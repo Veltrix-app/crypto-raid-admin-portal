@@ -130,7 +130,7 @@ function mapReward(row: DbReward): AdminReward {
 function mapSubmission(row: DbSubmission): AdminSubmission {
   return {
     id: row.id,
-    userId: row.user_id,
+    userId: row.user_id ?? "",
     username: row.username,
     questId: row.quest_id,
     questTitle: row.quest_title,
