@@ -1,0 +1,40 @@
+import { AdminSubmission } from "@/types/entities/submission";
+
+export const mockSubmissions: AdminSubmission[] = [
+  {
+    id: "s1",
+    userId: "u1",
+    username: "RaidKing",
+    questId: "q2",
+    questTitle: "Upload meme proof",
+    campaignId: "c1",
+    campaignTitle: "Weekly Meme Push",
+    proof: "https://x.com/raidking/status/123456789",
+    submittedAt: "2026-04-04T11:20:00.000Z",
+    status: "pending",
+  },
+  {
+    id: "s2",
+    userId: "u2",
+    username: "MoonMila",
+    questId: "q2",
+    questTitle: "Upload meme proof",
+    campaignId: "c1",
+    campaignTitle: "Weekly Meme Push",
+    proof: "Screenshot + Telegram link attached",
+    submittedAt: "2026-04-04T10:15:00.000Z",
+    status: "pending",
+  },
+  {
+    id: "s3",
+    userId: "u3",
+    username: "NovaWolf",
+    questId: "q3",
+    questTitle: "Connect wallet",
+    campaignId: "c2",
+    campaignTitle: "Launch Warmup",
+    proof: "Wallet: 0x7A3...19f2",
+    submittedAt: "2026-04-03T18:40:00.000Z",
+    status: "approved",
+  },
+];

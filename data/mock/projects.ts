@@ -1,0 +1,43 @@
+import { AdminProject } from "@/types/entities/project";
+
+export const mockProjects: AdminProject[] = [
+  {
+    id: "p1",
+    name: "Pepe Raiders",
+    chain: "Base",
+    status: "active",
+    members: 18244,
+    campaigns: 3,
+    logo: "🚀",
+    website: "https://peperaiders.xyz",
+    contactEmail: "team@peperaiders.xyz",
+    description: "Meme-first community focused on raids, viral pushes and fast social growth.",
+    onboardingStatus: "approved",
+  },
+  {
+    id: "p2",
+    name: "Nova DeFi",
+    chain: "Solana",
+    status: "active",
+    members: 9340,
+    campaigns: 2,
+    logo: "💠",
+    website: "https://novadefi.xyz",
+    contactEmail: "growth@novadefi.xyz",
+    description: "DeFi-native campaign system for launch growth and community activation.",
+    onboardingStatus: "approved",
+  },
+  {
+    id: "p3",
+    name: "ChainGuild",
+    chain: "Ethereum",
+    status: "draft",
+    members: 27111,
+    campaigns: 5,
+    logo: "⚔️",
+    website: "https://chainguild.xyz",
+    contactEmail: "ops@chainguild.xyz",
+    description: "Gaming and NFT growth guild with quest-heavy community campaigns.",
+    onboardingStatus: "pending",
+  },
+];
