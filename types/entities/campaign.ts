@@ -1,9 +1,40 @@
 export type AdminCampaign = {
   id: string;
-  title: string;
+
   projectId: string;
-  status: "draft" | "active" | "completed";
+
+  title: string;
+  slug: string;
+
+  shortDescription: string;
+  longDescription?: string;
+
+  bannerUrl?: string;
+  thumbnailUrl?: string;
+
+  campaignType:
+    | "social_growth"
+    | "community_growth"
+    | "onchain"
+    | "referral"
+    | "content"
+    | "hybrid";
+
+  xpBudget: number;
   participants: number;
   completionRate: number;
-  xpBudget: number;
+
+  visibility: "public" | "private" | "gated";
+  featured: boolean;
+
+  startsAt?: string;
+  endsAt?: string;
+
+  status:
+    | "draft"
+    | "scheduled"
+    | "active"
+    | "paused"
+    | "completed"
+    | "archived";
 };

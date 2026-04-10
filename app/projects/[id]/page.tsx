@@ -1,5 +1,3 @@
-"use client";
-
 import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
@@ -25,6 +23,9 @@ export default function ProjectDetailPage() {
       <AdminShell>
         <div className="rounded-[24px] border border-line bg-card p-6">
           <h1 className="text-2xl font-extrabold text-text">Project not found</h1>
+          <p className="mt-2 text-sm text-sub">
+            This project could not be found in the admin portal store.
+          </p>
         </div>
       </AdminShell>
     );
@@ -36,19 +37,36 @@ export default function ProjectDetailPage() {
     <AdminShell>
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
               Project Detail
             </p>
+
             <h1 className="mt-2 text-3xl font-extrabold text-text">
               {project.logo} {project.name}
             </h1>
-            <p className="mt-2 text-sm text-sub">{project.description}</p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Badge>{project.chain}</Badge>
+              {project.category ? <Badge>{project.category}</Badge> : null}
+              <Badge className="capitalize">{project.status}</Badge>
+              <Badge className="capitalize">{project.onboardingStatus}</Badge>
+              {project.isFeatured ? <Badge>Featured</Badge> : null}
+              {project.isPublic ? <Badge>Public</Badge> : <Badge>Private</Badge>}
+            </div>
+
+            <p className="mt-4 text-sm text-sub">{project.description}</p>
+
+            {project.longDescription ? (
+              <p className="mt-3 text-sm leading-6 text-sub">
+                {project.longDescription}
+              </p>
+            ) : null}
           </div>
 
           <button
-            onClick={() => {
-              deleteProject(project.id);
+            onClick={async () => {
+              await deleteProject(project.id);
               router.push("/projects");
             }}
             className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300"
@@ -64,53 +82,121 @@ export default function ProjectDetailPage() {
           <InfoCard label="Onboarding" value={project.onboardingStatus} />
         </div>
 
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <ProjectForm
-            initialValues={{
-              name: project.name,
-              chain: project.chain,
-              status: project.status,
-              members: project.members,
-              campaigns: project.campaigns,
-              logo: project.logo,
-              website: project.website,
-              contactEmail: project.contactEmail,
-              description: project.description,
-              onboardingStatus: project.onboardingStatus,
-            }}
-            submitLabel="Update Project"
-            onSubmit={(values) => updateProject(project.id, values)}
-          />
-        </div>
+        <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+          <div className="rounded-[28px] border border-line bg-card p-6">
+            <h2 className="text-xl font-extrabold text-text">Edit Project</h2>
+            <p className="mt-2 text-sm text-sub">
+              Update how this project appears in the app and portal.
+            </p>
 
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <h2 className="text-xl font-extrabold text-text">Related Campaigns</h2>
-          <div className="mt-4 grid gap-3">
-            {relatedCampaigns.length > 0 ? (
-              relatedCampaigns.map((campaign) => (
-                <div
-                  key={campaign.id}
-                  className="rounded-2xl border border-line bg-card2 px-4 py-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-text">{campaign.title}</p>
-                      <p className="mt-1 text-sm text-sub">
-                        {campaign.status} • {campaign.participants} participants
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => router.push(`/campaigns/${campaign.id}`)}
-                      className="rounded-xl border border-line px-3 py-2 font-semibold"
-                    >
-                      Open
-                    </button>
+            <div className="mt-6">
+              <ProjectForm
+                initialValues={{
+                  name: project.name,
+                  slug: project.slug,
+
+                  chain: project.chain,
+                  category: project.category || "",
+
+                  status: project.status,
+                  onboardingStatus: project.onboardingStatus,
+
+                  description: project.description,
+                  longDescription: project.longDescription || "",
+
+                  members: project.members,
+                  campaigns: project.campaigns,
+
+                  logo: project.logo,
+                  bannerUrl: project.bannerUrl || "",
+
+                  website: project.website || "",
+                  xUrl: project.xUrl || "",
+                  telegramUrl: project.telegramUrl || "",
+                  discordUrl: project.discordUrl || "",
+
+                  contactEmail: project.contactEmail || "",
+
+                  isFeatured: project.isFeatured ?? false,
+                  isPublic: project.isPublic ?? true,
+                }}
+                submitLabel="Update Project"
+                onSubmit={async (values) => {
+                  await updateProject(project.id, values);
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="rounded-[28px] border border-line bg-card p-6">
+              <h2 className="text-xl font-extrabold text-text">Project Assets</h2>
+
+              <div className="mt-4 space-y-4">
+                <DetailRow label="Slug" value={project.slug || "-"} />
+                <DetailRow label="Website" value={project.website || "-"} />
+                <DetailRow label="X URL" value={project.xUrl || "-"} />
+                <DetailRow label="Telegram URL" value={project.telegramUrl || "-"} />
+                <DetailRow label="Discord URL" value={project.discordUrl || "-"} />
+                <DetailRow label="Contact Email" value={project.contactEmail || "-"} />
+                <DetailRow
+                  label="Featured"
+                  value={project.isFeatured ? "Yes" : "No"}
+                />
+                <DetailRow
+                  label="Public"
+                  value={project.isPublic ? "Yes" : "No"}
+                />
+              </div>
+
+              {project.bannerUrl ? (
+                <div className="mt-6">
+                  <p className="mb-2 text-sm font-semibold text-text">Banner Preview</p>
+                  <div className="overflow-hidden rounded-2xl border border-line bg-card2">
+                    <img
+                      src={project.bannerUrl}
+                      alt={`${project.name} banner`}
+                      className="h-40 w-full object-cover"
+                    />
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-sub">No campaigns linked yet.</p>
-            )}
+              ) : null}
+            </div>
+
+            <div className="rounded-[28px] border border-line bg-card p-6">
+              <h2 className="text-xl font-extrabold text-text">Related Campaigns</h2>
+
+              <div className="mt-4 grid gap-3">
+                {relatedCampaigns.length > 0 ? (
+                  relatedCampaigns.map((campaign) => (
+                    <div
+                      key={campaign.id}
+                      className="rounded-2xl border border-line bg-card2 px-4 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="truncate font-bold text-text">
+                            {campaign.title}
+                          </p>
+                          <p className="mt-1 text-sm text-sub">
+                            {campaign.status} • {campaign.participants} participants
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => router.push(`/campaigns/${campaign.id}`)}
+                          className="rounded-xl border border-line px-3 py-2 font-semibold"
+                        >
+                          Open
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-sub">No campaigns linked yet.</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -124,5 +210,38 @@ function InfoCard({ label, value }: { label: string; value: string | number }) {
       <p className="text-sm text-sub">{label}</p>
       <p className="mt-2 text-2xl font-extrabold capitalize text-text">{value}</p>
     </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+        {label}
+      </p>
+      <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
+    </div>
+  );
+}
+
+function Badge({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold text-text ${className}`}
+    >
+      {children}
+    </span>
   );
 }
