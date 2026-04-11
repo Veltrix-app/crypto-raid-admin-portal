@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";

@@ -3,29 +3,83 @@ import { AdminCampaign } from "@/types/entities/campaign";
 export const mockCampaigns: AdminCampaign[] = [
   {
     id: "c1",
-    title: "Weekly Meme Push",
     projectId: "p1",
-    status: "active",
+
+    title: "Weekly Meme Push",
+    slug: "weekly-meme-push",
+
+    shortDescription: "Boost meme visibility across social channels.",
+    longDescription: "",
+
+    bannerUrl: "",
+    thumbnailUrl: "",
+
+    campaignType: "social_growth",
+
+    xpBudget: 12000,
     participants: 1421,
     completionRate: 64,
-    xpBudget: 12000,
+
+    visibility: "public",
+    featured: true,
+
+    startsAt: "",
+    endsAt: "",
+
+    status: "active",
   },
   {
     id: "c2",
-    title: "Launch Warmup",
     projectId: "p2",
-    status: "active",
+
+    title: "Launch Warmup",
+    slug: "launch-warmup",
+
+    shortDescription: "Warm up the community before launch.",
+    longDescription: "",
+
+    bannerUrl: "",
+    thumbnailUrl: "",
+
+    campaignType: "community_growth",
+
+    xpBudget: 9000,
     participants: 882,
     completionRate: 38,
-    xpBudget: 9000,
+
+    visibility: "public",
+    featured: false,
+
+    startsAt: "",
+    endsAt: "",
+
+    status: "active",
   },
   {
     id: "c3",
-    title: "Ambassador Sprint",
     projectId: "p3",
-    status: "draft",
+
+    title: "Ambassador Sprint",
+    slug: "ambassador-sprint",
+
+    shortDescription: "Quest-heavy ambassador drive for top contributors.",
+    longDescription: "",
+
+    bannerUrl: "",
+    thumbnailUrl: "",
+
+    campaignType: "hybrid",
+
+    xpBudget: 18000,
     participants: 0,
     completionRate: 0,
-    xpBudget: 18000,
+
+    visibility: "private",
+    featured: false,
+
+    startsAt: "",
+    endsAt: "",
+
+    status: "draft",
   },
 ];

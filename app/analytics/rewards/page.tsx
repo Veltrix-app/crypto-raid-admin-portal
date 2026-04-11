@@ -21,10 +21,12 @@ export default function AnalyticsRewardsPage() {
           <h2 className="text-xl font-extrabold text-text">Reward Catalog Overview</h2>
           <div className="mt-5">
             <RewardsChart
-              items={rewards.map((reward) => ({
-                label: reward.title,
-                value: reward.stock,
-              }))}
+items={rewards
+  .filter((reward) => !reward.unlimitedStock)
+  .map((reward) => ({
+    label: reward.title,
+    value: reward.stock ?? 0,
+  }))}
             />
           </div>
         </div>

@@ -33,17 +33,18 @@ export default function ClaimDetailPage() {
   }
 
   async function handleSetStatus(
-    nextStatus: "processing" | "fulfilled" | "rejected"
-  ) {
-    try {
-      setWorking(true);
-      await updateClaimStatus(claim.id, nextStatus);
-      router.refresh();
-    } finally {
-      setWorking(false);
-    }
-  }
+  nextStatus: "processing" | "fulfilled" | "rejected"
+) {
+  if (!claim) return;
 
+  try {
+    setWorking(true);
+    await updateClaimStatus(claim.id, nextStatus);
+    router.refresh();
+  } finally {
+    setWorking(false);
+  }
+}
   return (
     <AdminShell>
       <div className="space-y-6">

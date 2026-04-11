@@ -33,25 +33,29 @@ export default function SubmissionDetailPage() {
     );
   }
 
-  async function handleApprove() {
-    try {
-      setWorking(true);
-      await approveSubmission(submission.id);
-      router.refresh();
-    } finally {
-      setWorking(false);
-    }
-  }
+async function handleApprove() {
+  if (!submission) return;
 
-  async function handleReject() {
-    try {
-      setWorking(true);
-      await rejectSubmission(submission.id);
-      router.refresh();
-    } finally {
-      setWorking(false);
-    }
+  try {
+    setWorking(true);
+    await approveSubmission(submission.id);
+    router.refresh();
+  } finally {
+    setWorking(false);
   }
+}
+
+async function handleReject() {
+  if (!submission) return;
+
+  try {
+    setWorking(true);
+    await rejectSubmission(submission.id);
+    router.refresh();
+  } finally {
+    setWorking(false);
+  }
+}
 
   const proofLooksLikeUrl =
     submission.proof.startsWith("http://") || submission.proof.startsWith("https://");

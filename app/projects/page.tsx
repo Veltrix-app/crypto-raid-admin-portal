@@ -15,7 +15,7 @@ export default function ProjectsPage() {
       const matchesSearch =
         project.name.toLowerCase().includes(search.toLowerCase()) ||
         project.chain.toLowerCase().includes(search.toLowerCase()) ||
-        project.contactEmail.toLowerCase().includes(search.toLowerCase());
+        (project.contactEmail || "").toLowerCase().includes(search.toLowerCase());
 
       const matchesStatus =
         status === "all" ||
