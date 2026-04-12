@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import QuestForm from "@/components/forms/quest/QuestForm";
+import { getQuestVerificationPreview } from "@/lib/quest-verification";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function QuestDetailPage() {
@@ -45,6 +46,14 @@ export default function QuestDetailPage() {
     (submission) => submission.status === "pending"
   );
   const questBlueprintSummary = getQuestBlueprintSummary(quest.questType);
+  const verificationPreview = getQuestVerificationPreview({
+    questType: quest.questType,
+    verificationType: quest.verificationType,
+    proofRequired: quest.proofRequired,
+    proofType: quest.proofType,
+    autoApprove: quest.autoApprove,
+    verificationConfig: quest.verificationConfig,
+  });
   const questReadinessItems = [
     {
       label: "Destination",
@@ -53,8 +62,10 @@ export default function QuestDetailPage() {
     },
     {
       label: "Verification",
-      value: quest.verificationType.replace(/_/g, " "),
-      complete: true,
+      value: verificationPreview.routeLabel,
+      complete:
+        !verificationPreview.invalidConfig &&
+        verificationPreview.missingConfigKeys.length === 0,
     },
     {
       label: "Proof Flow",
@@ -105,6 +116,22 @@ export default function QuestDetailPage() {
               <p className="mt-2 text-sm leading-6 text-sub">
                 {questBlueprintSummary}
               </p>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-line bg-card2 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                    Verification Route
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    {verificationPreview.routeDescription}
+                  </p>
+                </div>
+                <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+                  {verificationPreview.routeLabel}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -275,6 +302,36 @@ export default function QuestDetailPage() {
                 <DetailRow label="Sort Order" value={quest.sortOrder} />
                 <DetailRow label="Starts At" value={quest.startsAt || "-"} />
                 <DetailRow label="Ends At" value={quest.endsAt || "-"} />
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-line bg-card p-6">
+              <h2 className="text-xl font-extrabold text-text">Verification Rules</h2>
+
+              <div className="mt-4 space-y-4">
+                <DetailRow label="Route" value={verificationPreview.routeLabel} />
+                <DetailRow
+                  label="Required Config"
+                  value={
+                    verificationPreview.requiredConfigKeys.length
+                      ? verificationPreview.requiredConfigKeys.join(", ")
+                      : "No required keys"
+                  }
+                />
+                <DetailRow
+                  label="Missing Config"
+                  value={
+                    verificationPreview.invalidConfig
+                      ? "Invalid JSON"
+                      : verificationPreview.missingConfigKeys.length
+                      ? verificationPreview.missingConfigKeys.join(", ")
+                      : "None"
+                  }
+                />
+                <DetailRow
+                  label="Proof Expectation"
+                  value={verificationPreview.proofExpectation}
+                />
               </div>
             </div>
 

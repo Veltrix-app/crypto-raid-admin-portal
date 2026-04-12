@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminQuest } from "@/types/entities/quest";
 import { AdminProject } from "@/types/entities/project";
 import { AdminCampaign } from "@/types/entities/campaign";
+import { getQuestVerificationPreview } from "@/lib/quest-verification";
 
 type Props = {
   projects: AdminProject[];
@@ -236,6 +237,10 @@ export default function QuestForm({
   }, [campaigns, values.projectId]);
   const activePreset = QUEST_TYPE_PRESETS[selectedPreset];
   const selectedProject = projects.find((project) => project.id === values.projectId);
+  const verificationPreview = useMemo(
+    () => getQuestVerificationPreview(values),
+    [values]
+  );
 
   useEffect(() => {
     if (!values.projectId && defaultProjectId) {
@@ -610,6 +615,45 @@ export default function QuestForm({
             </p>
           </div>
         </div>
+
+        <div className="rounded-2xl border border-line bg-card2 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-text">Verification Routing</p>
+              <p className="mt-2 text-sm leading-6 text-sub">
+                {verificationPreview.routeDescription}
+              </p>
+            </div>
+            <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+              {verificationPreview.routeLabel}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <RouteInfoCard
+              label="Proof expectation"
+              value={verificationPreview.proofExpectation}
+            />
+            <RouteInfoCard
+              label="Required config"
+              value={
+                verificationPreview.requiredConfigKeys.length
+                  ? verificationPreview.requiredConfigKeys.join(", ")
+                  : "No required keys"
+              }
+            />
+            <RouteInfoCard
+              label="Missing keys"
+              value={
+                verificationPreview.invalidConfig
+                  ? "Invalid JSON"
+                  : verificationPreview.missingConfigKeys.length
+                  ? verificationPreview.missingConfigKeys.join(", ")
+                  : "None"
+              }
+            />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -724,6 +768,21 @@ export default function QuestForm({
         {submitLabel}
       </button>
     </form>
+  );
+}
+
+function RouteInfoCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-line bg-card px-4 py-4">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-2 text-sm leading-6 text-text">{value}</p>
+    </div>
   );
 }
 
