@@ -7,6 +7,7 @@ import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function ClaimsPage() {
   const claims = useAdminPortalStore((s) => s.claims);
+  const users = useAdminPortalStore((s) => s.users);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -29,6 +30,11 @@ export default function ClaimsPage() {
   const processingCount = claims.filter((c) => c.status === "processing").length;
   const fulfilledCount = claims.filter((c) => c.status === "fulfilled").length;
   const rejectedCount = claims.filter((c) => c.status === "rejected").length;
+  const usersByAuthId = new Map(
+    users
+      .filter((user) => !!user.authUserId)
+      .map((user) => [user.authUserId as string, user])
+  );
 
   return (
     <AdminShell>
@@ -71,37 +77,57 @@ export default function ClaimsPage() {
         </div>
 
         <div className="overflow-hidden rounded-[24px] border border-line bg-card">
-          <div className="grid grid-cols-7 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
+          <div className="grid grid-cols-8 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
             <div>User</div>
             <div>Reward</div>
             <div>Project</div>
             <div>Campaign</div>
+            <div>Risk</div>
             <div>Status</div>
             <div>Created</div>
             <div>Open</div>
           </div>
 
-          {filteredClaims.map((claim) => (
-            <div
-              key={claim.id}
-              className="grid grid-cols-7 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
-            >
-              <div className="font-semibold">{claim.username}</div>
-              <div>{claim.rewardTitle}</div>
-              <div>{claim.projectName || "-"}</div>
-              <div>{claim.campaignTitle || "-"}</div>
-              <div className="capitalize text-primary">{claim.status}</div>
-              <div>{formatDate(claim.createdAt)}</div>
-              <div>
-                <Link
-                  href={`/claims/${claim.id}`}
-                  className="rounded-xl border border-line bg-card2 px-3 py-2 font-semibold"
-                >
-                  Review
-                </Link>
+          {filteredClaims.map((claim) => {
+            const user = usersByAuthId.get(claim.authUserId);
+            const riskLabel =
+              user?.status === "flagged"
+                ? `Watch • Sybil ${user.sybilScore}`
+                : `Trust ${user?.trustScore ?? 50}`;
+
+            return (
+              <div
+                key={claim.id}
+                className="grid grid-cols-8 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
+              >
+                <div className="font-semibold">{claim.username}</div>
+                <div>{claim.rewardTitle}</div>
+                <div>{claim.projectName || "-"}</div>
+                <div>{claim.campaignTitle || "-"}</div>
+                <div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold ${
+                      user?.status === "flagged"
+                        ? "bg-rose-500/15 text-rose-300"
+                        : "bg-card2 text-sub"
+                    }`}
+                  >
+                    {riskLabel}
+                  </span>
+                </div>
+                <div className="capitalize text-primary">{claim.status}</div>
+                <div>{formatDate(claim.createdAt)}</div>
+                <div>
+                  <Link
+                    href={`/claims/${claim.id}`}
+                    className="rounded-xl border border-line bg-card2 px-3 py-2 font-semibold"
+                  >
+                    Review
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {filteredClaims.length === 0 ? (
             <div className="px-5 py-8 text-sm text-sub">

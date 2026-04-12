@@ -7,6 +7,7 @@ import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function SubmissionsPage() {
   const submissions = useAdminPortalStore((s) => s.submissions);
+  const users = useAdminPortalStore((s) => s.users);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -29,6 +30,11 @@ export default function SubmissionsPage() {
   const pendingCount = submissions.filter((s) => s.status === "pending").length;
   const approvedCount = submissions.filter((s) => s.status === "approved").length;
   const rejectedCount = submissions.filter((s) => s.status === "rejected").length;
+  const usersByAuthId = new Map(
+    users
+      .filter((user) => !!user.authUserId)
+      .map((user) => [user.authUserId as string, user])
+  );
 
   return (
     <AdminShell>
@@ -69,37 +75,57 @@ export default function SubmissionsPage() {
         </div>
 
         <div className="overflow-hidden rounded-[24px] border border-line bg-card">
-          <div className="grid grid-cols-7 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
+          <div className="grid grid-cols-8 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
             <div>User</div>
             <div>Quest</div>
             <div>Campaign</div>
+            <div>Risk</div>
             <div>Status</div>
             <div>Submitted</div>
             <div>Proof</div>
             <div>Open</div>
           </div>
 
-          {filteredSubmissions.map((submission) => (
-            <div
-              key={submission.id}
-              className="grid grid-cols-7 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
-            >
-              <div className="font-semibold">{submission.username}</div>
-              <div>{submission.questTitle}</div>
-              <div>{submission.campaignTitle}</div>
-              <div className="capitalize text-primary">{submission.status}</div>
-              <div>{formatDate(submission.submittedAt)}</div>
-              <div className="truncate text-sub">{submission.proof}</div>
-              <div>
-                <Link
-                  href={`/submissions/${submission.id}`}
-                  className="rounded-xl border border-line bg-card2 px-3 py-2 font-semibold"
-                >
-                  Review
-                </Link>
+          {filteredSubmissions.map((submission) => {
+            const user = usersByAuthId.get(submission.userId);
+            const riskLabel =
+              user?.status === "flagged"
+                ? `Watch • Sybil ${user.sybilScore}`
+                : `Trust ${user?.trustScore ?? 50}`;
+
+            return (
+              <div
+                key={submission.id}
+                className="grid grid-cols-8 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
+              >
+                <div className="font-semibold">{submission.username}</div>
+                <div>{submission.questTitle}</div>
+                <div>{submission.campaignTitle}</div>
+                <div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold ${
+                      user?.status === "flagged"
+                        ? "bg-rose-500/15 text-rose-300"
+                        : "bg-card2 text-sub"
+                    }`}
+                  >
+                    {riskLabel}
+                  </span>
+                </div>
+                <div className="capitalize text-primary">{submission.status}</div>
+                <div>{formatDate(submission.submittedAt)}</div>
+                <div className="truncate text-sub">{submission.proof}</div>
+                <div>
+                  <Link
+                    href={`/submissions/${submission.id}`}
+                    className="rounded-xl border border-line bg-card2 px-3 py-2 font-semibold"
+                  >
+                    Review
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {filteredSubmissions.length === 0 ? (
             <div className="px-5 py-8 text-sm text-sub">
