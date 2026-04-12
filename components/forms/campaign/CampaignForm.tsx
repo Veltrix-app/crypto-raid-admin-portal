@@ -1,25 +1,88 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminCampaign } from "@/types/entities/campaign";
 import { AdminProject } from "@/types/entities/project";
 
 type Props = {
   projects: AdminProject[];
   initialValues?: Omit<AdminCampaign, "id">;
+  defaultProjectId?: string;
   onSubmit: (values: Omit<AdminCampaign, "id">) => void | Promise<void>;
   submitLabel?: string;
+};
+
+const CAMPAIGN_TYPE_PRESETS: Record<
+  AdminCampaign["campaignType"],
+  {
+    label: string;
+    summary: string;
+    visibility: AdminCampaign["visibility"];
+    xpBudget: number;
+    featured: boolean;
+    shortDescription: string;
+  }
+> = {
+  social_growth: {
+    label: "Social Growth Push",
+    summary: "Use this when the campaign’s main job is reach: follows, reposts, comments and traffic into key moments.",
+    visibility: "public",
+    xpBudget: 2500,
+    featured: true,
+    shortDescription: "A high-energy campaign designed to turn attention into measurable social reach.",
+  },
+  community_growth: {
+    label: "Community Expansion",
+    summary: "Best for campaigns focused on Discord, Telegram and deeper contributor activation.",
+    visibility: "public",
+    xpBudget: 2000,
+    featured: false,
+    shortDescription: "Bring new members into the community and guide them toward their first meaningful actions.",
+  },
+  onchain: {
+    label: "Onchain Activation",
+    summary: "Built for swaps, mints, wallet connection and asset-based participation loops.",
+    visibility: "gated",
+    xpBudget: 4000,
+    featured: true,
+    shortDescription: "Drive meaningful onchain participation with wallet-aware tasks and claimable incentives.",
+  },
+  referral: {
+    label: "Referral Loop",
+    summary: "Use this to turn contributors into acquisition channels with referral quests and invite mechanics.",
+    visibility: "public",
+    xpBudget: 3000,
+    featured: false,
+    shortDescription: "Reward contributors for bringing high-intent users into the project ecosystem.",
+  },
+  content: {
+    label: "Content Campaign",
+    summary: "Great for UGC, writing, design submissions and manual proof-based content loops.",
+    visibility: "public",
+    xpBudget: 1800,
+    featured: false,
+    shortDescription: "Collect quality content and proof-driven contributions around a clear campaign narrative.",
+  },
+  hybrid: {
+    label: "Hybrid Launch",
+    summary: "Mix social, community and onchain mechanics when you want one central campaign hub.",
+    visibility: "public",
+    xpBudget: 3500,
+    featured: true,
+    shortDescription: "A blended campaign structure that combines multiple mechanics into one launch-ready flow.",
+  },
 };
 
 export default function CampaignForm({
   projects,
   initialValues,
+  defaultProjectId,
   onSubmit,
   submitLabel = "Save Campaign",
 }: Props) {
   const [values, setValues] = useState<Omit<AdminCampaign, "id">>(
     initialValues || {
-      projectId: projects[0]?.id || "",
+      projectId: defaultProjectId || projects[0]?.id || "",
 
       title: "",
       slug: "",
@@ -45,6 +108,53 @@ export default function CampaignForm({
       status: "draft",
     }
   );
+  const [selectedPreset, setSelectedPreset] = useState<AdminCampaign["campaignType"]>(
+    initialValues?.campaignType || "hybrid"
+  );
+  const activePreset = CAMPAIGN_TYPE_PRESETS[selectedPreset];
+  const selectedProject = useMemo(
+    () => projects.find((project) => project.id === values.projectId),
+    [projects, values.projectId]
+  );
+
+  useEffect(() => {
+    if (!values.projectId && defaultProjectId) {
+      setValues((current) => ({ ...current, projectId: defaultProjectId }));
+    }
+  }, [defaultProjectId, values.projectId]);
+
+  useEffect(() => {
+    if (!initialValues?.slug && values.title) {
+      const nextSlug = values.title
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-");
+
+      setValues((current) =>
+        current.slug === nextSlug || current.slug.trim().length > 0
+          ? current
+          : { ...current, slug: nextSlug }
+      );
+    }
+  }, [initialValues?.slug, values.title]);
+
+  function applyPreset(campaignType: AdminCampaign["campaignType"]) {
+    const preset = CAMPAIGN_TYPE_PRESETS[campaignType];
+    setSelectedPreset(campaignType);
+    setValues((current) => ({
+      ...current,
+      campaignType,
+      visibility: preset.visibility,
+      xpBudget: current.xpBudget > 0 && current.campaignType === campaignType ? current.xpBudget : preset.xpBudget,
+      featured: preset.featured,
+      shortDescription:
+        current.shortDescription.trim() && current.campaignType === campaignType
+          ? current.shortDescription
+          : preset.shortDescription,
+    }));
+  }
 
   return (
     <form
@@ -54,6 +164,51 @@ export default function CampaignForm({
         await onSubmit(values);
       }}
     >
+      <div className="space-y-3">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+          Campaign Blueprint
+        </p>
+
+        <div className="grid gap-3 xl:grid-cols-2">
+          {(
+            ["hybrid", "social_growth", "community_growth", "onchain", "referral", "content"] as AdminCampaign["campaignType"][]
+          ).map((campaignType) => {
+            const preset = CAMPAIGN_TYPE_PRESETS[campaignType];
+            const isActive = values.campaignType === campaignType;
+
+            return (
+              <button
+                key={campaignType}
+                type="button"
+                onClick={() => applyPreset(campaignType)}
+                className={`rounded-2xl border p-4 text-left transition ${
+                  isActive
+                    ? "border-primary bg-primary/10"
+                    : "border-line bg-card2 hover:border-primary/40"
+                }`}
+              >
+                <p className="text-sm font-bold text-text">{preset.label}</p>
+                <p className="mt-2 text-sm leading-6 text-sub">{preset.summary}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="rounded-2xl border border-line bg-card2 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-text">{activePreset.label}</p>
+              <p className="mt-2 text-sm leading-6 text-sub">{activePreset.summary}</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
+              <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">{values.campaignType.replace(/_/g, " ")}</span>
+              <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.visibility}</span>
+              <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.xpBudget} xp</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           General
@@ -101,10 +256,7 @@ export default function CampaignForm({
             <select
               value={values.campaignType}
               onChange={(e) =>
-                setValues({
-                  ...values,
-                  campaignType: e.target.value as AdminCampaign["campaignType"],
-                })
+                applyPreset(e.target.value as AdminCampaign["campaignType"])
               }
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
             >
@@ -154,6 +306,15 @@ export default function CampaignForm({
             </select>
           </Field>
         </div>
+
+        {selectedProject ? (
+          <p className="text-sm text-sub">
+            This campaign will launch inside <span className="font-semibold text-text">{selectedProject.name}</span>
+            {values.visibility === "gated"
+              ? " with gated visibility, which is a good fit for wallet-aware or staged rollout flows."
+              : " and will be visible as a standard discoverable campaign unless you change visibility."}
+          </p>
+        ) : null}
       </div>
 
       <div className="space-y-3">
@@ -183,6 +344,10 @@ export default function CampaignForm({
             className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
           />
         </Field>
+
+        <div className="rounded-2xl border border-line bg-card2 p-4 text-sm text-sub">
+          <span className="font-semibold text-text">Builder hint:</span> write the short description like the campaign hook contributors see first, and use the long description to explain the full loop, reward logic and what “success” looks like.
+        </div>
       </div>
 
       <div className="space-y-3">

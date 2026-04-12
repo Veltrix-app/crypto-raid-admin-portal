@@ -3,10 +3,12 @@
 import { useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
+import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function NewCampaignPage() {
   const router = useRouter();
+  const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const createCampaign = useAdminPortalStore((s) => s.createCampaign);
   const projects = useAdminPortalStore((s) => s.projects);
 
@@ -26,6 +28,7 @@ export default function NewCampaignPage() {
         <div className="rounded-[28px] border border-line bg-card p-6">
           <CampaignForm
             projects={projects}
+            defaultProjectId={activeProjectId ?? undefined}
             onSubmit={async (values) => {
               const id = await createCampaign(values);
               router.push(`/campaigns/${id}`);
