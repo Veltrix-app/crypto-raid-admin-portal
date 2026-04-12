@@ -9,9 +9,11 @@ export default function ClaimsPage() {
   const claims = useAdminPortalStore((s) => s.claims);
   const users = useAdminPortalStore((s) => s.users);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
+  const reviewClaim = useAdminPortalStore((s) => s.reviewClaim);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [workingId, setWorkingId] = useState<string | null>(null);
 
   const usersByAuthId = new Map(
     users
@@ -48,6 +50,25 @@ export default function ClaimsPage() {
     const user = usersByAuthId.get(claim.authUserId);
     return user?.status === "flagged" || (claim.rewardCost ?? 0) >= 500;
   }).length;
+  const manualClaims = claims.filter((claim) => claim.claimMethod === "manual_fulfillment");
+  const highValueClaims = claims.filter((claim) => (claim.rewardCost ?? 0) >= 500);
+  const highPriorityClaims = filteredClaims.filter((claim) => {
+    const user = usersByAuthId.get(claim.authUserId);
+    const linkedFlags = flagsByClaimId.get(claim.id) ?? [];
+    return user?.status === "flagged" || linkedFlags.length > 0 || (claim.rewardCost ?? 0) >= 500;
+  });
+
+  async function handleQuickStatus(
+    claimId: string,
+    nextStatus: "processing" | "fulfilled"
+  ) {
+    try {
+      setWorkingId(claimId);
+      await reviewClaim(claimId, nextStatus);
+    } finally {
+      setWorkingId(null);
+    }
+  }
 
   return (
     <AdminShell>
@@ -72,15 +93,46 @@ export default function ClaimsPage() {
           <InfoCard label="High Priority" value={highPriorityCount} />
           <InfoCard
             label="Manual Fulfillment"
-            value={
-              claims.filter((claim) => claim.claimMethod === "manual_fulfillment")
-                .length
-            }
+            value={manualClaims.length}
           />
           <InfoCard
             label="High Value"
-            value={claims.filter((claim) => (claim.rewardCost ?? 0) >= 500).length}
+            value={highValueClaims.length}
           />
+        </div>
+
+        <div className="rounded-[28px] border border-line bg-card p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                Operations Focus
+              </p>
+              <h2 className="mt-2 text-xl font-extrabold text-text">
+                Claims that need hands-on attention first
+              </h2>
+            </div>
+            <span className="rounded-full border border-line bg-card2 px-4 py-2 text-sm font-bold text-text">
+              {highPriorityClaims.length}
+            </span>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <FocusCard
+              label="High Priority"
+              value={highPriorityClaims.length}
+              hint="Flagged users, high-value rewards or explicit review flags."
+            />
+            <FocusCard
+              label="Manual Queue"
+              value={manualClaims.filter((claim) => claim.status !== "fulfilled").length}
+              hint="Claims that still need human delivery or confirmation."
+            />
+            <FocusCard
+              label="Ready To Fulfill"
+              value={claims.filter((claim) => claim.status === "processing").length}
+              hint="Claims already triaged and ready for final delivery."
+            />
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-[1.4fr_220px]">
@@ -105,7 +157,7 @@ export default function ClaimsPage() {
         </div>
 
         <div className="overflow-hidden rounded-[24px] border border-line bg-card">
-          <div className="grid grid-cols-8 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
+          <div className="grid grid-cols-9 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
             <div>User</div>
             <div>Reward</div>
             <div>Project</div>
@@ -113,6 +165,7 @@ export default function ClaimsPage() {
             <div>Risk</div>
             <div>Status</div>
             <div>Created</div>
+            <div>Quick Action</div>
             <div>Open</div>
           </div>
 
@@ -142,7 +195,7 @@ export default function ClaimsPage() {
             return (
               <div
                 key={claim.id}
-                className="grid grid-cols-8 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
+                className="grid grid-cols-9 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
               >
                 <div className="font-semibold">{claim.username}</div>
                 <div>{claim.rewardTitle}</div>
@@ -168,6 +221,27 @@ export default function ClaimsPage() {
                 </div>
                 <div>{formatDate(claim.createdAt)}</div>
                 <div>
+                  {claim.status === "pending" ? (
+                    <button
+                      onClick={() => handleQuickStatus(claim.id, "processing")}
+                      disabled={workingId === claim.id}
+                      className="rounded-xl bg-amber-300 px-3 py-2 text-xs font-bold text-black disabled:opacity-50"
+                    >
+                      {workingId === claim.id ? "Working..." : "Start"}
+                    </button>
+                  ) : claim.status === "processing" ? (
+                    <button
+                      onClick={() => handleQuickStatus(claim.id, "fulfilled")}
+                      disabled={workingId === claim.id}
+                      className="rounded-xl bg-emerald-400 px-3 py-2 text-xs font-bold text-black disabled:opacity-50"
+                    >
+                      {workingId === claim.id ? "Working..." : "Fulfill"}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-sub">-</span>
+                  )}
+                </div>
+                <div>
                   <Link
                     href={`/claims/${claim.id}`}
                     className="rounded-xl border border-line bg-card2 px-3 py-2 font-semibold"
@@ -187,6 +261,24 @@ export default function ClaimsPage() {
         </div>
       </div>
     </AdminShell>
+  );
+}
+
+function FocusCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string | number;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-[24px] border border-line bg-card2 p-5">
+      <p className="text-sm text-sub">{label}</p>
+      <p className="mt-2 text-2xl font-extrabold text-text">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -9,8 +10,33 @@ export default function ModerationPage() {
   const approveSubmission = useAdminPortalStore((s) => s.approveSubmission);
   const rejectSubmission = useAdminPortalStore((s) => s.rejectSubmission);
   const updateReviewFlagStatus = useAdminPortalStore((s) => s.updateReviewFlagStatus);
+  const [search, setSearch] = useState("");
+  const [flagSeverity, setFlagSeverity] = useState<"all" | "high" | "medium" | "low">("all");
+  const [submissionStatus, setSubmissionStatus] = useState<"all" | "pending" | "approved" | "rejected">("pending");
 
   const openFlags = reviewFlags.filter((flag) => flag.status === "open");
+  const filteredFlags = useMemo(() => {
+    return openFlags.filter((flag) => {
+      const matchesSearch =
+        (flag.username || "").toLowerCase().includes(search.toLowerCase()) ||
+        flag.flagType.toLowerCase().includes(search.toLowerCase()) ||
+        flag.reason.toLowerCase().includes(search.toLowerCase());
+      const matchesSeverity = flagSeverity === "all" || flag.severity === flagSeverity;
+      return matchesSearch && matchesSeverity;
+    });
+  }, [openFlags, search, flagSeverity]);
+  const filteredSubmissions = useMemo(() => {
+    return submissions.filter((submission) => {
+      const matchesSearch =
+        submission.username.toLowerCase().includes(search.toLowerCase()) ||
+        submission.questTitle.toLowerCase().includes(search.toLowerCase()) ||
+        submission.campaignTitle.toLowerCase().includes(search.toLowerCase()) ||
+        submission.proof.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus =
+        submissionStatus === "all" || submission.status === submissionStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [submissions, search, submissionStatus]);
 
   return (
     <AdminShell>
@@ -45,6 +71,43 @@ export default function ModerationPage() {
           />
         </div>
 
+        <div className="grid gap-4 md:grid-cols-[1.4fr_220px_220px]">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search user, quest, flag type or reason..."
+            className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+          />
+
+          <select
+            value={flagSeverity}
+            onChange={(e) =>
+              setFlagSeverity(e.target.value as "all" | "high" | "medium" | "low")
+            }
+            className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+          >
+            <option value="all">all severities</option>
+            <option value="high">high</option>
+            <option value="medium">medium</option>
+            <option value="low">low</option>
+          </select>
+
+          <select
+            value={submissionStatus}
+            onChange={(e) =>
+              setSubmissionStatus(
+                e.target.value as "all" | "pending" | "approved" | "rejected"
+              )
+            }
+            className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+          >
+            <option value="pending">pending submissions</option>
+            <option value="all">all submissions</option>
+            <option value="approved">approved</option>
+            <option value="rejected">rejected</option>
+          </select>
+        </div>
+
         <div className="rounded-[28px] border border-line bg-card p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -61,9 +124,9 @@ export default function ModerationPage() {
           </div>
 
           <div className="mt-5 grid gap-4">
-            {openFlags.map((flag) => (
-              <div
-                key={flag.id}
+              {filteredFlags.map((flag) => (
+                <div
+                  key={flag.id}
                 className="rounded-2xl border border-line bg-card2 p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
@@ -138,16 +201,16 @@ export default function ModerationPage() {
               </div>
             ))}
 
-            {openFlags.length === 0 ? (
+            {filteredFlags.length === 0 ? (
               <div className="rounded-[24px] border border-line bg-card2 p-6 text-sm text-sub">
-                No open review flags right now.
+                No review flags match the current filters.
               </div>
             ) : null}
           </div>
         </div>
 
         <div className="grid gap-4">
-          {submissions.map((submission) => (
+          {filteredSubmissions.map((submission) => (
             <div
               key={submission.id}
               className="rounded-[24px] border border-line bg-card p-5"
@@ -199,9 +262,9 @@ export default function ModerationPage() {
             </div>
           ))}
 
-          {submissions.length === 0 ? (
+          {filteredSubmissions.length === 0 ? (
             <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
-              No submissions yet.
+              No submissions match the current moderation filters.
             </div>
           ) : null}
         </div>
