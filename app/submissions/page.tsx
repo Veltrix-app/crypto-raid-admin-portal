@@ -8,6 +8,7 @@ import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 export default function SubmissionsPage() {
   const submissions = useAdminPortalStore((s) => s.submissions);
   const users = useAdminPortalStore((s) => s.users);
+  const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -20,8 +21,7 @@ export default function SubmissionsPage() {
         submission.campaignTitle.toLowerCase().includes(search.toLowerCase()) ||
         submission.proof.toLowerCase().includes(search.toLowerCase());
 
-      const matchesStatus =
-        status === "all" || submission.status === status;
+      const matchesStatus = status === "all" || submission.status === status;
 
       return matchesSearch && matchesStatus;
     });
@@ -35,6 +35,13 @@ export default function SubmissionsPage() {
       .filter((user) => !!user.authUserId)
       .map((user) => [user.authUserId as string, user])
   );
+  const flagsBySubmissionId = reviewFlags.reduce((acc, flag) => {
+    if (flag.sourceTable !== "quest_submissions") return acc;
+    const existing = acc.get(flag.sourceId) ?? [];
+    existing.push(flag);
+    acc.set(flag.sourceId, existing);
+    return acc;
+  }, new Map<string, typeof reviewFlags>());
 
   return (
     <AdminShell>
@@ -88,10 +95,26 @@ export default function SubmissionsPage() {
 
           {filteredSubmissions.map((submission) => {
             const user = usersByAuthId.get(submission.userId);
+            const linkedFlags = flagsBySubmissionId.get(submission.id) ?? [];
             const riskLabel =
               user?.status === "flagged"
                 ? `Watch • Sybil ${user.sybilScore}`
                 : `Trust ${user?.trustScore ?? 50}`;
+            const decisionLabel =
+              linkedFlags.length > 0
+                ? linkedFlags[0].flagType.replace(/_/g, " ")
+                : submission.status === "approved"
+                  ? "Auto-approved"
+                  : submission.status === "pending"
+                    ? "Manual review"
+                    : "Validation failed";
+            const decisionReason =
+              linkedFlags[0]?.reason ??
+              (submission.status === "approved"
+                ? "Veltrix approved this submission automatically because it met the current low-risk verification rules."
+                : submission.status === "pending"
+                  ? "This submission is waiting for a reviewer because it could not be fully auto-verified."
+                  : "This submission did not meet the current verification requirements.");
 
             return (
               <div
@@ -102,19 +125,25 @@ export default function SubmissionsPage() {
                 <div>{submission.questTitle}</div>
                 <div>{submission.campaignTitle}</div>
                 <div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${
-                      user?.status === "flagged"
-                        ? "bg-rose-500/15 text-rose-300"
-                        : "bg-card2 text-sub"
-                    }`}
-                  >
-                    {riskLabel}
-                  </span>
+                  <div className="space-y-2">
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                        user?.status === "flagged"
+                          ? "bg-rose-500/15 text-rose-300"
+                          : "bg-card2 text-sub"
+                      }`}
+                    >
+                      {riskLabel}
+                    </span>
+                    <span className="block text-xs text-sub capitalize">{decisionLabel}</span>
+                  </div>
                 </div>
                 <div className="capitalize text-primary">{submission.status}</div>
                 <div>{formatDate(submission.submittedAt)}</div>
-                <div className="truncate text-sub">{submission.proof}</div>
+                <div className="space-y-2">
+                  <p className="truncate text-sub">{submission.proof}</p>
+                  <p className="line-clamp-2 text-xs text-sub">{decisionReason}</p>
+                </div>
                 <div>
                   <Link
                     href={`/submissions/${submission.id}`}

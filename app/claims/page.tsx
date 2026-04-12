@@ -8,6 +8,7 @@ import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 export default function ClaimsPage() {
   const claims = useAdminPortalStore((s) => s.claims);
   const users = useAdminPortalStore((s) => s.users);
+  const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -17,6 +18,13 @@ export default function ClaimsPage() {
       .filter((user) => !!user.authUserId)
       .map((user) => [user.authUserId as string, user])
   );
+  const flagsByClaimId = reviewFlags.reduce((acc, flag) => {
+    if (flag.sourceTable !== "reward_claims") return acc;
+    const existing = acc.get(flag.sourceId) ?? [];
+    existing.push(flag);
+    acc.set(flag.sourceId, existing);
+    return acc;
+  }, new Map<string, typeof reviewFlags>());
 
   const filteredClaims = useMemo(() => {
     return claims.filter((claim) => {
@@ -110,18 +118,26 @@ export default function ClaimsPage() {
 
           {filteredClaims.map((claim) => {
             const user = usersByAuthId.get(claim.authUserId);
+            const linkedFlags = flagsByClaimId.get(claim.id) ?? [];
             const riskLabel =
               user?.status === "flagged"
                 ? `Watch • Sybil ${user.sybilScore}`
                 : `Trust ${user?.trustScore ?? 50}`;
             const priorityLabel =
-              user?.status === "flagged"
-                ? "Escalate"
+              linkedFlags.length > 0
+                ? linkedFlags[0].flagType.replace(/_/g, " ")
                 : (claim.rewardCost ?? 0) >= 500
                   ? "High value"
                   : claim.claimMethod === "manual_fulfillment"
                     ? "Manual"
                     : "Normal";
+            const decisionReason =
+              linkedFlags[0]?.reason ??
+              ((claim.rewardCost ?? 0) >= 500
+                ? "This reward is valuable enough to deserve an extra fulfillment checkpoint."
+                : claim.claimMethod === "manual_fulfillment"
+                  ? "This claim depends on a manual delivery step from the project team."
+                  : "This claim can move through the standard fulfillment flow.");
 
             return (
               <div
@@ -143,10 +159,13 @@ export default function ClaimsPage() {
                     >
                       {riskLabel}
                     </span>
-                    <span className="block text-xs text-sub">{priorityLabel}</span>
+                    <span className="block text-xs text-sub capitalize">{priorityLabel}</span>
                   </div>
                 </div>
-                <div className="capitalize text-primary">{claim.status}</div>
+                <div className="space-y-2">
+                  <p className="capitalize text-primary">{claim.status}</p>
+                  <p className="line-clamp-2 text-xs text-sub">{decisionReason}</p>
+                </div>
                 <div>{formatDate(claim.createdAt)}</div>
                 <div>
                   <Link
