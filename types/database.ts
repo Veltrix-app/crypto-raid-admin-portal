@@ -293,6 +293,7 @@ export type DbClaim = {
   status: string | null;
   fulfillment_notes?: string | null;
   delivery_payload?: Record<string, any> | null;
+  reviewed_by_auth_user_id?: string | null;
   reviewed_at?: string | null;
   updated_at?: string | null;
 

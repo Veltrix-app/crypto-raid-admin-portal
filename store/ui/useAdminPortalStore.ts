@@ -370,6 +370,7 @@ function mapClaim(params: {
       deliveryPayload: row.delivery_payload
         ? JSON.stringify(row.delivery_payload, null, 2)
         : "",
+      reviewedByAuthUserId: row.reviewed_by_auth_user_id ?? "",
       reviewedAt: row.reviewed_at ?? "",
       updatedAt: row.updated_at ?? "",
 
@@ -1359,6 +1360,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     const fullUpdate = {
       status,
       fulfillment_notes: reviewNotes,
+      reviewed_by_auth_user_id: authUserId,
       reviewed_at: timestamp,
       updated_at: timestamp,
     };
@@ -1385,6 +1387,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
               ...item,
               status,
               fulfillmentNotes: reviewNotes || item.fulfillmentNotes,
+              reviewedByAuthUserId: authUserId ?? item.reviewedByAuthUserId,
               reviewedAt: timestamp,
               updatedAt: timestamp,
             }

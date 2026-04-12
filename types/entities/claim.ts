@@ -20,6 +20,7 @@ export type AdminClaim = {
   status: "pending" | "processing" | "fulfilled" | "rejected";
   fulfillmentNotes?: string;
   deliveryPayload?: string;
+  reviewedByAuthUserId?: string;
   reviewedAt?: string;
   updatedAt?: string;
 

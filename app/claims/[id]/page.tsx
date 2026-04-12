@@ -245,6 +245,7 @@ export default function ClaimDetailPage() {
               <DetailRow label="Project ID" value={currentClaim.projectId || "-"} />
               <DetailRow label="Campaign ID" value={currentClaim.campaignId || "-"} />
               <DetailRow label="Created At" value={formatDate(currentClaim.createdAt)} />
+              <DetailRow label="Reviewed By" value={currentClaim.reviewedByAuthUserId || "-"} />
               <DetailRow label="Updated At" value={currentClaim.updatedAt ? formatDate(currentClaim.updatedAt) : "-"} />
               <DetailRow label="Reviewed At" value={currentClaim.reviewedAt ? formatDate(currentClaim.reviewedAt) : "-"} />
             </div>
