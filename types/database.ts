@@ -213,14 +213,10 @@ export type DbReward = {
 
 export type DbSubmission = {
   id: string;
-  user_id: string | null;
-  username: string;
+  auth_user_id: string;
   quest_id: string;
-  quest_title: string;
-  campaign_id: string;
-  campaign_title: string;
-  proof: string;
-  submitted_at: string;
+  proof_text: string;
+  created_at: string;
   status: SubmissionStatus;
 };
 

@@ -76,6 +76,11 @@ type AdminPortalState = {
   inviteTeamMember: (input: Omit<AdminTeamMember, "id">) => Promise<void>;
 };
 
+type DbUserProfileLite = {
+  auth_user_id: string | null;
+  username: string;
+};
+
 function mapProject(row: DbProject): AdminProject {
   return {
     id: row.id,
@@ -258,18 +263,28 @@ function mapReward(row: DbReward): AdminReward {
   };
 }
 
-function mapSubmission(row: DbSubmission): AdminSubmission {
+function mapSubmission(params: {
+  row: DbSubmission;
+  questsById: Map<string, DbQuest>;
+  campaignsById: Map<string, DbCampaign>;
+  usernamesByAuthUserId: Map<string, string>;
+}): AdminSubmission {
+  const { row, questsById, campaignsById, usernamesByAuthUserId } = params;
+  const quest = questsById.get(row.quest_id);
+  const campaign = quest ? campaignsById.get(quest.campaign_id) : undefined;
+
   return {
     id: row.id,
-    userId: row.user_id ?? "",
-    username: row.username,
+    userId: row.auth_user_id ?? "",
+    username:
+      usernamesByAuthUserId.get(row.auth_user_id) ?? "Unknown User",
     questId: row.quest_id,
-    questTitle: row.quest_title,
-    campaignId: row.campaign_id,
-    campaignTitle: row.campaign_title,
-    proof: row.proof,
-    submittedAt: row.submitted_at,
-    status: row.status as AdminSubmission["status"],
+    questTitle: quest?.title ?? "Unknown Quest",
+    campaignId: quest?.campaign_id ?? "",
+    campaignTitle: campaign?.title ?? "Unknown Campaign",
+    proof: row.proof_text,
+    submittedAt: row.created_at,
+    status: row.status,
   };
 }
 
@@ -343,6 +358,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       questsRes,
       rewardsRes,
       submissionsRes,
+      profilesRes,
       claimsRes,
       teamRes,
       billingRes,
@@ -352,21 +368,41 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       supabase.from("raids").select("*").order("created_at", { ascending: false }),
       supabase.from("quests").select("*").order("created_at", { ascending: false }),
       supabase.from("rewards").select("*").order("created_at", { ascending: false }),
-      supabase.from("submissions").select("*").order("submitted_at", { ascending: false }),
+      supabase.from("quest_submissions").select("*").order("created_at", { ascending: false }),
+      supabase.from("user_profiles").select("auth_user_id, username"),
       supabase.from("reward_claims").select("*").order("created_at", { ascending: false }),
       supabase.from("team_members").select("*").order("created_at", { ascending: false }),
       supabase.from("billing_plans").select("*"),
     ]);
 
+    const campaignRows = (campaignsRes.data ?? []) as DbCampaign[];
+    const questRows = (questsRes.data ?? []) as DbQuest[];
+    const profileRows = (profilesRes.data ?? []) as DbUserProfileLite[];
+
+    const questsById = new Map(questRows.map((row) => [row.id, row]));
+    const campaignsById = new Map(campaignRows.map((row) => [row.id, row]));
+    const usernamesByAuthUserId = new Map(
+      profileRows
+        .filter((row): row is DbUserProfileLite & { auth_user_id: string } => !!row.auth_user_id)
+        .map((row) => [row.auth_user_id, row.username])
+    );
+
     set({
       hydrated: true,
       loading: false,
       projects: (projectsRes.data ?? []).map(mapProject),
-      campaigns: (campaignsRes.data ?? []).map(mapCampaign),
+      campaigns: campaignRows.map(mapCampaign),
       raids: (raidsRes.data ?? []).map(mapRaid),
-      quests: (questsRes.data ?? []).map(mapQuest),
+      quests: questRows.map(mapQuest),
       rewards: (rewardsRes.data ?? []).map(mapReward),
-      submissions: (submissionsRes.data ?? []).map(mapSubmission),
+      submissions: ((submissionsRes.data ?? []) as DbSubmission[]).map((row) =>
+        mapSubmission({
+          row,
+          questsById,
+          campaignsById,
+          usernamesByAuthUserId,
+        })
+      ),
       claims: (claimsRes.data ?? []).map(mapClaim),
       teamMembers: (teamRes.data ?? []).map(mapTeamMember),
       billingPlans: (billingRes.data ?? []).map(mapBillingPlan),
@@ -949,7 +985,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   approveSubmission: async (id) => {
     const supabase = createClient();
     const { error } = await supabase
-      .from("submissions")
+      .from("quest_submissions")
       .update({ status: "approved" })
       .eq("id", id);
 
@@ -965,7 +1001,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   rejectSubmission: async (id) => {
     const supabase = createClient();
     const { error } = await supabase
-      .from("submissions")
+      .from("quest_submissions")
       .update({ status: "rejected" })
       .eq("id", id);
 
