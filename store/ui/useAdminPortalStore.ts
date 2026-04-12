@@ -13,6 +13,7 @@ import { AdminTeamMember } from "@/types/entities/team-member";
 import { AdminBillingPlan } from "@/types/entities/billing-plan";
 import { AdminClaim } from "@/types/entities/claim";
 import { AdminOnboardingRequest } from "@/types/entities/onboarding-request";
+import { AdminReviewFlag } from "@/types/entities/review-flag";
 import { AdminUser } from "@/types/entities/user";
 import {
   DbBillingPlan,
@@ -23,6 +24,7 @@ import {
   DbQuest,
   DbRaid,
   DbReward,
+  DbReviewFlag,
   DbSubmission,
   DbTeamMember,
   DbUserGlobalReputation,
@@ -43,6 +45,7 @@ type AdminPortalState = {
   submissions: AdminSubmission[];
   claims: AdminClaim[];
   users: AdminUser[];
+  reviewFlags: AdminReviewFlag[];
   onboardingRequests: AdminOnboardingRequest[];
   teamMembers: AdminTeamMember[];
   billingPlans: AdminBillingPlan[];
@@ -80,6 +83,10 @@ type AdminPortalState = {
   updateClaimStatus: (
     id: string,
     status: AdminClaim["status"]
+  ) => Promise<void>;
+  updateReviewFlagStatus: (
+    id: string,
+    status: AdminReviewFlag["status"]
   ) => Promise<void>;
   getClaimById: (id: string) => AdminClaim | undefined;
 
@@ -341,6 +348,29 @@ function mapTeamMember(row: DbTeamMember): AdminTeamMember {
   };
 }
 
+function mapReviewFlag(params: {
+  row: DbReviewFlag;
+  usernamesByAuthUserId: Map<string, string>;
+}): AdminReviewFlag {
+  const { row, usernamesByAuthUserId } = params;
+
+  return {
+    id: row.id,
+    authUserId: row.auth_user_id ?? undefined,
+    projectId: row.project_id ?? undefined,
+    sourceTable: row.source_table,
+    sourceId: row.source_id,
+    flagType: row.flag_type,
+    severity: (row.severity ?? "medium") as AdminReviewFlag["severity"],
+    status: (row.status ?? "open") as AdminReviewFlag["status"],
+    reason: row.reason ?? "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    username: row.auth_user_id ? usernamesByAuthUserId.get(row.auth_user_id) ?? "Unknown User" : undefined,
+    metadata: row.metadata ? JSON.stringify(row.metadata, null, 2) : "",
+  };
+}
+
 function mapBillingPlan(row: DbBillingPlan): AdminBillingPlan {
   return {
     id: row.id,
@@ -430,6 +460,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   submissions: [],
   claims: [],
   users: [],
+  reviewFlags: [],
   onboardingRequests: [],
   teamMembers: [],
   billingPlans: [],
@@ -459,6 +490,14 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       !isSuperAdmin && activeProjectId ? rewardsQuery.eq("project_id", activeProjectId) : rewardsQuery;
     const scopedTeamQuery =
       !isSuperAdmin && activeProjectId ? teamQuery.eq("project_id", activeProjectId) : teamQuery;
+    const scopedReviewFlagsQuery =
+      !isSuperAdmin && activeProjectId
+        ? supabase
+            .from("review_flags")
+            .select("*")
+            .eq("project_id", activeProjectId)
+            .order("created_at", { ascending: false })
+        : supabase.from("review_flags").select("*").order("created_at", { ascending: false });
     const scopedProjectReputationQuery =
       activeProjectId
         ? supabase
@@ -481,6 +520,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       billingRes,
       globalReputationRes,
       projectReputationRes,
+      reviewFlagsRes,
     ] = await Promise.all([
       scopedProjectsQuery,
       scopedCampaignsQuery,
@@ -495,6 +535,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       supabase.from("billing_plans").select("*"),
       supabase.from("user_global_reputation").select("*"),
       scopedProjectReputationQuery,
+      scopedReviewFlagsQuery,
     ]);
 
     const campaignRows = (campaignsRes.data ?? []) as DbCampaign[];
@@ -558,6 +599,12 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
           if (b.trustScore !== a.trustScore) return b.trustScore - a.trustScore;
           return a.username.localeCompare(b.username);
         }),
+      reviewFlags: ((reviewFlagsRes.data ?? []) as DbReviewFlag[]).map((row) =>
+        mapReviewFlag({
+          row,
+          usernamesByAuthUserId,
+        })
+      ),
       onboardingRequests: ((onboardingRequestsRes.data ?? []) as DbOnboardingRequest[]).map(
         mapOnboardingRequest
       ),
@@ -1184,6 +1231,28 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     set((state) => ({
       claims: state.claims.map((item) =>
         item.id === id ? { ...item, status } : item
+      ),
+    }));
+  },
+
+  updateReviewFlagStatus: async (id, status) => {
+    const supabase = createClient();
+
+    const { error } = await supabase
+      .from("review_flags")
+      .update({
+        status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    set((state) => ({
+      reviewFlags: state.reviewFlags.map((item) =>
+        item.id === id
+          ? { ...item, status, updatedAt: new Date().toISOString() }
+          : item
       ),
     }));
   },

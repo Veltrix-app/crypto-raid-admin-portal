@@ -337,3 +337,18 @@ export type DbUserProjectReputation = {
   created_at?: string;
   updated_at?: string;
 };
+
+export type DbReviewFlag = {
+  id: string;
+  auth_user_id: string | null;
+  project_id: string | null;
+  source_table: string;
+  source_id: string;
+  flag_type: string;
+  severity: string;
+  status: string;
+  reason: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};

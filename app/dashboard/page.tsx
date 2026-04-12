@@ -11,9 +11,11 @@ export default function DashboardPage() {
   const quests = useAdminPortalStore((s) => s.quests);
   const rewards = useAdminPortalStore((s) => s.rewards);
   const submissions = useAdminPortalStore((s) => s.submissions);
+  const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
 
   const totalUsers = projects.reduce((sum, project) => sum + project.members, 0);
   const pendingSubmissions = submissions.filter((s) => s.status === "pending").length;
+  const openFlags = reviewFlags.filter((flag) => flag.status === "open").length;
   const approvedProjects = projects.filter((p) => p.onboardingStatus === "approved").length;
 
   return (
@@ -45,6 +47,18 @@ export default function DashboardPage() {
             value={campaigns.filter((c) => c.status === "active").length}
           />
           <StatCard label="Pending Reviews" value={pendingSubmissions} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <StatCard label="Open Review Flags" value={openFlags} />
+          <StatCard
+            label="High Risk Flags"
+            value={reviewFlags.filter((flag) => flag.severity === "high" && flag.status === "open").length}
+          />
+          <StatCard
+            label="Watched Users"
+            value={reviewFlags.filter((flag) => flag.flagType === "high_sybil_score" && flag.status === "open").length}
+          />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-2">
@@ -88,6 +102,11 @@ export default function DashboardPage() {
                   </div>
                 );
               })}
+
+              <div className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-4">
+                <span className="text-text">Open review flags</span>
+                <span className="font-bold text-primary">{openFlags}</span>
+              </div>
             </div>
           </div>
         </div>
