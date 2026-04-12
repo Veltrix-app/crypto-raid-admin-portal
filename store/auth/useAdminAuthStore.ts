@@ -25,6 +25,30 @@ type AdminAuthState = {
   setActiveProjectId: (projectId: string) => void;
 };
 
+async function resolvePortalRole(authUserId: string | null, email: string | null) {
+  if (!authUserId) return null;
+
+  const supabase = createClient();
+  const fallbackRole = email?.includes("super") ? "super_admin" : "project_admin";
+
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("role, status")
+    .eq("auth_user_id", authUserId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to resolve admin role from admin_users:", error.message);
+    return fallbackRole;
+  }
+
+  if (data?.status === "active" && data?.role === "super_admin") {
+    return "super_admin" as const;
+  }
+
+  return fallbackRole;
+}
+
 async function bootstrapMembershipsByEmail(authUserId: string, email: string) {
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) return;
@@ -189,10 +213,11 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
     const { data } = await supabase.auth.getSession();
     const session = data.session;
     const authUserId = session?.user?.id ?? null;
-    const isSuperAdmin = !!session?.user?.email?.includes("super");
+    const email = session?.user?.email ?? null;
     if (authUserId && session?.user?.email) {
       await bootstrapMembershipsByEmail(authUserId, session.user.email);
     }
+    const role = await resolvePortalRole(authUserId, email);
     const memberships = authUserId ? await loadMemberships(authUserId) : [];
     const nextActiveProjectId =
       memberships.find((item) => item.projectId === get().activeProjectId)?.projectId ??
@@ -202,8 +227,8 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
     set({
       isAuthenticated: !!session,
       authUserId,
-      email: session?.user?.email ?? null,
-      role: isSuperAdmin ? "super_admin" : session ? "project_admin" : null,
+      email,
+      role: session ? role : null,
       memberships,
       activeProjectId: nextActiveProjectId,
       loading: false,
@@ -223,16 +248,18 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
     }
 
     const authUserId = data.user?.id ?? null;
-    if (authUserId && (data.user?.email ?? email)) {
-      await bootstrapMembershipsByEmail(authUserId, data.user?.email ?? email);
+    const resolvedEmail = data.user?.email ?? email;
+    if (authUserId && resolvedEmail) {
+      await bootstrapMembershipsByEmail(authUserId, resolvedEmail);
     }
+    const role = await resolvePortalRole(authUserId, resolvedEmail);
     const memberships = authUserId ? await loadMemberships(authUserId) : [];
 
     set({
       isAuthenticated: true,
       authUserId,
-      email: data.user?.email ?? email,
-      role: data.user?.email?.includes("super") ? "super_admin" : "project_admin",
+      email: resolvedEmail,
+      role,
       memberships,
       activeProjectId: memberships[0]?.projectId ?? null,
       loading: false,
