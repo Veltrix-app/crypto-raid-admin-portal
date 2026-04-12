@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminProject } from "@/types/entities/project";
 
 type Props = {
@@ -9,42 +9,68 @@ type Props = {
   submitLabel?: string;
 };
 
+const defaultValues: Omit<AdminProject, "id"> = {
+  name: "",
+  slug: "",
+  chain: "Base",
+  category: "",
+  status: "draft",
+  onboardingStatus: "draft",
+  description: "",
+  longDescription: "",
+  members: 0,
+  campaigns: 0,
+  logo: "🚀",
+  bannerUrl: "",
+  website: "",
+  xUrl: "",
+  telegramUrl: "",
+  discordUrl: "",
+  contactEmail: "",
+  isFeatured: false,
+  isPublic: true,
+};
+
 export default function ProjectForm({
   initialValues,
   onSubmit,
   submitLabel = "Save Project",
 }: Props) {
-  const [values, setValues] = useState<Omit<AdminProject, "id">>(
-    initialValues || {
-      name: "",
-      slug: "",
+  const [values, setValues] = useState<Omit<AdminProject, "id">>(initialValues || defaultValues);
+  const [slugTouched, setSlugTouched] = useState(Boolean(initialValues?.slug));
 
-      chain: "Base",
-      category: "",
+  useEffect(() => {
+    if (slugTouched) return;
+    setValues((current) => ({ ...current, slug: slugify(current.name) }));
+  }, [slugTouched, values.name]);
 
-      status: "draft",
-      onboardingStatus: "draft",
-
-      description: "",
-      longDescription: "",
-
-      members: 0,
-      campaigns: 0,
-
-      logo: "🚀",
-      bannerUrl: "",
-
-      website: "",
-      xUrl: "",
-      telegramUrl: "",
-      discordUrl: "",
-
-      contactEmail: "",
-
-      isFeatured: false,
-      isPublic: true,
-    }
+  const connectedLinks = useMemo(
+    () => [values.website, values.xUrl, values.telegramUrl, values.discordUrl].filter(Boolean).length,
+    [values.discordUrl, values.telegramUrl, values.website, values.xUrl]
   );
+
+  const brandingReadiness = [
+    {
+      label: "Identity",
+      value: values.logo && values.name ? "Ready" : "Missing logo or project name",
+      complete: Boolean(values.logo && values.name),
+    },
+    {
+      label: "Public copy",
+      value: values.description ? "Short profile added" : "Add a short public description",
+      complete: Boolean(values.description),
+    },
+    {
+      label: "Distribution links",
+      value: connectedLinks > 0 ? `${connectedLinks} channels connected` : "No channels linked yet",
+      complete: connectedLinks > 0,
+    },
+    {
+      label: "Visibility",
+      value: values.isPublic ? "Workspace can appear publicly" : "Workspace remains private",
+      complete: true,
+    },
+  ];
 
   return (
     <form
@@ -55,9 +81,7 @@ export default function ProjectForm({
       }}
     >
       <div className="space-y-3">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          General
-        </p>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">General</p>
 
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Project Name">
@@ -72,7 +96,10 @@ export default function ProjectForm({
           <Field label="Slug">
             <input
               value={values.slug}
-              onChange={(e) => setValues({ ...values, slug: e.target.value })}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setValues({ ...values, slug: e.target.value });
+              }}
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
               placeholder="pepe-raiders"
               required
@@ -126,8 +153,7 @@ export default function ProjectForm({
               onChange={(e) =>
                 setValues({
                   ...values,
-                  onboardingStatus:
-                    e.target.value as AdminProject["onboardingStatus"],
+                  onboardingStatus: e.target.value as AdminProject["onboardingStatus"],
                 })
               }
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
@@ -141,36 +167,98 @@ export default function ProjectForm({
       </div>
 
       <div className="space-y-3">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Branding
-        </p>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Branding</p>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Logo / Emoji">
-            <input
-              value={values.logo}
-              onChange={(e) => setValues({ ...values, logo: e.target.value })}
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
-              placeholder="🚀"
-            />
-          </Field>
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="grid gap-5 md:grid-cols-2">
+            <Field label="Logo / Emoji">
+              <input
+                value={values.logo}
+                onChange={(e) => setValues({ ...values, logo: e.target.value })}
+                className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                placeholder="🚀"
+              />
+            </Field>
 
-          <Field label="Banner URL">
-            <input
-              value={values.bannerUrl || ""}
-              onChange={(e) =>
-                setValues({ ...values, bannerUrl: e.target.value })
-              }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
-              placeholder="https://..."
-            />
-          </Field>
+            <Field label="Banner URL">
+              <input
+                value={values.bannerUrl || ""}
+                onChange={(e) => setValues({ ...values, bannerUrl: e.target.value })}
+                className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                placeholder="https://..."
+              />
+            </Field>
+
+            <Field label="Contact Email">
+              <input
+                type="email"
+                value={values.contactEmail || ""}
+                onChange={(e) => setValues({ ...values, contactEmail: e.target.value })}
+                className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                placeholder="team@project.com"
+              />
+            </Field>
+
+            <Field label="Public Handle Hint">
+              <input
+                value={values.slug}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  setValues({ ...values, slug: e.target.value });
+                }}
+                className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                placeholder="project-slug"
+              />
+            </Field>
+          </div>
+
+          <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              Public Profile Preview
+            </p>
+
+            <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-card">
+              <div className="h-28 bg-gradient-to-br from-primary/20 via-card to-card2">
+                {values.bannerUrl ? (
+                  <img
+                    src={values.bannerUrl}
+                    alt={`${values.name || "Project"} banner`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : null}
+              </div>
+
+              <div className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-line bg-card2 text-2xl">
+                    {values.logo || "🚀"}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate font-extrabold text-text">
+                      {values.name || "Project name"}
+                    </p>
+                    <p className="truncate text-sm text-sub">/{values.slug || "project-slug"}</p>
+                  </div>
+                </div>
+
+                <p className="mt-4 text-sm leading-6 text-sub">
+                  {values.description || "Short public description will appear here."}
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <PreviewBadge>{values.chain}</PreviewBadge>
+                  {values.category ? <PreviewBadge>{values.category}</PreviewBadge> : null}
+                  <PreviewBadge>{values.isPublic ? "Public" : "Private"}</PreviewBadge>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Links
+          Distribution Links
         </p>
 
         <div className="grid gap-5 md:grid-cols-2">
@@ -180,18 +268,6 @@ export default function ProjectForm({
               onChange={(e) => setValues({ ...values, website: e.target.value })}
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
               placeholder="https://..."
-            />
-          </Field>
-
-          <Field label="Contact Email">
-            <input
-              type="email"
-              value={values.contactEmail || ""}
-              onChange={(e) =>
-                setValues({ ...values, contactEmail: e.target.value })
-              }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
-              placeholder="team@project.com"
             />
           </Field>
 
@@ -207,9 +283,7 @@ export default function ProjectForm({
           <Field label="Telegram URL">
             <input
               value={values.telegramUrl || ""}
-              onChange={(e) =>
-                setValues({ ...values, telegramUrl: e.target.value })
-              }
+              onChange={(e) => setValues({ ...values, telegramUrl: e.target.value })}
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
               placeholder="https://t.me/..."
             />
@@ -218,9 +292,7 @@ export default function ProjectForm({
           <Field label="Discord URL">
             <input
               value={values.discordUrl || ""}
-              onChange={(e) =>
-                setValues({ ...values, discordUrl: e.target.value })
-              }
+              onChange={(e) => setValues({ ...values, discordUrl: e.target.value })}
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
               placeholder="https://discord.gg/..."
             />
@@ -230,15 +302,13 @@ export default function ProjectForm({
 
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Content
+          Public Narrative
         </p>
 
         <Field label="Description">
           <textarea
             value={values.description}
-            onChange={(e) =>
-              setValues({ ...values, description: e.target.value })
-            }
+            onChange={(e) => setValues({ ...values, description: e.target.value })}
             rows={5}
             className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
             placeholder="Short project description..."
@@ -248,9 +318,7 @@ export default function ProjectForm({
         <Field label="Long Description">
           <textarea
             value={values.longDescription || ""}
-            onChange={(e) =>
-              setValues({ ...values, longDescription: e.target.value })
-            }
+            onChange={(e) => setValues({ ...values, longDescription: e.target.value })}
             rows={8}
             className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
             placeholder="Longer project overview, mission, value proposition..."
@@ -259,18 +327,14 @@ export default function ProjectForm({
       </div>
 
       <div className="space-y-3">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Metrics
-        </p>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Metrics</p>
 
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Members">
             <input
               type="number"
               value={values.members}
-              onChange={(e) =>
-                setValues({ ...values, members: Number(e.target.value) })
-              }
+              onChange={(e) => setValues({ ...values, members: Number(e.target.value) })}
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
               min={0}
             />
@@ -280,9 +344,7 @@ export default function ProjectForm({
             <input
               type="number"
               value={values.campaigns}
-              onChange={(e) =>
-                setValues({ ...values, campaigns: Number(e.target.value) })
-              }
+              onChange={(e) => setValues({ ...values, campaigns: Number(e.target.value) })}
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
               min={0}
             />
@@ -291,26 +353,46 @@ export default function ProjectForm({
       </div>
 
       <div className="space-y-3">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Visibility
-        </p>
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Visibility</p>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <ToggleField
-            label="Featured Project"
-            checked={values.isFeatured || false}
-            onChange={(checked) =>
-              setValues({ ...values, isFeatured: checked })
-            }
-          />
+        <div className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
+          <div className="grid gap-5 md:grid-cols-2">
+            <ToggleField
+              label="Featured Project"
+              checked={values.isFeatured || false}
+              onChange={(checked) => setValues({ ...values, isFeatured: checked })}
+            />
 
-          <ToggleField
-            label="Public Project"
-            checked={values.isPublic ?? true}
-            onChange={(checked) =>
-              setValues({ ...values, isPublic: checked })
-            }
-          />
+            <ToggleField
+              label="Public Project"
+              checked={values.isPublic ?? true}
+              onChange={(checked) => setValues({ ...values, isPublic: checked })}
+            />
+          </div>
+
+          <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              Public Profile Readiness
+            </p>
+
+            <div className="mt-4 space-y-3">
+              {brandingReadiness.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-line bg-card px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-text">{item.label}</p>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+                        item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                      }`}
+                    >
+                      {item.complete ? "Ready" : "Needs work"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-sub">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -356,4 +438,20 @@ function ToggleField({
       />
     </label>
   );
+}
+
+function PreviewBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold text-text">
+      {children}
+    </span>
+  );
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }

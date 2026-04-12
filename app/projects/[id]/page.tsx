@@ -53,6 +53,35 @@ export default function ProjectDetailPage() {
   const relatedQuests = quests.filter((quest) => quest.projectId === project.id);
   const relatedRewards = rewards.filter((reward) => reward.projectId === project.id);
   const relatedTeamMembers = teamMembers.filter((member) => member.projectId === project.id);
+  const connectedLinks = [project.website, project.xUrl, project.telegramUrl, project.discordUrl].filter(Boolean).length;
+  const publicProfileReadiness = [
+    {
+      label: "Brand identity",
+      value: project.logo && project.name ? "Logo and name are set" : "Missing logo or project name",
+      complete: Boolean(project.logo && project.name),
+    },
+    {
+      label: "Public copy",
+      value: project.description ? "Short profile is ready" : "Add a short public description",
+      complete: Boolean(project.description),
+    },
+    {
+      label: "Long narrative",
+      value: project.longDescription ? "Long-form profile added" : "Add a richer public narrative",
+      complete: Boolean(project.longDescription),
+    },
+    {
+      label: "Social surface",
+      value: connectedLinks > 0 ? `${connectedLinks} channels connected` : "No channels connected yet",
+      complete: connectedLinks > 0,
+    },
+    {
+      label: "Visibility state",
+      value: project.isPublic ? "Workspace can be surfaced publicly" : "Workspace is private",
+      complete: true,
+    },
+  ];
+  const completedPublicReadiness = publicProfileReadiness.filter((item) => item.complete).length;
   const launchpadSteps = [
     {
       title: "Review workspace settings",
@@ -253,6 +282,78 @@ export default function ProjectDetailPage() {
 
           <div className="space-y-6">
             <div className="rounded-[28px] border border-line bg-card p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    Public Profile
+                  </p>
+                  <h2 className="mt-2 text-xl font-extrabold text-text">
+                    Brand and community-facing preview
+                  </h2>
+                </div>
+
+                <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                    Readiness
+                  </p>
+                  <p className="mt-2 text-2xl font-extrabold text-text">
+                    {completedPublicReadiness}/{publicProfileReadiness.length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 overflow-hidden rounded-2xl border border-line bg-card2">
+                <div className="h-36 bg-gradient-to-br from-primary/20 via-card to-card2">
+                  {project.bannerUrl ? (
+                    <img
+                      src={project.bannerUrl}
+                      alt={`${project.name} banner`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null}
+                </div>
+
+                <div className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-card text-3xl">
+                      {project.logo || "🚀"}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-xl font-extrabold text-text">{project.name}</p>
+                        <Badge>{project.chain}</Badge>
+                        {project.category ? <Badge>{project.category}</Badge> : null}
+                        <Badge>{project.isPublic ? "Public" : "Private"}</Badge>
+                      </div>
+
+                      <p className="mt-2 text-sm text-sub">/{project.slug || "project-slug"}</p>
+                      <p className="mt-4 text-sm leading-6 text-sub">
+                        {project.description || "Add a short public description so this project feels credible from the first visit."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {project.longDescription ? (
+                    <div className="mt-5 rounded-2xl border border-line bg-card px-4 py-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                        Long Form Narrative
+                      </p>
+                      <p className="mt-3 text-sm leading-6 text-sub">{project.longDescription}</p>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-5 grid gap-3 md:grid-cols-2">
+                    <DetailRow label="Website" value={project.website || "Not connected"} />
+                    <DetailRow label="X URL" value={project.xUrl || "Not connected"} />
+                    <DetailRow label="Telegram URL" value={project.telegramUrl || "Not connected"} />
+                    <DetailRow label="Discord URL" value={project.discordUrl || "Not connected"} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-line bg-card p-6">
               <h2 className="text-xl font-extrabold text-text">Project Assets</h2>
 
               <div className="mt-4 space-y-4">
@@ -284,6 +385,28 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
               ) : null}
+            </div>
+
+            <div className="rounded-[28px] border border-line bg-card p-6">
+              <h2 className="text-xl font-extrabold text-text">Public Profile Readiness</h2>
+
+              <div className="mt-4 space-y-3">
+                {publicProfileReadiness.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-bold text-text">{item.label}</p>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+                          item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                        }`}
+                      >
+                        {item.complete ? "Ready" : "Needs work"}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm text-sub">{item.value}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="rounded-[28px] border border-line bg-card p-6">
