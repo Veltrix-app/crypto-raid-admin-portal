@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
+import { AdminAuditLog } from "@/types/entities/audit-log";
 
 export default function SubmissionDetailPage() {
   const params = useParams<{ id: string }>();
@@ -12,8 +13,8 @@ export default function SubmissionDetailPage() {
   const submissions = useAdminPortalStore((s) => s.submissions);
   const users = useAdminPortalStore((s) => s.users);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
-  const approveSubmission = useAdminPortalStore((s) => s.approveSubmission);
-  const rejectSubmission = useAdminPortalStore((s) => s.rejectSubmission);
+  const reviewSubmission = useAdminPortalStore((s) => s.reviewSubmission);
+  const fetchAuditTrail = useAdminPortalStore((s) => s.fetchAuditTrail);
 
   const submission = useMemo(
     () => submissions.find((item) => item.id === params.id),
@@ -21,6 +22,8 @@ export default function SubmissionDetailPage() {
   );
 
   const [working, setWorking] = useState(false);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
 
   if (!submission) {
     return (
@@ -63,10 +66,32 @@ export default function SubmissionDetailPage() {
     currentSubmission.proof.startsWith("http://") ||
     currentSubmission.proof.startsWith("https://");
 
+  useEffect(() => {
+    setReviewNotes(currentSubmission.reviewNotes || "");
+  }, [currentSubmission.id, currentSubmission.reviewNotes]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAuditTrail() {
+      const logs = await fetchAuditTrail("quest_submissions", currentSubmission.id);
+      if (active) {
+        setAuditLogs(logs);
+      }
+    }
+
+    loadAuditTrail();
+
+    return () => {
+      active = false;
+    };
+  }, [currentSubmission.id, fetchAuditTrail]);
+
   async function handleApprove() {
     try {
       setWorking(true);
-      await approveSubmission(currentSubmission.id);
+      await reviewSubmission(currentSubmission.id, "approved", reviewNotes);
+      setAuditLogs(await fetchAuditTrail("quest_submissions", currentSubmission.id));
       router.refresh();
     } finally {
       setWorking(false);
@@ -76,7 +101,8 @@ export default function SubmissionDetailPage() {
   async function handleReject() {
     try {
       setWorking(true);
-      await rejectSubmission(currentSubmission.id);
+      await reviewSubmission(currentSubmission.id, "rejected", reviewNotes);
+      setAuditLogs(await fetchAuditTrail("quest_submissions", currentSubmission.id));
       router.refresh();
     } finally {
       setWorking(false);
@@ -161,6 +187,19 @@ export default function SubmissionDetailPage() {
               Use these actions after reviewing both the proof and the automation context.
             </p>
 
+            <div className="mt-6">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-text">Reviewer Note</span>
+                <textarea
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  rows={4}
+                  className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                  placeholder="Capture why you approved, rejected, or escalated this submission."
+                />
+              </label>
+            </div>
+
             <div className="mt-6 flex gap-3">
               <button
                 onClick={handleApprove}
@@ -220,10 +259,31 @@ export default function SubmissionDetailPage() {
             </div>
 
             <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Reviewer Note</h2>
-              <p className="mt-2 text-sm text-sub">
-                Reviewer notes are still the next schema step, but reviewers can already make much better decisions here because the automation path is visible.
-              </p>
+              <h2 className="text-xl font-extrabold text-text">Audit Trail</h2>
+              <div className="mt-4 space-y-3">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="rounded-2xl border border-line bg-card2 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-bold capitalize text-text">
+                        {log.action.replace(/_/g, " ")}
+                      </p>
+                      <span className="text-xs text-sub">{formatDate(log.createdAt)}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-sub">{log.summary}</p>
+                    {log.metadata ? (
+                      <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">
+                        {log.metadata}
+                      </pre>
+                    ) : null}
+                  </div>
+                ))}
+
+                {auditLogs.length === 0 ? (
+                  <p className="text-sm text-sub">
+                    No audit events stored yet for this submission.
+                  </p>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>

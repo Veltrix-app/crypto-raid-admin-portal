@@ -9,4 +9,8 @@ export type AdminSubmission = {
   proof: string;
   submittedAt: string;
   status: "pending" | "approved" | "rejected";
+  reviewNotes?: string;
+  reviewedByAuthUserId?: string;
+  reviewedAt?: string;
+  updatedAt?: string;
 };

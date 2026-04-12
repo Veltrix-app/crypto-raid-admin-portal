@@ -15,7 +15,9 @@ import { AdminClaim } from "@/types/entities/claim";
 import { AdminOnboardingRequest } from "@/types/entities/onboarding-request";
 import { AdminReviewFlag } from "@/types/entities/review-flag";
 import { AdminUser } from "@/types/entities/user";
+import { AdminAuditLog } from "@/types/entities/audit-log";
 import {
+  DbAuditLog,
   DbBillingPlan,
   DbCampaign,
   DbClaim,
@@ -79,16 +81,27 @@ type AdminPortalState = {
 
   approveSubmission: (id: string) => Promise<void>;
   rejectSubmission: (id: string) => Promise<void>;
+  reviewSubmission: (
+    id: string,
+    status: AdminSubmission["status"],
+    reviewNotes?: string
+  ) => Promise<void>;
 
   updateClaimStatus: (
     id: string,
     status: AdminClaim["status"]
+  ) => Promise<void>;
+  reviewClaim: (
+    id: string,
+    status: AdminClaim["status"],
+    reviewNotes?: string
   ) => Promise<void>;
   updateReviewFlagStatus: (
     id: string,
     status: AdminReviewFlag["status"]
   ) => Promise<void>;
   getClaimById: (id: string) => AdminClaim | undefined;
+  fetchAuditTrail: (sourceTable: string, sourceId: string) => Promise<AdminAuditLog[]>;
 
   createOnboardingRequest: (
     input: Omit<AdminOnboardingRequest, "id" | "requestedByAuthUserId" | "status" | "reviewNotes" | "reviewedByAuthUserId" | "reviewedAt" | "approvedProjectId" | "createdAt" | "updatedAt">
@@ -309,6 +322,10 @@ function mapSubmission(params: {
     proof: row.proof_text,
     submittedAt: row.created_at,
     status: row.status,
+    reviewNotes: row.review_notes ?? "",
+    reviewedByAuthUserId: row.reviewed_by_auth_user_id ?? "",
+    reviewedAt: row.reviewed_at ?? "",
+    updatedAt: row.updated_at ?? "",
   };
 }
 
@@ -394,6 +411,45 @@ function mapReviewFlag(params: {
     username: row.auth_user_id ? usernamesByAuthUserId.get(row.auth_user_id) ?? "Unknown User" : undefined,
     metadata: row.metadata ? JSON.stringify(row.metadata, null, 2) : "",
   };
+}
+
+function mapAuditLog(row: DbAuditLog): AdminAuditLog {
+  return {
+    id: row.id,
+    authUserId: row.auth_user_id ?? undefined,
+    projectId: row.project_id ?? undefined,
+    sourceTable: row.source_table,
+    sourceId: row.source_id,
+    action: row.action,
+    summary: row.summary,
+    metadata: row.metadata ? JSON.stringify(row.metadata, null, 2) : "",
+    createdAt: row.created_at,
+  };
+}
+
+async function writeAuditLog(input: {
+  sourceTable: string;
+  sourceId: string;
+  projectId?: string;
+  action: string;
+  summary: string;
+  metadata?: Record<string, any>;
+}) {
+  const supabase = createClient();
+  const authUserId = useAdminAuthStore.getState().authUserId;
+  const { error } = await supabase.from("admin_audit_logs").insert({
+    auth_user_id: authUserId,
+    project_id: input.projectId ?? null,
+    source_table: input.sourceTable,
+    source_id: input.sourceId,
+    action: input.action,
+    summary: input.summary,
+    metadata: input.metadata ?? {},
+  });
+
+  if (error) {
+    console.error("Audit log write skipped:", error.message);
+  }
 }
 
 function mapBillingPlan(row: DbBillingPlan): AdminBillingPlan {
@@ -1225,53 +1281,137 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
   getRewardById: (id) => get().rewards.find((item) => item.id === id),
 
-  approveSubmission: async (id) => {
+  reviewSubmission: async (id, status, reviewNotes = "") => {
     const supabase = createClient();
-    const { error } = await supabase
+    const authUserId = useAdminAuthStore.getState().authUserId;
+    const timestamp = new Date().toISOString();
+    const submission = get().submissions.find((item) => item.id === id);
+
+    const fullUpdate = {
+      status,
+      review_notes: reviewNotes,
+      reviewed_by_auth_user_id: authUserId,
+      reviewed_at: timestamp,
+      updated_at: timestamp,
+    };
+
+    let { error } = await supabase
       .from("quest_submissions")
-      .update({ status: "approved" })
+      .update(fullUpdate)
       .eq("id", id);
+
+    if (error) {
+      const fallback = await supabase
+        .from("quest_submissions")
+        .update({ status })
+        .eq("id", id);
+      error = fallback.error;
+    }
 
     if (error) throw error;
 
     set((state) => ({
       submissions: state.submissions.map((item) =>
-        item.id === id ? { ...item, status: "approved" } : item
+        item.id === id
+          ? {
+              ...item,
+              status,
+              reviewNotes: reviewNotes || item.reviewNotes,
+              reviewedByAuthUserId: authUserId ?? item.reviewedByAuthUserId,
+              reviewedAt: timestamp,
+              updatedAt: timestamp,
+            }
+          : item
       ),
     }));
+
+    if (submission) {
+      await writeAuditLog({
+        sourceTable: "quest_submissions",
+        sourceId: id,
+        projectId: get().quests.find((quest) => quest.id === submission.questId)?.projectId,
+        action: `submission_${status}`,
+        summary: `${status === "approved" ? "Approved" : "Rejected"} submission for ${submission.questTitle}.`,
+        metadata: {
+          submissionId: id,
+          questId: submission.questId,
+          campaignId: submission.campaignId,
+          reviewNotes,
+        },
+      });
+    }
+  },
+
+  approveSubmission: async (id) => {
+    await get().reviewSubmission(id, "approved");
   },
 
   rejectSubmission: async (id) => {
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("quest_submissions")
-      .update({ status: "rejected" })
-      .eq("id", id);
-
-    if (error) throw error;
-
-    set((state) => ({
-      submissions: state.submissions.map((item) =>
-        item.id === id ? { ...item, status: "rejected" } : item
-      ),
-    }));
+    await get().reviewSubmission(id, "rejected");
   },
 
-  updateClaimStatus: async (id, status) => {
+  reviewClaim: async (id, status, reviewNotes = "") => {
     const supabase = createClient();
+    const authUserId = useAdminAuthStore.getState().authUserId;
+    const timestamp = new Date().toISOString();
+    const claim = get().claims.find((item) => item.id === id);
 
-    const { error } = await supabase
+    const fullUpdate = {
+      status,
+      fulfillment_notes: reviewNotes,
+      reviewed_at: timestamp,
+      updated_at: timestamp,
+    };
+
+    let { error } = await supabase
       .from("reward_claims")
-      .update({ status })
+      .update(fullUpdate)
       .eq("id", id);
+
+    if (error) {
+      const fallback = await supabase
+        .from("reward_claims")
+        .update({ status })
+        .eq("id", id);
+      error = fallback.error;
+    }
 
     if (error) throw error;
 
     set((state) => ({
       claims: state.claims.map((item) =>
-        item.id === id ? { ...item, status } : item
+        item.id === id
+          ? {
+              ...item,
+              status,
+              fulfillmentNotes: reviewNotes || item.fulfillmentNotes,
+              reviewedAt: timestamp,
+              updatedAt: timestamp,
+            }
+          : item
       ),
     }));
+
+    if (claim) {
+      await writeAuditLog({
+        sourceTable: "reward_claims",
+        sourceId: id,
+        projectId: claim.projectId,
+        action: `claim_${status}`,
+        summary: `${status === "fulfilled" ? "Fulfilled" : status === "processing" ? "Moved" : "Rejected"} claim for ${claim.rewardTitle}.`,
+        metadata: {
+          claimId: id,
+          rewardId: claim.rewardId,
+          campaignId: claim.campaignId,
+          authUserId,
+          reviewNotes,
+        },
+      });
+    }
+  },
+
+  updateClaimStatus: async (id, status) => {
+    await get().reviewClaim(id, status);
   },
 
   updateReviewFlagStatus: async (id, status) => {
@@ -1297,6 +1437,23 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   },
 
   getClaimById: (id) => get().claims.find((item) => item.id === id),
+
+  fetchAuditTrail: async (sourceTable, sourceId) => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("admin_audit_logs")
+      .select("*")
+      .eq("source_table", sourceTable)
+      .eq("source_id", sourceId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Audit trail fetch skipped:", error.message);
+      return [];
+    }
+
+    return ((data ?? []) as DbAuditLog[]).map(mapAuditLog);
+  },
 
   createOnboardingRequest: async (input) => {
     const supabase = createClient();

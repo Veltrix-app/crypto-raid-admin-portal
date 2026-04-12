@@ -219,6 +219,10 @@ export type DbSubmission = {
   proof_text: string;
   created_at: string;
   status: SubmissionStatus;
+  review_notes?: string | null;
+  reviewed_by_auth_user_id?: string | null;
+  reviewed_at?: string | null;
+  updated_at?: string | null;
 };
 
 export type DbTeamMember = {
@@ -355,4 +359,16 @@ export type DbReviewFlag = {
   metadata: Record<string, any> | null;
   created_at: string;
   updated_at: string;
+};
+
+export type DbAuditLog = {
+  id: string;
+  auth_user_id: string | null;
+  project_id: string | null;
+  source_table: string;
+  source_id: string;
+  action: string;
+  summary: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
 };

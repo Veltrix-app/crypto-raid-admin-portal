@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
+import { AdminAuditLog } from "@/types/entities/audit-log";
 
 export default function ClaimDetailPage() {
   const params = useParams<{ id: string }>();
@@ -11,6 +12,8 @@ export default function ClaimDetailPage() {
 
   const getClaimById = useAdminPortalStore((s) => s.getClaimById);
   const updateClaimStatus = useAdminPortalStore((s) => s.updateClaimStatus);
+  const reviewClaim = useAdminPortalStore((s) => s.reviewClaim);
+  const fetchAuditTrail = useAdminPortalStore((s) => s.fetchAuditTrail);
   const users = useAdminPortalStore((s) => s.users);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
 
@@ -20,6 +23,8 @@ export default function ClaimDetailPage() {
   );
 
   const [working, setWorking] = useState(false);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
 
   if (!claim) {
     return (
@@ -59,12 +64,34 @@ export default function ClaimDetailPage() {
         ? "This claim depends on manual delivery by the project team."
         : "This claim can move through the standard fulfillment flow unless other risk signals appear.");
 
+  useEffect(() => {
+    setReviewNotes(currentClaim.fulfillmentNotes || "");
+  }, [currentClaim.id, currentClaim.fulfillmentNotes]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAuditTrail() {
+      const logs = await fetchAuditTrail("reward_claims", currentClaim.id);
+      if (active) {
+        setAuditLogs(logs);
+      }
+    }
+
+    loadAuditTrail();
+
+    return () => {
+      active = false;
+    };
+  }, [currentClaim.id, fetchAuditTrail]);
+
   async function handleSetStatus(
     nextStatus: "processing" | "fulfilled" | "rejected"
   ) {
     try {
       setWorking(true);
-      await updateClaimStatus(currentClaim.id, nextStatus);
+      await reviewClaim(currentClaim.id, nextStatus, reviewNotes);
+      setAuditLogs(await fetchAuditTrail("reward_claims", currentClaim.id));
       router.refresh();
     } finally {
       setWorking(false);
@@ -161,6 +188,19 @@ export default function ClaimDetailPage() {
               Update fulfillment state after checking both delivery complexity and risk.
             </p>
 
+            <div className="mt-6">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-text">Reviewer Note</span>
+                <textarea
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  rows={4}
+                  className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                  placeholder="Capture payout checks, delivery decisions or rejection context."
+                />
+              </label>
+            </div>
+
             <div className="mt-6 flex flex-wrap gap-3">
               <button
                 onClick={() => handleSetStatus("processing")}
@@ -219,10 +259,31 @@ export default function ClaimDetailPage() {
             </div>
 
             <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Delivery Payload</h2>
-              <p className="mt-2 whitespace-pre-wrap break-all text-sm text-sub">
-                {currentClaim.deliveryPayload || "No delivery payload stored yet for this claim."}
-              </p>
+              <h2 className="text-xl font-extrabold text-text">Audit Trail</h2>
+              <div className="mt-4 space-y-3">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="rounded-2xl border border-line bg-card2 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-bold capitalize text-text">
+                        {log.action.replace(/_/g, " ")}
+                      </p>
+                      <span className="text-xs text-sub">{formatDate(log.createdAt)}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-sub">{log.summary}</p>
+                    {log.metadata ? (
+                      <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">
+                        {log.metadata}
+                      </pre>
+                    ) : null}
+                  </div>
+                ))}
+
+                {auditLogs.length === 0 ? (
+                  <p className="text-sm text-sub">
+                    No audit events stored yet for this claim.
+                  </p>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
