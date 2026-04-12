@@ -3,10 +3,12 @@
 import { useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import RewardForm from "@/components/forms/reward/RewardForm";
+import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function NewRewardPage() {
   const router = useRouter();
+  const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const createReward = useAdminPortalStore((s) => s.createReward);
   const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
@@ -28,6 +30,7 @@ export default function NewRewardPage() {
           <RewardForm
             projects={projects}
             campaigns={campaigns}
+            defaultProjectId={activeProjectId ?? undefined}
             onSubmit={async (values) => {
               const id = await createReward(values);
               router.push(`/rewards/${id}`);

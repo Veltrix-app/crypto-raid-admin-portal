@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminReward } from "@/types/entities/reward";
 import { AdminProject } from "@/types/entities/project";
 import { AdminCampaign } from "@/types/entities/campaign";
@@ -9,20 +9,108 @@ type Props = {
   projects: AdminProject[];
   campaigns: AdminCampaign[];
   initialValues?: Omit<AdminReward, "id">;
+  defaultProjectId?: string;
   onSubmit: (values: Omit<AdminReward, "id">) => void | Promise<void>;
   submitLabel?: string;
+};
+
+const REWARD_TYPE_PRESETS: Record<
+  AdminReward["rewardType"],
+  {
+    label: string;
+    summary: string;
+    claimMethod: AdminReward["claimMethod"];
+    rarity: AdminReward["rarity"];
+    claimable: boolean;
+    type: string;
+    recommendedConfig: string;
+  }
+> = {
+  token: {
+    label: "Token Reward",
+    summary: "Use a token payout when the reward should tie directly into onchain participation and measurable ownership.",
+    claimMethod: "wallet_airdrop",
+    rarity: "rare",
+    claimable: true,
+    type: "Token",
+    recommendedConfig: '{\n  "asset": "USDC",\n  "network": "base",\n  "amount": 25\n}',
+  },
+  nft: {
+    label: "NFT Reward",
+    summary: "Great for collectible utility, campaign memorabilia or proof-of-participation drops.",
+    claimMethod: "wallet_airdrop",
+    rarity: "epic",
+    claimable: true,
+    type: "NFT",
+    recommendedConfig: '{\n  "contractAddress": "0x...",\n  "collection": "Veltrix Season One"\n}',
+  },
+  role: {
+    label: "Role Unlock",
+    summary: "Reward contributors with gated Discord or community access after review or completion.",
+    claimMethod: "role_assignment",
+    rarity: "common",
+    claimable: true,
+    type: "Access",
+    recommendedConfig: '{\n  "platform": "discord",\n  "roleId": "1234567890"\n}',
+  },
+  allowlist: {
+    label: "Allowlist Spot",
+    summary: "Use for product launches, early access drops or partner activations where scarcity matters.",
+    claimMethod: "manual_fulfillment",
+    rarity: "legendary",
+    claimable: true,
+    type: "Launch",
+    recommendedConfig: '{\n  "collection": "Genesis Mint",\n  "spots": 50\n}',
+  },
+  access: {
+    label: "Access Pass",
+    summary: "Useful for gated docs, product betas, alpha channels or private experiences.",
+    claimMethod: "code_distribution",
+    rarity: "rare",
+    claimable: true,
+    type: "Access",
+    recommendedConfig: '{\n  "delivery": "invite_link",\n  "instructions": "Send beta invite after approval."\n}',
+  },
+  badge: {
+    label: "Badge Unlock",
+    summary: "Turn quest completion into visible reputation and progression inside Veltrix.",
+    claimMethod: "instant_auto",
+    rarity: "common",
+    claimable: false,
+    type: "Reputation",
+    recommendedConfig: '{\n  "badgeSlug": "season-one-closer"\n}',
+  },
+  physical: {
+    label: "Physical Drop",
+    summary: "Best for merch, event kits or other manually fulfilled rewards that need review and shipping.",
+    claimMethod: "manual_fulfillment",
+    rarity: "legendary",
+    claimable: true,
+    type: "Physical",
+    recommendedConfig: '{\n  "requiresShippingForm": true,\n  "region": "EU"\n}',
+  },
+  custom: {
+    label: "Custom Reward",
+    summary: "Use a flexible reward when the fulfillment flow is still bespoke or experimental.",
+    claimMethod: "manual_fulfillment",
+    rarity: "common",
+    claimable: true,
+    type: "Custom",
+    recommendedConfig: '{\n  "notes": "Describe how this reward is delivered."\n}',
+  },
 };
 
 export default function RewardForm({
   projects,
   campaigns,
   initialValues,
+  defaultProjectId,
   onSubmit,
   submitLabel = "Save Reward",
 }: Props) {
   const [values, setValues] = useState<Omit<AdminReward, "id">>(
     initialValues || {
-      projectId: projects[0]?.id || "",
+      projectId: defaultProjectId || projects[0]?.id || "",
       campaignId: "",
 
       title: "",
@@ -49,10 +137,52 @@ export default function RewardForm({
       status: "draft",
     }
   );
+  const [selectedPreset, setSelectedPreset] = useState<AdminReward["rewardType"]>(
+    initialValues?.rewardType || "custom"
+  );
 
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter((campaign) => campaign.projectId === values.projectId);
   }, [campaigns, values.projectId]);
+  const selectedProject = projects.find((project) => project.id === values.projectId);
+  const activePreset = REWARD_TYPE_PRESETS[selectedPreset];
+
+  useEffect(() => {
+    if (!values.projectId && defaultProjectId) {
+      setValues((current) => ({ ...current, projectId: defaultProjectId }));
+    }
+  }, [defaultProjectId, values.projectId]);
+
+  useEffect(() => {
+    if (!filteredCampaigns.length && values.campaignId) {
+      setValues((current) => ({ ...current, campaignId: "" }));
+      return;
+    }
+
+    if (
+      values.campaignId &&
+      !filteredCampaigns.some((campaign) => campaign.id === values.campaignId)
+    ) {
+      setValues((current) => ({ ...current, campaignId: "" }));
+    }
+  }, [filteredCampaigns, values.campaignId]);
+
+  function applyPreset(rewardType: AdminReward["rewardType"]) {
+    const preset = REWARD_TYPE_PRESETS[rewardType];
+    setSelectedPreset(rewardType);
+    setValues((current) => ({
+      ...current,
+      rewardType,
+      claimMethod: preset.claimMethod,
+      rarity: preset.rarity,
+      claimable: preset.claimable,
+      type: preset.type,
+      deliveryConfig:
+        current.deliveryConfig?.trim() && current.rewardType === rewardType
+          ? current.deliveryConfig
+          : preset.recommendedConfig,
+    }));
+  }
 
   return (
     <form
@@ -62,6 +192,51 @@ export default function RewardForm({
         await onSubmit(values);
       }}
     >
+      <div className="space-y-3">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+          Reward Blueprint
+        </p>
+
+        <div className="grid gap-3 xl:grid-cols-2">
+          {(
+            ["token", "nft", "role", "allowlist", "access", "badge"] as AdminReward["rewardType"][]
+          ).map((rewardType) => {
+            const preset = REWARD_TYPE_PRESETS[rewardType];
+            const isActive = values.rewardType === rewardType;
+
+            return (
+              <button
+                key={rewardType}
+                type="button"
+                onClick={() => applyPreset(rewardType)}
+                className={`rounded-2xl border p-4 text-left transition ${
+                  isActive
+                    ? "border-primary bg-primary/10"
+                    : "border-line bg-card2 hover:border-primary/40"
+                }`}
+              >
+                <p className="text-sm font-bold text-text">{preset.label}</p>
+                <p className="mt-2 text-sm leading-6 text-sub">{preset.summary}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="rounded-2xl border border-line bg-card2 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-text">{activePreset.label}</p>
+              <p className="mt-2 text-sm leading-6 text-sub">{activePreset.summary}</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
+              <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.type}</span>
+              <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">{activePreset.claimMethod.replace(/_/g, " ")}</span>
+              <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.rarity}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           General
@@ -137,6 +312,15 @@ export default function RewardForm({
             required
           />
         </Field>
+
+        {selectedProject ? (
+          <p className="text-sm text-sub">
+            This reward will belong to <span className="font-semibold text-text">{selectedProject.name}</span>
+            {values.campaignId
+              ? " and is already linked to a campaign."
+              : " and can optionally be attached to a campaign for tighter reward loops."}
+          </p>
+        ) : null}
       </div>
 
       <div className="space-y-3">
@@ -149,10 +333,7 @@ export default function RewardForm({
             <select
               value={values.rewardType}
               onChange={(e) =>
-                setValues({
-                  ...values,
-                  rewardType: e.target.value as AdminReward["rewardType"],
-                })
+                applyPreset(e.target.value as AdminReward["rewardType"])
               }
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
             >
@@ -273,6 +454,10 @@ export default function RewardForm({
             />
           </Field>
         </div>
+
+        <div className="rounded-2xl border border-line bg-card2 p-4 text-sm text-sub">
+          <span className="font-semibold text-text">Builder hint:</span> keep the cost and rarity aligned with the effort of the quests that unlock this reward. The stronger the reward, the more important it is to make fulfillment and stock rules explicit.
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -328,9 +513,12 @@ export default function RewardForm({
                 }
                 rows={5}
                 className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
-                placeholder='{"key":"value"}'
+                placeholder={activePreset.recommendedConfig}
               />
             </Field>
+            <p className="mt-2 text-sm text-sub">
+              Start from the recommended config for <span className="font-semibold text-text">{activePreset.label}</span> and adapt the delivery details for this project.
+            </p>
           </div>
         </div>
       </div>
