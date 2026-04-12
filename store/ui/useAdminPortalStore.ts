@@ -13,6 +13,7 @@ import { AdminTeamMember } from "@/types/entities/team-member";
 import { AdminBillingPlan } from "@/types/entities/billing-plan";
 import { AdminClaim } from "@/types/entities/claim";
 import { AdminOnboardingRequest } from "@/types/entities/onboarding-request";
+import { AdminUser } from "@/types/entities/user";
 import {
   DbBillingPlan,
   DbCampaign,
@@ -24,6 +25,9 @@ import {
   DbReward,
   DbSubmission,
   DbTeamMember,
+  DbUserGlobalReputation,
+  DbUserProfile,
+  DbUserProjectReputation,
 } from "@/types/database";
 
 type AdminPortalState = {
@@ -38,6 +42,7 @@ type AdminPortalState = {
   rewards: AdminReward[];
   submissions: AdminSubmission[];
   claims: AdminClaim[];
+  users: AdminUser[];
   onboardingRequests: AdminOnboardingRequest[];
   teamMembers: AdminTeamMember[];
   billingPlans: AdminBillingPlan[];
@@ -375,6 +380,43 @@ function mapOnboardingRequest(row: DbOnboardingRequest): AdminOnboardingRequest 
   };
 }
 
+function mapAdminUser(params: {
+  profile: DbUserProfile;
+  globalReputation?: DbUserGlobalReputation;
+  projectReputation?: DbUserProjectReputation;
+}): AdminUser {
+  const { profile, globalReputation, projectReputation } = params;
+  const sybilScore = globalReputation?.sybil_score ?? 0;
+  const statusSource = globalReputation?.status ?? profile.status ?? "active";
+  const status: AdminUser["status"] =
+    statusSource === "flagged" || sybilScore >= 70 ? "flagged" : "active";
+
+  return {
+    id: profile.id,
+    authUserId: profile.auth_user_id ?? undefined,
+    username: profile.username,
+    xp: projectReputation?.xp ?? globalReputation?.total_xp ?? profile.xp ?? 0,
+    level: projectReputation?.level ?? globalReputation?.level ?? profile.level ?? 1,
+    streak: projectReputation?.streak ?? globalReputation?.streak ?? profile.streak ?? 0,
+    trustScore: projectReputation?.trust_score ?? globalReputation?.trust_score ?? 50,
+    sybilScore,
+    contributionTier:
+      projectReputation?.contribution_tier ??
+      globalReputation?.contribution_tier ??
+      "explorer",
+    reputationRank: globalReputation?.reputation_rank ?? 0,
+    questsCompleted:
+      projectReputation?.quests_completed ?? globalReputation?.quests_completed ?? 0,
+    raidsCompleted:
+      projectReputation?.raids_completed ?? globalReputation?.raids_completed ?? 0,
+    rewardsClaimed:
+      projectReputation?.rewards_claimed ?? globalReputation?.rewards_claimed ?? 0,
+    title: profile.title ?? "Raider",
+    avatarUrl: profile.avatar_url ?? "",
+    status,
+  };
+}
+
 export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   hydrated: false,
   loading: false,
@@ -387,6 +429,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   rewards: [],
   submissions: [],
   claims: [],
+  users: [],
   onboardingRequests: [],
   teamMembers: [],
   billingPlans: [],
@@ -416,6 +459,13 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       !isSuperAdmin && activeProjectId ? rewardsQuery.eq("project_id", activeProjectId) : rewardsQuery;
     const scopedTeamQuery =
       !isSuperAdmin && activeProjectId ? teamQuery.eq("project_id", activeProjectId) : teamQuery;
+    const scopedProjectReputationQuery =
+      activeProjectId
+        ? supabase
+            .from("user_project_reputation")
+            .select("*")
+            .eq("project_id", activeProjectId)
+        : Promise.resolve({ data: [], error: null } as any);
 
     const [
       projectsRes,
@@ -429,6 +479,8 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       onboardingRequestsRes,
       teamRes,
       billingRes,
+      globalReputationRes,
+      projectReputationRes,
     ] = await Promise.all([
       scopedProjectsQuery,
       scopedCampaignsQuery,
@@ -436,23 +488,37 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       scopedQuestsQuery,
       scopedRewardsQuery,
       supabase.from("quest_submissions").select("*").order("created_at", { ascending: false }),
-      supabase.from("user_profiles").select("auth_user_id, username"),
+      supabase.from("user_profiles").select("*"),
       supabase.from("reward_claims").select("*").order("created_at", { ascending: false }),
       supabase.from("project_onboarding_requests").select("*").order("created_at", { ascending: false }),
       scopedTeamQuery,
       supabase.from("billing_plans").select("*"),
+      supabase.from("user_global_reputation").select("*"),
+      scopedProjectReputationQuery,
     ]);
 
     const campaignRows = (campaignsRes.data ?? []) as DbCampaign[];
     const questRows = (questsRes.data ?? []) as DbQuest[];
-    const profileRows = (profilesRes.data ?? []) as DbUserProfileLite[];
+    const profileRows = (profilesRes.data ?? []) as DbUserProfile[];
+    const globalReputationRows = globalReputationRes.error
+      ? []
+      : ((globalReputationRes.data ?? []) as DbUserGlobalReputation[]);
+    const projectReputationRows = projectReputationRes?.error
+      ? []
+      : ((projectReputationRes?.data ?? []) as DbUserProjectReputation[]);
 
     const questsById = new Map(questRows.map((row) => [row.id, row]));
     const campaignsById = new Map(campaignRows.map((row) => [row.id, row]));
-    const usernamesByAuthUserId = new Map(
+    const usernamesByAuthUserId = new Map<string, string>(
       profileRows
-        .filter((row): row is DbUserProfileLite & { auth_user_id: string } => !!row.auth_user_id)
+        .filter((row): row is DbUserProfile & { auth_user_id: string } => !!row.auth_user_id)
         .map((row) => [row.auth_user_id, row.username])
+    );
+    const globalReputationByAuthUserId = new Map(
+      globalReputationRows.map((row) => [row.auth_user_id, row])
+    );
+    const projectReputationByAuthUserId = new Map(
+      projectReputationRows.map((row) => [row.auth_user_id, row])
     );
 
     const questIds = new Set(questRows.map((row) => row.id));
@@ -478,6 +544,20 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
         })
       ),
       claims: (claimsRes.data ?? []).map(mapClaim),
+      users: profileRows
+        .filter((row): row is DbUserProfile & { auth_user_id: string } => !!row.auth_user_id)
+        .map((profile) =>
+          mapAdminUser({
+            profile,
+            globalReputation: globalReputationByAuthUserId.get(profile.auth_user_id),
+            projectReputation: projectReputationByAuthUserId.get(profile.auth_user_id),
+          })
+        )
+        .sort((a, b) => {
+          if (b.xp !== a.xp) return b.xp - a.xp;
+          if (b.trustScore !== a.trustScore) return b.trustScore - a.trustScore;
+          return a.username.localeCompare(b.username);
+        }),
       onboardingRequests: ((onboardingRequestsRes.data ?? []) as DbOnboardingRequest[]).map(
         mapOnboardingRequest
       ),

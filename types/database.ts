@@ -290,3 +290,50 @@ export type DbClaim = {
 
   created_at: string;
 };
+
+export type DbUserProfile = {
+  id: string;
+  auth_user_id: string | null;
+  username: string;
+  avatar_url: string | null;
+  banner_url: string | null;
+  xp: number;
+  level: number;
+  streak: number;
+  status: string;
+  title: string | null;
+};
+
+export type DbUserGlobalReputation = {
+  auth_user_id: string;
+  total_xp: number;
+  level: number;
+  streak: number;
+  trust_score: number;
+  sybil_score: number;
+  contribution_tier: string;
+  reputation_rank: number;
+  quests_completed: number;
+  raids_completed: number;
+  rewards_claimed: number;
+  status: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type DbUserProjectReputation = {
+  id: string;
+  auth_user_id: string;
+  project_id: string;
+  xp: number;
+  level: number;
+  streak: number;
+  trust_score: number;
+  contribution_tier: string;
+  quests_completed: number;
+  raids_completed: number;
+  rewards_claimed: number;
+  last_activity_at: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
