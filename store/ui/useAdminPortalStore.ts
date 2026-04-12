@@ -110,6 +110,10 @@ type AdminPortalState = {
   rejectOnboardingRequest: (id: string, notes?: string) => Promise<void>;
 
   inviteTeamMember: (input: Omit<AdminTeamMember, "id">) => Promise<void>;
+  updateTeamMember: (
+    id: string,
+    input: Pick<AdminTeamMember, "role" | "status">
+  ) => Promise<void>;
 };
 
 type DbUserProfileLite = {
@@ -1677,6 +1681,30 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     const mapped = mapTeamMember(data as DbTeamMember);
     set((state) => ({
       teamMembers: [mapped, ...state.teamMembers],
+    }));
+  },
+
+  updateTeamMember: async (id, input) => {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("team_members")
+      .update({
+        role: input.role,
+        status: input.status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const mapped = mapTeamMember(data as DbTeamMember);
+    set((state) => ({
+      teamMembers: state.teamMembers.map((member) =>
+        member.id === id ? mapped : member
+      ),
     }));
   },
 }));
