@@ -1053,43 +1053,60 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       }
     }
 
-    const { data, error } = await supabase
+    const payload = {
+      project_id: input.projectId,
+      campaign_id: input.campaignId,
+
+      title: input.title,
+      description: input.description,
+      short_description: input.shortDescription,
+
+      type: input.type,
+      quest_type: input.questType,
+      platform: input.platform,
+
+      xp: input.xp,
+      action_label: input.actionLabel,
+      action_url: input.actionUrl,
+
+      proof_required: input.proofRequired,
+      proof_type: input.proofType,
+
+      auto_approve: input.autoApprove,
+      verification_type: input.verificationType,
+      verification_config: parsedVerificationConfig,
+
+      is_repeatable: input.isRepeatable,
+      cooldown_seconds: input.cooldownSeconds ?? null,
+      max_completions_per_user: input.maxCompletionsPerUser ?? null,
+      sort_order: input.sortOrder,
+
+      starts_at: input.startsAt || null,
+      ends_at: input.endsAt || null,
+
+      status: input.status,
+    };
+
+    let { data, error } = await supabase
       .from("quests")
-      .insert({
-        project_id: input.projectId,
-        campaign_id: input.campaignId,
-
-        title: input.title,
-        description: input.description,
-        short_description: input.shortDescription,
-
-        type: input.type,
-        quest_type: input.questType,
-        platform: input.platform,
-
-        xp: input.xp,
-        action_label: input.actionLabel,
-        action_url: input.actionUrl,
-
-        proof_required: input.proofRequired,
-        proof_type: input.proofType,
-
-        auto_approve: input.autoApprove,
-        verification_type: input.verificationType,
-        verification_config: parsedVerificationConfig,
-
-        is_repeatable: input.isRepeatable,
-        cooldown_seconds: input.cooldownSeconds ?? null,
-        max_completions_per_user: input.maxCompletionsPerUser ?? null,
-        sort_order: input.sortOrder,
-
-        starts_at: input.startsAt || null,
-        ends_at: input.endsAt || null,
-
-        status: input.status,
-      })
+      .insert(payload)
       .select()
       .single();
+
+    if (error?.message?.toLowerCase().includes("description")) {
+      const { description: _description, ...fallbackPayload } = payload;
+      const fallback = await supabase
+        .from("quests")
+        .insert({
+          ...fallbackPayload,
+          short_description: input.shortDescription || input.description,
+        } as any)
+        .select()
+        .single();
+
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) throw error;
 
@@ -1110,44 +1127,62 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       }
     }
 
-    const { data, error } = await supabase
+    const payload = {
+      project_id: input.projectId,
+      campaign_id: input.campaignId,
+
+      title: input.title,
+      description: input.description,
+      short_description: input.shortDescription,
+
+      type: input.type,
+      quest_type: input.questType,
+      platform: input.platform,
+
+      xp: input.xp,
+      action_label: input.actionLabel,
+      action_url: input.actionUrl,
+
+      proof_required: input.proofRequired,
+      proof_type: input.proofType,
+
+      auto_approve: input.autoApprove,
+      verification_type: input.verificationType,
+      verification_config: parsedVerificationConfig,
+
+      is_repeatable: input.isRepeatable,
+      cooldown_seconds: input.cooldownSeconds ?? null,
+      max_completions_per_user: input.maxCompletionsPerUser ?? null,
+      sort_order: input.sortOrder,
+
+      starts_at: input.startsAt || null,
+      ends_at: input.endsAt || null,
+
+      status: input.status,
+    };
+
+    let { data, error } = await supabase
       .from("quests")
-      .update({
-        project_id: input.projectId,
-        campaign_id: input.campaignId,
-
-        title: input.title,
-        description: input.description,
-        short_description: input.shortDescription,
-
-        type: input.type,
-        quest_type: input.questType,
-        platform: input.platform,
-
-        xp: input.xp,
-        action_label: input.actionLabel,
-        action_url: input.actionUrl,
-
-        proof_required: input.proofRequired,
-        proof_type: input.proofType,
-
-        auto_approve: input.autoApprove,
-        verification_type: input.verificationType,
-        verification_config: parsedVerificationConfig,
-
-        is_repeatable: input.isRepeatable,
-        cooldown_seconds: input.cooldownSeconds ?? null,
-        max_completions_per_user: input.maxCompletionsPerUser ?? null,
-        sort_order: input.sortOrder,
-
-        starts_at: input.startsAt || null,
-        ends_at: input.endsAt || null,
-
-        status: input.status,
-      })
+      .update(payload)
       .eq("id", id)
       .select()
       .single();
+
+    if (error?.message?.toLowerCase().includes("description")) {
+      const { description: _description, ...fallbackPayload } = payload;
+      const fallback = await supabase
+        .from("quests")
+        .update({
+          ...fallbackPayload,
+          short_description: input.shortDescription || input.description,
+        } as any)
+        .eq("id", id)
+        .select()
+        .single();
+
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) throw error;
 

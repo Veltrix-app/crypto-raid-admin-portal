@@ -193,6 +193,8 @@ export default function QuestForm({
   onSubmit,
   submitLabel = "Save Quest",
 }: Props) {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [values, setValues] = useState<Omit<AdminQuest, "id">>(
     initialValues || {
       projectId: defaultProjectId || projects[0]?.id || "",
@@ -292,7 +294,16 @@ export default function QuestForm({
       className="space-y-8"
       onSubmit={async (e) => {
         e.preventDefault();
-        await onSubmit(values);
+        setSubmitting(true);
+        setSubmitError(null);
+
+        try {
+          await onSubmit(values);
+        } catch (error: any) {
+          setSubmitError(error?.message || "Failed to save quest.");
+        } finally {
+          setSubmitting(false);
+        }
       }}
     >
       <div className="space-y-3">
@@ -764,8 +775,18 @@ export default function QuestForm({
         </div>
       </div>
 
-      <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
-        {submitLabel}
+      {submitError ? (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          {submitError}
+        </div>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="rounded-2xl bg-primary px-5 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {submitting ? "Saving..." : submitLabel}
       </button>
     </form>
   );
