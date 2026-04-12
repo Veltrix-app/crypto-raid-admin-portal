@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { createClient } from "@/lib/supabase/client";
+import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { AdminProject } from "@/types/entities/project";
 import { AdminCampaign } from "@/types/entities/campaign";
 import { AdminRaid } from "@/types/entities/raid";
@@ -26,6 +27,7 @@ import {
 type AdminPortalState = {
   hydrated: boolean;
   loading: boolean;
+  scopedProjectId: string | null;
 
   projects: AdminProject[];
   campaigns: AdminCampaign[];
@@ -318,6 +320,9 @@ function mapTeamMember(row: DbTeamMember): AdminTeamMember {
     email: row.email,
     role: row.role as AdminTeamMember["role"],
     status: row.status as AdminTeamMember["status"],
+    projectId: row.project_id ?? undefined,
+    authUserId: row.auth_user_id ?? undefined,
+    joinedAt: row.joined_at ?? undefined,
   };
 }
 
@@ -336,6 +341,7 @@ function mapBillingPlan(row: DbBillingPlan): AdminBillingPlan {
 export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   hydrated: false,
   loading: false,
+  scopedProjectId: null,
 
   projects: [],
   campaigns: [],
@@ -350,6 +356,28 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   loadAll: async () => {
     const supabase = createClient();
     set({ loading: true });
+    const { activeProjectId, role } = useAdminAuthStore.getState();
+    const isSuperAdmin = role === "super_admin";
+
+    const projectsQuery = supabase.from("projects").select("*").order("created_at", { ascending: false });
+    const campaignsQuery = supabase.from("campaigns").select("*").order("created_at", { ascending: false });
+    const raidsQuery = supabase.from("raids").select("*").order("created_at", { ascending: false });
+    const questsQuery = supabase.from("quests").select("*").order("created_at", { ascending: false });
+    const rewardsQuery = supabase.from("rewards").select("*").order("created_at", { ascending: false });
+    const teamQuery = supabase.from("team_members").select("*").order("created_at", { ascending: false });
+
+    const scopedProjectsQuery =
+      !isSuperAdmin && activeProjectId ? projectsQuery.eq("id", activeProjectId) : projectsQuery;
+    const scopedCampaignsQuery =
+      !isSuperAdmin && activeProjectId ? campaignsQuery.eq("project_id", activeProjectId) : campaignsQuery;
+    const scopedRaidsQuery =
+      !isSuperAdmin && activeProjectId ? raidsQuery.eq("project_id", activeProjectId) : raidsQuery;
+    const scopedQuestsQuery =
+      !isSuperAdmin && activeProjectId ? questsQuery.eq("project_id", activeProjectId) : questsQuery;
+    const scopedRewardsQuery =
+      !isSuperAdmin && activeProjectId ? rewardsQuery.eq("project_id", activeProjectId) : rewardsQuery;
+    const scopedTeamQuery =
+      !isSuperAdmin && activeProjectId ? teamQuery.eq("project_id", activeProjectId) : teamQuery;
 
     const [
       projectsRes,
@@ -363,15 +391,15 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       teamRes,
       billingRes,
     ] = await Promise.all([
-      supabase.from("projects").select("*").order("created_at", { ascending: false }),
-      supabase.from("campaigns").select("*").order("created_at", { ascending: false }),
-      supabase.from("raids").select("*").order("created_at", { ascending: false }),
-      supabase.from("quests").select("*").order("created_at", { ascending: false }),
-      supabase.from("rewards").select("*").order("created_at", { ascending: false }),
+      scopedProjectsQuery,
+      scopedCampaignsQuery,
+      scopedRaidsQuery,
+      scopedQuestsQuery,
+      scopedRewardsQuery,
       supabase.from("quest_submissions").select("*").order("created_at", { ascending: false }),
       supabase.from("user_profiles").select("auth_user_id, username"),
       supabase.from("reward_claims").select("*").order("created_at", { ascending: false }),
-      supabase.from("team_members").select("*").order("created_at", { ascending: false }),
+      scopedTeamQuery,
       supabase.from("billing_plans").select("*"),
     ]);
 
@@ -387,15 +415,21 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
         .map((row) => [row.auth_user_id, row.username])
     );
 
+    const questIds = new Set(questRows.map((row) => row.id));
+    const filteredSubmissionRows = ((submissionsRes.data ?? []) as DbSubmission[]).filter(
+      (row) => isSuperAdmin || questIds.has(row.quest_id)
+    );
+
     set({
       hydrated: true,
       loading: false,
+      scopedProjectId: activeProjectId,
       projects: (projectsRes.data ?? []).map(mapProject),
       campaigns: campaignRows.map(mapCampaign),
       raids: (raidsRes.data ?? []).map(mapRaid),
       quests: questRows.map(mapQuest),
       rewards: (rewardsRes.data ?? []).map(mapReward),
-      submissions: ((submissionsRes.data ?? []) as DbSubmission[]).map((row) =>
+      submissions: filteredSubmissionRows.map((row) =>
         mapSubmission({
           row,
           questsById,
@@ -1035,6 +1069,11 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
   inviteTeamMember: async (input) => {
     const supabase = createClient();
+    const activeProjectId = useAdminAuthStore.getState().activeProjectId;
+    if (!activeProjectId) {
+      throw new Error("No active project selected.");
+    }
+
     const { data, error } = await supabase
       .from("team_members")
       .insert({
@@ -1042,6 +1081,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
         email: input.email,
         role: input.role,
         status: input.status,
+        project_id: activeProjectId,
       })
       .select()
       .single();

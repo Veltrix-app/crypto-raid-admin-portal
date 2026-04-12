@@ -66,6 +66,7 @@ export type DbProject = {
 
   is_featured: boolean | null;
   is_public: boolean | null;
+  owner_user_id?: string | null;
 
   created_at?: string;
   updated_at?: string;
@@ -226,6 +227,11 @@ export type DbTeamMember = {
   email: string;
   role: TeamRole;
   status: TeamStatus;
+  project_id: string | null;
+  auth_user_id: string | null;
+  invited_by?: string | null;
+  joined_at?: string | null;
+  updated_at?: string;
   created_at: string;
 };
 

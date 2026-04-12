@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function SettingsTeamPage() {
   const teamMembers = useAdminPortalStore((s) => s.teamMembers);
   const inviteTeamMember = useAdminPortalStore((s) => s.inviteTeamMember);
+  const activeProject = useAdminAuthStore((s) =>
+    s.memberships.find((item) => item.projectId === s.activeProjectId)
+  );
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,6 +25,9 @@ export default function SettingsTeamPage() {
               Team Management
             </p>
             <h1 className="mt-2 text-3xl font-extrabold text-text">Team</h1>
+            <p className="mt-2 text-sm text-sub">
+              Managing workspace access for {activeProject?.projectName || "this project"}.
+            </p>
           </div>
         </div>
 
@@ -85,6 +92,11 @@ export default function SettingsTeamPage() {
                 <div>
                   <h2 className="text-xl font-extrabold text-text">{member.name}</h2>
                   <p className="mt-2 text-sm text-sub">{member.email}</p>
+                  {member.joinedAt ? (
+                    <p className="mt-2 text-xs text-sub">
+                      Joined {new Date(member.joinedAt).toLocaleString()}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="text-right">

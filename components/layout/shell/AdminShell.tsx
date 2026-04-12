@@ -17,9 +17,12 @@ export default function AdminShell({ children }: Props) {
   const isAuthenticated = useAdminAuthStore((s) => s.isAuthenticated);
   const authLoading = useAdminAuthStore((s) => s.loading);
   const initialize = useAdminAuthStore((s) => s.initialize);
+  const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
+  const role = useAdminAuthStore((s) => s.role);
 
   const hydrated = useAdminPortalStore((s) => s.hydrated);
   const dataLoading = useAdminPortalStore((s) => s.loading);
+  const scopedProjectId = useAdminPortalStore((s) => s.scopedProjectId);
   const loadAll = useAdminPortalStore((s) => s.loadAll);
 
   useEffect(() => {
@@ -33,10 +36,14 @@ export default function AdminShell({ children }: Props) {
   }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
-    if (isAuthenticated && !hydrated && !dataLoading) {
+    const needsProjectScope = role !== "super_admin";
+    const canLoad = isAuthenticated && (!needsProjectScope || !!activeProjectId);
+    const scopeChanged = hydrated && scopedProjectId !== activeProjectId;
+
+    if (canLoad && (!hydrated || scopeChanged) && !dataLoading) {
       loadAll();
     }
-  }, [isAuthenticated, hydrated, dataLoading, loadAll]);
+  }, [isAuthenticated, hydrated, dataLoading, loadAll, activeProjectId, scopedProjectId, role]);
 
   if (authLoading || (!hydrated && dataLoading)) {
     return (
@@ -47,6 +54,14 @@ export default function AdminShell({ children }: Props) {
   }
 
   if (!isAuthenticated) return null;
+
+  if (role !== "super_admin" && !activeProjectId) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg text-text">
+        No project workspace is linked to this account yet.
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-bg text-text">

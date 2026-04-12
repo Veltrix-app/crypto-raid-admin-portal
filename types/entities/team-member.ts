@@ -4,4 +4,7 @@ export type AdminTeamMember = {
   email: string;
   role: "owner" | "admin" | "reviewer" | "analyst";
   status: "active" | "invited";
+  projectId?: string;
+  authUserId?: string;
+  joinedAt?: string;
 };

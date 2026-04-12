@@ -7,8 +7,9 @@ import { useAdminUIStore } from "@/store/ui/useAdminUIStore";
 
 export default function AdminHeader() {
   const router = useRouter();
-  const { email, role, logout } = useAdminAuthStore();
+  const { email, role, logout, memberships, activeProjectId, setActiveProjectId } = useAdminAuthStore();
   const toggleSidebar = useAdminUIStore((s) => s.toggleSidebar);
+  const activeProject = memberships.find((item) => item.projectId === activeProjectId);
 
   return (
     <header className="flex items-center justify-between gap-4 border-b border-line bg-card/70 px-6 py-4">
@@ -35,9 +36,22 @@ export default function AdminHeader() {
         </button>
 
         <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
+          {memberships.length > 0 ? (
+            <select
+              value={activeProjectId ?? ""}
+              onChange={(e) => setActiveProjectId(e.target.value)}
+              className="mb-2 w-full bg-transparent text-xs font-semibold uppercase tracking-[0.14em] text-primary outline-none"
+            >
+              {memberships.map((membership) => (
+                <option key={membership.projectId} value={membership.projectId} className="bg-card text-text">
+                  {membership.projectName}
+                </option>
+              ))}
+            </select>
+          ) : null}
           <p className="text-sm font-semibold text-text">{email || "admin@portal.com"}</p>
           <p className="text-xs uppercase tracking-[0.18em] text-primary">
-            {role || "project_admin"}
+            {activeProject?.role || role || "project_admin"}
           </p>
         </div>
 
