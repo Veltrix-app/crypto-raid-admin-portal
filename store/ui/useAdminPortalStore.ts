@@ -312,27 +312,52 @@ function mapSubmission(params: {
   };
 }
 
-function mapClaim(row: DbClaim): AdminClaim {
+function mapClaim(params: {
+  row: DbClaim;
+  rewardsById: Map<string, DbReward>;
+  campaignsById: Map<string, DbCampaign>;
+  projectsById: Map<string, DbProject>;
+  usernamesByAuthUserId: Map<string, string>;
+}): AdminClaim {
+  const { row, rewardsById, campaignsById, projectsById, usernamesByAuthUserId } = params;
+  const reward = row.reward_id ? rewardsById.get(row.reward_id) : undefined;
+  const campaignId = row.campaign_id ?? reward?.campaign_id ?? "";
+  const projectId =
+    row.project_id ?? reward?.project_id ?? (campaignId ? campaignsById.get(campaignId)?.project_id ?? "" : "");
+  const campaign = campaignId ? campaignsById.get(campaignId) : undefined;
+  const project = projectId ? projectsById.get(projectId) : undefined;
+
   return {
     id: row.id,
 
-    authUserId: row.auth_user_id ?? "",
-    username: row.username ?? "Unknown User",
+      authUserId: row.auth_user_id ?? "",
+      username:
+        row.username ??
+        (row.auth_user_id ? usernamesByAuthUserId.get(row.auth_user_id) : undefined) ??
+        "Unknown User",
 
-    rewardId: row.reward_id ?? "",
-    rewardTitle: row.reward_title ?? "Unknown Reward",
+      rewardId: row.reward_id ?? "",
+      rewardTitle: row.reward_title ?? reward?.title ?? "Unknown Reward",
+      rewardType: row.reward_id ? reward?.reward_type ?? reward?.type ?? undefined : undefined,
+      rewardCost: row.reward_id ? reward?.cost ?? undefined : undefined,
 
-    projectId: row.project_id ?? "",
-    projectName: row.project_name ?? "",
+      projectId: projectId || "",
+      projectName: row.project_name ?? project?.name ?? "",
 
-    campaignId: row.campaign_id ?? "",
-    campaignTitle: row.campaign_title ?? "",
+      campaignId: campaignId || "",
+      campaignTitle: row.campaign_title ?? campaign?.title ?? "",
 
-    claimMethod: row.claim_method ?? "manual_fulfillment",
-    status: (row.status ?? "pending") as AdminClaim["status"],
+      claimMethod: row.claim_method ?? "manual_fulfillment",
+      status: (row.status ?? "pending") as AdminClaim["status"],
+      fulfillmentNotes: row.fulfillment_notes ?? "",
+      deliveryPayload: row.delivery_payload
+        ? JSON.stringify(row.delivery_payload, null, 2)
+        : "",
+      reviewedAt: row.reviewed_at ?? "",
+      updatedAt: row.updated_at ?? "",
 
-    createdAt: row.created_at,
-  };
+      createdAt: row.created_at,
+    };
 }
 
 function mapTeamMember(row: DbTeamMember): AdminTeamMember {
@@ -550,6 +575,12 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
     const questsById = new Map(questRows.map((row) => [row.id, row]));
     const campaignsById = new Map(campaignRows.map((row) => [row.id, row]));
+    const rewardsById = new Map(
+      ((rewardsRes.data ?? []) as DbReward[]).map((row) => [row.id, row])
+    );
+    const projectsById = new Map(
+      ((projectsRes.data ?? []) as DbProject[]).map((row) => [row.id, row])
+    );
     const usernamesByAuthUserId = new Map<string, string>(
       profileRows
         .filter((row): row is DbUserProfile & { auth_user_id: string } => !!row.auth_user_id)
@@ -584,7 +615,15 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
           usernamesByAuthUserId,
         })
       ),
-      claims: (claimsRes.data ?? []).map(mapClaim),
+      claims: ((claimsRes.data ?? []) as DbClaim[]).map((row) =>
+        mapClaim({
+          row,
+          rewardsById,
+          campaignsById,
+          projectsById,
+          usernamesByAuthUserId,
+        })
+      ),
       users: profileRows
         .filter((row): row is DbUserProfile & { auth_user_id: string } => !!row.auth_user_id)
         .map((profile) =>

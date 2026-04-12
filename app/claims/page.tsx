@@ -12,6 +12,12 @@ export default function ClaimsPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
 
+  const usersByAuthId = new Map(
+    users
+      .filter((user) => !!user.authUserId)
+      .map((user) => [user.authUserId as string, user])
+  );
+
   const filteredClaims = useMemo(() => {
     return claims.filter((claim) => {
       const matchesSearch =
@@ -30,11 +36,10 @@ export default function ClaimsPage() {
   const processingCount = claims.filter((c) => c.status === "processing").length;
   const fulfilledCount = claims.filter((c) => c.status === "fulfilled").length;
   const rejectedCount = claims.filter((c) => c.status === "rejected").length;
-  const usersByAuthId = new Map(
-    users
-      .filter((user) => !!user.authUserId)
-      .map((user) => [user.authUserId as string, user])
-  );
+  const highPriorityCount = claims.filter((claim) => {
+    const user = usersByAuthId.get(claim.authUserId);
+    return user?.status === "flagged" || (claim.rewardCost ?? 0) >= 500;
+  }).length;
 
   return (
     <AdminShell>
@@ -53,6 +58,21 @@ export default function ClaimsPage() {
           <InfoCard label="Processing" value={processingCount} />
           <InfoCard label="Fulfilled" value={fulfilledCount} />
           <InfoCard label="Rejected" value={rejectedCount} />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <InfoCard label="High Priority" value={highPriorityCount} />
+          <InfoCard
+            label="Manual Fulfillment"
+            value={
+              claims.filter((claim) => claim.claimMethod === "manual_fulfillment")
+                .length
+            }
+          />
+          <InfoCard
+            label="High Value"
+            value={claims.filter((claim) => (claim.rewardCost ?? 0) >= 500).length}
+          />
         </div>
 
         <div className="grid gap-4 md:grid-cols-[1.4fr_220px]">
@@ -94,6 +114,14 @@ export default function ClaimsPage() {
               user?.status === "flagged"
                 ? `Watch • Sybil ${user.sybilScore}`
                 : `Trust ${user?.trustScore ?? 50}`;
+            const priorityLabel =
+              user?.status === "flagged"
+                ? "Escalate"
+                : (claim.rewardCost ?? 0) >= 500
+                  ? "High value"
+                  : claim.claimMethod === "manual_fulfillment"
+                    ? "Manual"
+                    : "Normal";
 
             return (
               <div
@@ -105,15 +133,18 @@ export default function ClaimsPage() {
                 <div>{claim.projectName || "-"}</div>
                 <div>{claim.campaignTitle || "-"}</div>
                 <div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${
-                      user?.status === "flagged"
-                        ? "bg-rose-500/15 text-rose-300"
-                        : "bg-card2 text-sub"
-                    }`}
-                  >
-                    {riskLabel}
-                  </span>
+                  <div className="space-y-2">
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                        user?.status === "flagged"
+                          ? "bg-rose-500/15 text-rose-300"
+                          : "bg-card2 text-sub"
+                      }`}
+                    >
+                      {riskLabel}
+                    </span>
+                    <span className="block text-xs text-sub">{priorityLabel}</span>
+                  </div>
                 </div>
                 <div className="capitalize text-primary">{claim.status}</div>
                 <div>{formatDate(claim.createdAt)}</div>

@@ -6,6 +6,8 @@ export type AdminClaim = {
 
   rewardId: string;
   rewardTitle: string;
+  rewardType?: string;
+  rewardCost?: number;
 
   projectId?: string;
   projectName?: string;
@@ -16,6 +18,10 @@ export type AdminClaim = {
   claimMethod: string;
 
   status: "pending" | "processing" | "fulfilled" | "rejected";
+  fulfillmentNotes?: string;
+  deliveryPayload?: string;
+  reviewedAt?: string;
+  updatedAt?: string;
 
   createdAt: string;
 };
