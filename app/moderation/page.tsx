@@ -36,8 +36,12 @@ export default function ModerationPage() {
             value={openFlags.filter((flag) => flag.severity === "high").length}
           />
           <InfoCard
-            label="Resolved Flags"
-            value={reviewFlags.filter((flag) => flag.status === "resolved").length}
+            label="Duplicate Signals"
+            value={
+              openFlags.filter((flag) =>
+                ["duplicate_proof", "duplicate_wallet"].includes(flag.flagType)
+              ).length
+            }
           />
         </div>
 
@@ -85,6 +89,18 @@ export default function ModerationPage() {
                     </div>
 
                     <p className="mt-3 text-sm leading-6 text-sub">{flag.reason}</p>
+
+                    {["duplicate_proof", "duplicate_wallet"].includes(flag.flagType) ? (
+                      <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-300">
+                          Duplicate Detection
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-sub">
+                          This case was escalated automatically because Veltrix detected overlapping proof or wallet identity signals.
+                          Treat it as a manual verification checkpoint before approving the linked submission.
+                        </p>
+                      </div>
+                    ) : null}
 
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                       <DetailRow label="Source" value={flag.sourceTable} />
