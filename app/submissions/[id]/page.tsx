@@ -3,8 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { AdminAuditLog } from "@/types/entities/audit-log";
+import { AdminVerificationResult } from "@/types/entities/verification-result";
+import { DbVerificationResult } from "@/types/database";
 
 export default function SubmissionDetailPage() {
   const params = useParams<{ id: string }>();
@@ -24,6 +27,7 @@ export default function SubmissionDetailPage() {
   const [working, setWorking] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
+  const [verificationResult, setVerificationResult] = useState<AdminVerificationResult | null>(null);
 
   if (!submission) {
     return (
@@ -86,6 +90,63 @@ export default function SubmissionDetailPage() {
       active = false;
     };
   }, [currentSubmission.id, fetchAuditTrail]);
+
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+
+    async function loadVerificationResult() {
+      const { data, error } = await supabase
+        .from("verification_results")
+        .select("*")
+        .eq("source_table", "quest_submissions")
+        .eq("source_id", currentSubmission.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Verification result load failed:", error.message);
+        if (active) {
+          setVerificationResult(null);
+        }
+        return;
+      }
+
+      if (!active || !data) {
+        if (active) {
+          setVerificationResult(null);
+        }
+        return;
+      }
+
+      const row = data as DbVerificationResult;
+      setVerificationResult({
+        id: row.id,
+        authUserId: row.auth_user_id ?? undefined,
+        projectId: row.project_id ?? undefined,
+        questId: row.quest_id ?? undefined,
+        sourceTable: row.source_table,
+        sourceId: row.source_id,
+        verificationType: row.verification_type,
+        route: row.route,
+        decisionStatus: row.decision_status,
+        decisionReason: row.decision_reason,
+        confidenceScore: row.confidence_score,
+        requiredConfigKeys: row.required_config_keys ?? [],
+        missingConfigKeys: row.missing_config_keys ?? [],
+        duplicateSignalTypes: row.duplicate_signal_types ?? [],
+        metadata: row.metadata ? JSON.stringify(row.metadata, null, 2) : undefined,
+        createdAt: row.created_at,
+      });
+    }
+
+    loadVerificationResult();
+
+    return () => {
+      active = false;
+    };
+  }, [currentSubmission.id]);
 
   async function handleApprove() {
     try {
@@ -150,7 +211,7 @@ export default function SubmissionDetailPage() {
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               <DecisionCard
                 label="Automation Route"
-                value={decisionLabel}
+                value={verificationResult?.route.replace(/_/g, " ") || decisionLabel}
                 tone={currentSubmission.status === "approved" ? "ready" : "review"}
               />
               <DecisionCard
@@ -159,6 +220,64 @@ export default function SubmissionDetailPage() {
                 tone={user?.status === "flagged" ? "danger" : "ready"}
               />
             </div>
+
+            {verificationResult ? (
+              <div className="mt-5 rounded-2xl border border-line bg-card2 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                  Verification Result
+                </p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <DecisionCard
+                    label="Verification Type"
+                    value={verificationResult.verificationType.replace(/_/g, " ")}
+                    tone="ready"
+                  />
+                  <DecisionCard
+                    label="Confidence"
+                    value={`${verificationResult.confidenceScore}%`}
+                    tone={
+                      verificationResult.confidenceScore >= 80
+                        ? "ready"
+                        : verificationResult.confidenceScore >= 50
+                          ? "review"
+                          : "danger"
+                    }
+                  />
+                </div>
+                <p className="mt-4 text-sm text-sub">{verificationResult.decisionReason}</p>
+                <div className="mt-4 space-y-3">
+                  <DetailRow
+                    label="Required Config"
+                    value={
+                      verificationResult.requiredConfigKeys.length
+                        ? verificationResult.requiredConfigKeys.join(", ")
+                        : "No required keys"
+                    }
+                  />
+                  <DetailRow
+                    label="Missing Config"
+                    value={
+                      verificationResult.missingConfigKeys.length
+                        ? verificationResult.missingConfigKeys.join(", ")
+                        : "None"
+                    }
+                  />
+                  <DetailRow
+                    label="Duplicate Signals"
+                    value={
+                      verificationResult.duplicateSignalTypes.length
+                        ? verificationResult.duplicateSignalTypes.join(", ")
+                        : "None"
+                    }
+                  />
+                </div>
+                {verificationResult.metadata ? (
+                  <pre className="mt-4 whitespace-pre-wrap break-all rounded-2xl border border-line bg-card px-4 py-3 text-xs text-sub">
+                    {verificationResult.metadata}
+                  </pre>
+                ) : null}
+              </div>
+            ) : null}
 
             {linkedFlags.length > 0 ? (
               <div className="mt-5 rounded-2xl border border-line bg-card2 p-4">

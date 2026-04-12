@@ -373,3 +373,22 @@ export type DbAuditLog = {
   metadata: Record<string, any> | null;
   created_at: string;
 };
+
+export type DbVerificationResult = {
+  id: string;
+  auth_user_id: string | null;
+  project_id: string | null;
+  quest_id: string | null;
+  source_table: string;
+  source_id: string;
+  verification_type: string;
+  route: string;
+  decision_status: SubmissionStatus;
+  decision_reason: string;
+  confidence_score: number;
+  required_config_keys: string[] | null;
+  missing_config_keys: string[] | null;
+  duplicate_signal_types: string[] | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+};
