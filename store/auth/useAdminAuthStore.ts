@@ -25,6 +25,83 @@ type AdminAuthState = {
   setActiveProjectId: (projectId: string) => void;
 };
 
+async function bootstrapMembershipsByEmail(authUserId: string, email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return;
+
+  const supabase = createClient();
+
+  const [
+    { data: teamMatches },
+    { data: projectMatches },
+  ] = await Promise.all([
+    supabase
+      .from("team_members")
+      .select("id")
+      .is("auth_user_id", null)
+      .ilike("email", normalizedEmail),
+    supabase
+      .from("projects")
+      .select("id, name, contact_email")
+      .is("owner_user_id", null)
+      .ilike("contact_email", normalizedEmail),
+  ]);
+
+  if ((teamMatches?.length ?? 0) > 0) {
+    const teamIds = teamMatches!.map((row: any) => row.id);
+    const { error } = await supabase
+      .from("team_members")
+      .update({
+        auth_user_id: authUserId,
+        status: "active",
+        joined_at: new Date().toISOString(),
+      })
+      .in("id", teamIds);
+
+    if (error) {
+      console.error("Failed to auto-link team memberships:", error.message);
+    }
+  }
+
+  for (const project of projectMatches ?? []) {
+    const timestamp = new Date().toISOString();
+
+    const { error: ownerError } = await supabase
+      .from("projects")
+      .update({ owner_user_id: authUserId })
+      .eq("id", project.id)
+      .is("owner_user_id", null);
+
+    if (ownerError) {
+      console.error("Failed to auto-link project owner:", ownerError.message);
+      continue;
+    }
+
+    const { data: existingTeamMember } = await supabase
+      .from("team_members")
+      .select("id")
+      .eq("project_id", project.id)
+      .eq("auth_user_id", authUserId)
+      .maybeSingle();
+
+    if (!existingTeamMember) {
+      const { error: teamInsertError } = await supabase.from("team_members").insert({
+        name: project.name ?? "Project Owner",
+        email: normalizedEmail,
+        role: "owner",
+        status: "active",
+        project_id: project.id,
+        auth_user_id: authUserId,
+        joined_at: timestamp,
+      });
+
+      if (teamInsertError) {
+        console.error("Failed to create owner team membership:", teamInsertError.message);
+      }
+    }
+  }
+}
+
 async function loadMemberships(authUserId: string) {
   const supabase = createClient();
 
@@ -113,6 +190,9 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
     const session = data.session;
     const authUserId = session?.user?.id ?? null;
     const isSuperAdmin = !!session?.user?.email?.includes("super");
+    if (authUserId && session?.user?.email) {
+      await bootstrapMembershipsByEmail(authUserId, session.user.email);
+    }
     const memberships = authUserId ? await loadMemberships(authUserId) : [];
     const nextActiveProjectId =
       memberships.find((item) => item.projectId === get().activeProjectId)?.projectId ??
@@ -143,6 +223,9 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
     }
 
     const authUserId = data.user?.id ?? null;
+    if (authUserId && (data.user?.email ?? email)) {
+      await bootstrapMembershipsByEmail(authUserId, data.user?.email ?? email);
+    }
     const memberships = authUserId ? await loadMemberships(authUserId) : [];
 
     set({
