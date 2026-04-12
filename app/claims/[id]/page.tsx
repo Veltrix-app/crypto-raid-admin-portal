@@ -12,6 +12,7 @@ export default function ClaimDetailPage() {
   const getClaimById = useAdminPortalStore((s) => s.getClaimById);
   const updateClaimStatus = useAdminPortalStore((s) => s.updateClaimStatus);
   const users = useAdminPortalStore((s) => s.users);
+  const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
 
   const claim = useMemo(
     () => getClaimById(params.id),
@@ -34,35 +35,29 @@ export default function ClaimDetailPage() {
   }
 
   const currentClaim = claim;
-
   const user = users.find((item) => item.authUserId === currentClaim.authUserId);
+  const linkedFlags = reviewFlags.filter(
+    (flag) => flag.sourceTable === "reward_claims" && flag.sourceId === currentClaim.id
+  );
+  const primaryFlag = linkedFlags[0];
   const riskLabel =
     user?.status === "flagged"
       ? `Watch • Sybil ${user.sybilScore}`
       : `Trust ${user?.trustScore ?? 50}`;
-  const claimReadinessItems = [
-    {
-      label: "Risk",
-      value: riskLabel,
-      complete: user?.status !== "flagged",
-    },
-    {
-      label: "Value",
-      value:
-        typeof currentClaim.rewardCost === "number" ? `${currentClaim.rewardCost} XP` : "Unknown",
-      complete: (currentClaim.rewardCost ?? 0) < 500,
-    },
-    {
-      label: "Fulfillment Mode",
-      value: currentClaim.claimMethod.replace(/_/g, " "),
-      complete: currentClaim.claimMethod !== "manual_fulfillment",
-    },
-    {
-      label: "Current Status",
-      value: currentClaim.status,
-      complete: currentClaim.status === "fulfilled",
-    },
-  ];
+  const decisionLabel =
+    primaryFlag?.flagType.replace(/_/g, " ") ??
+    ((currentClaim.rewardCost ?? 0) >= 500
+      ? "High value checkpoint"
+      : currentClaim.claimMethod === "manual_fulfillment"
+        ? "Manual fulfillment"
+        : "Standard flow");
+  const decisionReason =
+    primaryFlag?.reason ??
+    ((currentClaim.rewardCost ?? 0) >= 500
+      ? "This reward is valuable enough to deserve an additional fulfillment checkpoint before payout."
+      : currentClaim.claimMethod === "manual_fulfillment"
+        ? "This claim depends on manual delivery by the project team."
+        : "This claim can move through the standard fulfillment flow unless other risk signals appear.");
 
   async function handleSetStatus(
     nextStatus: "processing" | "fulfilled" | "rejected"
@@ -94,13 +89,12 @@ export default function ClaimDetailPage() {
               {currentClaim.projectName ? <Badge>{currentClaim.projectName}</Badge> : null}
               {currentClaim.campaignTitle ? <Badge>{currentClaim.campaignTitle}</Badge> : null}
               {currentClaim.rewardType ? <Badge className="capitalize">{currentClaim.rewardType}</Badge> : null}
-              <Badge className="capitalize">{currentClaim.claimMethod}</Badge>
+              <Badge>{riskLabel}</Badge>
               <Badge className="capitalize">{currentClaim.status}</Badge>
             </div>
 
             <p className="mt-4 text-sm text-sub">
-              Move this reward claim through processing, fulfillment or rejection.
-              High-risk or high-value claims should usually be checked before you mark them fulfilled.
+              Review the claim details and the automation context before moving it through fulfillment.
             </p>
           </div>
         </div>
@@ -109,7 +103,7 @@ export default function ClaimDetailPage() {
           <InfoCard label="User" value={currentClaim.username} />
           <InfoCard label="Reward" value={currentClaim.rewardTitle} />
           <InfoCard label="Method" value={currentClaim.claimMethod} />
-          <InfoCard label="Risk" value={riskLabel} />
+          <InfoCard label="Decision" value={decisionLabel} />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -117,42 +111,54 @@ export default function ClaimDetailPage() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                  Claim Readiness
+                  Claim Decision Context
                 </p>
                 <h2 className="mt-2 text-xl font-extrabold text-text">
-                  What this fulfillment needs
+                  Why this claim needs attention
                 </h2>
               </div>
             </div>
 
+            <p className="mt-4 text-sm leading-6 text-sub">{decisionReason}</p>
+
             <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {claimReadinessItems.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-2xl border border-line bg-card2 p-4"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold text-text">{item.label}</p>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                        item.complete
-                          ? "bg-primary/15 text-primary"
-                          : "bg-amber-500/15 text-amber-300"
-                      }`}
-                    >
-                      {item.complete ? "Ready" : "Review"}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
-                </div>
-              ))}
+              <DecisionCard
+                label="Automation Route"
+                value={decisionLabel}
+                tone={(currentClaim.rewardCost ?? 0) >= 500 || linkedFlags.length > 0 ? "review" : "ready"}
+              />
+              <DecisionCard
+                label="Risk Profile"
+                value={riskLabel}
+                tone={user?.status === "flagged" ? "danger" : "ready"}
+              />
             </div>
+
+            {linkedFlags.length > 0 ? (
+              <div className="mt-5 rounded-2xl border border-line bg-card2 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                  Linked Flags
+                </p>
+                <div className="mt-3 space-y-3">
+                  {linkedFlags.map((flag) => (
+                    <div key={flag.id} className="rounded-2xl border border-line bg-card px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge className="capitalize">{flag.flagType.replace(/_/g, " ")}</Badge>
+                        <Badge className="capitalize">{flag.severity}</Badge>
+                        <Badge className="capitalize">{flag.status}</Badge>
+                      </div>
+                      <p className="mt-3 text-sm text-sub">{flag.reason}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-[28px] border border-line bg-card p-6">
             <h2 className="text-xl font-extrabold text-text">Claim Actions</h2>
             <p className="mt-2 text-sm text-sub">
-              Update fulfillment state for this reward claim.
+              Update fulfillment state after checking both delivery complexity and risk.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -179,16 +185,6 @@ export default function ClaimDetailPage() {
               >
                 {working ? "Working..." : "Reject Claim"}
               </button>
-            </div>
-
-            <div className="mt-6 rounded-2xl border border-line bg-card2 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Fulfillment Guidance
-              </p>
-              <p className="mt-2 text-sm leading-6 text-sub">
-                Claims with manual fulfillment, flagged users or expensive rewards should usually move through
-                processing first so the project team can verify eligibility and delivery details.
-              </p>
             </div>
           </div>
         </div>
@@ -257,6 +253,34 @@ function DetailRow({
         {label}
       </p>
       <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
+    </div>
+  );
+}
+
+function DecisionCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "ready" | "review" | "danger";
+}) {
+  const toneClass =
+    tone === "ready"
+      ? "bg-primary/15 text-primary"
+      : tone === "danger"
+        ? "bg-rose-500/15 text-rose-300"
+        : "bg-amber-500/15 text-amber-300";
+
+  return (
+    <div className="rounded-2xl border border-line bg-card2 p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <div className="mt-3">
+        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${toneClass}`}>
+          {value}
+        </span>
+      </div>
     </div>
   );
 }
