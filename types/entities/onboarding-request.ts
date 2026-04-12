@@ -1,0 +1,24 @@
+export type AdminOnboardingRequest = {
+  id: string;
+  requestedByAuthUserId: string;
+  projectName: string;
+  chain: string;
+  category: string;
+  website: string;
+  contactEmail: string;
+  shortDescription: string;
+  longDescription: string;
+  logo: string;
+  bannerUrl: string;
+  xUrl: string;
+  telegramUrl: string;
+  discordUrl: string;
+  requestedPlanId: string;
+  status: "submitted" | "approved" | "rejected";
+  reviewNotes: string;
+  reviewedByAuthUserId: string;
+  reviewedAt: string;
+  approvedProjectId: string;
+  createdAt: string;
+  updatedAt: string;
+};

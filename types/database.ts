@@ -245,6 +245,31 @@ export type DbBillingPlan = {
   current: boolean;
 };
 
+export type DbOnboardingRequest = {
+  id: string;
+  requested_by_auth_user_id: string | null;
+  project_name: string;
+  chain: string;
+  category: string;
+  website: string;
+  contact_email: string;
+  short_description: string;
+  long_description: string;
+  logo: string;
+  banner_url: string;
+  x_url: string;
+  telegram_url: string;
+  discord_url: string;
+  requested_plan_id: string | null;
+  status: string;
+  review_notes: string;
+  reviewed_by_auth_user_id: string | null;
+  reviewed_at: string | null;
+  approved_project_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type DbClaim = {
   id: string;
 

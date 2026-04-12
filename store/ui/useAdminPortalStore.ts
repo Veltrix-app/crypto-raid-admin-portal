@@ -12,10 +12,12 @@ import { AdminSubmission } from "@/types/entities/submission";
 import { AdminTeamMember } from "@/types/entities/team-member";
 import { AdminBillingPlan } from "@/types/entities/billing-plan";
 import { AdminClaim } from "@/types/entities/claim";
+import { AdminOnboardingRequest } from "@/types/entities/onboarding-request";
 import {
   DbBillingPlan,
   DbCampaign,
   DbClaim,
+  DbOnboardingRequest,
   DbProject,
   DbQuest,
   DbRaid,
@@ -36,6 +38,7 @@ type AdminPortalState = {
   rewards: AdminReward[];
   submissions: AdminSubmission[];
   claims: AdminClaim[];
+  onboardingRequests: AdminOnboardingRequest[];
   teamMembers: AdminTeamMember[];
   billingPlans: AdminBillingPlan[];
 
@@ -74,6 +77,12 @@ type AdminPortalState = {
     status: AdminClaim["status"]
   ) => Promise<void>;
   getClaimById: (id: string) => AdminClaim | undefined;
+
+  createOnboardingRequest: (
+    input: Omit<AdminOnboardingRequest, "id" | "requestedByAuthUserId" | "status" | "reviewNotes" | "reviewedByAuthUserId" | "reviewedAt" | "approvedProjectId" | "createdAt" | "updatedAt">
+  ) => Promise<string>;
+  approveOnboardingRequest: (id: string) => Promise<string>;
+  rejectOnboardingRequest: (id: string, notes?: string) => Promise<void>;
 
   inviteTeamMember: (input: Omit<AdminTeamMember, "id">) => Promise<void>;
 };
@@ -338,6 +347,33 @@ function mapBillingPlan(row: DbBillingPlan): AdminBillingPlan {
   };
 }
 
+function mapOnboardingRequest(row: DbOnboardingRequest): AdminOnboardingRequest {
+  return {
+    id: row.id,
+    requestedByAuthUserId: row.requested_by_auth_user_id ?? "",
+    projectName: row.project_name,
+    chain: row.chain,
+    category: row.category ?? "",
+    website: row.website ?? "",
+    contactEmail: row.contact_email ?? "",
+    shortDescription: row.short_description ?? "",
+    longDescription: row.long_description ?? "",
+    logo: row.logo ?? "🚀",
+    bannerUrl: row.banner_url ?? "",
+    xUrl: row.x_url ?? "",
+    telegramUrl: row.telegram_url ?? "",
+    discordUrl: row.discord_url ?? "",
+    requestedPlanId: row.requested_plan_id ?? "",
+    status: (row.status ?? "submitted") as AdminOnboardingRequest["status"],
+    reviewNotes: row.review_notes ?? "",
+    reviewedByAuthUserId: row.reviewed_by_auth_user_id ?? "",
+    reviewedAt: row.reviewed_at ?? "",
+    approvedProjectId: row.approved_project_id ?? "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   hydrated: false,
   loading: false,
@@ -350,6 +386,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   rewards: [],
   submissions: [],
   claims: [],
+  onboardingRequests: [],
   teamMembers: [],
   billingPlans: [],
 
@@ -388,6 +425,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       submissionsRes,
       profilesRes,
       claimsRes,
+      onboardingRequestsRes,
       teamRes,
       billingRes,
     ] = await Promise.all([
@@ -399,6 +437,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       supabase.from("quest_submissions").select("*").order("created_at", { ascending: false }),
       supabase.from("user_profiles").select("auth_user_id, username"),
       supabase.from("reward_claims").select("*").order("created_at", { ascending: false }),
+      supabase.from("project_onboarding_requests").select("*").order("created_at", { ascending: false }),
       scopedTeamQuery,
       supabase.from("billing_plans").select("*"),
     ]);
@@ -438,6 +477,9 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
         })
       ),
       claims: (claimsRes.data ?? []).map(mapClaim),
+      onboardingRequests: ((onboardingRequestsRes.data ?? []) as DbOnboardingRequest[]).map(
+        mapOnboardingRequest
+      ),
       teamMembers: (teamRes.data ?? []).map(mapTeamMember),
       billingPlans: (billingRes.data ?? []).map(mapBillingPlan),
     });
@@ -1066,6 +1108,153 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   },
 
   getClaimById: (id) => get().claims.find((item) => item.id === id),
+
+  createOnboardingRequest: async (input) => {
+    const supabase = createClient();
+    const authUserId = useAdminAuthStore.getState().authUserId;
+
+    const { data, error } = await supabase
+      .from("project_onboarding_requests")
+      .insert({
+        requested_by_auth_user_id: authUserId,
+        project_name: input.projectName,
+        chain: input.chain,
+        category: input.category,
+        website: input.website,
+        contact_email: input.contactEmail,
+        short_description: input.shortDescription,
+        long_description: input.longDescription,
+        logo: input.logo,
+        banner_url: input.bannerUrl,
+        x_url: input.xUrl,
+        telegram_url: input.telegramUrl,
+        discord_url: input.discordUrl,
+        requested_plan_id: input.requestedPlanId || null,
+        status: "submitted",
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const mapped = mapOnboardingRequest(data as DbOnboardingRequest);
+    set((state) => ({
+      onboardingRequests: [mapped, ...state.onboardingRequests],
+    }));
+    return mapped.id;
+  },
+
+  approveOnboardingRequest: async (id) => {
+    const supabase = createClient();
+    const authUserId = useAdminAuthStore.getState().authUserId;
+    const request = get().onboardingRequests.find((item) => item.id === id);
+    if (!request) throw new Error("Onboarding request not found.");
+
+    const { data: createdProject, error: createError } = await supabase
+      .from("projects")
+      .insert({
+        name: request.projectName,
+        slug: request.projectName.toLowerCase().trim().replace(/\s+/g, "-"),
+        chain: request.chain,
+        category: request.category,
+        status: "draft",
+        onboarding_status: "approved",
+        description: request.shortDescription,
+        long_description: request.longDescription,
+        members: 0,
+        campaigns: 0,
+        logo: request.logo,
+        banner_url: request.bannerUrl,
+        website: request.website,
+        x_url: request.xUrl,
+        telegram_url: request.telegramUrl,
+        discord_url: request.discordUrl,
+        contact_email: request.contactEmail,
+        is_featured: false,
+        is_public: true,
+        owner_user_id: request.requestedByAuthUserId || null,
+      })
+      .select()
+      .single();
+
+    if (createError) throw createError;
+
+    if (request.requestedByAuthUserId) {
+      await supabase.from("team_members").insert({
+        name: request.projectName,
+        email: request.contactEmail,
+        role: "owner",
+        status: "active",
+        project_id: createdProject.id,
+        auth_user_id: request.requestedByAuthUserId,
+        joined_at: new Date().toISOString(),
+      });
+    }
+
+    const { error: updateError } = await supabase
+      .from("project_onboarding_requests")
+      .update({
+        status: "approved",
+        approved_project_id: createdProject.id,
+        reviewed_by_auth_user_id: authUserId,
+        reviewed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (updateError) throw updateError;
+
+    set((state) => ({
+      projects: [mapProject(createdProject as DbProject), ...state.projects],
+      onboardingRequests: state.onboardingRequests.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: "approved",
+              approvedProjectId: createdProject.id,
+              reviewedByAuthUserId: authUserId ?? "",
+              reviewedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }
+          : item
+      ),
+    }));
+
+    return createdProject.id;
+  },
+
+  rejectOnboardingRequest: async (id, notes = "") => {
+    const supabase = createClient();
+    const authUserId = useAdminAuthStore.getState().authUserId;
+
+    const { error } = await supabase
+      .from("project_onboarding_requests")
+      .update({
+        status: "rejected",
+        review_notes: notes,
+        reviewed_by_auth_user_id: authUserId,
+        reviewed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    set((state) => ({
+      onboardingRequests: state.onboardingRequests.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: "rejected",
+              reviewNotes: notes,
+              reviewedByAuthUserId: authUserId ?? "",
+              reviewedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }
+          : item
+      ),
+    }));
+  },
 
   inviteTeamMember: async (input) => {
     const supabase = createClient();
