@@ -16,6 +16,9 @@ export default function DashboardPage() {
   const totalUsers = projects.reduce((sum, project) => sum + project.members, 0);
   const pendingSubmissions = submissions.filter((s) => s.status === "pending").length;
   const openFlags = reviewFlags.filter((flag) => flag.status === "open").length;
+  const openClaimFlags = reviewFlags.filter(
+    (flag) => flag.status === "open" && flag.sourceTable === "reward_claims"
+  ).length;
   const approvedProjects = projects.filter((p) => p.onboardingStatus === "approved").length;
 
   return (
@@ -56,8 +59,8 @@ export default function DashboardPage() {
             value={reviewFlags.filter((flag) => flag.severity === "high" && flag.status === "open").length}
           />
           <StatCard
-            label="Watched Users"
-            value={reviewFlags.filter((flag) => flag.flagType === "high_sybil_score" && flag.status === "open").length}
+            label="Claim Escalations"
+            value={openClaimFlags}
           />
         </div>
 
@@ -106,6 +109,11 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-4">
                 <span className="text-text">Open review flags</span>
                 <span className="font-bold text-primary">{openFlags}</span>
+              </div>
+
+              <div className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-4">
+                <span className="text-text">Claim escalations</span>
+                <span className="font-bold text-primary">{openClaimFlags}</span>
               </div>
             </div>
           </div>
