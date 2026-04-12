@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminQuest } from "@/types/entities/quest";
 import { AdminProject } from "@/types/entities/project";
 import { AdminCampaign } from "@/types/entities/campaign";
@@ -9,20 +9,192 @@ type Props = {
   projects: AdminProject[];
   campaigns: AdminCampaign[];
   initialValues?: Omit<AdminQuest, "id">;
+  defaultProjectId?: string;
   onSubmit: (values: Omit<AdminQuest, "id">) => void | Promise<void>;
   submitLabel?: string;
+};
+
+const QUEST_TYPE_PRESETS: Record<
+  AdminQuest["questType"],
+  {
+    label: string;
+    summary: string;
+    platform: NonNullable<AdminQuest["platform"]>;
+    actionLabel: string;
+    proofRequired: boolean;
+    proofType: AdminQuest["proofType"];
+    verificationType: AdminQuest["verificationType"];
+    type: string;
+    recommendedConfig: string;
+  }
+> = {
+  social_follow: {
+    label: "Follow on X",
+    summary: "Grow reach by asking contributors to follow a specific X account.",
+    platform: "x",
+    actionLabel: "Follow Account",
+    proofRequired: false,
+    proofType: "none",
+    verificationType: "api_check",
+    type: "Social",
+    recommendedConfig: '{\n  "handle": "@veltrixapp"\n}',
+  },
+  social_like: {
+    label: "Like a Post",
+    summary: "Send users to a key announcement or launch post and track the engagement.",
+    platform: "x",
+    actionLabel: "Like Post",
+    proofRequired: false,
+    proofType: "none",
+    verificationType: "api_check",
+    type: "Social",
+    recommendedConfig: '{\n  "postUrl": "https://x.com/..."\n}',
+  },
+  social_repost: {
+    label: "Repost a Post",
+    summary: "Amplify campaign messages with repost-driven reach.",
+    platform: "x",
+    actionLabel: "Repost Post",
+    proofRequired: false,
+    proofType: "none",
+    verificationType: "api_check",
+    type: "Social",
+    recommendedConfig: '{\n  "postUrl": "https://x.com/..."\n}',
+  },
+  social_comment: {
+    label: "Comment on X",
+    summary: "Drive social proof by sending users to comment on a target post.",
+    platform: "x",
+    actionLabel: "Comment on Post",
+    proofRequired: true,
+    proofType: "url",
+    verificationType: "manual_review",
+    type: "Social",
+    recommendedConfig: '{\n  "postUrl": "https://x.com/...",\n  "keyword": "Veltrix"\n}',
+  },
+  telegram_join: {
+    label: "Join Telegram",
+    summary: "Route campaign traffic into a Telegram community or announcement hub.",
+    platform: "telegram",
+    actionLabel: "Join Telegram",
+    proofRequired: false,
+    proofType: "none",
+    verificationType: "bot_check",
+    type: "Community",
+    recommendedConfig: '{\n  "groupUrl": "https://t.me/..."\n}',
+  },
+  discord_join: {
+    label: "Join Discord",
+    summary: "Build owned community presence inside the project's Discord.",
+    platform: "discord",
+    actionLabel: "Join Discord",
+    proofRequired: false,
+    proofType: "none",
+    verificationType: "bot_check",
+    type: "Community",
+    recommendedConfig: '{\n  "inviteUrl": "https://discord.gg/..."\n}',
+  },
+  wallet_connect: {
+    label: "Connect Wallet",
+    summary: "Use wallet connection as the first trust and identity checkpoint.",
+    platform: "wallet",
+    actionLabel: "Connect Wallet",
+    proofRequired: false,
+    proofType: "wallet",
+    verificationType: "onchain_check",
+    type: "Wallet",
+    recommendedConfig: '{\n  "chain": "ethereum"\n}',
+  },
+  token_hold: {
+    label: "Hold Token",
+    summary: "Gate campaign progress behind token ownership or balance thresholds.",
+    platform: "wallet",
+    actionLabel: "Verify Token Holdings",
+    proofRequired: false,
+    proofType: "wallet",
+    verificationType: "onchain_check",
+    type: "Wallet",
+    recommendedConfig: '{\n  "contractAddress": "0x...",\n  "minimumBalance": 100\n}',
+  },
+  nft_hold: {
+    label: "Hold NFT",
+    summary: "Target collectors or holders with ownership-based access.",
+    platform: "wallet",
+    actionLabel: "Verify NFT",
+    proofRequired: false,
+    proofType: "wallet",
+    verificationType: "onchain_check",
+    type: "Wallet",
+    recommendedConfig: '{\n  "contractAddress": "0x...",\n  "minimumOwned": 1\n}',
+  },
+  onchain_tx: {
+    label: "Complete Onchain Action",
+    summary: "Track a swap, mint or contract interaction with an onchain verifier.",
+    platform: "wallet",
+    actionLabel: "Complete Onchain Action",
+    proofRequired: false,
+    proofType: "tx_hash",
+    verificationType: "onchain_check",
+    type: "Onchain",
+    recommendedConfig: '{\n  "contractAddress": "0x...",\n  "method": "swapExactTokensForTokens"\n}',
+  },
+  url_visit: {
+    label: "Visit Page",
+    summary: "Send users into landing pages, docs or partner experiences.",
+    platform: "website",
+    actionLabel: "Open Page",
+    proofRequired: false,
+    proofType: "none",
+    verificationType: "event_check",
+    type: "Traffic",
+    recommendedConfig: '{\n  "targetUrl": "https://veltrix.app/docs"\n}',
+  },
+  referral: {
+    label: "Invite Friends",
+    summary: "Turn contributors into growth channels with referral-based quests.",
+    platform: "custom",
+    actionLabel: "Share Referral Link",
+    proofRequired: false,
+    proofType: "text",
+    verificationType: "hybrid",
+    type: "Growth",
+    recommendedConfig: '{\n  "minimumReferrals": 3\n}',
+  },
+  manual_proof: {
+    label: "Manual Proof",
+    summary: "Collect screenshots, links or written proof for custom actions.",
+    platform: "custom",
+    actionLabel: "Submit Proof",
+    proofRequired: true,
+    proofType: "image",
+    verificationType: "manual_review",
+    type: "Proof",
+    recommendedConfig: '{\n  "instructions": "Upload a screenshot that clearly shows completion."\n}',
+  },
+  custom: {
+    label: "Custom Task",
+    summary: "Use a flexible template when the quest doesn't fit a standard mechanic yet.",
+    platform: "custom",
+    actionLabel: "Open Task",
+    proofRequired: true,
+    proofType: "text",
+    verificationType: "manual_review",
+    type: "Custom",
+    recommendedConfig: '{\n  "notes": "Define your own verification rules."\n}',
+  },
 };
 
 export default function QuestForm({
   projects,
   campaigns,
   initialValues,
+  defaultProjectId,
   onSubmit,
   submitLabel = "Save Quest",
 }: Props) {
   const [values, setValues] = useState<Omit<AdminQuest, "id">>(
     initialValues || {
-      projectId: projects[0]?.id || "",
+      projectId: defaultProjectId || projects[0]?.id || "",
       campaignId: "",
 
       title: "",
@@ -55,10 +227,60 @@ export default function QuestForm({
       status: "draft",
     }
   );
+  const [selectedPreset, setSelectedPreset] = useState<AdminQuest["questType"]>(
+    initialValues?.questType || "custom"
+  );
 
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter((campaign) => campaign.projectId === values.projectId);
   }, [campaigns, values.projectId]);
+  const activePreset = QUEST_TYPE_PRESETS[selectedPreset];
+  const selectedProject = projects.find((project) => project.id === values.projectId);
+
+  useEffect(() => {
+    if (!values.projectId && defaultProjectId) {
+      setValues((current) => ({ ...current, projectId: defaultProjectId }));
+    }
+  }, [defaultProjectId, values.projectId]);
+
+  useEffect(() => {
+    if (!filteredCampaigns.length) {
+      if (values.campaignId) {
+        setValues((current) => ({ ...current, campaignId: "" }));
+      }
+      return;
+    }
+
+    const hasSelectedCampaign = filteredCampaigns.some(
+      (campaign) => campaign.id === values.campaignId
+    );
+
+    if (!hasSelectedCampaign) {
+      setValues((current) => ({
+        ...current,
+        campaignId: filteredCampaigns[0]?.id || "",
+      }));
+    }
+  }, [filteredCampaigns, values.campaignId]);
+
+  function applyPreset(questType: AdminQuest["questType"]) {
+    const preset = QUEST_TYPE_PRESETS[questType];
+    setSelectedPreset(questType);
+    setValues((current) => ({
+      ...current,
+      questType,
+      platform: preset.platform,
+      actionLabel: preset.actionLabel,
+      proofRequired: preset.proofRequired,
+      proofType: preset.proofType,
+      verificationType: preset.verificationType,
+      verificationConfig:
+        current.verificationConfig?.trim() && current.questType === questType
+          ? current.verificationConfig
+          : preset.recommendedConfig,
+      type: preset.type,
+    }));
+  }
 
   return (
     <form
@@ -68,6 +290,58 @@ export default function QuestForm({
         await onSubmit(values);
       }}
     >
+      <div className="space-y-3">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+          Quest Blueprint
+        </p>
+
+        <div className="grid gap-3 xl:grid-cols-2">
+          {(
+            [
+              "social_follow",
+              "telegram_join",
+              "wallet_connect",
+              "token_hold",
+              "referral",
+              "manual_proof",
+            ] as AdminQuest["questType"][]
+          ).map((questType) => {
+            const preset = QUEST_TYPE_PRESETS[questType];
+            const isActive = values.questType === questType;
+
+            return (
+              <button
+                key={questType}
+                type="button"
+                onClick={() => applyPreset(questType)}
+                className={`rounded-2xl border p-4 text-left transition ${
+                  isActive
+                    ? "border-primary bg-primary/10"
+                    : "border-line bg-card2 hover:border-primary/40"
+                }`}
+              >
+                <p className="text-sm font-bold text-text">{preset.label}</p>
+                <p className="mt-2 text-sm leading-6 text-sub">{preset.summary}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="rounded-2xl border border-line bg-card2 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-text">{activePreset.label}</p>
+              <p className="mt-2 text-sm leading-6 text-sub">{activePreset.summary}</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
+              <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.type}</span>
+              <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">{activePreset.platform}</span>
+              <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.verificationType}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           General
@@ -141,6 +415,15 @@ export default function QuestForm({
           />
         </Field>
 
+        {selectedProject ? (
+          <p className="text-sm text-sub">
+            This quest will be created inside <span className="font-semibold text-text">{selectedProject.name}</span>
+            {filteredCampaigns.length
+              ? ` with ${filteredCampaigns.length} available campaign${filteredCampaigns.length === 1 ? "" : "s"} in this workspace.`
+              : " but this project still needs a campaign before the quest can go live."}
+          </p>
+        ) : null}
+
         <Field label="Short Description">
           <textarea
             value={values.shortDescription || ""}
@@ -163,10 +446,7 @@ export default function QuestForm({
             <select
               value={values.questType}
               onChange={(e) =>
-                setValues({
-                  ...values,
-                  questType: e.target.value as AdminQuest["questType"],
-                })
+                applyPreset(e.target.value as AdminQuest["questType"])
               }
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
             >
@@ -240,6 +520,10 @@ export default function QuestForm({
               placeholder="https://..."
             />
           </Field>
+        </div>
+
+        <div className="rounded-2xl border border-line bg-card2 p-4 text-sm text-sub">
+          <span className="font-semibold text-text">Builder hint:</span> use the action label and URL as the exact CTA contributors will see in the app. For social or onchain quests, point this directly at the target destination so the flow feels one-tap.
         </div>
       </div>
 
@@ -318,9 +602,12 @@ export default function QuestForm({
                 }
                 rows={5}
                 className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
-                placeholder='{"key":"value"}'
+                placeholder={activePreset.recommendedConfig}
               />
             </Field>
+            <p className="mt-2 text-sm text-sub">
+              Start from the recommended config for <span className="font-semibold text-text">{activePreset.label}</span> and adjust the values to match this campaign.
+            </p>
           </div>
         </div>
       </div>

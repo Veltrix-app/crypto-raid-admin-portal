@@ -3,10 +3,12 @@
 import { useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import QuestForm from "@/components/forms/quest/QuestForm";
+import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function NewQuestPage() {
   const router = useRouter();
+  const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const createQuest = useAdminPortalStore((s) => s.createQuest);
   const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
@@ -28,6 +30,7 @@ export default function NewQuestPage() {
           <QuestForm
             projects={projects}
             campaigns={campaigns}
+            defaultProjectId={activeProjectId ?? undefined}
             onSubmit={async (values) => {
               const id = await createQuest(values);
               router.push(`/quests/${id}`);
