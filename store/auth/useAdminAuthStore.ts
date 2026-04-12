@@ -19,6 +19,7 @@ type AdminAuthState = {
   activeProjectId: string | null;
   loading: boolean;
   initialize: () => Promise<void>;
+  refreshMemberships: () => Promise<void>;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   setActiveProjectId: (projectId: string) => void;
@@ -85,6 +86,25 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
     const membership = get().memberships.find((item) => item.projectId === projectId);
     if (!membership) return;
     set({ activeProjectId: projectId });
+  },
+
+  refreshMemberships: async () => {
+    const authUserId = get().authUserId;
+    if (!authUserId) {
+      set({ memberships: [], activeProjectId: null });
+      return;
+    }
+
+    const memberships = await loadMemberships(authUserId);
+    const nextActiveProjectId =
+      memberships.find((item) => item.projectId === get().activeProjectId)?.projectId ??
+      memberships[0]?.projectId ??
+      null;
+
+    set({
+      memberships,
+      activeProjectId: nextActiveProjectId,
+    });
   },
 
   initialize: async () => {

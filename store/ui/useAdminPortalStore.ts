@@ -90,6 +90,7 @@ type AdminPortalState = {
 type DbUserProfileLite = {
   auth_user_id: string | null;
   username: string;
+  avatar_url?: string;
 };
 
 function mapProject(row: DbProject): AdminProject {
@@ -1146,22 +1147,40 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
   approveOnboardingRequest: async (id) => {
     const supabase = createClient();
-    const authUserId = useAdminAuthStore.getState().authUserId;
+    const authStore = useAdminAuthStore.getState();
+    const authUserId = authStore.authUserId;
     const request = get().onboardingRequests.find((item) => item.id === id);
     if (!request) throw new Error("Onboarding request not found.");
+
+    const { data: requesterProfile } = request.requestedByAuthUserId
+      ? await supabase
+          .from("user_profiles")
+          .select("auth_user_id, username, avatar_url")
+          .eq("auth_user_id", request.requestedByAuthUserId)
+          .maybeSingle()
+      : { data: null };
+
+    const normalizedSlug = request.projectName
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+    const ownerWasAttached = !!request.requestedByAuthUserId;
+    const timestamp = new Date().toISOString();
 
     const { data: createdProject, error: createError } = await supabase
       .from("projects")
       .insert({
         name: request.projectName,
-        slug: request.projectName.toLowerCase().trim().replace(/\s+/g, "-"),
+        slug: normalizedSlug,
         chain: request.chain,
         category: request.category,
         status: "draft",
         onboarding_status: "approved",
         description: request.shortDescription,
         long_description: request.longDescription,
-        members: 0,
+        members: ownerWasAttached ? 1 : 0,
         campaigns: 0,
         logo: request.logo,
         banner_url: request.bannerUrl,
@@ -1180,15 +1199,17 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     if (createError) throw createError;
 
     if (request.requestedByAuthUserId) {
-      await supabase.from("team_members").insert({
-        name: request.projectName,
+      const { error: teamInsertError } = await supabase.from("team_members").insert({
+        name: requesterProfile?.username || request.projectName,
         email: request.contactEmail,
         role: "owner",
         status: "active",
         project_id: createdProject.id,
         auth_user_id: request.requestedByAuthUserId,
-        joined_at: new Date().toISOString(),
+        joined_at: timestamp,
       });
+
+      if (teamInsertError) throw teamInsertError;
     }
 
     const { error: updateError } = await supabase
@@ -1197,15 +1218,43 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
         status: "approved",
         approved_project_id: createdProject.id,
         reviewed_by_auth_user_id: authUserId,
-        reviewed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        reviewed_at: timestamp,
+        updated_at: timestamp,
       })
       .eq("id", id);
 
     if (updateError) throw updateError;
 
+    if (ownerWasAttached) {
+      await authStore.refreshMemberships();
+      if (authStore.authUserId === request.requestedByAuthUserId) {
+        useAdminAuthStore.setState({ activeProjectId: createdProject.id });
+      }
+    }
+
     set((state) => ({
       projects: [mapProject(createdProject as DbProject), ...state.projects],
+      teamMembers: ownerWasAttached
+        ? [
+            {
+              id: `pending-${createdProject.id}`,
+              name: requesterProfile?.username || request.projectName,
+              email: request.contactEmail,
+              role: "owner",
+              status: "active",
+              projectId: createdProject.id,
+              authUserId: request.requestedByAuthUserId,
+              joinedAt: timestamp,
+            },
+            ...state.teamMembers.filter(
+              (item) =>
+                !(
+                  item.projectId === createdProject.id &&
+                  item.authUserId === request.requestedByAuthUserId
+                )
+            ),
+          ]
+        : state.teamMembers,
       onboardingRequests: state.onboardingRequests.map((item) =>
         item.id === id
           ? {
@@ -1213,8 +1262,8 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
               status: "approved",
               approvedProjectId: createdProject.id,
               reviewedByAuthUserId: authUserId ?? "",
-              reviewedAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
+              reviewedAt: timestamp,
+              updatedAt: timestamp,
             }
           : item
       ),
