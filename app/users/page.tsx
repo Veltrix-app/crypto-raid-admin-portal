@@ -30,6 +30,10 @@ export default function UsersPage() {
     users.length > 0
       ? Math.round(users.reduce((sum, user) => sum + user.trustScore, 0) / users.length)
       : 0;
+  const avgSybil =
+    users.length > 0
+      ? Math.round(users.reduce((sum, user) => sum + user.sybilScore, 0) / users.length)
+      : 0;
   const totalQuestCompletions = users.reduce(
     (sum, user) => sum + user.questsCompleted,
     0
@@ -56,7 +60,7 @@ export default function UsersPage() {
           <InfoCard label="Tracked Users" value={users.length} />
           <InfoCard label="Active" value={activeCount} />
           <InfoCard label="Flagged" value={flaggedCount} />
-          <InfoCard label="Avg Trust" value={avgTrust} />
+          <InfoCard label={activeWorkspace ? "Avg Local Trust" : "Avg Trust"} value={avgTrust} />
         </div>
 
         <div className="rounded-[28px] border border-line bg-card p-6">
@@ -69,17 +73,29 @@ export default function UsersPage() {
                 Quality over raw participation
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-sub">
-                This view combines profile XP with the first Veltrix reputation signals: trust, sybil risk, contribution tier and completion history. As we expand phase 4, this becomes the backbone for better moderation, segmentation and anti-abuse.
+                {activeWorkspace
+                  ? `This workspace is now using project-specific reputation for ${activeWorkspace.projectName}. XP, trust and contribution tiers reflect local contribution inside this project instead of only global platform behavior.`
+                  : "This view combines profile XP with the first Veltrix reputation signals: trust, sybil risk, contribution tier and completion history. As we expand phase 4, this becomes the backbone for better moderation, segmentation and anti-abuse."}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                Quest Completions
-              </p>
-              <p className="mt-2 text-2xl font-extrabold text-text">
-                {totalQuestCompletions}
-              </p>
+            <div className="flex gap-3">
+              <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                  Quest Completions
+                </p>
+                <p className="mt-2 text-2xl font-extrabold text-text">
+                  {totalQuestCompletions}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                  Avg Sybil
+                </p>
+                <p className="mt-2 text-2xl font-extrabold text-text">
+                  {avgSybil}
+                </p>
+              </div>
             </div>
           </div>
         </div>
