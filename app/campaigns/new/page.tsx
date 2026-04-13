@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  BuilderBottomNav,
+  BuilderHero,
+  BuilderMetricCard,
+  BuilderStepRail,
+} from "@/components/layout/builder/BuilderPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -410,28 +416,15 @@ export default function NewCampaignPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="rounded-[32px] border border-line bg-card p-6">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-                Campaign Builder Wizard
-              </p>
-              <h1 className="mt-2 text-3xl font-extrabold text-text">
-                New Campaign
-              </h1>
-              <p className="mt-3 text-sm leading-6 text-sub">
-                Pick a full campaign template and let Veltrix generate the campaign,
-                quest sequence and reward drafts from the project context you already
-                filled in.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <PreviewStat
-                label="Active project"
-                value={selectedProject?.name || "No project"}
-              />
-              <PreviewStat
+        <BuilderHero
+          eyebrow="Campaign Builder Wizard"
+          title="New Campaign"
+          description="Pick a full campaign template and let Veltrix generate the campaign, quest sequence and reward drafts from the project context you already filled in."
+          progressPercent={progressPercent}
+          metrics={
+            <>
+              <BuilderMetricCard label="Active project" value={selectedProject?.name || "No project"} />
+              <BuilderMetricCard
                 label="Template fit"
                 value={
                   selectedTemplate
@@ -439,72 +432,30 @@ export default function NewCampaignPage() {
                     : "Not selected"
                 }
               />
-              <PreviewStat
+              <BuilderMetricCard
                 label="Missing context"
-                value={templatePlan?.missingProjectFields.length ?? 0}
+                value={String(templatePlan?.missingProjectFields.length ?? 0)}
               />
-            </div>
-          </div>
-          <div className="mt-6">
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.16em] text-sub">
-              <span>Builder progress</span>
-              <span>{progressPercent}%</span>
-            </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-card2">
-              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
-        <div className="grid gap-3 xl:grid-cols-4">
-          {builderSteps.map((step, index) => {
-            const active = currentStep === step.id;
-            const complete =
+        <BuilderStepRail
+          title="Workflow"
+          steps={builderSteps.map((step) => ({
+            ...step,
+            complete:
               step.id === "template"
                 ? Boolean(selectedTemplate)
                 : step.id === "autofill"
                   ? Boolean(templatePlan && templatePlan.missingProjectFields.length === 0)
                   : step.id === "flow"
                     ? includedQuestDrafts.length + includedRewardDrafts.length > 0
-                    : Boolean(templatePlan?.campaignDraft.title);
-
-            return (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => setCurrentStep(step.id)}
-                className={`rounded-[24px] border px-4 py-4 text-left transition ${
-                  active
-                    ? "border-primary/50 bg-primary/10"
-                    : "border-line bg-card hover:border-primary/30"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
-                      {step.eyebrow}
-                    </p>
-                    <p className="mt-2 text-sm font-bold text-text">
-                      {index + 1}. {step.label}
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-                      complete
-                        ? "bg-primary/15 text-primary"
-                        : active
-                          ? "bg-card2 text-text"
-                          : "bg-card2 text-sub"
-                    }`}
-                  >
-                    {complete ? "Ready" : active ? "Current" : "Open"}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-sub">{step.description}</p>
-              </button>
-            );
-          })}
-        </div>
+                    : Boolean(templatePlan?.campaignDraft.title),
+          }))}
+          currentStep={currentStep}
+          onSelect={setCurrentStep}
+        />
 
         {currentStep !== "launch" ? (
         <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
@@ -991,31 +942,13 @@ export default function NewCampaignPage() {
         </div>
         ) : null}
 
-        <div className="flex flex-col gap-3 rounded-[28px] border border-line bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => previousStep && setCurrentStep(previousStep.id)}
-              disabled={!previousStep}
-              className="rounded-2xl border border-line bg-card2 px-5 py-3 font-bold text-text disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Back
-            </button>
-            {nextStep ? (
-              <button
-                type="button"
-                onClick={() => setCurrentStep(nextStep.id)}
-                className="rounded-2xl bg-primary px-5 py-3 font-bold text-black"
-              >
-                Continue to {nextStep.label}
-              </button>
-            ) : null}
-          </div>
-
-          <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-sub">
-            {currentStepMeta.eyebrow} | {currentStepMeta.label}
-          </div>
-        </div>
+        <BuilderBottomNav
+          canGoBack={Boolean(previousStep)}
+          onBack={() => previousStep && setCurrentStep(previousStep.id)}
+          nextLabel={nextStep ? `Continue to ${nextStep.label}` : undefined}
+          onNext={nextStep ? () => setCurrentStep(nextStep.id) : undefined}
+          footerLabel={`${currentStepMeta.eyebrow} | ${currentStepMeta.label}`}
+        />
       </div>
     </AdminShell>
   );
