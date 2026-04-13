@@ -136,6 +136,10 @@ export default function NewCampaignPage() {
   const [stepError, setStepError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationMessage, setGenerationMessage] = useState<string | null>(null);
+  const [generatedCampaign, setGeneratedCampaign] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const selectedProject = useMemo(
     () =>
@@ -1034,8 +1038,11 @@ export default function NewCampaignPage() {
                   }
                 }
 
-                setGenerationMessage("Campaign created. Opening the campaign workspace...");
-                router.push(`/campaigns/${campaignId}`);
+                setGenerationMessage("Campaign generated successfully. Review the next step below.");
+                setGeneratedCampaign({
+                  id: campaignId,
+                  title: values.title,
+                });
               } catch (error: any) {
                 setGenerationMessage(error?.message || "Failed to generate the campaign.");
                 throw error;
@@ -1052,6 +1059,21 @@ export default function NewCampaignPage() {
           <div className="rounded-[24px] border border-rose-500/30 bg-rose-500/10 px-4 py-4 text-sm text-rose-100">
             {stepError}
           </div>
+        ) : null}
+
+        {generatedCampaign ? (
+          <SuccessCampaignModal
+            campaign={generatedCampaign}
+            onClose={() => setGeneratedCampaign(null)}
+            onOpenOverview={() => {
+              setGeneratedCampaign(null);
+              router.push("/campaigns");
+            }}
+            onOpenCampaign={() => {
+              setGeneratedCampaign(null);
+              router.push(`/campaigns/${generatedCampaign.id}`);
+            }}
+          />
         ) : null}
 
         <BuilderBottomNav
@@ -1074,6 +1096,85 @@ export default function NewCampaignPage() {
         />
       </div>
     </AdminShell>
+  );
+}
+
+function SuccessCampaignModal({
+  campaign,
+  onClose,
+  onOpenOverview,
+  onOpenCampaign,
+}: {
+  campaign: {
+    id: string;
+    title: string;
+  };
+  onClose: () => void;
+  onOpenOverview: () => void;
+  onOpenCampaign: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4 backdrop-blur-md">
+      <div className="w-full max-w-2xl rounded-[32px] border border-primary/20 bg-[linear-gradient(180deg,rgba(16,20,28,0.98),rgba(8,10,16,0.98))] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
+              Campaign Generated
+            </p>
+            <h3 className="mt-3 text-3xl font-extrabold tracking-[-0.03em] text-text">
+              Your campaign is ready to go
+            </h3>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-sub">
+              <span className="font-semibold text-text">{campaign.title}</span> has
+              been generated successfully. You can check its status in the campaign
+              overview or jump straight into the campaign workspace.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-sub transition hover:bg-white/[0.08] hover:text-text"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          <PreviewStat label="Campaign title" value={campaign.title} />
+          <PreviewStat label="Status route" value="Check in overview" />
+          <PreviewStat label="Next move" value="Review and publish" />
+        </div>
+
+        <div className="mt-6 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+            Next step
+          </p>
+          <p className="mt-3 text-sm leading-7 text-sub">
+            Open the campaign overview to confirm status, continue editing drafts,
+            or jump directly into the generated campaign if you want to inspect the
+            linked quest and reward flow right away.
+          </p>
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onOpenCampaign}
+            className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3 font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+          >
+            Open Campaign
+          </button>
+          <button
+            type="button"
+            onClick={onOpenOverview}
+            className="rounded-2xl bg-primary px-5 py-3 font-bold text-black transition hover:-translate-y-0.5 hover:brightness-110"
+          >
+            Check Status In Overview
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
