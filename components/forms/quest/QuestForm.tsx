@@ -15,6 +15,13 @@ type Props = {
   submitLabel?: string;
 };
 
+type QuestBuilderStepId =
+  | "blueprint"
+  | "setup"
+  | "logic"
+  | "verification"
+  | "launch";
+
 const QUEST_TYPE_PRESETS: Record<
   AdminQuest["questType"],
   {
@@ -185,6 +192,44 @@ const QUEST_TYPE_PRESETS: Record<
   },
 };
 
+const questBuilderSteps: Array<{
+  id: QuestBuilderStepId;
+  eyebrow: string;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: "blueprint",
+    eyebrow: "Step 1",
+    label: "Pick blueprint",
+    description: "Start from the mechanic that best matches the contributor action you want.",
+  },
+  {
+    id: "setup",
+    eyebrow: "Step 2",
+    label: "Set destination",
+    description: "Place the quest inside the right project and campaign, then define its core copy.",
+  },
+  {
+    id: "logic",
+    eyebrow: "Step 3",
+    label: "Shape quest logic",
+    description: "Tune quest type, platform, XP, CTA, and the contributor journey.",
+  },
+  {
+    id: "verification",
+    eyebrow: "Step 4",
+    label: "Proof and verification",
+    description: "Decide how the quest is checked and what signals route it into review.",
+  },
+  {
+    id: "launch",
+    eyebrow: "Step 5",
+    label: "Review and launch",
+    description: "Set limits, timing, and launch readiness before saving the quest.",
+  },
+];
+
 export default function QuestForm({
   projects,
   campaigns,
@@ -195,6 +240,7 @@ export default function QuestForm({
 }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<QuestBuilderStepId>("blueprint");
   const [values, setValues] = useState<Omit<AdminQuest, "id">>(
     initialValues || {
       projectId: defaultProjectId || projects[0]?.id || "",
@@ -243,6 +289,43 @@ export default function QuestForm({
     () => getQuestVerificationPreview(values),
     [values]
   );
+  const currentStepIndex = questBuilderSteps.findIndex((step) => step.id === currentStep);
+  const currentStepMeta = questBuilderSteps[currentStepIndex];
+  const previousStep = questBuilderSteps[currentStepIndex - 1];
+  const nextStep = questBuilderSteps[currentStepIndex + 1];
+  const readinessItems = [
+    {
+      label: "Project placement",
+      value: values.projectId && values.campaignId ? "Ready" : "Missing project or campaign",
+      complete: Boolean(values.projectId && values.campaignId),
+    },
+    {
+      label: "Destination",
+      value: values.actionUrl ? "Connected" : "Add an action URL",
+      complete: Boolean(values.actionUrl),
+    },
+    {
+      label: "Verification",
+      value: verificationPreview.routeLabel,
+      complete:
+        !verificationPreview.invalidConfig &&
+        verificationPreview.missingConfigKeys.length === 0,
+    },
+    {
+      label: "Proof flow",
+      value: values.proofRequired ? values.proofType : "No proof required",
+      complete: !values.proofRequired || values.proofType !== "none",
+    },
+  ];
+  const stepCompletion: Record<QuestBuilderStepId, boolean> = {
+    blueprint: Boolean(values.questType),
+    setup: Boolean(values.projectId && values.campaignId && values.title && values.description),
+    logic: Boolean(values.actionLabel && values.platform),
+    verification:
+      !verificationPreview.invalidConfig &&
+      verificationPreview.missingConfigKeys.length === 0,
+    launch: Boolean(values.status),
+  };
 
   useEffect(() => {
     if (!values.projectId && defaultProjectId) {
@@ -291,7 +374,7 @@ export default function QuestForm({
 
   return (
     <form
-      className="space-y-8"
+      className="space-y-6"
       onSubmit={async (e) => {
         e.preventDefault();
         setSubmitting(true);
@@ -306,6 +389,89 @@ export default function QuestForm({
         }
       }}
     >
+      <div className="rounded-[32px] border border-line bg-card p-6">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
+              Quest Builder Wizard
+            </p>
+            <h2 className="mt-2 text-3xl font-extrabold text-text">
+              Build the quest one decision at a time
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-sub">
+              Choose the mechanic, connect the destination, define verification, and
+              launch with much less noise on screen.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <RouteInfoCard label="Blueprint" value={activePreset.label} />
+            <RouteInfoCard label="Verification route" value={verificationPreview.routeLabel} />
+            <RouteInfoCard label="Missing config" value={verificationPreview.invalidConfig ? "Invalid JSON" : String(verificationPreview.missingConfigKeys.length)} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[0.78fr_1.42fr_0.9fr]">
+        <aside className="rounded-[28px] border border-line bg-card p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Progress</p>
+          <div className="mt-4 space-y-3">
+            {questBuilderSteps.map((step, index) => {
+              const active = currentStep === step.id;
+              const complete = stepCompletion[step.id];
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  onClick={() => setCurrentStep(step.id)}
+                  className={`w-full rounded-[22px] border px-4 py-4 text-left transition ${
+                    active
+                      ? "border-primary/50 bg-primary/10"
+                      : "border-line bg-card2 hover:border-primary/30"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
+                        {step.eyebrow}
+                      </p>
+                      <p className="mt-2 text-sm font-bold text-text">
+                        {index + 1}. {step.label}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+                        complete ? "bg-primary/15 text-primary" : active ? "bg-card text-text" : "bg-card text-sub"
+                      }`}
+                    >
+                      {complete ? "Ready" : active ? "Current" : "Open"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-sub">{step.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        <div className="space-y-6 rounded-[28px] border border-line bg-card p-6">
+          <div className="flex flex-col gap-3 border-b border-line pb-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                {currentStepMeta.eyebrow}
+              </p>
+              <h3 className="mt-2 text-2xl font-extrabold text-text">{currentStepMeta.label}</h3>
+              <p className="mt-2 text-sm leading-6 text-sub">{currentStepMeta.description}</p>
+            </div>
+            <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Workflow</p>
+              <p className="mt-2 text-sm font-semibold text-text">
+                {currentStepIndex + 1} of {questBuilderSteps.length}
+              </p>
+            </div>
+          </div>
+
+      {currentStep === "blueprint" ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Quest Blueprint
@@ -357,7 +523,9 @@ export default function QuestForm({
           </div>
         </div>
       </div>
+      ) : null}
 
+      {currentStep === "setup" ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           General
@@ -451,7 +619,9 @@ export default function QuestForm({
           />
         </Field>
       </div>
+      ) : null}
 
+      {currentStep === "logic" ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Quest Logic
@@ -542,7 +712,9 @@ export default function QuestForm({
           <span className="font-semibold text-text">Builder hint:</span> use the action label and URL as the exact CTA contributors will see in the app. For social or onchain quests, point this directly at the target destination so the flow feels one-tap.
         </div>
       </div>
+      ) : null}
 
+      {currentStep === "verification" ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Proof & Verification
@@ -666,7 +838,10 @@ export default function QuestForm({
           </div>
         </div>
       </div>
+      ) : null}
 
+      {currentStep === "launch" ? (
+      <>
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Limits
@@ -774,6 +949,8 @@ export default function QuestForm({
           </Field>
         </div>
       </div>
+      </>
+      ) : null}
 
       {submitError ? (
         <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
@@ -781,13 +958,99 @@ export default function QuestForm({
         </div>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="rounded-2xl bg-primary px-5 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {submitting ? "Saving..." : submitLabel}
-      </button>
+          <div className="flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => previousStep && setCurrentStep(previousStep.id)}
+                disabled={!previousStep}
+                className="rounded-2xl border border-line bg-card2 px-5 py-3 font-bold text-text disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Back
+              </button>
+              {nextStep ? (
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(nextStep.id)}
+                  className="rounded-2xl bg-primary px-5 py-3 font-bold text-black"
+                >
+                  Continue
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-2xl bg-primary px-5 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting ? "Saving..." : submitLabel}
+                </button>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-sub">
+              {currentStepMeta.eyebrow} • {currentStepMeta.label}
+            </div>
+          </div>
+        </div>
+
+        <aside className="space-y-6">
+          <div className="rounded-[28px] border border-line bg-card p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Blueprint Summary</p>
+            <div className="mt-4 rounded-2xl border border-line bg-card2 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-text">{activePreset.label}</p>
+                  <p className="mt-2 text-sm leading-6 text-sub">{activePreset.summary}</p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.type}</span>
+                  <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">{activePreset.platform}</span>
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.verificationType}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-line bg-card p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Readiness Guide</p>
+            <div className="mt-4 space-y-3">
+              {readinessItems.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-text">{item.label}</p>
+                    <span
+                      className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+                        item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                      }`}
+                    >
+                      {item.complete ? "Ready" : "Needs work"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-line bg-card p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Verification Routing</p>
+            <div className="mt-4 space-y-3">
+              <RouteInfoCard label="Route" value={verificationPreview.routeLabel} />
+              <RouteInfoCard label="Proof expectation" value={verificationPreview.proofExpectation} />
+              <RouteInfoCard
+                label="Missing keys"
+                value={
+                  verificationPreview.invalidConfig
+                    ? "Invalid JSON"
+                    : verificationPreview.missingConfigKeys.length
+                      ? verificationPreview.missingConfigKeys.join(", ")
+                      : "None"
+                }
+              />
+            </div>
+          </div>
+        </aside>
+      </div>
     </form>
   );
 }
