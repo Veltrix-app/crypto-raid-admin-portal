@@ -15,6 +15,8 @@ import {
   ResolvedRewardDraft,
 } from "@/lib/campaign-templates";
 import { AdminProject } from "@/types/entities/project";
+import { AdminQuest } from "@/types/entities/quest";
+import { AdminReward } from "@/types/entities/reward";
 
 type EditableProjectContextField =
   | "website"
@@ -23,6 +25,13 @@ type EditableProjectContextField =
   | "discordUrl"
   | "bannerUrl"
   | "contactEmail";
+
+type EditableQuestDraft = Pick<
+  AdminQuest,
+  "title" | "description" | "xp" | "actionUrl" | "actionLabel"
+>;
+
+type EditableRewardDraft = Pick<AdminReward, "title" | "description" | "cost">;
 
 export default function NewCampaignPage() {
   const router = useRouter();
@@ -39,6 +48,12 @@ export default function NewCampaignPage() {
   const [selectedRewardKeys, setSelectedRewardKeys] = useState<string[]>([]);
   const [projectContextDraft, setProjectContextDraft] = useState<
     Partial<Pick<AdminProject, EditableProjectContextField>>
+  >({});
+  const [questDraftEdits, setQuestDraftEdits] = useState<
+    Record<string, Partial<EditableQuestDraft>>
+  >({});
+  const [rewardDraftEdits, setRewardDraftEdits] = useState<
+    Record<string, Partial<EditableRewardDraft>>
   >({});
   const [contextSaving, setContextSaving] = useState(false);
   const [contextMessage, setContextMessage] = useState<string | null>(null);
@@ -76,6 +91,8 @@ export default function NewCampaignPage() {
 
   useEffect(() => {
     setProjectContextDraft({});
+    setQuestDraftEdits({});
+    setRewardDraftEdits({});
     setContextMessage(null);
   }, [selectedProject?.id, selectedTemplateId]);
 
@@ -86,18 +103,58 @@ export default function NewCampaignPage() {
 
   const includedQuestDrafts = useMemo(
     () =>
-      templatePlan?.questDrafts.filter((quest) =>
-        selectedQuestKeys.includes(quest.key)
-      ) ?? [],
-    [selectedQuestKeys, templatePlan]
+      templatePlan?.questDrafts
+        .map((quest) => ({
+          ...quest,
+          draft: {
+            ...quest.draft,
+            ...(questDraftEdits[quest.key] ?? {}),
+          },
+        }))
+        .filter((quest) => selectedQuestKeys.includes(quest.key)) ?? [],
+    [questDraftEdits, selectedQuestKeys, templatePlan]
   );
   const includedRewardDrafts = useMemo(
     () =>
-      templatePlan?.rewardDrafts.filter((reward) =>
-        selectedRewardKeys.includes(reward.key)
-      ) ?? [],
-    [selectedRewardKeys, templatePlan]
+      templatePlan?.rewardDrafts
+        .map((reward) => ({
+          ...reward,
+          draft: {
+            ...reward.draft,
+            ...(rewardDraftEdits[reward.key] ?? {}),
+          },
+        }))
+        .filter((reward) => selectedRewardKeys.includes(reward.key)) ?? [],
+    [rewardDraftEdits, selectedRewardKeys, templatePlan]
   );
+
+  function updateQuestDraftEdit(
+    key: string,
+    field: keyof EditableQuestDraft,
+    value: string | number
+  ) {
+    setQuestDraftEdits((current) => ({
+      ...current,
+      [key]: {
+        ...(current[key] ?? {}),
+        [field]: value,
+      },
+    }));
+  }
+
+  function updateRewardDraftEdit(
+    key: string,
+    field: keyof EditableRewardDraft,
+    value: string | number
+  ) {
+    setRewardDraftEdits((current) => ({
+      ...current,
+      [key]: {
+        ...(current[key] ?? {}),
+        [field]: value,
+      },
+    }));
+  }
 
   async function saveProjectContextFields() {
     if (!selectedProject || !templatePlan || templatePlan.missingProjectFields.length === 0) {
@@ -335,7 +392,13 @@ export default function NewCampaignPage() {
                     {templatePlan.questDrafts.map((quest, index) => (
                       <TemplateQuestCard
                         key={quest.key}
-                        item={quest}
+                        item={{
+                          ...quest,
+                          draft: {
+                            ...quest.draft,
+                            ...(questDraftEdits[quest.key] ?? {}),
+                          },
+                        }}
                         index={index}
                         included={selectedQuestKeys.includes(quest.key)}
                         onToggle={() =>
@@ -345,6 +408,7 @@ export default function NewCampaignPage() {
                               : [...current, quest.key]
                           )
                         }
+                        onEdit={updateQuestDraftEdit}
                       />
                     ))}
                   </div>
@@ -358,7 +422,13 @@ export default function NewCampaignPage() {
                     {templatePlan.rewardDrafts.map((reward) => (
                       <TemplateRewardCard
                         key={reward.key}
-                        item={reward}
+                        item={{
+                          ...reward,
+                          draft: {
+                            ...reward.draft,
+                            ...(rewardDraftEdits[reward.key] ?? {}),
+                          },
+                        }}
                         included={selectedRewardKeys.includes(reward.key)}
                         onToggle={() =>
                           setSelectedRewardKeys((current) =>
@@ -367,6 +437,7 @@ export default function NewCampaignPage() {
                               : [...current, reward.key]
                           )
                         }
+                        onEdit={updateRewardDraftEdit}
                       />
                     ))}
                   </div>
@@ -443,11 +514,17 @@ function TemplateQuestCard({
   index,
   included,
   onToggle,
+  onEdit,
 }: {
   item: ResolvedQuestDraft;
   index: number;
   included: boolean;
   onToggle: () => void;
+  onEdit: (
+    key: string,
+    field: keyof EditableQuestDraft,
+    value: string | number
+  ) => void;
 }) {
   return (
     <div className="rounded-2xl border border-line bg-card px-4 py-4">
@@ -511,6 +588,75 @@ function TemplateQuestCard({
           }
         />
       </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <label className="block">
+          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
+            Quest title
+          </span>
+          <input
+            value={item.draft.title}
+            onChange={(event) => onEdit(item.key, "title", event.target.value)}
+            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
+            XP
+          </span>
+          <input
+            type="number"
+            min={0}
+            value={item.draft.xp}
+            onChange={(event) =>
+              onEdit(item.key, "xp", Number(event.target.value || 0))
+            }
+            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+          />
+        </label>
+
+        <label className="block md:col-span-2">
+          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
+            Description
+          </span>
+          <textarea
+            value={item.draft.description}
+            onChange={(event) =>
+              onEdit(item.key, "description", event.target.value)
+            }
+            rows={3}
+            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
+            Action label
+          </span>
+          <input
+            value={item.draft.actionLabel}
+            onChange={(event) =>
+              onEdit(item.key, "actionLabel", event.target.value)
+            }
+            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
+            Action URL
+          </span>
+          <input
+            value={item.draft.actionUrl ?? ""}
+            onChange={(event) =>
+              onEdit(item.key, "actionUrl", event.target.value)
+            }
+            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            placeholder="https://..."
+          />
+        </label>
+      </div>
     </div>
   );
 }
@@ -519,10 +665,16 @@ function TemplateRewardCard({
   item,
   included,
   onToggle,
+  onEdit,
 }: {
   item: ResolvedRewardDraft;
   included: boolean;
   onToggle: () => void;
+  onEdit: (
+    key: string,
+    field: keyof EditableRewardDraft,
+    value: string | number
+  ) => void;
 }) {
   return (
     <div className="rounded-2xl border border-line bg-card px-4 py-4">
@@ -567,6 +719,48 @@ function TemplateRewardCard({
               : "Base defaults only"
           }
         />
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <label className="block">
+          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
+            Reward title
+          </span>
+          <input
+            value={item.draft.title}
+            onChange={(event) => onEdit(item.key, "title", event.target.value)}
+            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
+            Cost
+          </span>
+          <input
+            type="number"
+            min={0}
+            value={item.draft.cost}
+            onChange={(event) =>
+              onEdit(item.key, "cost", Number(event.target.value || 0))
+            }
+            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+          />
+        </label>
+
+        <label className="block md:col-span-2">
+          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
+            Description
+          </span>
+          <textarea
+            value={item.draft.description}
+            onChange={(event) =>
+              onEdit(item.key, "description", event.target.value)
+            }
+            rows={3}
+            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+          />
+        </label>
       </div>
     </div>
   );
