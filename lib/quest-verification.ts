@@ -101,6 +101,24 @@ export function getQuestVerificationPreview(
     : `Contributors must submit ${params.proofType.replace(/_/g, " ")} proof.`;
 
   if (
+    params.questType === "telegram_join" &&
+    params.verificationProvider === "telegram" &&
+    params.completionMode === "integration_auto" &&
+    !invalid &&
+    missingConfigKeys.length === 0
+  ) {
+    return {
+      routeLabel: "Telegram auto-verify",
+      routeDescription:
+        "Veltrix will route this quest through Telegram identity and group membership verification instead of treating it like a blind rule auto-approve.",
+      proofExpectation: "Contributors connect Telegram, join the group and wait for membership confirmation.",
+      requiredConfigKeys,
+      missingConfigKeys,
+      invalidConfig: false,
+    };
+  }
+
+  if (
     params.questType === "discord_join" &&
     params.verificationProvider === "discord" &&
     params.completionMode === "integration_auto" &&

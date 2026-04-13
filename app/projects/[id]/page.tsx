@@ -33,6 +33,7 @@ export default function ProjectDetailPage() {
   const rewards = useAdminPortalStore((s) => s.rewards);
   const teamMembers = useAdminPortalStore((s) => s.teamMembers);
   const [discordIntegrationStatus, setDiscordIntegrationStatus] = useState<string>("unknown");
+  const [telegramIntegrationStatus, setTelegramIntegrationStatus] = useState<string>("unknown");
 
   const project = useMemo(
     () => getProjectById(params.id),
@@ -54,15 +55,24 @@ export default function ProjectDetailPage() {
       if (!project?.id) return;
 
       const supabase = createClient();
-      const { data } = await supabase
-        .from("project_integrations")
-        .select("status")
-        .eq("project_id", project.id)
-        .eq("provider", "discord")
-        .maybeSingle();
+      const [{ data: discordData }, { data: telegramData }] = await Promise.all([
+        supabase
+          .from("project_integrations")
+          .select("status")
+          .eq("project_id", project.id)
+          .eq("provider", "discord")
+          .maybeSingle(),
+        supabase
+          .from("project_integrations")
+          .select("status")
+          .eq("project_id", project.id)
+          .eq("provider", "telegram")
+          .maybeSingle(),
+      ]);
 
       if (cancelled) return;
-      setDiscordIntegrationStatus(data?.status ?? "not_connected");
+      setDiscordIntegrationStatus(discordData?.status ?? "not_connected");
+      setTelegramIntegrationStatus(telegramData?.status ?? "not_connected");
     }
 
     loadProjectIntegrations();
@@ -456,16 +466,33 @@ export default function ProjectDetailPage() {
                   }
                 />
                 <DetailMetaRow
+                  label="Telegram quest verification"
+                  value={
+                    telegramIntegrationStatus === "connected"
+                      ? "Telegram integration connected"
+                      : telegramIntegrationStatus === "needs_attention"
+                      ? "Telegram integration needs attention"
+                      : "Telegram integration not connected"
+                  }
+                />
+                <DetailMetaRow
                   label="Discord invite"
                   value={project.discordUrl || "No Discord URL on project yet"}
                 />
                 <DetailMetaRow
+                  label="Telegram group"
+                  value={project.telegramUrl || "No Telegram URL on project yet"}
+                />
+                <DetailMetaRow
                   label="What this unlocks"
-                  value={
+                  value={[
                     discordIntegrationStatus === "connected"
                       ? "Discord join quests can route into integration verification."
-                      : "Connect the Discord integration to move join quests beyond placeholder automation."
-                  }
+                      : "Connect the Discord integration to move Discord join quests beyond placeholder automation.",
+                    telegramIntegrationStatus === "connected"
+                      ? "Telegram join quests can route into integration verification."
+                      : "Connect the Telegram integration to move Telegram join quests beyond placeholder automation.",
+                  ].join(" ")}
                 />
               </div>
             </DetailSidebarSurface>
