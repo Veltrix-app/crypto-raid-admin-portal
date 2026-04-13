@@ -9,8 +9,9 @@ import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import {
   buildCampaignTemplate,
   CampaignTemplateId,
+  CampaignTemplateOption,
   formatProjectFieldLabel,
-  getCampaignTemplateOptions,
+  getRecommendedCampaignTemplateOptions,
   ResolvedQuestDraft,
   ResolvedRewardDraft,
 } from "@/lib/campaign-templates";
@@ -76,7 +77,10 @@ export default function NewCampaignPage() {
     [projectContextDraft, selectedProject]
   );
 
-  const templateOptions = getCampaignTemplateOptions();
+  const templateOptions = useMemo(
+    () => getRecommendedCampaignTemplateOptions(effectiveProject),
+    [effectiveProject]
+  );
   const templatePlan = useMemo(
     () =>
       effectiveProject
@@ -270,10 +274,43 @@ export default function NewCampaignPage() {
                           {template.summary}
                         </p>
                       </div>
-                      <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
-                        {template.quests.length} quests / {template.rewards.length} rewards
-                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+                            template.fitLabel === "Best fit"
+                              ? "bg-primary/20 text-primary"
+                              : template.fitLabel === "Strong fit"
+                              ? "bg-emerald-500/15 text-emerald-300"
+                              : template.fitLabel === "Good fit"
+                              ? "bg-white/5 text-text"
+                              : "bg-amber-500/15 text-amber-300"
+                          }`}
+                        >
+                          {template.fitLabel}
+                        </span>
+                        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
+                          {template.fitScore}/100 fit
+                        </span>
+                        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
+                          {template.quests.length} quests / {template.rewards.length} rewards
+                        </span>
+                      </div>
                     </div>
+
+                    {template.fitReasons.length > 0 ? (
+                      <div className="mt-3 rounded-2xl border border-line bg-card px-4 py-3">
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                          Why this fit
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          {template.fitReasons.map((reason) => (
+                            <p key={reason} className="text-sm leading-6 text-sub">
+                              {reason}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </button>
                 );
               })}
@@ -303,6 +340,10 @@ export default function NewCampaignPage() {
                   <PreviewStat
                     label="Campaign title"
                     value={templatePlan.campaignDraft.title}
+                  />
+                  <PreviewStat
+                    label="Template fit"
+                    value={`${selectedTemplate.fitLabel} (${selectedTemplate.fitScore}/100)`}
                   />
                   <PreviewStat
                     label="Quest drafts"

@@ -58,6 +58,12 @@ export type ResolvedRewardDraft = {
   autofilledFields: string[];
 };
 
+export type CampaignTemplateOption = CampaignTemplateDefinition & {
+  fitScore: number;
+  fitLabel: "Best fit" | "Strong fit" | "Good fit" | "Needs setup";
+  fitReasons: string[];
+};
+
 const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinition> = {
   community_growth_starter: {
     id: "community_growth_starter",
@@ -957,7 +963,18 @@ function resolveRewardDraft(
 }
 
 export function getCampaignTemplateOptions() {
-  return Object.values(TEMPLATE_DEFINITIONS);
+  return Object.values(TEMPLATE_DEFINITIONS).map((template) => ({
+    ...template,
+    fitScore: 0,
+    fitLabel: "Good fit" as const,
+    fitReasons: [],
+  }));
+}
+
+export function getRecommendedCampaignTemplateOptions(project?: AdminProject | null) {
+  return Object.values(TEMPLATE_DEFINITIONS)
+    .map((template) => assessTemplateFit(template, project))
+    .sort((a, b) => b.fitScore - a.fitScore || a.label.localeCompare(b.label));
 }
 
 export function buildCampaignTemplate(
@@ -1026,4 +1043,93 @@ export function formatProjectFieldLabel(field: keyof AdminProject) {
     default:
       return field.replace(/([A-Z])/g, " $1").replace(/^./, (char) => char.toUpperCase());
   }
+}
+
+function assessTemplateFit(
+  template: CampaignTemplateDefinition,
+  project?: AdminProject | null
+): CampaignTemplateOption {
+  if (!project) {
+    return {
+      ...template,
+      fitScore: 40,
+      fitLabel: "Good fit",
+      fitReasons: ["Choose a project workspace to get a personalized recommendation."],
+    };
+  }
+
+  const reasons: string[] = [];
+  let score = 45;
+
+  const presentRequiredFields = template.requiredProjectFields.filter((field) =>
+    Boolean(getProjectFieldValue(project, field))
+  );
+  const missingRequiredFields = template.requiredProjectFields.filter(
+    (field) => !getProjectFieldValue(project, field)
+  );
+
+  score += presentRequiredFields.length * 10;
+  score -= missingRequiredFields.length * 8;
+
+  if (presentRequiredFields.length > 0) {
+    reasons.push(
+      `Ready project context: ${presentRequiredFields
+        .map((field) => formatProjectFieldLabel(field))
+        .join(", ")}.`
+    );
+  }
+
+  if (missingRequiredFields.length > 0) {
+    reasons.push(
+      `Needs setup for ${missingRequiredFields
+        .map((field) => formatProjectFieldLabel(field))
+        .join(", ")}.`
+    );
+  }
+
+  if (template.id === "holder_activation_path" && project.chain.trim()) {
+    score += 18;
+    reasons.push(`Chain is already set to ${project.chain}, which helps wallet-first onboarding.`);
+  }
+
+  if (
+    (template.id === "community_growth_starter" ||
+      template.id === "ecosystem_onboarding_loop" ||
+      template.id === "social_raid_push") &&
+    (project.telegramUrl || project.discordUrl)
+  ) {
+    score += 10;
+    reasons.push("Community channels are already connected, so social/community quests can auto-wire fast.");
+  }
+
+  if (
+    (template.id === "launch_hype_sprint" ||
+      template.id === "content_creator_flywheel" ||
+      template.id === "referral_growth_loop") &&
+    project.xUrl
+  ) {
+    score += 10;
+    reasons.push("The X profile is connected, which strengthens social, creator and launch templates.");
+  }
+
+  if ((template.id === "referral_growth_loop" || template.id === "launch_hype_sprint") && project.website) {
+    score += 8;
+    reasons.push("Website traffic is ready to route into launch or referral conversion.");
+  }
+
+  const fitLabel =
+    score >= 88
+      ? "Best fit"
+      : score >= 72
+      ? "Strong fit"
+      : score >= 55
+      ? "Good fit"
+      : "Needs setup";
+
+  return {
+    ...template,
+    fitScore: Math.max(0, Math.min(100, score)),
+    fitLabel,
+    fitReasons: reasons.slice(0, 3),
+  };
 }
