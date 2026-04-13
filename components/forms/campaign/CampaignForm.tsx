@@ -8,9 +8,42 @@ type Props = {
   projects: AdminProject[];
   initialValues?: Omit<AdminCampaign, "id">;
   defaultProjectId?: string;
+  resetKey?: string;
   onSubmit: (values: Omit<AdminCampaign, "id">) => void | Promise<void>;
   submitLabel?: string;
 };
+
+function getDefaultCampaignValues(
+  projects: AdminProject[],
+  defaultProjectId?: string
+): Omit<AdminCampaign, "id"> {
+  return {
+    projectId: defaultProjectId || projects[0]?.id || "",
+
+    title: "",
+    slug: "",
+
+    shortDescription: "",
+    longDescription: "",
+
+    bannerUrl: "",
+    thumbnailUrl: "",
+
+    campaignType: "hybrid",
+
+    xpBudget: 0,
+    participants: 0,
+    completionRate: 0,
+
+    visibility: "public",
+    featured: false,
+
+    startsAt: "",
+    endsAt: "",
+
+    status: "draft",
+  };
+}
 
 const CAMPAIGN_TYPE_PRESETS: Record<
   AdminCampaign["campaignType"],
@@ -77,36 +110,12 @@ export default function CampaignForm({
   projects,
   initialValues,
   defaultProjectId,
+  resetKey,
   onSubmit,
   submitLabel = "Save Campaign",
 }: Props) {
   const [values, setValues] = useState<Omit<AdminCampaign, "id">>(
-    initialValues || {
-      projectId: defaultProjectId || projects[0]?.id || "",
-
-      title: "",
-      slug: "",
-
-      shortDescription: "",
-      longDescription: "",
-
-      bannerUrl: "",
-      thumbnailUrl: "",
-
-      campaignType: "hybrid",
-
-      xpBudget: 0,
-      participants: 0,
-      completionRate: 0,
-
-      visibility: "public",
-      featured: false,
-
-      startsAt: "",
-      endsAt: "",
-
-      status: "draft",
-    }
+    initialValues || getDefaultCampaignValues(projects, defaultProjectId)
   );
   const [selectedPreset, setSelectedPreset] = useState<AdminCampaign["campaignType"]>(
     initialValues?.campaignType || "hybrid"
@@ -122,6 +131,12 @@ export default function CampaignForm({
       setValues((current) => ({ ...current, projectId: defaultProjectId }));
     }
   }, [defaultProjectId, values.projectId]);
+
+  useEffect(() => {
+    if (!resetKey) return;
+    setValues(initialValues || getDefaultCampaignValues(projects, defaultProjectId));
+    setSelectedPreset(initialValues?.campaignType || "hybrid");
+  }, [defaultProjectId, projects, resetKey]);
 
   useEffect(() => {
     if (!initialValues?.slug && values.title) {
