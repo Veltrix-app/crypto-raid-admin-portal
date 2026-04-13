@@ -163,19 +163,28 @@ export function OpsSearchInput({
   value,
   onChange,
   placeholder,
+  ariaLabel = "Search",
+  name = "search",
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  ariaLabel?: string;
+  name?: string;
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-[20px] border border-line bg-card2 px-4 py-3">
+    <label className="flex items-center gap-3 rounded-[20px] border border-line bg-card2 px-4 py-3 transition focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/30">
       <span className="text-sub">Search</span>
       <input
+        type="search"
+        name={name}
+        aria-label={ariaLabel}
+        autoComplete="off"
+        spellCheck={false}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-transparent text-sm text-text outline-none placeholder:text-sub/70"
+        className="w-full bg-transparent text-sm text-text placeholder:text-sub/70 focus:outline-none"
       />
     </label>
   );
@@ -185,16 +194,22 @@ export function OpsSelect({
   value,
   onChange,
   children,
+  ariaLabel,
+  name,
 }: {
   value: string;
   onChange: (value: string) => void;
   children: ReactNode;
+  ariaLabel: string;
+  name?: string;
 }) {
   return (
     <select
+      name={name}
+      aria-label={ariaLabel}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-text outline-none"
+      className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-text transition focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
     >
       {children}
     </select>

@@ -84,11 +84,15 @@ export default function ModerationPage() {
           <OpsSearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Search user, quest, flag type or reason..."
+            placeholder="Search user, quest, flag type or reason…"
+            ariaLabel="Search moderation queue"
+            name="moderation-search"
           />
           <OpsSelect
             value={flagSeverity}
             onChange={(value) => setFlagSeverity(value as "all" | "high" | "medium" | "low")}
+            ariaLabel="Filter review flags by severity"
+            name="moderation-severity"
           >
             <option value="all">all severities</option>
             <option value="high">high</option>
@@ -98,6 +102,8 @@ export default function ModerationPage() {
           <OpsSelect
             value={submissionStatus}
             onChange={(value) => setSubmissionStatus(value as "all" | "pending" | "approved" | "rejected")}
+            ariaLabel="Filter submissions by moderation status"
+            name="moderation-status"
           >
             <option value="pending">pending submissions</option>
             <option value="all">all submissions</option>

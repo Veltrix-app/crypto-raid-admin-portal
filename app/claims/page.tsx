@@ -134,9 +134,11 @@ export default function ClaimsPage() {
           <OpsSearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Search user, reward, project or campaign..."
+            placeholder="Search user, reward, project or campaign…"
+            ariaLabel="Search claims"
+            name="claim-search"
           />
-          <OpsSelect value={status} onChange={setStatus}>
+          <OpsSelect value={status} onChange={setStatus} ariaLabel="Filter claims by status" name="claim-status">
             <option value="all">all statuses</option>
             <option value="pending">pending</option>
             <option value="processing">processing</option>

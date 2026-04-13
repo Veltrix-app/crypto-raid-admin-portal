@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   OpsFilterBar,
@@ -18,9 +19,20 @@ export default function SubmissionsPage() {
   const submissions = useAdminPortalStore((s) => s.submissions);
   const users = useAdminPortalStore((s) => s.users);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
+  const [status, setStatus] = useState(() => searchParams.get("status") ?? "all");
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (status !== "all") params.set("status", status);
+    const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(next, { scroll: false });
+  }, [pathname, router, search, status]);
 
   const filteredSubmissions = useMemo(() => {
     return submissions.filter((submission) => {
@@ -116,9 +128,11 @@ export default function SubmissionsPage() {
           <OpsSearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Search user, quest, campaign or proof..."
+            placeholder="Search user, quest, campaign or proof…"
+            ariaLabel="Search submissions"
+            name="submission-search"
           />
-          <OpsSelect value={status} onChange={setStatus}>
+          <OpsSelect value={status} onChange={setStatus} ariaLabel="Filter submissions by status" name="submission-status">
             <option value="all">all statuses</option>
             <option value="pending">pending</option>
             <option value="approved">approved</option>

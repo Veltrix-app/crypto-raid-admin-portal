@@ -153,8 +153,14 @@ export default function ProjectsPage() {
         ) : null}
 
         <OpsFilterBar>
-          <OpsSearchInput value={search} onChange={setSearch} placeholder="Search projects, chain or contact..." />
-          <OpsSelect value={status} onChange={setStatus}>
+          <OpsSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search projects, chain or contact…"
+            ariaLabel="Search projects"
+            name="project-search"
+          />
+          <OpsSelect value={status} onChange={setStatus} ariaLabel="Filter projects by status" name="project-status">
             <option value="all">all</option>
             <option value="draft">draft</option>
             <option value="active">active</option>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   OpsFilterBar,
@@ -15,11 +16,22 @@ import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function UsersPage() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
   const users = useAdminPortalStore((s) => s.users);
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const memberships = useAdminAuthStore((s) => s.memberships);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
+  const [status, setStatus] = useState(() => searchParams.get("status") ?? "all");
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (status !== "all") params.set("status", status);
+    const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(next, { scroll: false });
+  }, [pathname, router, search, status]);
 
   const activeWorkspace = memberships.find((item) => item.projectId === activeProjectId);
   const filteredUsers = useMemo(() => {
@@ -109,9 +121,11 @@ export default function UsersPage() {
           <OpsSearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Search username, title or tier..."
+            placeholder="Search username, title or tier…"
+            ariaLabel="Search users"
+            name="user-search"
           />
-          <OpsSelect value={status} onChange={setStatus}>
+          <OpsSelect value={status} onChange={setStatus} ariaLabel="Filter users by status" name="user-status">
             <option value="all">all statuses</option>
             <option value="active">active</option>
             <option value="flagged">flagged</option>

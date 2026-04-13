@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   OpsFilterBar,
@@ -17,11 +18,24 @@ import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 export default function CampaignsPage() {
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const projects = useAdminPortalStore((s) => s.projects);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [projectFilter, setProjectFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
+  const [status, setStatus] = useState(() => searchParams.get("status") ?? "all");
+  const [projectFilter, setProjectFilter] = useState(() => searchParams.get("project") ?? "all");
+  const [typeFilter, setTypeFilter] = useState(() => searchParams.get("type") ?? "all");
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (status !== "all") params.set("status", status);
+    if (projectFilter !== "all") params.set("project", projectFilter);
+    if (typeFilter !== "all") params.set("type", typeFilter);
+    const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(next, { scroll: false });
+  }, [pathname, projectFilter, router, search, status, typeFilter]);
 
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter((campaign) => {
@@ -99,8 +113,14 @@ export default function CampaignsPage() {
         </div>
 
         <OpsFilterBar>
-          <OpsSearchInput value={search} onChange={setSearch} placeholder="Search campaigns..." />
-          <OpsSelect value={status} onChange={setStatus}>
+          <OpsSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search campaigns…"
+            ariaLabel="Search campaigns"
+            name="campaign-search"
+          />
+          <OpsSelect value={status} onChange={setStatus} ariaLabel="Filter campaigns by status" name="campaign-status">
             <option value="all">all statuses</option>
             <option value="draft">draft</option>
             <option value="scheduled">scheduled</option>
@@ -109,7 +129,7 @@ export default function CampaignsPage() {
             <option value="completed">completed</option>
             <option value="archived">archived</option>
           </OpsSelect>
-          <OpsSelect value={projectFilter} onChange={setProjectFilter}>
+          <OpsSelect value={projectFilter} onChange={setProjectFilter} ariaLabel="Filter campaigns by project" name="campaign-project">
             <option value="all">all projects</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
@@ -121,7 +141,7 @@ export default function CampaignsPage() {
 
         <div className="rounded-[24px] border border-line bg-card p-4">
           <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
-            <OpsSelect value={typeFilter} onChange={setTypeFilter}>
+            <OpsSelect value={typeFilter} onChange={setTypeFilter} ariaLabel="Filter campaigns by type" name="campaign-type">
               <option value="all">all types</option>
               <option value="social_growth">social growth</option>
               <option value="community_growth">community growth</option>
