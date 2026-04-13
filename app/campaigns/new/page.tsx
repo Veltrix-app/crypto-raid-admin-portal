@@ -127,6 +127,12 @@ export default function NewCampaignPage() {
         .filter((reward) => selectedRewardKeys.includes(reward.key)) ?? [],
     [rewardDraftEdits, selectedRewardKeys, templatePlan]
   );
+  const editedQuestCount = Object.values(questDraftEdits).filter(
+    (draft) => Object.keys(draft).length > 0
+  ).length;
+  const editedRewardCount = Object.values(rewardDraftEdits).filter(
+    (draft) => Object.keys(draft).length > 0
+  ).length;
 
   function updateQuestDraftEdit(
     key: string,
@@ -306,6 +312,54 @@ export default function NewCampaignPage() {
                     label="Reward drafts"
                     value={`${includedRewardDrafts.length}/${templatePlan.rewardDrafts.length}`}
                   />
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-4">
+                  <PreviewStat
+                    label="Auto-wired fields"
+                    value={
+                      templatePlan.questDrafts.reduce(
+                        (total, quest) => total + quest.autofilledFields.length,
+                        0
+                      ) +
+                      templatePlan.rewardDrafts.reduce(
+                        (total, reward) => total + reward.autofilledFields.length,
+                        0
+                      )
+                    }
+                  />
+                  <PreviewStat
+                    label="Edited quests"
+                    value={editedQuestCount}
+                  />
+                  <PreviewStat
+                    label="Edited rewards"
+                    value={editedRewardCount}
+                  />
+                  <PreviewStat
+                    label="Missing context"
+                    value={templatePlan.missingProjectFields.length}
+                  />
+                </div>
+
+                <div className="rounded-2xl border border-line bg-card2 p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                    Generation route
+                  </p>
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    <TemplateMeta
+                      label="Campaign output"
+                      value="Editable before save via the builder form below."
+                    />
+                    <TemplateMeta
+                      label="Quest output"
+                      value="Selected quests generate as drafts by default, or go active if the campaign is saved as active."
+                    />
+                    <TemplateMeta
+                      label="Reward output"
+                      value="Selected rewards follow the same route, so launch-ready campaigns can publish in one pass."
+                    />
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-line bg-card2 p-4">
@@ -587,6 +641,10 @@ function TemplateQuestCard({
               : "Nothing missing"
           }
         />
+        <TemplateMeta
+          label="Editable before generate"
+          value="Title, description, XP, action label and action URL"
+        />
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -718,6 +776,13 @@ function TemplateRewardCard({
               ? item.autofilledFields.join(", ")
               : "Base defaults only"
           }
+        />
+      </div>
+
+      <div className="mt-3">
+        <TemplateMeta
+          label="Editable before generate"
+          value="Title, description and reward cost"
         />
       </div>
 
