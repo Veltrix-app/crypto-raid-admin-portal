@@ -5,6 +5,15 @@ import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import QuestForm from "@/components/forms/quest/QuestForm";
+import {
+  DetailActionTile,
+  DetailBadge,
+  DetailHero,
+  DetailMetaRow,
+  DetailMetricCard,
+  DetailSidebarSurface,
+  DetailSurface,
+} from "@/components/layout/detail/DetailPrimitives";
 import { getQuestVerificationPreview } from "@/lib/quest-verification";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -84,102 +93,72 @@ export default function QuestDetailPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Quest Detail
-            </p>
+        <DetailHero
+          eyebrow="Quest Detail"
+          title={quest.title}
+          description={quest.shortDescription || quest.description}
+          badges={
+            <>
+              <DetailBadge>{project?.name || "Unknown Project"}</DetailBadge>
+              <DetailBadge>{campaign?.title || "Unknown Campaign"}</DetailBadge>
+              <DetailBadge>{quest.questType}</DetailBadge>
+              <DetailBadge>{quest.verificationType}</DetailBadge>
+              <DetailBadge tone={quest.status === "active" ? "primary" : "default"}>{quest.status}</DetailBadge>
+            </>
+          }
+          actions={
+            <button
+              onClick={async () => {
+                await deleteQuest(quest.id);
+                router.push("/quests");
+              }}
+              className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
+            >
+              Delete Quest
+            </button>
+          }
+          metrics={
+            <>
+              <DetailMetricCard label="Project" value={project?.name || "-"} hint="Workspace this quest belongs to." />
+              <DetailMetricCard label="Campaign" value={campaign?.title || "-"} hint="Campaign path that contains this quest." />
+              <DetailMetricCard label="XP" value={quest.xp} hint="Progression value awarded on completion." />
+              <DetailMetricCard label="Auto Approve" value={quest.autoApprove ? "Yes" : "No"} hint="Whether low-risk proofs can clear automatically." />
+            </>
+          }
+        />
 
-            <h1 className="mt-2 text-3xl font-extrabold text-text">
-              {quest.title}
-            </h1>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge>{project?.name || "Unknown Project"}</Badge>
-              <Badge>{campaign?.title || "Unknown Campaign"}</Badge>
-              <Badge className="capitalize">{quest.questType}</Badge>
-              <Badge className="capitalize">{quest.verificationType}</Badge>
-              <Badge className="capitalize">{quest.status}</Badge>
-            </div>
-
-            <p className="mt-4 text-sm text-sub">{quest.description}</p>
-            {quest.shortDescription ? (
-              <p className="mt-3 text-sm leading-6 text-sub">
-                {quest.shortDescription}
-              </p>
-            ) : null}
-
-            <div className="mt-5 rounded-2xl border border-line bg-card2 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Builder Summary
-              </p>
-              <p className="mt-2 text-sm leading-6 text-sub">
-                {questBlueprintSummary}
-              </p>
-            </div>
-
-            <div className="mt-4 rounded-2xl border border-line bg-card2 p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Verification Route
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
-                    {verificationPreview.routeDescription}
-                  </p>
-                </div>
-                <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
-                  {verificationPreview.routeLabel}
-                </span>
+        <DetailSurface
+          eyebrow="Quest Logic"
+          title="Builder Summary and Verification Route"
+          description={questBlueprintSummary}
+        >
+          <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                  Verification Route
+                </p>
+                <p className="mt-2 text-sm leading-6 text-sub">
+                  {verificationPreview.routeDescription}
+                </p>
               </div>
+              <DetailBadge tone="primary">{verificationPreview.routeLabel}</DetailBadge>
             </div>
           </div>
-
-          <button
-            onClick={async () => {
-              await deleteQuest(quest.id);
-              router.push("/quests");
-            }}
-            className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300"
-          >
-            Delete Quest
-          </button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          <InfoCard label="Project" value={project?.name || "-"} />
-          <InfoCard label="Campaign" value={campaign?.title || "-"} />
-          <InfoCard label="XP" value={quest.xp} />
-          <InfoCard label="Auto Approve" value={quest.autoApprove ? "Yes" : "No"} />
-        </div>
+        </DetailSurface>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                  Quest Readiness
-                </p>
-                <h2 className="mt-2 text-xl font-extrabold text-text">
-                  What this quest still needs
-                </h2>
-              </div>
-
-              <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                  Pending Reviews
-                </p>
-                <p className="mt-2 text-2xl font-extrabold text-text">
-                  {pendingSubmissions.length}
-                </p>
-              </div>
-            </div>
-
+          <DetailSurface
+            eyebrow="Quest Readiness"
+            title="What this quest still needs"
+            description="A concise operator read on destination quality, verification stability and moderation drag."
+            aside={<DetailMetricCard label="Pending Reviews" value={pendingSubmissions.length} />}
+          >
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {questReadinessItems.map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-line bg-card2 p-4"
+                  className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
@@ -197,18 +176,15 @@ export default function QuestDetailPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </DetailSurface>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-              Next Actions
-            </p>
-            <h2 className="mt-2 text-xl font-extrabold text-text">
-              Keep this campaign moving
-            </h2>
-
+          <DetailSurface
+            eyebrow="Next Actions"
+            title="Keep this campaign moving"
+            description="Use these routes to tighten the destination, moderate incoming proofs and connect stronger incentives."
+          >
             <div className="mt-5 space-y-3">
-              <ActionLink
+              <DetailActionTile
                 href={quest.actionUrl || "#edit-quest"}
                 label={quest.actionUrl ? "Open quest destination" : "Add quest destination"}
                 description={
@@ -217,12 +193,12 @@ export default function QuestDetailPage() {
                     : "Point this quest at the live page, post or wallet action before launch."
                 }
               />
-              <ActionLink
+              <DetailActionTile
                 href="/submissions"
                 label="Review submissions"
                 description={`${relatedSubmissions.length} submission${relatedSubmissions.length === 1 ? "" : "s"} linked to this quest.`}
               />
-              <ActionLink
+              <DetailActionTile
                 href={relatedRewards.length > 0 ? "/rewards" : "/rewards/new"}
                 label={relatedRewards.length > 0 ? "Link campaign rewards" : "Create a reward"}
                 description={
@@ -232,16 +208,14 @@ export default function QuestDetailPage() {
                 }
               />
             </div>
-          </div>
+          </DetailSurface>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-          <div id="edit-quest" className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Edit Quest</h2>
-            <p className="mt-2 text-sm text-sub">
-              Update quest logic, verification and timing.
-            </p>
-
+          <DetailSurface
+            title="Edit Quest"
+            description="Update quest logic, verification and timing without leaving the detail workspace."
+          >
             <div className="mt-6">
               <QuestForm
                 projects={projects}
@@ -286,31 +260,27 @@ export default function QuestDetailPage() {
                 }}
               />
             </div>
-          </div>
+          </DetailSurface>
 
           <div className="space-y-6">
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Quest Settings</h2>
-
+            <DetailSidebarSurface title="Quest Settings">
               <div className="mt-4 space-y-4">
-                <DetailRow label="Quest Type" value={quest.questType} />
-                <DetailRow label="Platform" value={quest.platform || "-"} />
-                <DetailRow label="Verification" value={quest.verificationType} />
-                <DetailRow label="Proof Required" value={quest.proofRequired ? "Yes" : "No"} />
-                <DetailRow label="Proof Type" value={quest.proofType} />
-                <DetailRow label="Repeatable" value={quest.isRepeatable ? "Yes" : "No"} />
-                <DetailRow label="Sort Order" value={quest.sortOrder} />
-                <DetailRow label="Starts At" value={quest.startsAt || "-"} />
-                <DetailRow label="Ends At" value={quest.endsAt || "-"} />
+                <DetailMetaRow label="Quest Type" value={quest.questType} />
+                <DetailMetaRow label="Platform" value={quest.platform || "-"} />
+                <DetailMetaRow label="Verification" value={quest.verificationType} />
+                <DetailMetaRow label="Proof Required" value={quest.proofRequired ? "Yes" : "No"} />
+                <DetailMetaRow label="Proof Type" value={quest.proofType} />
+                <DetailMetaRow label="Repeatable" value={quest.isRepeatable ? "Yes" : "No"} />
+                <DetailMetaRow label="Sort Order" value={quest.sortOrder} />
+                <DetailMetaRow label="Starts At" value={quest.startsAt || "-"} />
+                <DetailMetaRow label="Ends At" value={quest.endsAt || "-"} />
               </div>
-            </div>
+            </DetailSidebarSurface>
 
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Verification Rules</h2>
-
+            <DetailSidebarSurface title="Verification Rules">
               <div className="mt-4 space-y-4">
-                <DetailRow label="Route" value={verificationPreview.routeLabel} />
-                <DetailRow
+                <DetailMetaRow label="Route" value={verificationPreview.routeLabel} />
+                <DetailMetaRow
                   label="Required Config"
                   value={
                     verificationPreview.requiredConfigKeys.length
@@ -318,7 +288,7 @@ export default function QuestDetailPage() {
                       : "No required keys"
                   }
                 />
-                <DetailRow
+                <DetailMetaRow
                   label="Missing Config"
                   value={
                     verificationPreview.invalidConfig
@@ -328,23 +298,21 @@ export default function QuestDetailPage() {
                       : "None"
                   }
                 />
-                <DetailRow
+                <DetailMetaRow
                   label="Proof Expectation"
                   value={verificationPreview.proofExpectation}
                 />
               </div>
-            </div>
+            </DetailSidebarSurface>
 
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Action</h2>
-
+            <DetailSidebarSurface title="Action">
               <div className="mt-4 space-y-4">
-                <DetailRow label="Action Label" value={quest.actionLabel} />
-                <DetailRow label="Action URL" value={quest.actionUrl || "-"} />
-                <DetailRow label="Submissions" value={relatedSubmissions.length} />
-                <DetailRow label="Pending Reviews" value={pendingSubmissions.length} />
+                <DetailMetaRow label="Action Label" value={quest.actionLabel} />
+                <DetailMetaRow label="Action URL" value={quest.actionUrl || "-"} />
+                <DetailMetaRow label="Submissions" value={relatedSubmissions.length} />
+                <DetailMetaRow label="Pending Reviews" value={pendingSubmissions.length} />
               </div>
-            </div>
+            </DetailSidebarSurface>
           </div>
         </div>
       </div>
@@ -373,66 +341,4 @@ function getQuestBlueprintSummary(questType: string) {
     default:
       return `This quest is currently configured as ${questTypeLabel}. Use the builder to tighten the action destination, verification and reward loop before making it a core campaign step.`;
   }
-}
-
-function InfoCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold capitalize text-text">{value}</p>
-    </div>
-  );
-}
-
-function ActionLink({
-  href,
-  label,
-  description,
-}: {
-  href: string;
-  label: string;
-  description: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-2xl border border-line bg-card2 p-4 transition hover:border-primary/40"
-    >
-      <p className="font-bold text-text">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{description}</p>
-    </Link>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-        {label}
-      </p>
-      <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
-    </div>
-  );
-}
-
-function Badge({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold text-text ${className}`}
-    >
-      {children}
-    </span>
-  );
 }

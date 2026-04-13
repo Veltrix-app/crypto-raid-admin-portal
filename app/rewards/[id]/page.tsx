@@ -5,6 +5,15 @@ import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import RewardForm from "@/components/forms/reward/RewardForm";
+import {
+  DetailActionTile,
+  DetailBadge,
+  DetailHero,
+  DetailMetaRow,
+  DetailMetricCard,
+  DetailSidebarSurface,
+  DetailSurface,
+} from "@/components/layout/detail/DetailPrimitives";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function RewardDetailPage() {
@@ -69,80 +78,65 @@ export default function RewardDetailPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Reward Detail
+        <DetailHero
+          eyebrow="Reward Detail"
+          title={reward.title}
+          description={reward.description}
+          badges={
+            <>
+              <DetailBadge>{project?.name || "Unknown Project"}</DetailBadge>
+              {campaign ? <DetailBadge>{campaign.title}</DetailBadge> : null}
+              <DetailBadge>{reward.rewardType}</DetailBadge>
+              <DetailBadge>{reward.rarity}</DetailBadge>
+              <DetailBadge>{reward.claimMethod}</DetailBadge>
+              <DetailBadge tone={reward.status === "active" ? "primary" : "default"}>{reward.status}</DetailBadge>
+            </>
+          }
+          actions={
+            <button
+              onClick={async () => {
+                await deleteReward(reward.id);
+                router.push("/rewards");
+              }}
+              className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
+            >
+              Delete Reward
+            </button>
+          }
+          metrics={
+            <>
+              <DetailMetricCard label="Project" value={project?.name || "-"} hint="Workspace owning this incentive." />
+              <DetailMetricCard label="Cost" value={reward.cost} hint="XP pressure required to unlock it." />
+              <DetailMetricCard label="Claimable" value={reward.claimable ? "Yes" : "No"} hint="Whether contributors can actively claim it." />
+              <DetailMetricCard label="Visible" value={reward.visible ? "Yes" : "No"} hint="Whether it currently surfaces in the app." />
+            </>
+          }
+        />
+
+        <DetailSurface
+          eyebrow="Reward Logic"
+          title="Builder Summary"
+          description={rewardSummary}
+        >
+          <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+            <p className="text-sm leading-7 text-sub">
+              Use the settings below to keep scarcity, visibility and claim pressure aligned with how this reward should feel inside the contributor journey.
             </p>
-
-            <h1 className="mt-2 text-3xl font-extrabold text-text">
-              {reward.title}
-            </h1>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge>{project?.name || "Unknown Project"}</Badge>
-              {campaign ? <Badge>{campaign.title}</Badge> : null}
-              <Badge className="capitalize">{reward.rewardType}</Badge>
-              <Badge className="capitalize">{reward.rarity}</Badge>
-              <Badge className="capitalize">{reward.claimMethod}</Badge>
-              <Badge className="capitalize">{reward.status}</Badge>
-            </div>
-
-            <p className="mt-4 text-sm text-sub">{reward.description}</p>
-
-            <div className="mt-5 rounded-2xl border border-line bg-card2 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Builder Summary
-              </p>
-              <p className="mt-2 text-sm leading-6 text-sub">{rewardSummary}</p>
-            </div>
           </div>
-
-          <button
-            onClick={async () => {
-              await deleteReward(reward.id);
-              router.push("/rewards");
-            }}
-            className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300"
-          >
-            Delete Reward
-          </button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          <InfoCard label="Project" value={project?.name || "-"} />
-          <InfoCard label="Cost" value={reward.cost} />
-          <InfoCard label="Claimable" value={reward.claimable ? "Yes" : "No"} />
-          <InfoCard label="Visible" value={reward.visible ? "Yes" : "No"} />
-        </div>
+        </DetailSurface>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                  Reward Readiness
-                </p>
-                <h2 className="mt-2 text-xl font-extrabold text-text">
-                  What this reward still needs
-                </h2>
-              </div>
-
-              <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                  Pending Claims
-                </p>
-                <p className="mt-2 text-2xl font-extrabold text-text">
-                  {pendingClaims.length}
-                </p>
-              </div>
-            </div>
-
+          <DetailSurface
+            eyebrow="Reward Readiness"
+            title="What this reward still needs"
+            description="A concise read on claim posture, visibility and operational drag before more demand routes into this reward."
+            aside={<DetailMetricCard label="Pending Claims" value={pendingClaims.length} />}
+          >
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {rewardReadinessItems.map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-line bg-card2 p-4"
+                  className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
@@ -160,23 +154,20 @@ export default function RewardDetailPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </DetailSurface>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-              Next Actions
-            </p>
-            <h2 className="mt-2 text-xl font-extrabold text-text">
-              Keep the reward loop healthy
-            </h2>
-
+          <DetailSurface
+            eyebrow="Next Actions"
+            title="Keep the reward loop healthy"
+            description="Use these routes to manage demand, connect new quest pressure and tune scarcity."
+          >
             <div className="mt-5 space-y-3">
-              <ActionLink
+              <DetailActionTile
                 href="/claims"
                 label="Review reward claims"
                 description={`${relatedClaims.length} claim${relatedClaims.length === 1 ? "" : "s"} currently route through this reward.`}
               />
-              <ActionLink
+              <DetailActionTile
                 href={relatedQuests.length > 0 ? "/quests" : "/quests/new"}
                 label={relatedQuests.length > 0 ? "Connect to active quests" : "Create a quest"}
                 description={
@@ -185,22 +176,20 @@ export default function RewardDetailPage() {
                     : "Add a quest next so contributors have a clear path to unlock this reward."
                 }
               />
-              <ActionLink
+              <DetailActionTile
                 href="#edit-reward"
                 label="Tune stock and delivery"
                 description="Use the builder below to align scarcity, visibility and claim behavior with the intended campaign pressure."
               />
             </div>
-          </div>
+          </DetailSurface>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-          <div id="edit-reward" className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Edit Reward</h2>
-            <p className="mt-2 text-sm text-sub">
-              Update reward settings, fulfillment and visibility.
-            </p>
-
+          <DetailSurface
+            title="Edit Reward"
+            description="Update reward settings, fulfillment and visibility without leaving the detail workspace."
+          >
             <div className="mt-6">
               <RewardForm
                 projects={projects}
@@ -239,35 +228,31 @@ export default function RewardDetailPage() {
                 }}
               />
             </div>
-          </div>
+          </DetailSurface>
 
           <div className="space-y-6">
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Reward Settings</h2>
-
+            <DetailSidebarSurface title="Reward Settings">
               <div className="mt-4 space-y-4">
-                <DetailRow label="Reward Type" value={reward.rewardType} />
-                <DetailRow label="Rarity" value={reward.rarity} />
-                <DetailRow label="Claim Method" value={reward.claimMethod} />
-                <DetailRow label="Claimable" value={reward.claimable ? "Yes" : "No"} />
-                <DetailRow label="Visible" value={reward.visible ? "Yes" : "No"} />
-                <DetailRow
+                <DetailMetaRow label="Reward Type" value={reward.rewardType} />
+                <DetailMetaRow label="Rarity" value={reward.rarity} />
+                <DetailMetaRow label="Claim Method" value={reward.claimMethod} />
+                <DetailMetaRow label="Claimable" value={reward.claimable ? "Yes" : "No"} />
+                <DetailMetaRow label="Visible" value={reward.visible ? "Yes" : "No"} />
+                <DetailMetaRow
                   label="Stock"
                   value={reward.unlimitedStock ? "Unlimited" : reward.stock ?? "-"}
                 />
               </div>
-            </div>
+            </DetailSidebarSurface>
 
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Assets</h2>
-
+            <DetailSidebarSurface title="Assets">
               <div className="mt-4 space-y-4">
-                <DetailRow label="Icon URL" value={reward.icon || "-"} />
-                <DetailRow label="Image URL" value={reward.imageUrl || "-"} />
-                <DetailRow label="Claims" value={relatedClaims.length} />
-                <DetailRow label="Pending Claims" value={pendingClaims.length} />
+                <DetailMetaRow label="Icon URL" value={reward.icon || "-"} />
+                <DetailMetaRow label="Image URL" value={reward.imageUrl || "-"} />
+                <DetailMetaRow label="Claims" value={relatedClaims.length} />
+                <DetailMetaRow label="Pending Claims" value={pendingClaims.length} />
               </div>
-            </div>
+            </DetailSidebarSurface>
           </div>
         </div>
       </div>
@@ -294,66 +279,4 @@ function getRewardBlueprintSummary(rewardType: string) {
     default:
       return `This reward is currently configured as ${rewardTypeLabel}. Tighten the claim method, stock logic and campaign connection so it becomes an intentional part of the reward loop.`;
   }
-}
-
-function InfoCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold capitalize text-text">{value}</p>
-    </div>
-  );
-}
-
-function ActionLink({
-  href,
-  label,
-  description,
-}: {
-  href: string;
-  label: string;
-  description: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-2xl border border-line bg-card2 p-4 transition hover:border-primary/40"
-    >
-      <p className="font-bold text-text">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{description}</p>
-    </Link>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-        {label}
-      </p>
-      <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
-    </div>
-  );
-}
-
-function Badge({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold text-text ${className}`}
-    >
-      {children}
-    </span>
-  );
 }

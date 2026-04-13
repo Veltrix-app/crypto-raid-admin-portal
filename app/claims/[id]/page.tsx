@@ -3,6 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import {
+  DetailBadge,
+  DetailHero,
+  DetailMetaRow,
+  DetailMetricCard,
+  DetailSidebarSurface,
+  DetailSurface,
+} from "@/components/layout/detail/DetailPrimitives";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { AdminAuditLog } from "@/types/entities/audit-log";
 
@@ -101,51 +109,37 @@ export default function ClaimDetailPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Claim Review
-            </p>
-
-            <h1 className="mt-2 text-3xl font-extrabold text-text">
-              {currentClaim.rewardTitle}
-            </h1>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge>{currentClaim.username}</Badge>
-              {currentClaim.projectName ? <Badge>{currentClaim.projectName}</Badge> : null}
-              {currentClaim.campaignTitle ? <Badge>{currentClaim.campaignTitle}</Badge> : null}
-              {currentClaim.rewardType ? <Badge className="capitalize">{currentClaim.rewardType}</Badge> : null}
-              <Badge>{riskLabel}</Badge>
-              <Badge className="capitalize">{currentClaim.status}</Badge>
-            </div>
-
-            <p className="mt-4 text-sm text-sub">
-              Review the claim details and the automation context before moving it through fulfillment.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          <InfoCard label="User" value={currentClaim.username} />
-          <InfoCard label="Reward" value={currentClaim.rewardTitle} />
-          <InfoCard label="Method" value={currentClaim.claimMethod} />
-          <InfoCard label="Decision" value={decisionLabel} />
-        </div>
+        <DetailHero
+          eyebrow="Claim Review"
+          title={currentClaim.rewardTitle}
+          description="Review the claim, its risk posture and the delivery complexity before moving fulfillment forward."
+          badges={
+            <>
+              <DetailBadge>{currentClaim.username}</DetailBadge>
+              {currentClaim.projectName ? <DetailBadge>{currentClaim.projectName}</DetailBadge> : null}
+              {currentClaim.campaignTitle ? <DetailBadge>{currentClaim.campaignTitle}</DetailBadge> : null}
+              {currentClaim.rewardType ? <DetailBadge>{currentClaim.rewardType}</DetailBadge> : null}
+              <DetailBadge tone={user?.status === "flagged" ? "danger" : "default"}>{riskLabel}</DetailBadge>
+              <DetailBadge tone={currentClaim.status === "fulfilled" ? "primary" : currentClaim.status === "rejected" ? "danger" : "warning"}>
+                {currentClaim.status}
+              </DetailBadge>
+            </>
+          }
+          metrics={
+            <>
+              <DetailMetricCard label="User" value={currentClaim.username} hint="Claimant currently attached to this reward payout." />
+              <DetailMetricCard label="Reward" value={currentClaim.rewardTitle} hint="Payout target being processed." />
+              <DetailMetricCard label="Method" value={currentClaim.claimMethod} hint="Fulfillment method currently configured." />
+              <DetailMetricCard label="Decision" value={decisionLabel} hint="Primary checkpoint or automation posture." />
+            </>
+          }
+        />
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                  Claim Decision Context
-                </p>
-                <h2 className="mt-2 text-xl font-extrabold text-text">
-                  Why this claim needs attention
-                </h2>
-              </div>
-            </div>
-
+          <DetailSurface
+            title="Claim Decision Context"
+            description={decisionReason}
+          >
             <p className="mt-4 text-sm leading-6 text-sub">{decisionReason}</p>
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
@@ -162,7 +156,7 @@ export default function ClaimDetailPage() {
             </div>
 
             {linkedFlags.length > 0 ? (
-              <div className="mt-5 rounded-2xl border border-line bg-card2 p-4">
+              <div className="mt-5 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                   Linked Flags
                 </p>
@@ -170,9 +164,9 @@ export default function ClaimDetailPage() {
                   {linkedFlags.map((flag) => (
                     <div key={flag.id} className="rounded-2xl border border-line bg-card px-4 py-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge className="capitalize">{flag.flagType.replace(/_/g, " ")}</Badge>
-                        <Badge className="capitalize">{flag.severity}</Badge>
-                        <Badge className="capitalize">{flag.status}</Badge>
+                        <DetailBadge>{flag.flagType.replace(/_/g, " ")}</DetailBadge>
+                        <DetailBadge tone="warning">{flag.severity}</DetailBadge>
+                        <DetailBadge>{flag.status}</DetailBadge>
                       </div>
                       <p className="mt-3 text-sm text-sub">{flag.reason}</p>
                     </div>
@@ -180,14 +174,12 @@ export default function ClaimDetailPage() {
                 </div>
               </div>
             ) : null}
-          </div>
+          </DetailSurface>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Claim Actions</h2>
-            <p className="mt-2 text-sm text-sub">
-              Update fulfillment state after checking both delivery complexity and risk.
-            </p>
-
+          <DetailSurface
+            title="Claim Actions"
+            description="Update fulfillment state after checking both delivery complexity and risk."
+          >
             <div className="mt-6">
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-text">Reviewer Note</span>
@@ -226,41 +218,40 @@ export default function ClaimDetailPage() {
                 {working ? "Working..." : "Reject Claim"}
               </button>
             </div>
-          </div>
+          </DetailSurface>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Claim Data</h2>
-
+          <DetailSurface
+            title="Claim Data"
+            description="Core payout, claimant and review metadata for this claim."
+          >
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <DetailRow label="Claim ID" value={currentClaim.id} />
-              <DetailRow label="Auth User ID" value={currentClaim.authUserId || "-"} />
-              <DetailRow label="Reward ID" value={currentClaim.rewardId} />
-              <DetailRow label="Reward Type" value={currentClaim.rewardType || "-"} />
-              <DetailRow
+              <DetailMetaRow label="Claim ID" value={currentClaim.id} />
+              <DetailMetaRow label="Auth User ID" value={currentClaim.authUserId || "-"} />
+              <DetailMetaRow label="Reward ID" value={currentClaim.rewardId} />
+              <DetailMetaRow label="Reward Type" value={currentClaim.rewardType || "-"} />
+              <DetailMetaRow
                 label="Reward Cost"
                 value={typeof currentClaim.rewardCost === "number" ? `${currentClaim.rewardCost} XP` : "-"}
               />
-              <DetailRow label="Project ID" value={currentClaim.projectId || "-"} />
-              <DetailRow label="Campaign ID" value={currentClaim.campaignId || "-"} />
-              <DetailRow label="Created At" value={formatDate(currentClaim.createdAt)} />
-              <DetailRow label="Reviewed By" value={currentClaim.reviewedByAuthUserId || "-"} />
-              <DetailRow label="Updated At" value={currentClaim.updatedAt ? formatDate(currentClaim.updatedAt) : "-"} />
-              <DetailRow label="Reviewed At" value={currentClaim.reviewedAt ? formatDate(currentClaim.reviewedAt) : "-"} />
+              <DetailMetaRow label="Project ID" value={currentClaim.projectId || "-"} />
+              <DetailMetaRow label="Campaign ID" value={currentClaim.campaignId || "-"} />
+              <DetailMetaRow label="Created At" value={formatDate(currentClaim.createdAt)} />
+              <DetailMetaRow label="Reviewed By" value={currentClaim.reviewedByAuthUserId || "-"} />
+              <DetailMetaRow label="Updated At" value={currentClaim.updatedAt ? formatDate(currentClaim.updatedAt) : "-"} />
+              <DetailMetaRow label="Reviewed At" value={currentClaim.reviewedAt ? formatDate(currentClaim.reviewedAt) : "-"} />
             </div>
-          </div>
+          </DetailSurface>
 
           <div className="space-y-6">
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Fulfillment Note</h2>
+            <DetailSidebarSurface title="Fulfillment Note">
               <p className="mt-2 text-sm text-sub">
                 {currentClaim.fulfillmentNotes || "No reviewer notes stored yet for this claim."}
               </p>
-            </div>
+            </DetailSidebarSurface>
 
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Audit Trail</h2>
+            <DetailSidebarSurface title="Audit Trail">
               <div className="mt-4 space-y-3">
                 {auditLogs.map((log) => (
                   <div key={log.id} className="rounded-2xl border border-line bg-card2 p-4">
@@ -285,37 +276,11 @@ export default function ClaimDetailPage() {
                   </p>
                 ) : null}
               </div>
-            </div>
+            </DetailSidebarSurface>
           </div>
         </div>
       </div>
     </AdminShell>
-  );
-}
-
-function InfoCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold capitalize text-text">{value}</p>
-    </div>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-        {label}
-      </p>
-      <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
-    </div>
   );
 }
 
@@ -344,22 +309,6 @@ function DecisionCard({
         </span>
       </div>
     </div>
-  );
-}
-
-function Badge({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold text-text ${className}`}
-    >
-      {children}
-    </span>
   );
 }
 
