@@ -50,6 +50,40 @@ type SavedTemplateConfiguration = {
   rewardDraftEdits: Record<string, Partial<EditableRewardDraft>>;
 };
 
+type BuilderStepId = "template" | "autofill" | "flow" | "launch";
+
+const builderSteps: Array<{
+  id: BuilderStepId;
+  eyebrow: string;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: "template",
+    eyebrow: "Step 1",
+    label: "Pick a playbook",
+    description: "Choose the full campaign template or a saved project variant that fits this workspace best.",
+  },
+  {
+    id: "autofill",
+    eyebrow: "Step 2",
+    label: "Wire project context",
+    description: "See what Veltrix can autofill already and patch the missing project context inline.",
+  },
+  {
+    id: "flow",
+    eyebrow: "Step 3",
+    label: "Tune generated flow",
+    description: "Review the generated quests and rewards, then include, skip, or refine the drafts.",
+  },
+  {
+    id: "launch",
+    eyebrow: "Step 4",
+    label: "Review and launch",
+    description: "Save this setup as a reusable template variant and generate the campaign when it feels right.",
+  },
+];
+
 export default function NewCampaignPage() {
   const router = useRouter();
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
@@ -89,6 +123,7 @@ export default function NewCampaignPage() {
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [pendingSavedTemplateConfig, setPendingSavedTemplateConfig] =
     useState<SavedTemplateConfiguration | null>(null);
+  const [currentStep, setCurrentStep] = useState<BuilderStepId>("template");
 
   const selectedProject = useMemo(
     () =>
@@ -130,6 +165,10 @@ export default function NewCampaignPage() {
   const selectedTemplate = templateOptions.find(
     (template) => template.id === selectedTemplateId
   );
+  const currentStepIndex = builderSteps.findIndex((step) => step.id === currentStep);
+  const currentStepMeta = builderSteps[currentStepIndex];
+  const previousStep = builderSteps[currentStepIndex - 1];
+  const nextStep = builderSteps[currentStepIndex + 1];
 
   useEffect(() => {
     setProjectContextDraft({});
@@ -370,21 +409,96 @@ export default function NewCampaignPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-            Campaign Builder
-          </p>
-          <h1 className="mt-2 text-3xl font-extrabold text-text">
-            New Campaign
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-sub">
-            Pick a full campaign template and let Veltrix generate the campaign,
-            quest sequence and reward drafts from the project context you already
-            filled in.
-          </p>
+        <div className="rounded-[32px] border border-line bg-card p-6">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
+                Campaign Builder Wizard
+              </p>
+              <h1 className="mt-2 text-3xl font-extrabold text-text">
+                New Campaign
+              </h1>
+              <p className="mt-3 text-sm leading-6 text-sub">
+                Pick a full campaign template and let Veltrix generate the campaign,
+                quest sequence and reward drafts from the project context you already
+                filled in.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <PreviewStat
+                label="Active project"
+                value={selectedProject?.name || "No project"}
+              />
+              <PreviewStat
+                label="Template fit"
+                value={
+                  selectedTemplate
+                    ? `${selectedTemplate.fitLabel} (${selectedTemplate.fitScore}/100)`
+                    : "Not selected"
+                }
+              />
+              <PreviewStat
+                label="Missing context"
+                value={templatePlan?.missingProjectFields.length ?? 0}
+              />
+            </div>
+          </div>
         </div>
 
+        <div className="grid gap-3 xl:grid-cols-4">
+          {builderSteps.map((step, index) => {
+            const active = currentStep === step.id;
+            const complete =
+              step.id === "template"
+                ? Boolean(selectedTemplate)
+                : step.id === "autofill"
+                  ? Boolean(templatePlan && templatePlan.missingProjectFields.length === 0)
+                  : step.id === "flow"
+                    ? includedQuestDrafts.length + includedRewardDrafts.length > 0
+                    : Boolean(templatePlan?.campaignDraft.title);
+
+            return (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => setCurrentStep(step.id)}
+                className={`rounded-[24px] border px-4 py-4 text-left transition ${
+                  active
+                    ? "border-primary/50 bg-primary/10"
+                    : "border-line bg-card hover:border-primary/30"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
+                      {step.eyebrow}
+                    </p>
+                    <p className="mt-2 text-sm font-bold text-text">
+                      {index + 1}. {step.label}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+                      complete
+                        ? "bg-primary/15 text-primary"
+                        : active
+                          ? "bg-card2 text-text"
+                          : "bg-card2 text-sub"
+                    }`}
+                  >
+                    {complete ? "Ready" : active ? "Current" : "Open"}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-sub">{step.description}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        {currentStep !== "launch" ? (
         <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          {currentStep === "template" ? (
           <div className="rounded-[28px] border border-line bg-card p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -515,17 +629,27 @@ export default function NewCampaignPage() {
               })}
             </div>
           </div>
+          ) : null}
 
           <div className="rounded-[28px] border border-line bg-card p-6">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-              Autofill Preview
+              {currentStep === "autofill"
+                ? "Autofill Preview"
+                : currentStep === "flow"
+                  ? "Generated Flow"
+                  : "Campaign Preview"}
             </p>
             <h2 className="mt-2 text-xl font-extrabold text-text">
-              What Veltrix will generate for you
+              {currentStep === "autofill"
+                ? "Wire the project context"
+                : currentStep === "flow"
+                  ? "Tune what gets generated"
+                  : "What Veltrix will generate for you"}
             </h2>
 
             {selectedTemplate && templatePlan ? (
               <div className="mt-5 space-y-5">
+                {currentStep !== "flow" ? (
                 <div className="rounded-2xl border border-line bg-card2 p-4">
                   <p className="text-sm font-bold text-text">
                     {selectedTemplate.label}
@@ -534,8 +658,9 @@ export default function NewCampaignPage() {
                     {selectedTemplate.goal}
                   </p>
                 </div>
+                ) : null}
 
-                {contextSections.length > 0 ? (
+                {contextSections.length > 0 && currentStep === "autofill" ? (
                   <div className="rounded-2xl border border-line bg-card2 p-4">
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                       Context Signals
@@ -600,6 +725,7 @@ export default function NewCampaignPage() {
                   />
                 </div>
 
+                {currentStep === "autofill" ? (
                 <div className="rounded-2xl border border-line bg-card2 p-4">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Generation route
@@ -619,7 +745,9 @@ export default function NewCampaignPage() {
                     />
                   </div>
                 </div>
+                ) : null}
 
+                {currentStep === "autofill" ? (
                 <div className="rounded-2xl border border-line bg-card2 p-4">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Project context usage
@@ -695,7 +823,9 @@ export default function NewCampaignPage() {
                     </p>
                   )}
                 </div>
+                ) : null}
 
+                {currentStep === "flow" ? (
                 <div className="rounded-2xl border border-line bg-card2 p-4">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Generated quest flow
@@ -725,7 +855,9 @@ export default function NewCampaignPage() {
                     ))}
                   </div>
                 </div>
+                ) : null}
 
+                {currentStep === "flow" ? (
                 <div className="rounded-2xl border border-line bg-card2 p-4">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Generated rewards
@@ -754,6 +886,7 @@ export default function NewCampaignPage() {
                     ))}
                   </div>
                 </div>
+                ) : null}
               </div>
             ) : (
               <p className="mt-4 text-sm text-sub">
@@ -762,7 +895,9 @@ export default function NewCampaignPage() {
             )}
           </div>
         </div>
+        ) : null}
 
+        {currentStep === "launch" ? (
         <div className="rounded-[28px] border border-line bg-card p-6">
           <div className="mb-6 rounded-2xl border border-line bg-card2 p-4">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
@@ -843,6 +978,33 @@ export default function NewCampaignPage() {
             }}
             submitLabel="Generate Campaign"
           />
+        </div>
+        ) : null}
+
+        <div className="flex flex-col gap-3 rounded-[28px] border border-line bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => previousStep && setCurrentStep(previousStep.id)}
+              disabled={!previousStep}
+              className="rounded-2xl border border-line bg-card2 px-5 py-3 font-bold text-text disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Back
+            </button>
+            {nextStep ? (
+              <button
+                type="button"
+                onClick={() => setCurrentStep(nextStep.id)}
+                className="rounded-2xl bg-primary px-5 py-3 font-bold text-black"
+              >
+                Continue
+              </button>
+            ) : null}
+          </div>
+
+          <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-sub">
+            {currentStepMeta.eyebrow} • {currentStepMeta.label}
+          </div>
         </div>
       </div>
     </AdminShell>
