@@ -307,19 +307,21 @@ export default function NewCampaignPage() {
 
     return sections;
   }, [effectiveProject]);
+  const currentMissingContextFields = templatePlan?.missingProjectFields ?? [];
+  const persistedMissingContextFields =
+    persistedTemplatePlan?.missingProjectFields ?? [];
   const editableContextFields = useMemo(() => {
-    const persistedMissing = persistedTemplatePlan?.missingProjectFields ?? [];
     const draftKeys = Object.keys(projectContextDraft).filter(
       (key) => key in projectContextDraft
     ) as EditableProjectContextField[];
 
     return Array.from(
       new Set<EditableProjectContextField>([
-        ...(persistedMissing as EditableProjectContextField[]),
+        ...(persistedMissingContextFields as EditableProjectContextField[]),
         ...draftKeys,
       ])
     );
-  }, [persistedTemplatePlan?.missingProjectFields, projectContextDraft]);
+  }, [persistedMissingContextFields, projectContextDraft]);
 
   function updateQuestDraftEdit(
     key: string,
@@ -350,7 +352,7 @@ export default function NewCampaignPage() {
   }
 
   async function saveProjectContextFields() {
-    if (!selectedProject || !templatePlan || templatePlan.missingProjectFields.length === 0) {
+    if (!selectedProject || Object.keys(projectContextDraft).length === 0) {
       return;
     }
 
@@ -459,8 +461,8 @@ export default function NewCampaignPage() {
       return "Choose a playbook or blank campaign canvas before continuing.";
     }
 
-    if (step === "autofill" && persistedTemplatePlan && persistedTemplatePlan.missingProjectFields.length > 0) {
-      return `Add the missing workspace context first: ${persistedTemplatePlan.missingProjectFields
+    if (step === "autofill" && currentMissingContextFields.length > 0) {
+      return `Add the missing workspace context first: ${currentMissingContextFields
         .map((field) => formatProjectFieldLabel(field))
         .join(", ")}.`;
     }
@@ -518,7 +520,7 @@ export default function NewCampaignPage() {
               />
               <BuilderMetricCard
                 label="Missing context"
-                value={String(persistedTemplatePlan?.missingProjectFields.length ?? 0)}
+                value={String(currentMissingContextFields.length)}
               />
             </>
           }
@@ -727,7 +729,7 @@ export default function NewCampaignPage() {
                       />
                       <PreviewStat
                         label="Missing context"
-                        value={persistedTemplatePlan?.missingProjectFields.length ?? 0}
+                        value={currentMissingContextFields.length}
                       />
                       <PreviewStat
                         label="Launch route"
@@ -783,7 +785,7 @@ export default function NewCampaignPage() {
                       <span
                         key={field}
                         className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                          (persistedTemplatePlan?.missingProjectFields ?? []).includes(field)
+                          currentMissingContextFields.includes(field)
                             ? "bg-amber-500/15 text-amber-300"
                             : "bg-primary/15 text-primary"
                         }`}
@@ -792,11 +794,11 @@ export default function NewCampaignPage() {
                       </span>
                     ))}
                   </div>
-                  {(persistedTemplatePlan?.missingProjectFields.length ?? 0) > 0 ? (
+                  {currentMissingContextFields.length > 0 ? (
                     <div className="mt-4 space-y-4">
                       <p className="text-sm leading-6 text-amber-200">
                         Missing project fields:{" "}
-                        {(persistedTemplatePlan?.missingProjectFields ?? [])
+                        {currentMissingContextFields
                           .map((field) => formatProjectFieldLabel(field))
                           .join(", ")}
                         . Fill them here once and this template will auto-wire itself.
@@ -832,7 +834,11 @@ export default function NewCampaignPage() {
                         <button
                           type="button"
                           onClick={saveProjectContextFields}
-                          disabled={contextSaving}
+                          disabled={
+                            contextSaving ||
+                            !selectedProject ||
+                            Object.keys(projectContextDraft).length === 0
+                          }
                           className="rounded-2xl bg-primary px-4 py-3 font-bold text-black shadow-[0_12px_28px_rgba(141,255,89,0.18)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {contextSaving ? "Saving workspace context..." : "Save workspace context"}
@@ -841,6 +847,12 @@ export default function NewCampaignPage() {
                           <p className="text-sm text-sub">{contextMessage}</p>
                         ) : null}
                       </div>
+                    </div>
+                  ) : Object.keys(projectContextDraft).length > 0 ? (
+                    <div className="mt-4 rounded-[22px] border border-emerald-500/30 bg-emerald-500/10 px-4 py-4">
+                      <p className="text-sm leading-6 text-emerald-100">
+                        Everything needed for this template is filled in. You can continue now, or save these values back to the workspace for future campaigns.
+                      </p>
                     </div>
                   ) : (
                     <p className="mt-3 text-sm leading-6 text-sub">
