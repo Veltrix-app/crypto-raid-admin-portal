@@ -118,37 +118,31 @@ const REWARD_TYPE_PRESETS: Record<
 
 const rewardBuilderSteps: Array<{
   id: RewardBuilderStepId;
-  eyebrow: string;
   label: string;
   description: string;
 }> = [
   {
     id: "blueprint",
-    eyebrow: "Step 1",
     label: "Pick reward type",
     description: "Start from the reward mechanic that best matches the payoff you want to offer.",
   },
   {
     id: "setup",
-    eyebrow: "Step 2",
     label: "Set placement",
     description: "Attach the reward to the right project and campaign, then define the core offer.",
   },
   {
     id: "value",
-    eyebrow: "Step 3",
     label: "Define value",
     description: "Tune rarity, cost, visibility, stock, and the visual feel of the reward.",
   },
   {
     id: "delivery",
-    eyebrow: "Step 4",
     label: "Configure delivery",
     description: "Make the fulfillment route explicit so claims and ops stay clean later.",
   },
   {
     id: "launch",
-    eyebrow: "Step 5",
     label: "Review and launch",
     description: "Check readiness, then save the reward with confidence.",
   },
@@ -206,6 +200,14 @@ export default function RewardForm({
   const previousStep = rewardBuilderSteps[currentStepIndex - 1];
   const nextStep = rewardBuilderSteps[currentStepIndex + 1];
   const progressPercent = Math.round(((currentStepIndex + 1) / rewardBuilderSteps.length) * 100);
+  const featuredRewardBlueprints = [
+    "token",
+    "nft",
+    "role",
+    "allowlist",
+    "access",
+    "badge",
+  ] as AdminReward["rewardType"][];
   const readinessItems = [
     {
       label: "Placement",
@@ -295,16 +297,23 @@ export default function RewardForm({
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[0.78fr_1.42fr_0.9fr]">
-        <BuilderStepRail
-          steps={rewardBuilderSteps.map((step) => ({ ...step, complete: stepCompletion[step.id] }))}
-          currentStep={currentStep}
-          onSelect={setCurrentStep}
-        />
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="space-y-6">
+          <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+            <BuilderStepRail
+              steps={rewardBuilderSteps.map((step, index) => ({
+                ...step,
+                eyebrow: `Step ${index + 1}`,
+                complete: stepCompletion[step.id],
+              }))}
+              currentStep={currentStep}
+              onSelect={setCurrentStep}
+            />
+          </div>
 
-        <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
+          <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
           <BuilderStepHeader
-            eyebrow={currentStepMeta.eyebrow}
+            eyebrow={`Step ${currentStepIndex + 1}`}
             title={currentStepMeta.label}
             description={currentStepMeta.description}
             stepIndex={currentStepIndex + 1}
@@ -318,9 +327,7 @@ export default function RewardForm({
         </p>
 
         <div className="grid gap-3 xl:grid-cols-2">
-          {(
-            ["token", "nft", "role", "allowlist", "access", "badge"] as AdminReward["rewardType"][]
-          ).map((rewardType) => {
+          {featuredRewardBlueprints.map((rewardType) => {
             const preset = REWARD_TYPE_PRESETS[rewardType];
             const isActive = values.rewardType === rewardType;
 
@@ -329,14 +336,21 @@ export default function RewardForm({
                 key={rewardType}
                 type="button"
                 onClick={() => applyPreset(rewardType)}
-                className={`rounded-2xl border p-4 text-left transition ${
+                className={`rounded-[24px] border p-4 text-left transition ${
                   isActive
-                    ? "border-primary bg-primary/10"
+                    ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))]"
                     : "border-line bg-card2 hover:border-primary/40"
                 }`}
               >
-                <p className="text-sm font-bold text-text">{preset.label}</p>
-                <p className="mt-2 text-sm leading-6 text-sub">{preset.summary}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-text">{preset.label}</p>
+                    <p className="mt-2 text-sm leading-6 text-sub">{preset.summary}</p>
+                  </div>
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-text">
+                    {preset.rarity}
+                  </span>
+                </div>
               </button>
             );
           })}
@@ -683,7 +697,7 @@ export default function RewardForm({
             onBack={() => previousStep && setCurrentStep(previousStep.id)}
             nextLabel={nextStep ? `Continue to ${nextStep.label}` : undefined}
             onNext={nextStep ? () => setCurrentStep(nextStep.id) : undefined}
-            footerLabel={`${currentStepMeta.eyebrow} • ${currentStepMeta.label}`}
+            footerLabel={`Step ${currentStepIndex + 1} - ${currentStepMeta.label}`}
             submitButton={
               nextStep ? undefined : (
                 <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
@@ -693,22 +707,19 @@ export default function RewardForm({
             }
           />
         </div>
+        </div>
 
         <BuilderSidebarStack>
-          <BuilderSidebarCard title="Reward Summary">
-            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-bold text-text">{activePreset.label}</p>
-                  <p className="mt-2 text-sm leading-6 text-sub">{activePreset.summary}</p>
-                </div>
-                <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
-                  <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.type}</span>
-                  <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">{activePreset.claimMethod.replace(/_/g, " ")}</span>
-                  <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.rarity}</span>
-                </div>
-              </div>
-            </div>
+          <BuilderSidebarCard title="Reward Preview">
+            <RewardPreviewSurface
+              preset={activePreset}
+              title={values.title || activePreset.label}
+              description={values.description || activePreset.summary}
+              cost={values.cost}
+              claimMethod={values.claimMethod}
+              claimable={values.claimable}
+              visible={values.visible}
+            />
           </BuilderSidebarCard>
 
           <BuilderSidebarCard title="Readiness Guide">
@@ -733,6 +744,80 @@ export default function RewardForm({
         </BuilderSidebarStack>
       </div>
     </form>
+  );
+}
+
+function RewardPreviewSurface({
+  preset,
+  title,
+  description,
+  cost,
+  claimMethod,
+  claimable,
+  visible,
+}: {
+  preset: {
+    label: string;
+    summary: string;
+    rarity: string;
+    claimMethod: string;
+    type: string;
+  };
+  title: string;
+  description: string;
+  cost: number;
+  claimMethod: string;
+  claimable: boolean;
+  visible: boolean;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="max-w-xl">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+            {preset.label}
+          </p>
+          <h3 className="mt-3 text-2xl font-extrabold tracking-[-0.03em] text-text">
+            {title}
+          </h3>
+          <p className="mt-3 text-sm leading-7 text-sub">{description}</p>
+        </div>
+        <span className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3 text-sm font-bold text-text">
+          {cost} XP
+        </span>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
+          {preset.type}
+        </span>
+        <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+          {preset.rarity}
+        </span>
+        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
+          {claimMethod.replace(/_/g, " ")}
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+            Claim state
+          </p>
+          <p className="mt-2 text-sm font-semibold text-text">
+            {claimable ? "Claimable" : "Auto-granted / gated"}
+          </p>
+        </div>
+        <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+            Visibility
+          </p>
+          <p className="mt-2 text-sm font-semibold text-text">
+            {visible ? "Visible in app" : "Hidden from app"}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
