@@ -57,35 +57,36 @@ type SavedTemplateConfiguration = {
   rewardDraftEdits: Record<string, Partial<EditableRewardDraft>>;
 };
 
-type BuilderStepId = "template" | "autofill" | "flow" | "launch";
+type SelectedTemplateId = CampaignTemplateId | null;
+type BuilderStepId = "template" | "custom" | "autofill" | "flow" | "launch";
 
-const builderSteps: Array<{
+const baseBuilderSteps: Array<{
   id: BuilderStepId;
-  eyebrow: string;
   label: string;
   description: string;
 }> = [
   {
     id: "template",
-    eyebrow: "Step 1",
     label: "Pick a playbook",
     description: "Choose the full campaign template or a saved project variant that fits this workspace best.",
   },
   {
+    id: "custom",
+    label: "Shape custom playbook",
+    description: "Define the direction for a custom campaign path before you continue into setup and launch.",
+  },
+  {
     id: "autofill",
-    eyebrow: "Step 2",
     label: "Wire project context",
     description: "See what Veltrix can autofill already and patch the missing project context inline.",
   },
   {
     id: "flow",
-    eyebrow: "Step 3",
     label: "Tune generated flow",
     description: "Review the generated quests and rewards, then include, skip, or refine the drafts.",
   },
   {
     id: "launch",
-    eyebrow: "Step 4",
     label: "Review and launch",
     description: "Save this setup as a reusable template variant and generate the campaign when it feels right.",
   },
@@ -94,6 +95,7 @@ const builderSteps: Array<{
 export default function NewCampaignPage() {
   const router = useRouter();
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
+  const setActiveProjectId = useAdminAuthStore((s) => s.setActiveProjectId);
   const createCampaign = useAdminPortalStore((s) => s.createCampaign);
   const createQuest = useAdminPortalStore((s) => s.createQuest);
   const createReward = useAdminPortalStore((s) => s.createReward);
@@ -110,7 +112,7 @@ export default function NewCampaignPage() {
   const projects = useAdminPortalStore((s) => s.projects);
 
   const [selectedTemplateId, setSelectedTemplateId] =
-    useState<CampaignTemplateId>("community_growth_starter");
+    useState<SelectedTemplateId>(null);
   const [selectedQuestKeys, setSelectedQuestKeys] = useState<string[]>([]);
   const [selectedRewardKeys, setSelectedRewardKeys] = useState<string[]>([]);
   const [projectContextDraft, setProjectContextDraft] = useState<
@@ -140,6 +142,8 @@ export default function NewCampaignPage() {
     id: string;
     title: string;
   } | null>(null);
+  const [customPlaybookSummary, setCustomPlaybookSummary] = useState("");
+  const [customPlaybookGoal, setCustomPlaybookGoal] = useState("");
 
   const selectedProject = useMemo(
     () =>
@@ -172,14 +176,14 @@ export default function NewCampaignPage() {
   );
   const templatePlan = useMemo(
     () =>
-      effectiveProject
+      effectiveProject && selectedTemplateId
         ? buildCampaignTemplate(effectiveProject, selectedTemplateId)
         : null,
     [effectiveProject, selectedTemplateId]
   );
   const persistedTemplatePlan = useMemo(
     () =>
-      selectedProject
+      selectedProject && selectedTemplateId
         ? buildCampaignTemplate(selectedProject, selectedTemplateId)
         : null,
     [selectedProject, selectedTemplateId]
@@ -187,6 +191,13 @@ export default function NewCampaignPage() {
 
   const selectedTemplate = templateOptions.find(
     (template) => template.id === selectedTemplateId
+  );
+  const builderSteps = useMemo(
+    () =>
+      baseBuilderSteps.filter((step) =>
+        selectedTemplateId === "blank_campaign_canvas" ? true : step.id !== "custom"
+      ),
+    [selectedTemplateId]
   );
   const currentStepIndex = builderSteps.findIndex((step) => step.id === currentStep);
   const currentStepMeta = builderSteps[currentStepIndex];
@@ -202,11 +213,19 @@ export default function NewCampaignPage() {
   }, [currentStep]);
 
   useEffect(() => {
+    if (!builderSteps.some((step) => step.id === currentStep)) {
+      setCurrentStep("template");
+    }
+  }, [builderSteps, currentStep]);
+
+  useEffect(() => {
     setProjectContextDraft({});
     setQuestDraftEdits({});
     setRewardDraftEdits({});
     setContextMessage(null);
     setSavedTemplateMessage(null);
+    setCustomPlaybookSummary("");
+    setCustomPlaybookGoal("");
   }, [selectedProject?.id, selectedTemplateId]);
 
   useEffect(() => {
@@ -457,8 +476,16 @@ export default function NewCampaignPage() {
   }
 
   function validateCurrentStep(step: BuilderStepId) {
-    if (step === "template" && !selectedTemplate) {
+    if (step === "template" && !selectedTemplateId) {
       return "Choose a playbook or blank campaign canvas before continuing.";
+    }
+
+    if (
+      step === "custom" &&
+      selectedTemplateId === "blank_campaign_canvas" &&
+      !campaignTitleDraft.trim()
+    ) {
+      return "Give your custom playbook a campaign title before continuing.";
     }
 
     if (step === "autofill" && currentMissingContextFields.length > 0) {
@@ -526,6 +553,39 @@ export default function NewCampaignPage() {
           }
         />
 
+        <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+          <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                Workspace
+              </p>
+              <h3 className="mt-2 text-xl font-extrabold tracking-[-0.02em] text-text">
+                Switch the project you are building for
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-sub">
+                Choose the active workspace first so the right links, branding and
+                project context flow into this campaign builder.
+              </p>
+            </div>
+            <label className="block">
+              <span className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                Active workspace
+              </span>
+              <select
+                value={selectedProject?.id ?? ""}
+                onChange={(event) => setActiveProjectId(event.target.value)}
+                className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-text outline-none"
+              >
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
         <CampaignStepNavigator
           steps={builderSteps}
           currentStep={currentStep}
@@ -539,7 +599,7 @@ export default function NewCampaignPage() {
           {currentStep === "template" ? (
           <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
             <BuilderStepHeader
-              eyebrow="Template Studio"
+              eyebrow={`Step ${currentStepIndex + 1}`}
               title="Start from a complete playbook"
               description="Pick the campaign system that fits this workspace best. Veltrix scores templates against your project context so teams can move fast without building from scratch."
               stepIndex={currentStepIndex + 1}
@@ -597,7 +657,13 @@ export default function NewCampaignPage() {
                   <button
                     key={template.id}
                     type="button"
-                    onClick={() => setSelectedTemplateId(template.id)}
+                    onClick={() => {
+                      setSelectedTemplateId(template.id);
+                      setVisitedSteps(["template"]);
+                      setCurrentStep(
+                        template.id === "blank_campaign_canvas" ? "custom" : "autofill"
+                      );
+                    }}
                     className={`rounded-[26px] border p-5 text-left transition ${
                       isActive
                         ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))] shadow-[0_18px_36px_rgba(0,0,0,0.24)]"
@@ -657,14 +723,79 @@ export default function NewCampaignPage() {
           </div>
           ) : null}
 
+          {currentStep === "custom" ? (
+          <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
+            <BuilderStepHeader
+              eyebrow={`Step ${currentStepIndex + 1}`}
+              title="Shape your custom playbook"
+              description="You are not using a prebuilt template here. Set the custom direction first, then continue into the workspace wiring and launch setup."
+              stepIndex={currentStepIndex + 1}
+              totalSteps={builderSteps.length}
+            />
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                <span className="mb-2 block text-sm font-semibold text-text">
+                  Campaign title
+                </span>
+                <input
+                  value={campaignTitleDraft}
+                  onChange={(event) => setCampaignTitleDraft(event.target.value)}
+                  className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                  placeholder="Chainwars Custom Sprint"
+                />
+                <p className="mt-3 text-sm leading-6 text-sub">
+                  This becomes the public campaign title and anchors the rest of the
+                  custom setup path.
+                </p>
+              </label>
+
+              <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                <span className="mb-2 block text-sm font-semibold text-text">
+                  Short campaign hook
+                </span>
+                <input
+                  value={customPlaybookSummary}
+                  onChange={(event) => setCustomPlaybookSummary(event.target.value)}
+                  className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                  placeholder="A custom campaign for holders, community and launch traffic"
+                />
+                <p className="mt-3 text-sm leading-6 text-sub">
+                  Use one sentence to frame what this custom campaign is trying to do.
+                </p>
+              </label>
+            </div>
+
+            <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+              <span className="mb-2 block text-sm font-semibold text-text">
+                Internal direction
+              </span>
+              <textarea
+                value={customPlaybookGoal}
+                onChange={(event) => setCustomPlaybookGoal(event.target.value)}
+                rows={5}
+                className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                placeholder="Describe the flow you want to build: what should users do first, what should this campaign unlock, and what kind of reward logic should it support?"
+              />
+              <p className="mt-3 text-sm leading-6 text-sub">
+                This is your own custom playbook note. It helps the launch step feel
+                intentional instead of blank.
+              </p>
+            </label>
+          </div>
+          ) : null}
+
           <div className="space-y-5 xl:self-start">
             {selectedTemplate && templatePlan ? (
               <div className="space-y-5">
                 <BuilderSidebarCard
-                  title={
-                    currentStep === "autofill"
-                      ? "Autofill Preview"
-                      : currentStep === "flow"
+                    title={
+                      currentStep === "custom"
+                        ? "Custom Playbook Preview"
+                        : 
+                      currentStep === "autofill"
+                        ? "Autofill Preview"
+                        : currentStep === "flow"
                         ? "Generated Flow"
                         : "Campaign Preview"
                   }
@@ -673,10 +804,14 @@ export default function NewCampaignPage() {
                     {currentStep !== "flow" ? (
                     <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
                       <p className="text-sm font-bold text-text">
-                        {selectedTemplate.label}
+                        {selectedTemplate.id === "blank_campaign_canvas"
+                          ? "Custom Playbook"
+                          : selectedTemplate.label}
                       </p>
                       <p className="mt-2 text-sm leading-6 text-sub">
-                        {selectedTemplate.goal}
+                        {selectedTemplate.id === "blank_campaign_canvas" && customPlaybookGoal
+                          ? customPlaybookGoal
+                          : selectedTemplate.goal}
                       </p>
                     </div>
                     ) : null}
@@ -721,7 +856,11 @@ export default function NewCampaignPage() {
                     <div className="grid gap-3 md:grid-cols-2">
                       <PreviewStat
                         label="Campaign title"
-                        value={campaignTitleDraft || templatePlan.campaignDraft.title}
+                        value={
+                          campaignTitleDraft ||
+                          customPlaybookSummary ||
+                          templatePlan.campaignDraft.title
+                        }
                       />
                       <PreviewStat
                         label="Edited drafts"
@@ -770,6 +909,24 @@ export default function NewCampaignPage() {
                     <TemplateMeta
                       label="Reward output"
                       value="Selected rewards follow the same route, so launch-ready campaigns can publish in one pass."
+                    />
+                  </div>
+                </BuilderSidebarCard>
+                ) : null}
+
+                {currentStep === "custom" ? (
+                <BuilderSidebarCard title="Custom Route">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                    Custom path
+                  </p>
+                  <div className="mt-4 grid gap-3">
+                    <TemplateMeta
+                      label="Starting point"
+                      value="This route skips pre-generated quests and rewards so your team can build the campaign structure manually."
+                    />
+                    <TemplateMeta
+                      label="What happens next"
+                      value="Continue into workspace context, then generate the campaign shell and add quests or rewards with the dedicated builders."
                     />
                   </div>
                 </BuilderSidebarCard>
@@ -1012,6 +1169,10 @@ export default function NewCampaignPage() {
                 ? {
                     ...templatePlan.campaignDraft,
                     title: campaignTitleDraft || templatePlan.campaignDraft.title,
+                    shortDescription:
+                      customPlaybookSummary || templatePlan.campaignDraft.shortDescription,
+                    longDescription:
+                      customPlaybookGoal || templatePlan.campaignDraft.longDescription,
                     slug: (campaignTitleDraft || templatePlan.campaignDraft.title)
                       .toLowerCase()
                       .trim()
@@ -1104,7 +1265,7 @@ export default function NewCampaignPage() {
                 }
               : undefined
           }
-          footerLabel={`${currentStepMeta.eyebrow} - ${currentStepMeta.label}`}
+          footerLabel={`Step ${currentStepIndex + 1} - ${currentStepMeta.label}`}
         />
       </div>
     </AdminShell>
@@ -1216,7 +1377,6 @@ function CampaignStepNavigator({
 }: {
   steps: Array<{
     id: BuilderStepId;
-    eyebrow: string;
     label: string;
     description: string;
   }>;
@@ -1233,10 +1393,10 @@ function CampaignStepNavigator({
           const complete = index < currentStepIndex && visitedSteps.includes(step.id);
 
           return (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => onSelect(step.id)}
+          <button
+            key={step.id}
+            type="button"
+            onClick={() => onSelect(step.id)}
               className={`rounded-[22px] border px-4 py-4 text-left transition ${
                 active
                   ? "border-primary/35 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))]"
@@ -1244,9 +1404,9 @@ function CampaignStepNavigator({
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+              <div className="min-w-0">
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
-                    {step.eyebrow}
+                    Step {index + 1}
                   </p>
                   <p className="mt-2 text-sm font-bold tracking-[-0.01em] text-text">
                     {step.label}
@@ -1256,12 +1416,12 @@ function CampaignStepNavigator({
                   className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
                     complete
                       ? "bg-primary/15 text-primary"
-                      : active
+                    : active
                         ? "bg-white/[0.08] text-text"
                         : "bg-black/20 text-sub"
                   }`}
                 >
-                  {complete ? "Done" : active ? "Current" : "Next"}
+                  {complete ? "Locked in" : active ? "Current" : "Next"}
                 </span>
               </div>
               <p className="mt-3 text-sm leading-6 text-sub">{step.description}</p>
