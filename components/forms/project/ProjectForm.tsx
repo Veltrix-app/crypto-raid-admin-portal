@@ -7,7 +7,6 @@ import {
   BuilderMetricCard,
   BuilderSidebarCard,
   BuilderSidebarStack,
-  BuilderSignalRow,
   BuilderStepHeader,
   BuilderStepRail,
 } from "@/components/layout/builder/BuilderPrimitives";
@@ -60,43 +59,36 @@ const defaultValues: Omit<AdminProject, "id"> = {
 const steps: Array<{
   id: StepId;
   label: string;
-  eyebrow: string;
   description: string;
 }> = [
   {
     id: "identity",
     label: "Identity",
-    eyebrow: "Step 1",
     description: "Name the workspace and lock in the core metadata.",
   },
   {
     id: "brand",
     label: "Brand",
-    eyebrow: "Step 2",
     description: "Set the tone and public-facing assets.",
   },
   {
     id: "links",
     label: "Links",
-    eyebrow: "Step 3",
     description: "Connect the channels templates can use automatically.",
   },
   {
     id: "context",
     label: "Campaign Context",
-    eyebrow: "Step 4",
     description: "Add launch, contract, and wallet context for smarter automation.",
   },
   {
     id: "public-profile",
     label: "Public Profile",
-    eyebrow: "Step 5",
     description: "Refine the story, metrics, and visibility settings users will see.",
   },
   {
     id: "review",
     label: "Review",
-    eyebrow: "Step 6",
     description: "Check readiness before saving the workspace.",
   },
 ];
@@ -210,6 +202,44 @@ export default function ProjectForm({
   const nextStep = steps[currentStepIndex + 1];
   const readinessCount = brandingReadiness.filter((item) => item.complete).length;
   const progressPercent = Math.round(((currentStepIndex + 1) / steps.length) * 100);
+  const connectedModules = [
+    { label: "Website", value: values.website },
+    { label: "X", value: values.xUrl },
+    { label: "Telegram", value: values.telegramUrl },
+    { label: "Discord", value: values.discordUrl },
+    { label: "Docs", value: values.docsUrl },
+    { label: "Waitlist", value: values.waitlistUrl },
+  ];
+  const capabilitySignals = [
+    {
+      label: "Launch Templates",
+      ready: Boolean(values.launchPostUrl || values.website || values.xUrl),
+      hint: values.launchPostUrl
+        ? "Launch post is connected"
+        : "Add a launch post to unlock cleaner social sprint autofill",
+    },
+    {
+      label: "Holder Flows",
+      ready: Boolean(values.tokenContractAddress || values.nftContractAddress),
+      hint: values.tokenContractAddress
+        ? "Token context is ready"
+        : "Add contract data for holder-first campaign paths",
+    },
+    {
+      label: "Referral Loops",
+      ready: Boolean(values.waitlistUrl || values.website),
+      hint: values.waitlistUrl
+        ? "Waitlist path is connected"
+        : "Add a waitlist or destination URL for conversion loops",
+    },
+    {
+      label: "Creator Research",
+      ready: Boolean(values.docsUrl),
+      hint: values.docsUrl
+        ? "Docs can be routed into creator tasks"
+        : "Connect docs to support research and creator templates",
+    },
+  ];
 
   const setField = <K extends keyof Omit<AdminProject, "id">>(
     key: K,
@@ -240,16 +270,23 @@ export default function ProjectForm({
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[0.8fr_1.4fr_0.9fr]">
-        <BuilderStepRail
-          steps={steps.map((step) => ({ ...step, complete: stepCompletion[step.id] }))}
-          currentStep={currentStep}
-          onSelect={setCurrentStep}
-        />
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="space-y-6">
+          <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+            <BuilderStepRail
+              steps={steps.map((step, index) => ({
+                ...step,
+                eyebrow: `Step ${index + 1}`,
+                complete: stepCompletion[step.id],
+              }))}
+              currentStep={currentStep}
+              onSelect={setCurrentStep}
+            />
+          </div>
 
-        <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
+          <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
           <BuilderStepHeader
-            eyebrow={currentStepMeta.eyebrow}
+            eyebrow={`Step ${currentStepIndex + 1}`}
             title={currentStepMeta.label}
             description={currentStepMeta.description}
             stepIndex={currentStepIndex + 1}
@@ -268,7 +305,7 @@ export default function ProjectForm({
             onBack={() => previousStep && setCurrentStep(previousStep.id)}
             nextLabel={nextStep ? `Continue to ${nextStep.label}` : undefined}
             onNext={nextStep ? () => setCurrentStep(nextStep.id) : undefined}
-            footerLabel={`${currentStepMeta.eyebrow} • ${currentStepMeta.label}`}
+            footerLabel={`Step ${currentStepIndex + 1} - ${currentStepMeta.label}`}
             submitButton={
               nextStep ? (
                 undefined
@@ -280,58 +317,10 @@ export default function ProjectForm({
             }
           />
         </div>
+        </div>
 
         <BuilderSidebarStack>
-          <div className="overflow-hidden rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.98),rgba(10,12,18,0.96))] shadow-[0_22px_60px_rgba(0,0,0,0.22)]">
-            <div
-              className="h-36 bg-gradient-to-br from-primary/15 via-card to-card2"
-              style={
-                values.brandAccent
-                  ? {
-                      backgroundImage: `linear-gradient(135deg, ${values.brandAccent}22, rgba(10,12,18,0.88), rgba(18,22,32,0.98))`,
-                    }
-                  : undefined
-              }
-            >
-              {values.bannerUrl ? (
-                <img
-                  src={values.bannerUrl}
-                  alt={`${values.name || "Project"} banner`}
-                  className="h-full w-full object-cover"
-                />
-              ) : null}
-            </div>
-
-            <div className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/8 bg-white/[0.04] text-2xl">
-                  {values.logo || "\uD83D\uDE80"}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-lg font-extrabold text-text">
-                    {values.name || "Project name"}
-                  </p>
-                  <p className="truncate text-sm text-sub">/{values.slug || "project-slug"}</p>
-                </div>
-              </div>
-
-              <p className="mt-4 text-sm leading-6 text-sub">
-                {values.description || "Short public description will appear here."}
-              </p>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <PreviewBadge>{values.chain}</PreviewBadge>
-                {values.category ? <PreviewBadge>{values.category}</PreviewBadge> : null}
-                <PreviewBadge>{values.isPublic ? "Public" : "Private"}</PreviewBadge>
-                {values.brandMood ? <PreviewBadge>{values.brandMood}</PreviewBadge> : null}
-              </div>
-
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <PreviewStat label="Members" value={String(values.members)} />
-                <PreviewStat label="Campaigns" value={String(values.campaigns)} />
-              </div>
-            </div>
-          </div>
+          <ProjectPreviewSurface values={values} />
 
           <BuilderSidebarCard title="Readiness Guide">
             <div className="space-y-2">
@@ -353,16 +342,40 @@ export default function ProjectForm({
             </div>
           </BuilderSidebarCard>
 
-          <BuilderSidebarCard title="Autofill Signals">
-            <div className="grid gap-3">
-              <BuilderSignalRow label="Website" ready={Boolean(values.website)} />
-              <BuilderSignalRow label="X" ready={Boolean(values.xUrl)} />
-              <BuilderSignalRow label="Telegram" ready={Boolean(values.telegramUrl)} />
-              <BuilderSignalRow label="Discord" ready={Boolean(values.discordUrl)} />
-              <BuilderSignalRow label="Docs" ready={Boolean(values.docsUrl)} />
-              <BuilderSignalRow label="Waitlist" ready={Boolean(values.waitlistUrl)} />
-              <BuilderSignalRow label="Launch Post" ready={Boolean(values.launchPostUrl)} />
-              <BuilderSignalRow label="Token Contract" ready={Boolean(values.tokenContractAddress)} />
+          <BuilderSidebarCard title="Connected Modules">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {connectedModules.map((item) => (
+                <ConnectedModuleCard
+                  key={item.label}
+                  label={item.label}
+                  ready={Boolean(item.value)}
+                />
+              ))}
+            </div>
+          </BuilderSidebarCard>
+
+          <BuilderSidebarCard title="Capabilities Unlocked">
+            <div className="space-y-3">
+              {capabilitySignals.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-text">{item.label}</p>
+                    <span
+                      className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+                        item.ready
+                          ? "bg-primary/15 text-primary"
+                          : "bg-white/5 text-sub"
+                      }`}
+                    >
+                      {item.ready ? "Unlocked" : "Not ready"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-sub">{item.hint}</p>
+                </div>
+              ))}
             </div>
           </BuilderSidebarCard>
         </BuilderSidebarStack>
@@ -862,6 +875,91 @@ function SummaryPanel({
             <p className="max-w-[60%] text-right text-sm font-semibold text-text">{value}</p>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function ProjectPreviewSurface({
+  values,
+}: {
+  values: Omit<AdminProject, "id">;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.98),rgba(10,12,18,0.96))] shadow-[0_22px_60px_rgba(0,0,0,0.22)]">
+      <div
+        className="h-40 bg-gradient-to-br from-primary/15 via-card to-card2"
+        style={
+          values.brandAccent
+            ? {
+                backgroundImage: `linear-gradient(135deg, ${values.brandAccent}22, rgba(10,12,18,0.88), rgba(18,22,32,0.98))`,
+              }
+            : undefined
+        }
+      >
+        {values.bannerUrl ? (
+          <img
+            src={values.bannerUrl}
+            alt={`${values.name || "Project"} banner`}
+            className="h-full w-full object-cover"
+          />
+        ) : null}
+      </div>
+
+      <div className="p-5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+          Public Project Preview
+        </p>
+        <div className="mt-4 flex items-center gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/8 bg-white/[0.04] text-2xl">
+            {values.logo || "\uD83D\uDE80"}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-xl font-extrabold text-text">
+              {values.name || "Project name"}
+            </p>
+            <p className="truncate text-sm text-sub">/{values.slug || "project-slug"}</p>
+          </div>
+        </div>
+
+        <p className="mt-4 text-sm leading-7 text-sub">
+          {values.description || "Short public description will appear here."}
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <PreviewBadge>{values.chain}</PreviewBadge>
+          {values.category ? <PreviewBadge>{values.category}</PreviewBadge> : null}
+          <PreviewBadge>{values.isPublic ? "Public" : "Private"}</PreviewBadge>
+          {values.brandMood ? <PreviewBadge>{values.brandMood}</PreviewBadge> : null}
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <PreviewStat label="Members" value={String(values.members)} />
+          <PreviewStat label="Campaigns" value={String(values.campaigns)} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConnectedModuleCard({
+  label,
+  ready,
+}: {
+  label: string;
+  ready: boolean;
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-bold text-text">{label}</p>
+        <span
+          className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+            ready ? "bg-primary/15 text-primary" : "bg-white/5 text-sub"
+          }`}
+        >
+          {ready ? "Connected" : "Missing"}
+        </span>
       </div>
     </div>
   );
