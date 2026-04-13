@@ -14,6 +14,13 @@ type Props = {
   submitLabel?: string;
 };
 
+type RewardBuilderStepId =
+  | "blueprint"
+  | "setup"
+  | "value"
+  | "delivery"
+  | "launch";
+
 const REWARD_TYPE_PRESETS: Record<
   AdminReward["rewardType"],
   {
@@ -100,6 +107,44 @@ const REWARD_TYPE_PRESETS: Record<
   },
 };
 
+const rewardBuilderSteps: Array<{
+  id: RewardBuilderStepId;
+  eyebrow: string;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: "blueprint",
+    eyebrow: "Step 1",
+    label: "Pick reward type",
+    description: "Start from the reward mechanic that best matches the payoff you want to offer.",
+  },
+  {
+    id: "setup",
+    eyebrow: "Step 2",
+    label: "Set placement",
+    description: "Attach the reward to the right project and campaign, then define the core offer.",
+  },
+  {
+    id: "value",
+    eyebrow: "Step 3",
+    label: "Define value",
+    description: "Tune rarity, cost, visibility, stock, and the visual feel of the reward.",
+  },
+  {
+    id: "delivery",
+    eyebrow: "Step 4",
+    label: "Configure delivery",
+    description: "Make the fulfillment route explicit so claims and ops stay clean later.",
+  },
+  {
+    id: "launch",
+    eyebrow: "Step 5",
+    label: "Review and launch",
+    description: "Check readiness, then save the reward with confidence.",
+  },
+];
+
 export default function RewardForm({
   projects,
   campaigns,
@@ -108,6 +153,7 @@ export default function RewardForm({
   onSubmit,
   submitLabel = "Save Reward",
 }: Props) {
+  const [currentStep, setCurrentStep] = useState<RewardBuilderStepId>("blueprint");
   const [values, setValues] = useState<Omit<AdminReward, "id">>(
     initialValues || {
       projectId: defaultProjectId || projects[0]?.id || "",
@@ -146,6 +192,39 @@ export default function RewardForm({
   }, [campaigns, values.projectId]);
   const selectedProject = projects.find((project) => project.id === values.projectId);
   const activePreset = REWARD_TYPE_PRESETS[selectedPreset];
+  const currentStepIndex = rewardBuilderSteps.findIndex((step) => step.id === currentStep);
+  const currentStepMeta = rewardBuilderSteps[currentStepIndex];
+  const previousStep = rewardBuilderSteps[currentStepIndex - 1];
+  const nextStep = rewardBuilderSteps[currentStepIndex + 1];
+  const readinessItems = [
+    {
+      label: "Placement",
+      value: values.projectId ? (values.campaignId ? "Project and campaign linked" : "Project linked, campaign optional") : "Missing project",
+      complete: Boolean(values.projectId),
+    },
+    {
+      label: "Value",
+      value: `${values.cost} XP • ${values.rarity}`,
+      complete: values.cost >= 0,
+    },
+    {
+      label: "Delivery",
+      value: values.claimMethod.replace(/_/g, " "),
+      complete: Boolean(values.claimMethod),
+    },
+    {
+      label: "Visibility",
+      value: values.visible ? "Visible in app" : "Hidden from app",
+      complete: true,
+    },
+  ];
+  const stepCompletion: Record<RewardBuilderStepId, boolean> = {
+    blueprint: Boolean(values.rewardType),
+    setup: Boolean(values.projectId && values.title && values.description),
+    value: Boolean(values.rarity && values.cost >= 0),
+    delivery: Boolean(values.claimMethod),
+    launch: Boolean(values.status),
+  };
 
   useEffect(() => {
     if (!values.projectId && defaultProjectId) {
@@ -186,12 +265,95 @@ export default function RewardForm({
 
   return (
     <form
-      className="space-y-8"
+      className="space-y-6"
       onSubmit={async (e) => {
         e.preventDefault();
         await onSubmit(values);
       }}
     >
+      <div className="rounded-[32px] border border-line bg-card p-6">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
+              Reward Builder Wizard
+            </p>
+            <h2 className="mt-2 text-3xl font-extrabold text-text">
+              Design the payoff in a guided flow
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-sub">
+              Pick the reward type, define its value, make delivery explicit, and
+              launch it without a wall of fields.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <MetricCard label="Blueprint" value={activePreset.label} />
+            <MetricCard label="Cost" value={`${values.cost} XP`} />
+            <MetricCard label="Claim Flow" value={values.claimMethod.replace(/_/g, " ")} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[0.78fr_1.42fr_0.9fr]">
+        <aside className="rounded-[28px] border border-line bg-card p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Progress</p>
+          <div className="mt-4 space-y-3">
+            {rewardBuilderSteps.map((step, index) => {
+              const active = currentStep === step.id;
+              const complete = stepCompletion[step.id];
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  onClick={() => setCurrentStep(step.id)}
+                  className={`w-full rounded-[22px] border px-4 py-4 text-left transition ${
+                    active
+                      ? "border-primary/50 bg-primary/10"
+                      : "border-line bg-card2 hover:border-primary/30"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
+                        {step.eyebrow}
+                      </p>
+                      <p className="mt-2 text-sm font-bold text-text">
+                        {index + 1}. {step.label}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+                        complete ? "bg-primary/15 text-primary" : active ? "bg-card text-text" : "bg-card text-sub"
+                      }`}
+                    >
+                      {complete ? "Ready" : active ? "Current" : "Open"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-sub">{step.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        <div className="space-y-6 rounded-[28px] border border-line bg-card p-6">
+          <div className="flex flex-col gap-3 border-b border-line pb-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                {currentStepMeta.eyebrow}
+              </p>
+              <h3 className="mt-2 text-2xl font-extrabold text-text">{currentStepMeta.label}</h3>
+              <p className="mt-2 text-sm leading-6 text-sub">{currentStepMeta.description}</p>
+            </div>
+            <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Workflow</p>
+              <p className="mt-2 text-sm font-semibold text-text">
+                {currentStepIndex + 1} of {rewardBuilderSteps.length}
+              </p>
+            </div>
+          </div>
+
+      {currentStep === "blueprint" ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Reward Blueprint
@@ -236,7 +398,9 @@ export default function RewardForm({
           </div>
         </div>
       </div>
+      ) : null}
 
+      {currentStep === "setup" ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           General
@@ -322,7 +486,10 @@ export default function RewardForm({
           </p>
         ) : null}
       </div>
+      ) : null}
 
+      {currentStep === "value" ? (
+      <>
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Reward Settings
@@ -459,7 +626,10 @@ export default function RewardForm({
           <span className="font-semibold text-text">Builder hint:</span> keep the cost and rarity aligned with the effort of the quests that unlock this reward. The stronger the reward, the more important it is to make fulfillment and stock rules explicit.
         </div>
       </div>
+      </>
+      ) : null}
 
+      {currentStep === "delivery" ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Inventory & Fulfillment
@@ -522,10 +692,105 @@ export default function RewardForm({
           </div>
         </div>
       </div>
+      ) : null}
 
-      <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
-        {submitLabel}
-      </button>
+      {currentStep === "launch" ? (
+      <div className="space-y-3">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+          Launch Review
+        </p>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {readinessItems.map((item) => (
+            <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-bold text-text">{item.label}</p>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+                    item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                  }`}
+                >
+                  {item.complete ? "Ready" : "Needs work"}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      ) : null}
+
+          <div className="flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => previousStep && setCurrentStep(previousStep.id)}
+                disabled={!previousStep}
+                className="rounded-2xl border border-line bg-card2 px-5 py-3 font-bold text-text disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Back
+              </button>
+              {nextStep ? (
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(nextStep.id)}
+                  className="rounded-2xl bg-primary px-5 py-3 font-bold text-black"
+                >
+                  Continue
+                </button>
+              ) : (
+                <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
+                  {submitLabel}
+                </button>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-sub">
+              {currentStepMeta.eyebrow} • {currentStepMeta.label}
+            </div>
+          </div>
+        </div>
+
+        <aside className="space-y-6">
+          <div className="rounded-[28px] border border-line bg-card p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Reward Summary</p>
+            <div className="mt-4 rounded-2xl border border-line bg-card2 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-text">{activePreset.label}</p>
+                  <p className="mt-2 text-sm leading-6 text-sub">{activePreset.summary}</p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.type}</span>
+                  <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">{activePreset.claimMethod.replace(/_/g, " ")}</span>
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.rarity}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-line bg-card p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Readiness Guide</p>
+            <div className="mt-4 space-y-3">
+              {readinessItems.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-text">{item.label}</p>
+                    <span
+                      className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+                        item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                      }`}
+                    >
+                      {item.complete ? "Ready" : "Needs work"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
     </form>
   );
 }
@@ -564,5 +829,14 @@ function ToggleField({
         className="h-5 w-5 accent-lime-400"
       />
     </label>
+  );
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-line bg-card px-4 py-4">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-2 text-lg font-extrabold capitalize text-text">{value}</p>
+    </div>
   );
 }
