@@ -13,6 +13,7 @@ import {
   DetailSidebarSurface,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
+import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -47,12 +48,10 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <AdminShell>
-        <div className="rounded-[24px] border border-line bg-card p-6">
-          <h1 className="text-2xl font-extrabold text-text">Project not found</h1>
-          <p className="mt-2 text-sm text-sub">
-            This project could not be found in the admin portal store.
-          </p>
-        </div>
+        <NotFoundState
+          title="Project not found"
+          description="This project could not be resolved from the current admin portal store state. It may have been removed, be outside your workspace scope, or not have loaded yet."
+        />
       </AdminShell>
     );
   }

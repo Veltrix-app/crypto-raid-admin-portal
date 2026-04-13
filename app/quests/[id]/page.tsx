@@ -15,6 +15,7 @@ import {
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { getQuestVerificationPreview } from "@/lib/quest-verification";
+import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function QuestDetailPage() {
@@ -37,12 +38,10 @@ export default function QuestDetailPage() {
   if (!quest) {
     return (
       <AdminShell>
-        <div className="rounded-[24px] border border-line bg-card p-6">
-          <h1 className="text-2xl font-extrabold text-text">Quest not found</h1>
-          <p className="mt-2 text-sm text-sub">
-            This quest could not be found in the admin portal store.
-          </p>
-        </div>
+        <NotFoundState
+          title="Quest not found"
+          description="This quest could not be resolved from the current workspace state. It may have been deleted, moved to another project or not loaded into the active scope."
+        />
       </AdminShell>
     );
   }

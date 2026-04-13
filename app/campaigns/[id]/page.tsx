@@ -14,6 +14,7 @@ import {
   DetailSidebarSurface,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
+import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { DbVerificationResult } from "@/types/database";
@@ -50,12 +51,10 @@ export default function CampaignDetailPage() {
   if (!campaign) {
     return (
       <AdminShell>
-        <div className="rounded-[24px] border border-line bg-card p-6">
-          <h1 className="text-2xl font-extrabold text-text">Campaign not found</h1>
-          <p className="mt-2 text-sm text-sub">
-            This campaign could not be found in the admin portal store.
-          </p>
-        </div>
+        <NotFoundState
+          title="Campaign not found"
+          description="This campaign could not be resolved from the current admin portal store state. It may have been deleted, moved out of scope or never loaded into the active workspace."
+        />
       </AdminShell>
     );
   }

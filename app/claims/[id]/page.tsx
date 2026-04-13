@@ -11,6 +11,7 @@ import {
   DetailSidebarSurface,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
+import { InlineEmptyNotice, NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { AdminAuditLog } from "@/types/entities/audit-log";
 
@@ -37,12 +38,10 @@ export default function ClaimDetailPage() {
   if (!claim) {
     return (
       <AdminShell>
-        <div className="rounded-[24px] border border-line bg-card p-6">
-          <h1 className="text-2xl font-extrabold text-text">Claim not found</h1>
-          <p className="mt-2 text-sm text-sub">
-            This reward claim could not be found in the admin portal store.
-          </p>
-        </div>
+        <NotFoundState
+          title="Claim not found"
+          description="This reward claim could not be resolved from the active portal state. It may have moved out of scope or not have loaded into the current workspace."
+        />
       </AdminShell>
     );
   }
@@ -246,9 +245,14 @@ export default function ClaimDetailPage() {
 
           <div className="space-y-6">
             <DetailSidebarSurface title="Fulfillment Note">
-              <p className="mt-2 text-sm text-sub">
-                {currentClaim.fulfillmentNotes || "No reviewer notes stored yet for this claim."}
-              </p>
+              {currentClaim.fulfillmentNotes ? (
+                <p className="mt-2 text-sm text-sub">{currentClaim.fulfillmentNotes}</p>
+              ) : (
+                <InlineEmptyNotice
+                  title="No reviewer notes stored yet"
+                  description="This claim does not have any fulfillment notes attached yet."
+                />
+              )}
             </DetailSidebarSurface>
 
             <DetailSidebarSurface title="Audit Trail">
@@ -271,9 +275,10 @@ export default function ClaimDetailPage() {
                 ))}
 
                 {auditLogs.length === 0 ? (
-                  <p className="text-sm text-sub">
-                    No audit events stored yet for this claim.
-                  </p>
+                  <InlineEmptyNotice
+                    title="No audit events stored yet"
+                    description="This claim has not written any review or fulfillment events into the audit trail yet."
+                  />
                 ) : null}
               </div>
             </DetailSidebarSurface>

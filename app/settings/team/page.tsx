@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import { InlineEmptyNotice } from "@/components/layout/state/StatePrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { AdminTeamMember } from "@/types/entities/team-member";
@@ -332,7 +333,10 @@ function TeamSection({
         ))}
 
         {members.length === 0 ? (
-          <p className="text-sm text-sub">No members in this section yet.</p>
+          <InlineEmptyNotice
+            title="No members in this section yet"
+            description="As invites go out or teammates become active, they will appear here with the right role and status controls."
+          />
         ) : null}
       </div>
     </div>

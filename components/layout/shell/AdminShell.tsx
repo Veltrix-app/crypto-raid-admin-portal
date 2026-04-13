@@ -4,6 +4,7 @@ import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "@/components/layout/sidebar/AdminSidebar";
 import AdminHeader from "@/components/layout/header/AdminHeader";
+import { EmptyState, LoadingState } from "@/components/layout/state/StatePrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -47,8 +48,10 @@ export default function AdminShell({ children }: Props) {
 
   if (authLoading || (!hydrated && dataLoading)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bg text-text">
-        Loading portal...
+      <div className="flex min-h-screen items-center justify-center bg-bg px-6 text-text">
+        <div className="w-full max-w-2xl">
+          <LoadingState />
+        </div>
       </div>
     );
   }
@@ -57,8 +60,13 @@ export default function AdminShell({ children }: Props) {
 
   if (role !== "super_admin" && !activeProjectId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bg text-text">
-        No project workspace is linked to this account yet.
+      <div className="flex min-h-screen items-center justify-center bg-bg px-6 text-text">
+        <div className="w-full max-w-2xl">
+          <EmptyState
+            title="No workspace is linked to this account yet"
+            description="This account is authenticated, but it still needs at least one project membership before the portal can open a scoped operator workspace."
+          />
+        </div>
       </div>
     );
   }

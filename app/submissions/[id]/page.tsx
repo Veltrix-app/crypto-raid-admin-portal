@@ -11,6 +11,7 @@ import {
   DetailSidebarSurface,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
+import { InlineEmptyNotice, NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { AdminAuditLog } from "@/types/entities/audit-log";
@@ -40,12 +41,10 @@ export default function SubmissionDetailPage() {
   if (!submission) {
     return (
       <AdminShell>
-        <div className="rounded-[24px] border border-line bg-card p-6">
-          <h1 className="text-2xl font-extrabold text-text">Submission not found</h1>
-          <p className="mt-2 text-sm text-sub">
-            This submission could not be found in the admin portal store.
-          </p>
-        </div>
+        <NotFoundState
+          title="Submission not found"
+          description="This submission could not be resolved from the active portal state. It may have been moderated away, fallen out of workspace scope or not loaded yet."
+        />
       </AdminShell>
     );
   }
@@ -393,9 +392,10 @@ export default function SubmissionDetailPage() {
                 ))}
 
                 {auditLogs.length === 0 ? (
-                  <p className="text-sm text-sub">
-                    No audit events stored yet for this submission.
-                  </p>
+                  <InlineEmptyNotice
+                    title="No audit events stored yet"
+                    description="This submission has not written any review or moderation events into the audit trail yet."
+                  />
                 ) : null}
               </div>
             </DetailSidebarSurface>

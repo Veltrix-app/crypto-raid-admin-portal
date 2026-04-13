@@ -11,6 +11,7 @@ import {
   DetailSidebarSurface,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
+import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function UserDetailPage() {
@@ -27,12 +28,10 @@ export default function UserDetailPage() {
   if (!user) {
     return (
       <AdminShell>
-        <div className="rounded-[24px] border border-line bg-card p-6">
-          <h1 className="text-2xl font-extrabold text-text">User not found</h1>
-          <p className="mt-2 text-sm text-sub">
-            This contributor could not be found in the admin portal store.
-          </p>
-        </div>
+        <NotFoundState
+          title="Contributor not found"
+          description="This contributor could not be resolved from the active portal state. They may not belong to the current workspace scope or their profile has not loaded yet."
+        />
       </AdminShell>
     );
   }
