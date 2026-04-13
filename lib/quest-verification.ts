@@ -101,6 +101,24 @@ export function getQuestVerificationPreview(
     : `Contributors must submit ${params.proofType.replace(/_/g, " ")} proof.`;
 
   if (
+    params.questType === "discord_join" &&
+    params.verificationProvider === "discord" &&
+    params.completionMode === "integration_auto" &&
+    !invalid &&
+    missingConfigKeys.length === 0
+  ) {
+    return {
+      routeLabel: "Discord auto-verify",
+      routeDescription:
+        "Veltrix will route this quest through Discord identity and membership verification instead of treating it like a blind rule auto-approve.",
+      proofExpectation: "Contributors connect Discord, join the server and wait for membership confirmation.",
+      requiredConfigKeys,
+      missingConfigKeys,
+      invalidConfig: false,
+    };
+  }
+
+  if (
     params.questType === "url_visit" &&
     params.verificationProvider === "website" &&
     params.completionMode === "integration_auto" &&

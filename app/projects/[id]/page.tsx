@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectForm from "@/components/forms/project/ProjectForm";
@@ -14,6 +14,7 @@ import {
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
+import { createClient } from "@/lib/supabase/client";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -31,6 +32,7 @@ export default function ProjectDetailPage() {
   const quests = useAdminPortalStore((s) => s.quests);
   const rewards = useAdminPortalStore((s) => s.rewards);
   const teamMembers = useAdminPortalStore((s) => s.teamMembers);
+  const [discordIntegrationStatus, setDiscordIntegrationStatus] = useState<string>("unknown");
 
   const project = useMemo(
     () => getProjectById(params.id),
@@ -44,6 +46,31 @@ export default function ProjectDetailPage() {
       setActiveProjectId(project.id);
     }
   }, [activeProjectId, memberships, project, setActiveProjectId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProjectIntegrations() {
+      if (!project?.id) return;
+
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("project_integrations")
+        .select("status")
+        .eq("project_id", project.id)
+        .eq("provider", "discord")
+        .maybeSingle();
+
+      if (cancelled) return;
+      setDiscordIntegrationStatus(data?.status ?? "not_connected");
+    }
+
+    loadProjectIntegrations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [project?.id]);
 
   if (!project) {
     return (
@@ -412,6 +439,33 @@ export default function ProjectDetailPage() {
                 <DetailMetaRow
                   label="Brand Mood"
                   value={project.brandMood || "-"}
+                />
+              </div>
+            </DetailSidebarSurface>
+
+            <DetailSidebarSurface title="Integration Readiness">
+              <div className="mt-4 space-y-4">
+                <DetailMetaRow
+                  label="Discord quest verification"
+                  value={
+                    discordIntegrationStatus === "connected"
+                      ? "Discord integration connected"
+                      : discordIntegrationStatus === "needs_attention"
+                      ? "Discord integration needs attention"
+                      : "Discord integration not connected"
+                  }
+                />
+                <DetailMetaRow
+                  label="Discord invite"
+                  value={project.discordUrl || "No Discord URL on project yet"}
+                />
+                <DetailMetaRow
+                  label="What this unlocks"
+                  value={
+                    discordIntegrationStatus === "connected"
+                      ? "Discord join quests can route into integration verification."
+                      : "Connect the Discord integration to move join quests beyond placeholder automation."
+                  }
                 />
               </div>
             </DetailSidebarSurface>
