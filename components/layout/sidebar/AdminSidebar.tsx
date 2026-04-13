@@ -14,75 +14,169 @@ import {
   Settings,
   Shield,
   Swords,
-  Users
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminUIStore } from "@/store/ui/useAdminUIStore";
 
-const links = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/campaigns", label: "Campaigns", icon: ScrollText },
-  { href: "/raids", label: "Raids", icon: Megaphone },
-  { href: "/quests", label: "Quests", icon: Swords },
-  { href: "/rewards", label: "Rewards", icon: Gift },
-  { href: "/users", label: "Users", icon: Users },
-  { href: "/moderation", label: "Moderation", icon: ClipboardCheck },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/settings/team", label: "Team", icon: Users },
-  { href: "/settings/billing", label: "Billing", icon: CreditCard },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+const groups = [
+  {
+    label: "Control",
+    links: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/moderation", label: "Moderation", icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: "Workspace",
+    links: [
+      { href: "/projects", label: "Projects", icon: FolderKanban },
+      { href: "/campaigns", label: "Campaigns", icon: ScrollText },
+      { href: "/raids", label: "Raids", icon: Megaphone },
+      { href: "/quests", label: "Quests", icon: Swords },
+      { href: "/rewards", label: "Rewards", icon: Gift },
+      { href: "/users", label: "Users", icon: Users },
+    ],
+  },
+  {
+    label: "Settings",
+    links: [
+      { href: "/settings/team", label: "Team", icon: Users },
+      { href: "/settings/billing", label: "Billing", icon: CreditCard },
+      { href: "/settings", label: "Settings", icon: Settings },
+    ],
+  },
+] as const;
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const sidebarCollapsed = useAdminUIStore((s) => s.sidebarCollapsed);
+  const { memberships, activeProjectId, role } = useAdminAuthStore();
+  const activeWorkspace = memberships.find((item) => item.projectId === activeProjectId);
 
   return (
     <aside
       className={cn(
-        "shrink-0 border-r border-line bg-card/80 p-5 transition-all",
-        sidebarCollapsed ? "w-[96px]" : "w-[260px]"
+        "sticky top-0 flex h-screen shrink-0 flex-col border-r border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.12),transparent_22%),linear-gradient(180deg,rgba(9,13,22,0.98),rgba(7,10,16,0.98))] px-4 py-5 shadow-[16px_0_60px_rgba(0,0,0,0.28)] transition-all",
+        sidebarCollapsed ? "w-[108px]" : "w-[308px]"
       )}
     >
-      <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary shadow-neon">
-          <Shield size={20} />
+      <div
+        className={cn(
+          "rounded-[28px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.25)]",
+          sidebarCollapsed && "px-3"
+        )}
+      >
+        <div className={cn("flex items-start gap-3", sidebarCollapsed && "justify-center")}>
+          <div className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-primary/30 bg-primary/10 text-primary shadow-[0_0_24px_rgba(186,255,59,0.18)]">
+            <Shield size={20} />
+          </div>
+
+          {!sidebarCollapsed ? (
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
+                Veltrix OS
+              </p>
+              <h2 className="mt-2 text-lg font-extrabold tracking-tight text-text">
+                Admin Portal
+              </h2>
+              <p className="mt-1 text-sm text-sub">Campaign control, trust intel & workspace ops.</p>
+            </div>
+          ) : null}
         </div>
+
         {!sidebarCollapsed ? (
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Admin Portal
+          <div className="mt-4 rounded-[22px] border border-white/10 bg-black/20 px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-sub">Live workspace</p>
+            <p className="mt-2 truncate text-sm font-bold text-text">
+              {activeWorkspace?.projectName || "Workspace not selected"}
             </p>
-            <p className="text-sm text-sub">Crypto Raid Control</p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-primary">
+              {role === "super_admin" ? "Super admin" : activeWorkspace?.role || "Project operator"}
+            </p>
           </div>
         ) : null}
       </div>
 
-      <nav className="space-y-2">
-        {links.map((link) => {
-          const Icon = link.icon;
-          const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+      <div className="mt-6 flex-1 space-y-5 overflow-y-auto pr-1">
+        {groups.map((group) => (
+          <section key={group.label} className="space-y-2">
+            {!sidebarCollapsed ? (
+              <div className="px-2">
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sub">{group.label}</p>
+              </div>
+            ) : null}
 
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "flex items-center gap-3 rounded-2xl border px-4 py-3 transition",
-                active
-                  ? "border-primary/30 bg-primary/10 text-primary shadow-neon"
-                  : "border-transparent text-sub hover:border-line hover:bg-card2 hover:text-text",
-                sidebarCollapsed && "justify-center px-0"
-              )}
-              title={link.label}
-            >
-              <Icon size={18} />
-              {!sidebarCollapsed ? <span className="font-semibold">{link.label}</span> : null}
-            </Link>
-          );
-        })}
-      </nav>
+            <nav className="space-y-1.5">
+              {group.links.map((link) => {
+                const Icon = link.icon;
+                const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "group flex items-center gap-3 rounded-[22px] border px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                      active
+                        ? "border-primary/30 bg-[linear-gradient(90deg,rgba(186,255,59,0.18),rgba(18,24,39,0.92))] text-text shadow-[0_0_0_1px_rgba(186,255,59,0.08)]"
+                        : "border-transparent text-sub hover:border-white/10 hover:bg-white/[0.04] hover:text-text",
+                      sidebarCollapsed && "justify-center px-0"
+                    )}
+                    title={link.label}
+                    aria-label={link.label}
+                  >
+                    <div
+                      className={cn(
+                        "flex h-9 w-9 items-center justify-center rounded-[16px] transition",
+                        active
+                          ? "bg-primary/12 text-primary"
+                          : "bg-white/[0.03] text-sub group-hover:text-text"
+                      )}
+                    >
+                      <Icon size={18} />
+                    </div>
+
+                    {!sidebarCollapsed ? (
+                      <div className="min-w-0 flex-1">
+                        <p className={cn("font-semibold", active ? "text-text" : "text-inherit")}>{link.label}</p>
+                      </div>
+                    ) : null}
+
+                    {!sidebarCollapsed && active ? (
+                      <span className="h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_16px_rgba(186,255,59,0.6)]" />
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </nav>
+          </section>
+        ))}
+      </div>
+
+      <div className="mt-4 rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-4">
+        {!sidebarCollapsed ? (
+          <>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">System mode</p>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold text-text">Portal surface</span>
+              <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-300">
+                Stable
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="flex justify-center">
+            <span
+              className="h-3 w-3 rounded-full bg-emerald-300 shadow-[0_0_16px_rgba(110,231,183,0.55)]"
+              aria-label="Portal stable"
+              title="Portal stable"
+            />
+          </div>
+        )}
+      </div>
     </aside>
   );
 }
