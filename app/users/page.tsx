@@ -2,6 +2,15 @@
 
 import { useMemo, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import {
+  OpsFilterBar,
+  OpsHero,
+  OpsMetricCard,
+  OpsPanel,
+  OpsSearchInput,
+  OpsSelect,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -15,10 +24,11 @@ export default function UsersPage() {
   const activeWorkspace = memberships.find((item) => item.projectId === activeProjectId);
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
+      const term = search.toLowerCase();
       const matchesSearch =
-        user.username.toLowerCase().includes(search.toLowerCase()) ||
-        (user.title || "").toLowerCase().includes(search.toLowerCase()) ||
-        user.contributionTier.toLowerCase().includes(search.toLowerCase());
+        user.username.toLowerCase().includes(term) ||
+        (user.title || "").toLowerCase().includes(term) ||
+        user.contributionTier.toLowerCase().includes(term);
       const matchesStatus = status === "all" || user.status === status;
       return matchesSearch && matchesStatus;
     });
@@ -34,168 +44,197 @@ export default function UsersPage() {
     users.length > 0
       ? Math.round(users.reduce((sum, user) => sum + user.sybilScore, 0) / users.length)
       : 0;
-  const totalQuestCompletions = users.reduce(
-    (sum, user) => sum + user.questsCompleted,
-    0
-  );
+  const totalQuestCompletions = users.reduce((sum, user) => sum + user.questsCompleted, 0);
+  const avgXp =
+    users.length > 0 ? Math.round(users.reduce((sum, user) => sum + user.xp, 0) / users.length) : 0;
 
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Community Reputation
-            </p>
-            <h1 className="mt-2 text-3xl font-extrabold text-text">Users</h1>
-            <p className="mt-2 text-sm text-sub">
-              {activeWorkspace
-                ? `Reputation and trust signals for contributors inside ${activeWorkspace.projectName}.`
-                : "Platform-wide reputation and trust signals for contributors."}
-            </p>
-          </div>
-        </div>
+        <OpsHero
+          eyebrow="Community Reputation Board"
+          title="Users"
+          description={
+            activeWorkspace
+              ? `Reputation and trust signals for contributors inside ${activeWorkspace.projectName}.`
+              : "Platform-wide reputation and trust signals for contributors."
+          }
+          aside={
+            <div className="grid grid-cols-2 gap-2">
+              <ReputationChip label="Avg trust" value={String(avgTrust)} tone={avgTrust >= 60 ? "success" : "warning"} />
+              <ReputationChip label="Avg sybil" value={String(avgSybil)} tone={avgSybil >= 60 ? "danger" : "success"} />
+            </div>
+          }
+        />
 
         <div className="grid gap-4 md:grid-cols-4">
-          <InfoCard label="Tracked Users" value={users.length} />
-          <InfoCard label="Active" value={activeCount} />
-          <InfoCard label="Flagged" value={flaggedCount} />
-          <InfoCard label={activeWorkspace ? "Avg Local Trust" : "Avg Trust"} value={avgTrust} />
+          <OpsMetricCard label="Tracked users" value={users.length} />
+          <OpsMetricCard label="Active" value={activeCount} emphasis={activeCount > 0 ? "primary" : "default"} />
+          <OpsMetricCard label="Flagged" value={flaggedCount} emphasis={flaggedCount > 0 ? "warning" : "default"} />
+          <OpsMetricCard label={activeWorkspace ? "Avg local trust" : "Avg trust"} value={avgTrust} emphasis={avgTrust >= 60 ? "primary" : "default"} />
         </div>
 
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                Reputation Snapshot
-              </p>
-              <h2 className="mt-2 text-xl font-extrabold text-text">
-                Quality over raw participation
-              </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-sub">
-                {activeWorkspace
-                  ? `This workspace is now using project-specific reputation for ${activeWorkspace.projectName}. XP, trust and contribution tiers reflect local contribution inside this project instead of only global platform behavior.`
-                  : "This view combines profile XP with the first Veltrix reputation signals: trust, sybil risk, contribution tier and completion history. As we expand phase 4, this becomes the backbone for better moderation, segmentation and anti-abuse."}
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                  Quest Completions
-                </p>
-                <p className="mt-2 text-2xl font-extrabold text-text">
-                  {totalQuestCompletions}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                  Avg Sybil
-                </p>
-                <p className="mt-2 text-2xl font-extrabold text-text">
-                  {avgSybil}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-[1.4fr_220px]">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search username, title or tier..."
-            className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
-          />
-
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <OpsPanel
+            eyebrow="Reputation snapshot"
+            title="Quality over raw participation"
+            description={
+              activeWorkspace
+                ? `This workspace is using project-specific reputation for ${activeWorkspace.projectName}. XP, trust and tiers now reflect local contribution instead of only global platform behavior.`
+                : "This view combines profile XP with trust, sybil risk, contribution tier and completion history to drive moderation and anti-abuse."
+            }
+            tone="accent"
           >
-            <option value="all">all</option>
+            <div className="grid gap-4 md:grid-cols-3">
+              <DecisionCard label="Quest completions" value={totalQuestCompletions} hint="Total finished quest actions across the current dataset." />
+              <DecisionCard label="Average XP" value={avgXp} hint="A fast read on how deep the current contributor base is." />
+              <DecisionCard label="Flagged users" value={flaggedCount} hint="Accounts currently carrying elevated trust or abuse risk." tone="warning" />
+            </div>
+          </OpsPanel>
+
+          <OpsPanel
+            eyebrow="Trust posture"
+            title="Contribution quality signals"
+            description="The shortest board for whether the current community looks healthy or risky."
+          >
+            <div className="grid gap-4">
+              <SignalRow label="Average trust" value={`${avgTrust}`} />
+              <SignalRow label="Average sybil risk" value={`${avgSybil}`} />
+              <SignalRow label="Flagged accounts" value={`${flaggedCount}`} />
+            </div>
+          </OpsPanel>
+        </div>
+
+        <OpsFilterBar>
+          <OpsSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search username, title or tier..."
+          />
+          <OpsSelect value={status} onChange={setStatus}>
+            <option value="all">all statuses</option>
             <option value="active">active</option>
             <option value="flagged">flagged</option>
-          </select>
-        </div>
+          </OpsSelect>
+          <div className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-sub">
+            {filteredUsers.length} users in view
+          </div>
+        </OpsFilterBar>
 
-        <div className="grid gap-4">
-          {filteredUsers.map((user) => (
-            <div
-              key={user.id}
-              className="rounded-[24px] border border-line bg-card p-5"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="text-xl font-extrabold text-text">{user.username}</h2>
-                    <span className="rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
-                      {user.contributionTier}
-                    </span>
-                    {user.title ? (
-                      <span className="rounded-full border border-line bg-card2 px-3 py-1 text-xs font-semibold text-sub">
-                        {user.title}
-                      </span>
-                    ) : null}
+        <OpsPanel
+          eyebrow="Contributor stream"
+          title="Reputation roster"
+          description="Trust, sybil risk, XP and claim history brought together into one readable community board."
+        >
+          <div className="grid gap-4">
+            {filteredUsers.map((user) => (
+              <div key={user.id} className="rounded-[24px] border border-line bg-card2 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h2 className="text-xl font-extrabold text-text">{user.username}</h2>
+                      <OpsStatusPill tone="default">{user.contributionTier}</OpsStatusPill>
+                      {user.title ? <OpsStatusPill tone="success">{user.title}</OpsStatusPill> : null}
+                    </div>
+
+                    <p className="mt-3 text-sm text-sub">
+                      XP: {user.xp.toLocaleString()} • Level: {user.level} • Streak: {user.streak}
+                    </p>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-4">
+                      <Metric label="Trust" value={user.trustScore} />
+                      <Metric label="Sybil risk" value={user.sybilScore} />
+                      <Metric label="Quests" value={user.questsCompleted} />
+                      <Metric label="Claims" value={user.rewardsClaimed} />
+                    </div>
                   </div>
 
-                  <p className="mt-3 text-sm text-sub">
-                    XP: {user.xp.toLocaleString()} • Level: {user.level} • Streak: {user.streak}
-                  </p>
-
-                  <div className="mt-4 grid gap-3 md:grid-cols-4">
-                    <Metric label="Trust" value={user.trustScore} />
-                    <Metric label="Sybil Risk" value={user.sybilScore} />
-                    <Metric label="Quests" value={user.questsCompleted} />
-                    <Metric label="Claims" value={user.rewardsClaimed} />
+                  <div className="rounded-2xl border border-line bg-card px-4 py-3 text-right">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Rank</p>
+                    <p className="mt-2 text-2xl font-extrabold text-text">
+                      {user.reputationRank > 0 ? `#${user.reputationRank}` : "-"}
+                    </p>
+                    <div className="mt-3">
+                      <OpsStatusPill tone={user.status === "flagged" ? "danger" : "success"}>
+                        {user.status}
+                      </OpsStatusPill>
+                    </div>
                   </div>
-                </div>
-
-                <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                    Rank
-                  </p>
-                  <p className="mt-2 text-2xl font-extrabold text-text">
-                    {user.reputationRank > 0 ? `#${user.reputationRank}` : "-"}
-                  </p>
-                  <p
-                    className={`mt-2 text-sm font-semibold capitalize ${
-                      user.status === "flagged" ? "text-rose-300" : "text-primary"
-                    }`}
-                  >
-                    {user.status}
-                  </p>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-          {filteredUsers.length === 0 ? (
-            <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
-              No users match your filters.
-            </div>
-          ) : null}
-        </div>
+            {filteredUsers.length === 0 ? (
+              <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
+                No users match your filters.
+              </div>
+            ) : null}
+          </div>
+        </OpsPanel>
       </div>
     </AdminShell>
   );
 }
 
-function InfoCard({ label, value }: { label: string; value: string | number }) {
+function ReputationChip({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "warning" | "success" | "danger";
+}) {
+  const toneClass =
+    tone === "warning"
+      ? "border-amber-400/30 bg-amber-400/10 text-amber-200"
+      : tone === "success"
+        ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
+        : tone === "danger"
+          ? "border-rose-400/30 bg-rose-400/10 text-rose-200"
+          : "border-white/10 bg-white/[0.05] text-text";
+
   return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
+    <div className={`rounded-[18px] border px-4 py-3 ${toneClass}`}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-75">{label}</p>
+      <p className="mt-2 text-xl font-extrabold tracking-tight">{value}</p>
+    </div>
+  );
+}
+
+function DecisionCard({
+  label,
+  value,
+  hint,
+  tone = "default",
+}: {
+  label: string;
+  value: number;
+  hint: string;
+  tone?: "default" | "warning";
+}) {
+  return (
+    <div className="rounded-[24px] border border-line bg-card2 p-5">
       <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold text-text">{value}</p>
+      <p className={`mt-2 text-2xl font-extrabold ${tone === "warning" ? "text-amber-300" : "text-text"}`}>{value}</p>
+      <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
+    </div>
+  );
+}
+
+function SignalRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-        {label}
-      </p>
+    <div className="rounded-2xl border border-line bg-card px-4 py-3">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>
   );
