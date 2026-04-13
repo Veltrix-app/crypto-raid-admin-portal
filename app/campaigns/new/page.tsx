@@ -410,7 +410,7 @@ export default function NewCampaignPage() {
       const parsed = JSON.parse(configurationRaw) as SavedTemplateConfiguration;
       setSelectedTemplateId(parsed.baseTemplateId);
       setPendingSavedTemplateConfig(parsed);
-      setSavedTemplateMessage("Saved project template loaded.");
+      setSavedTemplateMessage("Saved project variant loaded.");
     } catch {
       setSavedTemplateMessage("This saved template could not be parsed.");
     }
@@ -422,11 +422,11 @@ export default function NewCampaignPage() {
         <BuilderHero
           eyebrow="Campaign Builder Wizard"
           title="New Campaign"
-          description="Pick a full campaign template and let Veltrix generate the campaign, quest sequence and reward drafts from the project context you already filled in."
+          description="Pick a complete playbook, let Veltrix wire in the workspace context you already captured, and launch a campaign with generated quest and reward drafts."
           progressPercent={progressPercent}
           metrics={
             <>
-              <BuilderMetricCard label="Active project" value={selectedProject?.name || "No project"} />
+              <BuilderMetricCard label="Workspace" value={selectedProject?.name || "No project"} />
               <BuilderMetricCard
                 label="Template fit"
                 value={
@@ -497,14 +497,14 @@ export default function NewCampaignPage() {
                             <button
                               type="button"
                               onClick={() => applySavedTemplate(template.configuration)}
-                              className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-bold text-text"
+                              className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
                             >
-                              Load
+                              Load variant
                             </button>
                             <button
                               type="button"
                               onClick={() => deleteProjectCampaignTemplate(template.id)}
-                              className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-bold text-rose-300"
+                              className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-bold text-rose-300 transition hover:bg-rose-500/15"
                             >
                               Delete
                             </button>
@@ -756,9 +756,9 @@ export default function NewCampaignPage() {
                           type="button"
                           onClick={saveProjectContextFields}
                           disabled={contextSaving}
-                          className="rounded-2xl bg-primary px-4 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-2xl bg-primary px-4 py-3 font-bold text-black shadow-[0_12px_28px_rgba(141,255,89,0.18)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {contextSaving ? "Saving project context..." : "Save project context"}
+                          {contextSaving ? "Saving workspace context..." : "Save workspace context"}
                         </button>
                         {contextMessage ? (
                           <p className="text-sm text-sub">{contextMessage}</p>
@@ -778,6 +778,9 @@ export default function NewCampaignPage() {
                 <BuilderSidebarCard title="Generated Quest Flow">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Generated quest flow
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    Turn off anything you do not want, then refine the drafts that should ship with this campaign.
                   </p>
                   <div className="mt-4 space-y-3">
                     {templatePlan.questDrafts.map((quest, index) => (
@@ -810,6 +813,9 @@ export default function NewCampaignPage() {
                 <BuilderSidebarCard title="Generated Rewards">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Generated rewards
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    Tighten the payoff layer here so the campaign launches with a clean, intentional reward ladder.
                   </p>
                   <div className="mt-4 space-y-3">
                     {templatePlan.rewardDrafts.map((reward) => (
@@ -892,9 +898,9 @@ export default function NewCampaignPage() {
                 type="button"
                 onClick={saveCurrentTemplateVariant}
                 disabled={!selectedProject || !selectedTemplate || savingTemplate}
-                className="rounded-2xl border border-line px-4 py-3 font-bold text-text disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {savingTemplate ? "Saving template..." : "Save as project template"}
+                {savingTemplate ? "Saving variant..." : "Save as project variant"}
               </button>
               {savedTemplateMessage ? (
                 <p className="text-sm text-sub">{savedTemplateMessage}</p>
@@ -944,7 +950,7 @@ export default function NewCampaignPage() {
           onBack={() => previousStep && setCurrentStep(previousStep.id)}
           nextLabel={nextStep ? `Continue to ${nextStep.label}` : undefined}
           onNext={nextStep ? () => setCurrentStep(nextStep.id) : undefined}
-          footerLabel={`${currentStepMeta.eyebrow} | ${currentStepMeta.label}`}
+          footerLabel={`${currentStepMeta.eyebrow} - ${currentStepMeta.label}`}
         />
       </div>
     </AdminShell>
@@ -959,7 +965,7 @@ function PreviewStat({
   value: string | number;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 shadow-[0_12px_28px_rgba(0,0,0,0.12)]">
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 shadow-[0_12px_28px_rgba(0,0,0,0.12)] transition duration-200 hover:-translate-y-0.5 hover:bg-white/[0.05]">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
         {label}
       </p>
@@ -986,7 +992,7 @@ function TemplateQuestCard({
   ) => void;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)]">
+    <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_rgba(0,0,0,0.22)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-text">
@@ -1140,7 +1146,7 @@ function TemplateRewardCard({
   ) => void;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)]">
+    <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_rgba(0,0,0,0.22)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-text">{item.draft.title}</p>
