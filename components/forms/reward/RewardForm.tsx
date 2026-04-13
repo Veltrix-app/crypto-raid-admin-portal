@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  BuilderBottomNav,
+  BuilderHero,
+  BuilderMetricCard,
+  BuilderSidebarCard,
+  BuilderSidebarStack,
+  BuilderStepHeader,
+  BuilderStepRail,
+} from "@/components/layout/builder/BuilderPrimitives";
 import { AdminReward } from "@/types/entities/reward";
 import { AdminProject } from "@/types/entities/project";
 import { AdminCampaign } from "@/types/entities/campaign";
@@ -272,96 +281,35 @@ export default function RewardForm({
         await onSubmit(values);
       }}
     >
-      <div className="rounded-[32px] border border-line bg-card p-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Reward Builder Wizard
-            </p>
-            <h2 className="mt-2 text-3xl font-extrabold text-text">
-              Design the payoff in a guided flow
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-sub">
-              Pick the reward type, define its value, make delivery explicit, and
-              launch it without a wall of fields.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <MetricCard label="Blueprint" value={activePreset.label} />
-            <MetricCard label="Cost" value={`${values.cost} XP`} />
-            <MetricCard label="Claim Flow" value={values.claimMethod.replace(/_/g, " ")} />
-          </div>
-        </div>
-        <div className="mt-6">
-          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.16em] text-sub">
-            <span>Builder progress</span>
-            <span>{progressPercent}%</span>
-          </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-card2">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
-          </div>
-        </div>
-      </div>
+      <BuilderHero
+        eyebrow="Reward Builder Wizard"
+        title="Design the payoff in a guided flow"
+        description="Pick the reward type, define its value, make delivery explicit, and launch it without a wall of fields."
+        progressPercent={progressPercent}
+        metrics={
+          <>
+            <BuilderMetricCard label="Blueprint" value={activePreset.label} />
+            <BuilderMetricCard label="Cost" value={`${values.cost} XP`} />
+            <BuilderMetricCard label="Claim Flow" value={values.claimMethod.replace(/_/g, " ")} />
+          </>
+        }
+      />
 
       <div className="grid gap-6 xl:grid-cols-[0.78fr_1.42fr_0.9fr]">
-        <aside className="rounded-[28px] border border-line bg-card p-5 xl:sticky xl:top-24 xl:self-start">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Progress</p>
-          <div className="mt-4 space-y-3">
-            {rewardBuilderSteps.map((step, index) => {
-              const active = currentStep === step.id;
-              const complete = stepCompletion[step.id];
-              return (
-                <button
-                  key={step.id}
-                  type="button"
-                  onClick={() => setCurrentStep(step.id)}
-                  className={`w-full rounded-[22px] border px-4 py-4 text-left transition ${
-                    active
-                      ? "border-primary/50 bg-primary/10"
-                      : "border-line bg-card2 hover:border-primary/30"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
-                        {step.eyebrow}
-                      </p>
-                      <p className="mt-2 text-sm font-bold text-text">
-                        {index + 1}. {step.label}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-                        complete ? "bg-primary/15 text-primary" : active ? "bg-card text-text" : "bg-card text-sub"
-                      }`}
-                    >
-                      {complete ? "Ready" : active ? "Current" : "Open"}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-sub">{step.description}</p>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
+        <BuilderStepRail
+          steps={rewardBuilderSteps.map((step) => ({ ...step, complete: stepCompletion[step.id] }))}
+          currentStep={currentStep}
+          onSelect={setCurrentStep}
+        />
 
         <div className="space-y-6 rounded-[28px] border border-line bg-card p-6">
-          <div className="flex flex-col gap-3 border-b border-line pb-5 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                {currentStepMeta.eyebrow}
-              </p>
-              <h3 className="mt-2 text-2xl font-extrabold text-text">{currentStepMeta.label}</h3>
-              <p className="mt-2 text-sm leading-6 text-sub">{currentStepMeta.description}</p>
-            </div>
-            <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Workflow</p>
-              <p className="mt-2 text-sm font-semibold text-text">
-                {currentStepIndex + 1} of {rewardBuilderSteps.length}
-              </p>
-            </div>
-          </div>
+          <BuilderStepHeader
+            eyebrow={currentStepMeta.eyebrow}
+            title={currentStepMeta.label}
+            description={currentStepMeta.description}
+            stepIndex={currentStepIndex + 1}
+            totalSteps={rewardBuilderSteps.length}
+          />
 
       {currentStep === "blueprint" ? (
       <div className="space-y-3">
@@ -730,41 +678,25 @@ export default function RewardForm({
       </div>
       ) : null}
 
-          <div className="flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => previousStep && setCurrentStep(previousStep.id)}
-                disabled={!previousStep}
-                className="rounded-2xl border border-line bg-card2 px-5 py-3 font-bold text-text disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Back
-              </button>
-              {nextStep ? (
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(nextStep.id)}
-                  className="rounded-2xl bg-primary px-5 py-3 font-bold text-black"
-                >
-                  Continue to {nextStep.label}
-                </button>
-              ) : (
+          <BuilderBottomNav
+            canGoBack={Boolean(previousStep)}
+            onBack={() => previousStep && setCurrentStep(previousStep.id)}
+            nextLabel={nextStep ? `Continue to ${nextStep.label}` : undefined}
+            onNext={nextStep ? () => setCurrentStep(nextStep.id) : undefined}
+            footerLabel={`${currentStepMeta.eyebrow} • ${currentStepMeta.label}`}
+            submitButton={
+              nextStep ? undefined : (
                 <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
                   {submitLabel}
                 </button>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-sub">
-              {currentStepMeta.eyebrow} • {currentStepMeta.label}
-            </div>
-          </div>
+              )
+            }
+          />
         </div>
 
-        <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
-          <div className="rounded-[28px] border border-line bg-card p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Reward Summary</p>
-            <div className="mt-4 rounded-2xl border border-line bg-card2 p-4">
+        <BuilderSidebarStack>
+          <BuilderSidebarCard title="Reward Summary">
+            <div className="rounded-2xl border border-line bg-card2 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-bold text-text">{activePreset.label}</p>
@@ -777,11 +709,10 @@ export default function RewardForm({
                 </div>
               </div>
             </div>
-          </div>
+          </BuilderSidebarCard>
 
-          <div className="rounded-[28px] border border-line bg-card p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Readiness Guide</p>
-            <div className="mt-4 space-y-3">
+          <BuilderSidebarCard title="Readiness Guide">
+            <div className="space-y-3">
               {readinessItems.map((item) => (
                 <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
                   <div className="flex items-center justify-between gap-3">
@@ -798,8 +729,8 @@ export default function RewardForm({
                 </div>
               ))}
             </div>
-          </div>
-        </aside>
+          </BuilderSidebarCard>
+        </BuilderSidebarStack>
       </div>
     </form>
   );
@@ -839,14 +770,5 @@ function ToggleField({
         className="h-5 w-5 accent-lime-400"
       />
     </label>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-card px-4 py-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-lg font-extrabold capitalize text-text">{value}</p>
-    </div>
   );
 }

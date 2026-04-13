@@ -1,6 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  BuilderBottomNav,
+  BuilderHero,
+  BuilderMetricCard,
+  BuilderSidebarCard,
+  BuilderSidebarStack,
+  BuilderSignalRow,
+  BuilderStepHeader,
+  BuilderStepRail,
+} from "@/components/layout/builder/BuilderPrimitives";
 import { AdminProject } from "@/types/entities/project";
 
 type Props = {
@@ -216,96 +226,35 @@ export default function ProjectForm({
         onSubmit(values);
       }}
     >
-      <div className="rounded-[32px] border border-line bg-card p-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Project Setup Wizard
-            </p>
-            <h2 className="mt-3 text-3xl font-extrabold text-text">
-              Build the workspace through a guided walkthrough
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-sub">
-              Move through identity, brand, links, and campaign context step by step. The
-              public preview and readiness stay visible while you work.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <MetricTile label="Readiness" value={`${readinessCount}/${brandingReadiness.length}`} sublabel="sections ready" />
-            <MetricTile label="Connected Links" value={String(connectedLinks)} sublabel="channels" />
-            <MetricTile label="Template Context" value={String(templateContextCount)} sublabel="advanced fields" />
-          </div>
-        </div>
-        <div className="mt-6">
-          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.16em] text-sub">
-            <span>Builder progress</span>
-            <span>{progressPercent}%</span>
-          </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-card2">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
-          </div>
-        </div>
-      </div>
+      <BuilderHero
+        eyebrow="Project Setup Wizard"
+        title="Build the workspace through a guided walkthrough"
+        description="Move through identity, brand, links, and campaign context step by step. The public preview and readiness stay visible while you work."
+        progressPercent={progressPercent}
+        metrics={
+          <>
+            <BuilderMetricCard label="Readiness" value={`${readinessCount}/${brandingReadiness.length}`} sublabel="sections ready" />
+            <BuilderMetricCard label="Connected Links" value={String(connectedLinks)} sublabel="channels" />
+            <BuilderMetricCard label="Template Context" value={String(templateContextCount)} sublabel="advanced fields" />
+          </>
+        }
+      />
 
       <div className="grid gap-6 xl:grid-cols-[0.8fr_1.4fr_0.9fr]">
-        <aside className="rounded-[28px] border border-line bg-card p-5 xl:sticky xl:top-24 xl:self-start">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Progress</p>
-          <div className="mt-4 space-y-3">
-            {steps.map((step, index) => {
-              const active = step.id === currentStep;
-              const complete = stepCompletion[step.id];
-              return (
-                <button
-                  key={step.id}
-                  type="button"
-                  onClick={() => setCurrentStep(step.id)}
-                  className={`w-full rounded-[22px] border px-4 py-4 text-left transition ${
-                    active
-                      ? "border-primary/50 bg-primary/10"
-                      : "border-line bg-card2 hover:border-primary/30"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
-                        {step.eyebrow}
-                      </p>
-                      <p className="mt-2 text-sm font-bold text-text">
-                        {index + 1}. {step.label}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-                        complete ? "bg-primary/15 text-primary" : active ? "bg-card text-text" : "bg-card text-sub"
-                      }`}
-                    >
-                      {complete ? "Ready" : active ? "Current" : "Open"}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-sub">{step.description}</p>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
+        <BuilderStepRail
+          steps={steps.map((step) => ({ ...step, complete: stepCompletion[step.id] }))}
+          currentStep={currentStep}
+          onSelect={setCurrentStep}
+        />
 
         <div className="space-y-6 rounded-[28px] border border-line bg-card p-6">
-          <div className="flex flex-col gap-3 border-b border-line pb-5 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                {currentStepMeta.eyebrow}
-              </p>
-              <h3 className="mt-2 text-2xl font-extrabold text-text">{currentStepMeta.label}</h3>
-              <p className="mt-2 text-sm leading-6 text-sub">{currentStepMeta.description}</p>
-            </div>
-            <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Workflow</p>
-              <p className="mt-2 text-sm font-semibold text-text">
-                {currentStepIndex + 1} of {steps.length}
-              </p>
-            </div>
-          </div>
+          <BuilderStepHeader
+            eyebrow={currentStepMeta.eyebrow}
+            title={currentStepMeta.label}
+            description={currentStepMeta.description}
+            stepIndex={currentStepIndex + 1}
+            totalSteps={steps.length}
+          />
 
           {currentStep === "identity" ? renderIdentity(values, setField, setSlugTouched) : null}
           {currentStep === "brand" ? renderBrand(values, setField) : null}
@@ -314,43 +263,25 @@ export default function ProjectForm({
           {currentStep === "public-profile" ? renderPublicProfile(values, setField) : null}
           {currentStep === "review" ? renderReview(values, brandingReadiness, connectedLinks, templateContextCount) : null}
 
-          <div className="flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => previousStep && setCurrentStep(previousStep.id)}
-                disabled={!previousStep}
-                className="rounded-2xl border border-line bg-card2 px-5 py-3 font-bold text-text disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Back
-              </button>
-
-              {nextStep ? (
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(nextStep.id)}
-                  className="rounded-2xl bg-primary px-5 py-3 font-bold text-black"
-                >
-                  Continue to {nextStep.label}
-                </button>
+          <BuilderBottomNav
+            canGoBack={Boolean(previousStep)}
+            onBack={() => previousStep && setCurrentStep(previousStep.id)}
+            nextLabel={nextStep ? `Continue to ${nextStep.label}` : undefined}
+            onNext={nextStep ? () => setCurrentStep(nextStep.id) : undefined}
+            footerLabel={`${currentStepMeta.eyebrow} • ${currentStepMeta.label}`}
+            submitButton={
+              nextStep ? (
+                undefined
               ) : (
                 <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
                   {submitLabel}
                 </button>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onSubmit(values)}
-              className="rounded-2xl border border-line bg-card2 px-5 py-3 text-sm font-bold text-text"
-            >
-              Save Draft Now
-            </button>
-          </div>
+              )
+            }
+          />
         </div>
 
-        <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
+        <BuilderSidebarStack>
           <div className="overflow-hidden rounded-[28px] border border-line bg-card">
             <div
               className="h-36 bg-gradient-to-br from-primary/15 via-card to-card2"
@@ -402,11 +333,8 @@ export default function ProjectForm({
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-line bg-card p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-              Readiness Guide
-            </p>
-            <div className="mt-4 space-y-3">
+          <BuilderSidebarCard title="Readiness Guide">
+            <div className="space-y-3">
               {brandingReadiness.map((item) => (
                 <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
                   <div className="flex items-center justify-between gap-3">
@@ -423,24 +351,21 @@ export default function ProjectForm({
                 </div>
               ))}
             </div>
-          </div>
+          </BuilderSidebarCard>
 
-          <div className="rounded-[28px] border border-line bg-card p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-              Autofill Signals
-            </p>
-            <div className="mt-4 grid gap-3">
-              <SignalRow label="Website" ready={Boolean(values.website)} />
-              <SignalRow label="X" ready={Boolean(values.xUrl)} />
-              <SignalRow label="Telegram" ready={Boolean(values.telegramUrl)} />
-              <SignalRow label="Discord" ready={Boolean(values.discordUrl)} />
-              <SignalRow label="Docs" ready={Boolean(values.docsUrl)} />
-              <SignalRow label="Waitlist" ready={Boolean(values.waitlistUrl)} />
-              <SignalRow label="Launch Post" ready={Boolean(values.launchPostUrl)} />
-              <SignalRow label="Token Contract" ready={Boolean(values.tokenContractAddress)} />
+          <BuilderSidebarCard title="Autofill Signals">
+            <div className="grid gap-3">
+              <BuilderSignalRow label="Website" ready={Boolean(values.website)} />
+              <BuilderSignalRow label="X" ready={Boolean(values.xUrl)} />
+              <BuilderSignalRow label="Telegram" ready={Boolean(values.telegramUrl)} />
+              <BuilderSignalRow label="Discord" ready={Boolean(values.discordUrl)} />
+              <BuilderSignalRow label="Docs" ready={Boolean(values.docsUrl)} />
+              <BuilderSignalRow label="Waitlist" ready={Boolean(values.waitlistUrl)} />
+              <BuilderSignalRow label="Launch Post" ready={Boolean(values.launchPostUrl)} />
+              <BuilderSignalRow label="Token Contract" ready={Boolean(values.tokenContractAddress)} />
             </div>
-          </div>
-        </aside>
+          </BuilderSidebarCard>
+        </BuilderSidebarStack>
       </div>
     </form>
   );
@@ -920,24 +845,6 @@ function PreviewStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function MetricTile({
-  label,
-  value,
-  sublabel,
-}: {
-  label: string;
-  value: string;
-  sublabel: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-line bg-card px-4 py-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold text-text">{value}</p>
-      <p className="mt-1 text-xs text-sub">{sublabel}</p>
-    </div>
-  );
-}
-
 function SummaryPanel({
   title,
   items,
@@ -956,21 +863,6 @@ function SummaryPanel({
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-function SignalRow({ label, ready }: { label: string; ready: boolean }) {
-  return (
-    <div className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3">
-      <p className="text-sm font-semibold text-text">{label}</p>
-      <span
-        className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-          ready ? "bg-primary/15 text-primary" : "bg-card text-sub"
-        }`}
-      >
-        {ready ? "Connected" : "Missing"}
-      </span>
     </div>
   );
 }
