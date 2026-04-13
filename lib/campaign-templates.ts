@@ -197,7 +197,7 @@ const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinitio
     summary:
       "Create a fast-moving social launch campaign with attention, amplification and a simple reward loop.",
     goal: "Stack launch awareness across X, website traffic and visible social proof.",
-    requiredProjectFields: ["xUrl", "website"],
+    requiredProjectFields: ["xUrl", "website", "launchPostUrl"],
     campaign: {
       campaignType: "social_growth",
       visibility: "public",
@@ -252,26 +252,26 @@ const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinitio
         requiredProjectFields: ["website"],
       },
       {
-        title: "Post your launch reaction",
+        title: "Amplify the launch post",
         description:
-          "Share your take on the launch and submit the public post as proof.",
-        shortDescription: "Post your launch reaction",
+          "Open the canonical launch post, react to it and submit your own public response as proof.",
+        shortDescription: "Amplify the launch post",
         type: "Social",
         questType: "manual_proof",
         platform: "x",
         xp: 220,
         actionLabel: "Submit Post Proof",
-        actionUrl: "{{project.xUrl}}",
+        actionUrl: "{{project.launchPostUrl}}",
         proofRequired: true,
         proofType: "url",
         autoApprove: false,
         verificationType: "manual_review",
         verificationConfig:
-          '{\n  "instructions": "Share a public post reacting to the launch and paste the URL here."\n}',
+          '{\n  "targetPostUrl": "{{project.launchPostUrl}}",\n  "instructions": "Quote, comment on or react to the official launch post and paste your public proof URL here."\n}',
         isRepeatable: false,
         sortOrder: 3,
         status: "active",
-        requiredProjectFields: ["xUrl"],
+        requiredProjectFields: ["launchPostUrl"],
       },
     ],
     rewards: [
@@ -300,7 +300,7 @@ const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinitio
     summary:
       "Set up a creator-focused campaign with proof-based content submission and a themed creator reward.",
     goal: "Collect quality creator content without asking projects to build the loop from scratch.",
-    requiredProjectFields: ["website", "xUrl"],
+    requiredProjectFields: ["website", "xUrl", "docsUrl"],
     campaign: {
       campaignType: "content",
       visibility: "public",
@@ -315,24 +315,24 @@ const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinitio
     },
     quests: [
       {
-        title: "Research {{project.name}}",
-        description: "Visit the official site and understand the project before creating content.",
-        shortDescription: "Research the project",
+        title: "Read the {{project.name}} docs",
+        description: "Open the docs and understand the product deeply before creating content around it.",
+        shortDescription: "Read the docs",
         type: "Traffic",
         questType: "url_visit",
         platform: "website",
         xp: 80,
-        actionLabel: "Open Website",
-        actionUrl: "{{project.website}}",
+        actionLabel: "Open Docs",
+        actionUrl: "{{project.docsUrl}}",
         proofRequired: false,
         proofType: "none",
         autoApprove: true,
         verificationType: "event_check",
-        verificationConfig: '{\n  "targetUrl": "{{project.website}}"\n}',
+        verificationConfig: '{\n  "targetUrl": "{{project.docsUrl}}"\n}',
         isRepeatable: false,
         sortOrder: 1,
         status: "active",
-        requiredProjectFields: ["website"],
+        requiredProjectFields: ["docsUrl"],
       },
       {
         title: "Follow the project on X",
@@ -528,7 +528,7 @@ const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinitio
     summary:
       "Turn contributors into acquisition channels with a fast referral ladder and a milestone reward.",
     goal: "Drive new user acquisition without forcing the project to design the whole loop manually.",
-    requiredProjectFields: ["website", "xUrl"],
+    requiredProjectFields: ["website", "xUrl", "waitlistUrl"],
     campaign: {
       campaignType: "referral",
       visibility: "public",
@@ -591,19 +591,19 @@ const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinitio
         platform: "custom",
         xp: 260,
         actionLabel: "Submit Referral Proof",
-        actionUrl: "{{project.website}}",
+        actionUrl: "{{project.waitlistUrl}}",
         proofRequired: true,
         proofType: "url",
         autoApprove: false,
         verificationType: "hybrid",
         verificationConfig:
-          '{\n  "instructions": "Paste the referral post, link or landing page you used to drive signups."\n}',
+          '{\n  "landingUrl": "{{project.waitlistUrl}}",\n  "instructions": "Paste the referral post, link or landing page you used to drive signups."\n}',
         isRepeatable: true,
         cooldownSeconds: 86400,
         maxCompletionsPerUser: 3,
         sortOrder: 3,
         status: "active",
-        requiredProjectFields: ["website"],
+        requiredProjectFields: ["waitlistUrl"],
       },
     ],
     rewards: [
@@ -738,7 +738,7 @@ const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinitio
     summary:
       "A starter template for wallet-first ecosystems that want to convert holders into active community members.",
     goal: "Bridge wallet connection, community joining and a first holder-facing reward.",
-    requiredProjectFields: ["website", "discordUrl", "chain"],
+    requiredProjectFields: ["website", "discordUrl", "chain", "tokenContractAddress"],
     campaign: {
       campaignType: "onchain",
       visibility: "gated",
@@ -786,11 +786,12 @@ const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinitio
         proofType: "wallet",
         autoApprove: true,
         verificationType: "onchain_check",
-        verificationConfig: '{\n  "chain": "{{project.chain}}"\n}',
+        verificationConfig:
+          '{\n  "chain": "{{project.chain}}",\n  "tokenContract": "{{project.tokenContractAddress}}"\n}',
         isRepeatable: false,
         sortOrder: 2,
         status: "active",
-        requiredProjectFields: ["website", "chain"],
+        requiredProjectFields: ["website", "chain", "tokenContractAddress"],
       },
       {
         title: "Join the holder Discord lane",
@@ -1092,6 +1093,11 @@ function assessTemplateFit(
     reasons.push(`Chain is already set to ${project.chain}, which helps wallet-first onboarding.`);
   }
 
+  if (template.id === "holder_activation_path" && project.tokenContractAddress) {
+    score += 14;
+    reasons.push("Token contract is already set, so holder verification can auto-configure cleanly.");
+  }
+
   if (
     (template.id === "community_growth_starter" ||
       template.id === "ecosystem_onboarding_loop" ||
@@ -1115,6 +1121,21 @@ function assessTemplateFit(
   if ((template.id === "referral_growth_loop" || template.id === "launch_hype_sprint") && project.website) {
     score += 8;
     reasons.push("Website traffic is ready to route into launch or referral conversion.");
+  }
+
+  if (template.id === "launch_hype_sprint" && project.launchPostUrl) {
+    score += 12;
+    reasons.push("Launch post URL is set, so the hype sprint can point users at the exact social moment.");
+  }
+
+  if (template.id === "referral_growth_loop" && project.waitlistUrl) {
+    score += 12;
+    reasons.push("Waitlist URL is present, which makes the referral path much cleaner to convert.");
+  }
+
+  if (template.id === "content_creator_flywheel" && project.docsUrl) {
+    score += 10;
+    reasons.push("Docs are linked, which gives creator contributors better research context upfront.");
   }
 
   const fitLabel =

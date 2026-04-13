@@ -25,6 +25,14 @@ type EditableProjectContextField =
   | "telegramUrl"
   | "discordUrl"
   | "bannerUrl"
+  | "docsUrl"
+  | "waitlistUrl"
+  | "launchPostUrl"
+  | "tokenContractAddress"
+  | "nftContractAddress"
+  | "primaryWallet"
+  | "brandAccent"
+  | "brandMood"
   | "contactEmail";
 
 type EditableQuestDraft = Pick<
@@ -197,6 +205,14 @@ export default function NewCampaignPage() {
         xUrl: nextProject.xUrl ?? "",
         telegramUrl: nextProject.telegramUrl ?? "",
         discordUrl: nextProject.discordUrl ?? "",
+        docsUrl: nextProject.docsUrl ?? "",
+        waitlistUrl: nextProject.waitlistUrl ?? "",
+        launchPostUrl: nextProject.launchPostUrl ?? "",
+        tokenContractAddress: nextProject.tokenContractAddress ?? "",
+        nftContractAddress: nextProject.nftContractAddress ?? "",
+        primaryWallet: nextProject.primaryWallet ?? "",
+        brandAccent: nextProject.brandAccent ?? "",
+        brandMood: nextProject.brandMood ?? "",
         contactEmail: nextProject.contactEmail ?? "",
         isFeatured: nextProject.isFeatured ?? false,
         isPublic: nextProject.isPublic ?? true,
