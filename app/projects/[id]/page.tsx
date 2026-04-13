@@ -5,6 +5,14 @@ import { useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectForm from "@/components/forms/project/ProjectForm";
+import {
+  DetailBadge,
+  DetailHero,
+  DetailMetaRow,
+  DetailMetricCard,
+  DetailSidebarSurface,
+  DetailSurface,
+} from "@/components/layout/detail/DetailPrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -155,78 +163,53 @@ export default function ProjectDetailPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Project Detail
-            </p>
-
-            <h1 className="mt-2 text-3xl font-extrabold text-text">
-              {project.logo} {project.name}
-            </h1>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge>{project.chain}</Badge>
-              {project.category ? <Badge>{project.category}</Badge> : null}
-              <Badge className="capitalize">{project.status}</Badge>
-              <Badge className="capitalize">{project.onboardingStatus}</Badge>
-              {project.isFeatured ? <Badge>Featured</Badge> : null}
-              {project.isPublic ? <Badge>Public</Badge> : <Badge>Private</Badge>}
-            </div>
-
-            <p className="mt-4 text-sm text-sub">{project.description}</p>
-
-            {project.longDescription ? (
-              <p className="mt-3 text-sm leading-6 text-sub">
-                {project.longDescription}
-              </p>
-            ) : null}
-          </div>
-
-          <button
-            onClick={async () => {
-              await deleteProject(project.id);
-              router.push("/projects");
-            }}
-            className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300"
-          >
-            Delete Project
-          </button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          <InfoCard label="Chain" value={project.chain} />
-          <InfoCard label="Members" value={project.members.toLocaleString()} />
-          <InfoCard label="Campaigns" value={relatedCampaigns.length} />
-          <InfoCard label="Onboarding" value={project.onboardingStatus} />
-          <InfoCard label="Template Context" value={templateContextCount} />
-        </div>
+        <DetailHero
+          eyebrow="Project Detail"
+          title={`${project.logo} ${project.name}`}
+          description={project.longDescription || project.description}
+          badges={
+            <>
+              <DetailBadge>{project.chain}</DetailBadge>
+              {project.category ? <DetailBadge>{project.category}</DetailBadge> : null}
+              <DetailBadge tone={project.status === "active" ? "primary" : "default"}>
+                {project.status}
+              </DetailBadge>
+              <DetailBadge tone={project.onboardingStatus === "approved" ? "primary" : "warning"}>
+                {project.onboardingStatus}
+              </DetailBadge>
+              {project.isFeatured ? <DetailBadge tone="warning">Featured</DetailBadge> : null}
+              <DetailBadge>{project.isPublic ? "Public" : "Private"}</DetailBadge>
+            </>
+          }
+          actions={
+            <button
+              onClick={async () => {
+                await deleteProject(project.id);
+                router.push("/projects");
+              }}
+              className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
+            >
+              Delete Project
+            </button>
+          }
+          metrics={
+            <>
+              <DetailMetricCard label="Chain" value={project.chain} hint="Primary ecosystem for this workspace." />
+              <DetailMetricCard label="Members" value={project.members.toLocaleString()} hint="Community size currently visible on the public surface." />
+              <DetailMetricCard label="Campaigns" value={relatedCampaigns.length} hint="Active campaign spaces inside this workspace." />
+              <DetailMetricCard label="Onboarding" value={project.onboardingStatus} hint="Current approval posture for this workspace." />
+              <DetailMetricCard label="Template Context" value={templateContextCount} hint="Advanced autofill fields currently attached." />
+            </>
+          }
+        />
 
         {showLaunchpad ? (
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="max-w-2xl">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                  Workspace Launchpad
-                </p>
-                <h2 className="mt-2 text-2xl font-extrabold text-text">
-                  Give {project.name} a strong first setup
-                </h2>
-                <p className="mt-3 text-sm text-sub">
-                  This checklist keeps a newly approved project moving from onboarding into a campaign-ready workspace.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                  Progress
-                </p>
-                <p className="mt-2 text-3xl font-extrabold text-text">
-                  {completedLaunchpadSteps}/4
-                </p>
-              </div>
-            </div>
-
+          <DetailSurface
+            eyebrow="Workspace Launchpad"
+            title={`Give ${project.name} a strong first setup`}
+            description="This checklist keeps a newly approved project moving from onboarding into a campaign-ready workspace."
+            aside={<DetailMetricCard label="Progress" value={`${completedLaunchpadSteps}/4`} />}
+          >
             <div className="mt-6 grid gap-4 xl:grid-cols-2">
               {launchpadSteps.map((step) => (
                 <Link
@@ -257,16 +240,14 @@ export default function ProjectDetailPage() {
                 </Link>
               ))}
             </div>
-          </div>
+          </DetailSurface>
         ) : null}
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-          <div id="edit-project" className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Edit Project</h2>
-            <p className="mt-2 text-sm text-sub">
-              Update how this project appears in the app and portal.
-            </p>
-
+          <DetailSurface
+            title="Edit Project"
+            description="Update how this project appears in the app and portal without leaving the workspace detail view."
+          >
             <div className="mt-6">
               <ProjectForm
                 initialValues={{
@@ -312,30 +293,15 @@ export default function ProjectDetailPage() {
                 }}
               />
             </div>
-          </div>
+          </DetailSurface>
 
           <div className="space-y-6">
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                    Public Profile
-                  </p>
-                  <h2 className="mt-2 text-xl font-extrabold text-text">
-                    Brand and community-facing preview
-                  </h2>
-                </div>
-
-                <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                    Readiness
-                  </p>
-                  <p className="mt-2 text-2xl font-extrabold text-text">
-                    {completedPublicReadiness}/{publicProfileReadiness.length}
-                  </p>
-                </div>
-              </div>
-
+            <DetailSurface
+              eyebrow="Public Profile"
+              title="Brand and community-facing preview"
+              description="This is how the workspace reads when someone lands on it from discovery or a campaign entry point."
+              aside={<DetailMetricCard label="Readiness" value={`${completedPublicReadiness}/${publicProfileReadiness.length}`} />}
+            >
               <div className="mt-5 overflow-hidden rounded-2xl border border-line bg-card2">
                 <div className="h-36 bg-gradient-to-br from-primary/20 via-card to-card2">
                   {project.bannerUrl ? (
@@ -356,9 +322,9 @@ export default function ProjectDetailPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="truncate text-xl font-extrabold text-text">{project.name}</p>
-                        <Badge>{project.chain}</Badge>
-                        {project.category ? <Badge>{project.category}</Badge> : null}
-                        <Badge>{project.isPublic ? "Public" : "Private"}</Badge>
+                        <DetailBadge>{project.chain}</DetailBadge>
+                        {project.category ? <DetailBadge>{project.category}</DetailBadge> : null}
+                        <DetailBadge>{project.isPublic ? "Public" : "Private"}</DetailBadge>
                       </div>
 
                       <p className="mt-2 text-sm text-sub">/{project.slug || "project-slug"}</p>
@@ -378,37 +344,35 @@ export default function ProjectDetailPage() {
                   ) : null}
 
                   <div className="mt-5 grid gap-3 md:grid-cols-2">
-                    <DetailRow label="Website" value={project.website || "Not connected"} />
-                    <DetailRow label="X URL" value={project.xUrl || "Not connected"} />
-                    <DetailRow label="Telegram URL" value={project.telegramUrl || "Not connected"} />
-                    <DetailRow label="Discord URL" value={project.discordUrl || "Not connected"} />
-                    <DetailRow label="Docs URL" value={project.docsUrl || "Not connected"} />
-                    <DetailRow label="Waitlist URL" value={project.waitlistUrl || "Not connected"} />
-                    <DetailRow label="Launch Post URL" value={project.launchPostUrl || "Not connected"} />
-                    <DetailRow label="Primary Wallet" value={project.primaryWallet || "Not set"} />
+                    <DetailMetaRow label="Website" value={project.website || "Not connected"} />
+                    <DetailMetaRow label="X URL" value={project.xUrl || "Not connected"} />
+                    <DetailMetaRow label="Telegram URL" value={project.telegramUrl || "Not connected"} />
+                    <DetailMetaRow label="Discord URL" value={project.discordUrl || "Not connected"} />
+                    <DetailMetaRow label="Docs URL" value={project.docsUrl || "Not connected"} />
+                    <DetailMetaRow label="Waitlist URL" value={project.waitlistUrl || "Not connected"} />
+                    <DetailMetaRow label="Launch Post URL" value={project.launchPostUrl || "Not connected"} />
+                    <DetailMetaRow label="Primary Wallet" value={project.primaryWallet || "Not set"} />
                   </div>
                 </div>
               </div>
-            </div>
+            </DetailSurface>
 
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Project Assets</h2>
-
+            <DetailSidebarSurface title="Project Assets">
               <div className="mt-4 space-y-4">
-                <DetailRow label="Slug" value={project.slug || "-"} />
-                <DetailRow label="Website" value={project.website || "-"} />
-                <DetailRow label="X URL" value={project.xUrl || "-"} />
-                <DetailRow label="Telegram URL" value={project.telegramUrl || "-"} />
-                <DetailRow label="Discord URL" value={project.discordUrl || "-"} />
-                <DetailRow label="Docs URL" value={project.docsUrl || "-"} />
-                <DetailRow label="Waitlist URL" value={project.waitlistUrl || "-"} />
-                <DetailRow label="Launch Post URL" value={project.launchPostUrl || "-"} />
-                <DetailRow label="Contact Email" value={project.contactEmail || "-"} />
-                <DetailRow
+                <DetailMetaRow label="Slug" value={project.slug || "-"} />
+                <DetailMetaRow label="Website" value={project.website || "-"} />
+                <DetailMetaRow label="X URL" value={project.xUrl || "-"} />
+                <DetailMetaRow label="Telegram URL" value={project.telegramUrl || "-"} />
+                <DetailMetaRow label="Discord URL" value={project.discordUrl || "-"} />
+                <DetailMetaRow label="Docs URL" value={project.docsUrl || "-"} />
+                <DetailMetaRow label="Waitlist URL" value={project.waitlistUrl || "-"} />
+                <DetailMetaRow label="Launch Post URL" value={project.launchPostUrl || "-"} />
+                <DetailMetaRow label="Contact Email" value={project.contactEmail || "-"} />
+                <DetailMetaRow
                   label="Featured"
                   value={project.isFeatured ? "Yes" : "No"}
                 />
-                <DetailRow
+                <DetailMetaRow
                   label="Public"
                   value={project.isPublic ? "Yes" : "No"}
                 />
@@ -426,41 +390,37 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
               ) : null}
-            </div>
+            </DetailSidebarSurface>
 
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Template Context</h2>
-
+            <DetailSidebarSurface title="Template Context">
               <div className="mt-4 space-y-4">
-                <DetailRow
+                <DetailMetaRow
                   label="Token Contract"
                   value={project.tokenContractAddress || "-"}
                 />
-                <DetailRow
+                <DetailMetaRow
                   label="NFT Contract"
                   value={project.nftContractAddress || "-"}
                 />
-                <DetailRow
+                <DetailMetaRow
                   label="Primary Wallet"
                   value={project.primaryWallet || "-"}
                 />
-                <DetailRow
+                <DetailMetaRow
                   label="Brand Accent"
                   value={project.brandAccent || "-"}
                 />
-                <DetailRow
+                <DetailMetaRow
                   label="Brand Mood"
                   value={project.brandMood || "-"}
                 />
               </div>
-            </div>
+            </DetailSidebarSurface>
 
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Public Profile Readiness</h2>
-
+            <DetailSidebarSurface title="Public Profile Readiness">
               <div className="mt-4 space-y-3">
                 {publicProfileReadiness.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
+                  <div key={item.label} className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-bold text-text">{item.label}</p>
                       <span
@@ -475,11 +435,9 @@ export default function ProjectDetailPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </DetailSidebarSurface>
 
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Related Campaigns</h2>
-
+            <DetailSidebarSurface title="Related Campaigns">
               <div className="mt-4 grid gap-3">
                 {relatedCampaigns.length > 0 ? (
                   relatedCampaigns.map((campaign) => (
@@ -523,7 +481,7 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </DetailSidebarSurface>
           </div>
         </div>
       </div>
@@ -531,44 +489,3 @@ export default function ProjectDetailPage() {
   );
 }
 
-function InfoCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold capitalize text-text">{value}</p>
-    </div>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-        {label}
-      </p>
-      <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
-    </div>
-  );
-}
-
-function Badge({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold text-text ${className}`}
-    >
-      {children}
-    </span>
-  );
-}

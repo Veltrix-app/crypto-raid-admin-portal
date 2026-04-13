@@ -5,6 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
+import {
+  DetailActionTile,
+  DetailBadge,
+  DetailHero,
+  DetailMetaRow,
+  DetailMetricCard,
+  DetailSidebarSurface,
+  DetailSurface,
+} from "@/components/layout/detail/DetailPrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { DbVerificationResult } from "@/types/database";
@@ -158,94 +167,66 @@ export default function CampaignDetailPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Campaign Detail
-            </p>
-
-            <h1 className="mt-2 text-3xl font-extrabold text-text">
-              {campaign.title}
-            </h1>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge>{project?.name || "Unknown Project"}</Badge>
-              <Badge className="capitalize">{campaign.campaignType}</Badge>
-              <Badge className="capitalize">{campaign.visibility}</Badge>
-              <Badge className="capitalize">{campaign.status}</Badge>
-              {campaign.featured ? <Badge>Featured</Badge> : null}
-            </div>
-
-            <p className="mt-4 text-sm text-sub">{campaign.shortDescription}</p>
-
-            {campaign.longDescription ? (
-              <p className="mt-3 text-sm leading-6 text-sub">
-                {campaign.longDescription}
-              </p>
-            ) : null}
-
-            <div className="mt-5 rounded-2xl border border-line bg-card2 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Builder Summary
-              </p>
-              <p className="mt-2 text-sm leading-6 text-sub">
-                {getCampaignBlueprintSummary(campaign.campaignType)}
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={async () => {
-              await deleteCampaign(campaign.id);
-              router.push("/campaigns");
-            }}
-            className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300"
-          >
-            Delete Campaign
-          </button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          <InfoCard label="Project" value={project?.name || "-"} />
-          <InfoCard label="XP Budget" value={campaign.xpBudget} />
-          <InfoCard label="Participants" value={campaign.participants} />
-          <InfoCard label="Progress" value={`${campaign.completionRate}%`} />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          <InfoCard label="Submissions" value={snapshot?.submissions ?? relatedSubmissions.length} />
-          <InfoCard label="Auto Approved" value={snapshot?.autoApproved ?? 0} />
-          <InfoCard label="Open Flags" value={snapshot?.openFlags ?? relatedFlags.filter((flag) => flag.status === "open").length} />
-          <InfoCard label="Avg Confidence" value={`${snapshot?.averageConfidence ?? 0}%`} />
-        </div>
+        <DetailHero
+          eyebrow="Campaign Detail"
+          title={campaign.title}
+          description={campaign.longDescription || campaign.shortDescription}
+          badges={
+            <>
+              <DetailBadge>{project?.name || "Unknown Project"}</DetailBadge>
+              <DetailBadge>{campaign.campaignType.replace(/_/g, " ")}</DetailBadge>
+              <DetailBadge>{campaign.visibility}</DetailBadge>
+              <DetailBadge tone={campaign.status === "active" ? "primary" : "default"}>
+                {campaign.status}
+              </DetailBadge>
+              {campaign.featured ? <DetailBadge tone="warning">Featured</DetailBadge> : null}
+            </>
+          }
+          actions={
+            <>
+              <Link
+                href="/analytics"
+                className="rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-text transition hover:border-primary/30 hover:bg-primary/5"
+              >
+                Open Analytics
+              </Link>
+              <button
+                onClick={async () => {
+                  await deleteCampaign(campaign.id);
+                  router.push("/campaigns");
+                }}
+                className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
+              >
+                Delete Campaign
+              </button>
+            </>
+          }
+          metrics={
+            <>
+              <DetailMetricCard label="Project" value={project?.name || "-"} hint="Workspace owning this campaign." />
+              <DetailMetricCard label="XP Budget" value={campaign.xpBudget} hint="Total reward pressure planned in this loop." />
+              <DetailMetricCard label="Participants" value={campaign.participants} hint="Current contributor volume attached here." />
+              <DetailMetricCard label="Completion" value={`${campaign.completionRate}%`} hint="Current finish rate across the campaign path." />
+              <DetailMetricCard label="Submissions" value={snapshot?.submissions ?? relatedSubmissions.length} hint="Total quest submissions routed into this campaign." />
+              <DetailMetricCard label="Auto Approved" value={snapshot?.autoApproved ?? 0} hint="Submissions cleared by rules without manual work." />
+              <DetailMetricCard label="Open Flags" value={snapshot?.openFlags ?? relatedFlags.filter((flag) => flag.status === "open").length} hint="Trust or moderation items still unresolved." />
+              <DetailMetricCard label="Avg Confidence" value={`${snapshot?.averageConfidence ?? 0}%`} hint="Verification confidence across recent activity." />
+            </>
+          }
+        />
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                  Campaign Readiness
-                </p>
-                <h2 className="mt-2 text-xl font-extrabold text-text">
-                  What this campaign still needs
-                </h2>
-              </div>
-
-              <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                  Active Mechanics
-                </p>
-                <p className="mt-2 text-2xl font-extrabold text-text">
-                  {relatedQuests.length + relatedRaids.length}
-                </p>
-              </div>
-            </div>
-
+          <DetailSurface
+            eyebrow="Readiness"
+            title="What this campaign still needs"
+            description="A quick operator read on messaging, timing, mechanics and incentive coverage before you scale more traffic into the loop."
+            aside={<DetailMetricCard label="Active Mechanics" value={relatedQuests.length + relatedRaids.length} />}
+          >
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {readinessItems.map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-line bg-card2 p-4"
+                  className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
@@ -263,18 +244,15 @@ export default function CampaignDetailPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </DetailSurface>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-              Next Actions
-            </p>
-            <h2 className="mt-2 text-xl font-extrabold text-text">
-              Build out the campaign loop
-            </h2>
-
+          <DetailSurface
+            eyebrow="Next Actions"
+            title="Build out the campaign loop"
+            description="Keep the campaign moving by filling the weakest part of the contributor journey next."
+          >
             <div className="mt-5 space-y-3">
-              <ActionLink
+              <DetailActionTile
                 href={relatedQuests.length > 0 ? "/quests" : "/quests/new"}
                 label={relatedQuests.length > 0 ? "Review quests" : "Create first quest"}
                 description={
@@ -283,7 +261,7 @@ export default function CampaignDetailPage() {
                     : "Quests are the backbone of the contributor journey, so add one next."
                 }
               />
-              <ActionLink
+              <DetailActionTile
                 href={relatedRaids.length > 0 ? "/raids" : "/raids/new"}
                 label={relatedRaids.length > 0 ? "Review raids" : "Add a raid"}
                 description={
@@ -292,7 +270,7 @@ export default function CampaignDetailPage() {
                     : "Raids help layer in time-sensitive social momentum on top of the quest structure."
                 }
               />
-              <ActionLink
+              <DetailActionTile
                 href={relatedRewards.length > 0 ? "/rewards" : "/rewards/new"}
                 label={relatedRewards.length > 0 ? "Review rewards" : "Create reward loop"}
                 description={
@@ -302,27 +280,14 @@ export default function CampaignDetailPage() {
                 }
               />
             </div>
-          </div>
+          </DetailSurface>
         </div>
 
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                Analytics Snapshot
-              </p>
-              <h2 className="mt-2 text-xl font-extrabold text-text">
-                How this campaign is actually behaving
-              </h2>
-            </div>
-            <Link
-              href="/analytics"
-              className="rounded-2xl border border-line bg-card2 px-4 py-3 font-semibold"
-            >
-              Open Analytics
-            </Link>
-          </div>
-
+        <DetailSurface
+          eyebrow="Analytics Snapshot"
+          title="How this campaign is actually behaving"
+          description="These numbers show whether the loop is clearing smoothly or building moderation and fraud drag."
+        >
           <div className="mt-5 grid gap-3 md:grid-cols-4">
             <AnalyticsStat
               label="Approved"
@@ -345,15 +310,13 @@ export default function CampaignDetailPage() {
               hint="Identity or proof overlap detected in this campaign."
             />
           </div>
-        </div>
+        </DetailSurface>
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Edit Campaign</h2>
-            <p className="mt-2 text-sm text-sub">
-              Update this campaign's content, visibility and timing.
-            </p>
-
+          <DetailSurface
+            title="Edit Campaign"
+            description="Tighten the hook, structure and timing without leaving the detail view."
+          >
             <div className="mt-6">
               <CampaignForm
                 projects={projects}
@@ -390,31 +353,27 @@ export default function CampaignDetailPage() {
                 }}
               />
             </div>
-          </div>
+          </DetailSurface>
 
           <div className="space-y-6">
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Campaign Assets</h2>
-
+            <DetailSidebarSurface title="Campaign Assets">
               <div className="mt-4 space-y-4">
-                <DetailRow label="Slug" value={campaign.slug || "-"} />
-                <DetailRow label="Type" value={campaign.campaignType} />
-                <DetailRow label="Visibility" value={campaign.visibility} />
-                <DetailRow label="Featured" value={campaign.featured ? "Yes" : "No"} />
-                <DetailRow label="Starts At" value={campaign.startsAt || "-"} />
-                <DetailRow label="Ends At" value={campaign.endsAt || "-"} />
+                <DetailMetaRow label="Slug" value={campaign.slug || "-"} />
+                <DetailMetaRow label="Type" value={campaign.campaignType} />
+                <DetailMetaRow label="Visibility" value={campaign.visibility} />
+                <DetailMetaRow label="Featured" value={campaign.featured ? "Yes" : "No"} />
+                <DetailMetaRow label="Starts At" value={campaign.startsAt || "-"} />
+                <DetailMetaRow label="Ends At" value={campaign.endsAt || "-"} />
               </div>
-            </div>
+            </DetailSidebarSurface>
 
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Linked Content</h2>
-
+            <DetailSidebarSurface title="Linked Content">
               <div className="mt-4 grid gap-3">
-                <DetailRow label="Raids" value={relatedRaids.length} />
-                <DetailRow label="Quests" value={relatedQuests.length} />
-                <DetailRow label="Rewards" value={relatedRewards.length} />
+                <DetailMetaRow label="Raids" value={relatedRaids.length} />
+                <DetailMetaRow label="Quests" value={relatedQuests.length} />
+                <DetailMetaRow label="Rewards" value={relatedRewards.length} />
               </div>
-            </div>
+            </DetailSidebarSurface>
           </div>
         </div>
       </div>
@@ -439,68 +398,6 @@ function getCampaignBlueprintSummary(campaignType: string) {
     default:
       return `This campaign is currently configured as ${label}. Use the builder below to tighten its hook, mechanics and reward loop before scaling traffic into it.`;
   }
-}
-
-function InfoCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold capitalize text-text">{value}</p>
-    </div>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-        {label}
-      </p>
-      <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
-    </div>
-  );
-}
-
-function Badge({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold text-text ${className}`}
-    >
-      {children}
-    </span>
-  );
-}
-
-function ActionLink({
-  href,
-  label,
-  description,
-}: {
-  href: string;
-  label: string;
-  description: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-2xl border border-line bg-card2 p-4 transition hover:border-primary/40"
-    >
-      <p className="font-bold text-text">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{description}</p>
-    </Link>
-  );
 }
 
 function AnalyticsStat({

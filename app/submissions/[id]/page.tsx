@@ -3,6 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import {
+  DetailBadge,
+  DetailHero,
+  DetailMetaRow,
+  DetailMetricCard,
+  DetailSidebarSurface,
+  DetailSurface,
+} from "@/components/layout/detail/DetailPrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { AdminAuditLog } from "@/types/entities/audit-log";
@@ -173,41 +181,35 @@ export default function SubmissionDetailPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Submission Review
-            </p>
-
-            <h1 className="mt-2 text-3xl font-extrabold text-text">
-              {currentSubmission.questTitle}
-            </h1>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge>{currentSubmission.username}</Badge>
-              <Badge>{currentSubmission.campaignTitle}</Badge>
-              <Badge>{riskLabel}</Badge>
-              <Badge className="capitalize">{currentSubmission.status}</Badge>
-            </div>
-
-            <p className="mt-4 text-sm text-sub">
-              Review the proof and the automation decision before approving or rejecting this quest submission.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          <InfoCard label="User" value={currentSubmission.username} />
-          <InfoCard label="Quest" value={currentSubmission.questTitle} />
-          <InfoCard label="Campaign" value={currentSubmission.campaignTitle} />
-          <InfoCard label="Decision" value={decisionLabel} />
-        </div>
+        <DetailHero
+          eyebrow="Submission Review"
+          title={currentSubmission.questTitle}
+          description="Review the proof, the automation route and any linked flags before moving this submission forward."
+          badges={
+            <>
+              <DetailBadge>{currentSubmission.username}</DetailBadge>
+              <DetailBadge>{currentSubmission.campaignTitle}</DetailBadge>
+              <DetailBadge tone={user?.status === "flagged" ? "danger" : "default"}>{riskLabel}</DetailBadge>
+              <DetailBadge tone={currentSubmission.status === "approved" ? "primary" : currentSubmission.status === "rejected" ? "danger" : "warning"}>
+                {currentSubmission.status}
+              </DetailBadge>
+            </>
+          }
+          metrics={
+            <>
+              <DetailMetricCard label="User" value={currentSubmission.username} hint="Contributor currently under review." />
+              <DetailMetricCard label="Quest" value={currentSubmission.questTitle} hint="Task the contributor attempted to complete." />
+              <DetailMetricCard label="Campaign" value={currentSubmission.campaignTitle} hint="Campaign this submission routes into." />
+              <DetailMetricCard label="Decision" value={decisionLabel} hint="Current automation or moderation posture." />
+            </>
+          }
+        />
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Decision Context</h2>
-            <p className="mt-2 text-sm text-sub">{decisionReason}</p>
-
+          <DetailSurface
+            title="Decision Context"
+            description={decisionReason}
+          >
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               <DecisionCard
                 label="Automation Route"
@@ -222,7 +224,7 @@ export default function SubmissionDetailPage() {
             </div>
 
             {verificationResult ? (
-              <div className="mt-5 rounded-2xl border border-line bg-card2 p-4">
+              <div className="mt-5 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                   Verification Result
                 </p>
@@ -246,7 +248,7 @@ export default function SubmissionDetailPage() {
                 </div>
                 <p className="mt-4 text-sm text-sub">{verificationResult.decisionReason}</p>
                 <div className="mt-4 space-y-3">
-                  <DetailRow
+                  <DetailMetaRow
                     label="Required Config"
                     value={
                       verificationResult.requiredConfigKeys.length
@@ -254,7 +256,7 @@ export default function SubmissionDetailPage() {
                         : "No required keys"
                     }
                   />
-                  <DetailRow
+                  <DetailMetaRow
                     label="Missing Config"
                     value={
                       verificationResult.missingConfigKeys.length
@@ -262,7 +264,7 @@ export default function SubmissionDetailPage() {
                         : "None"
                     }
                   />
-                  <DetailRow
+                  <DetailMetaRow
                     label="Duplicate Signals"
                     value={
                       verificationResult.duplicateSignalTypes.length
@@ -280,7 +282,7 @@ export default function SubmissionDetailPage() {
             ) : null}
 
             {linkedFlags.length > 0 ? (
-              <div className="mt-5 rounded-2xl border border-line bg-card2 p-4">
+              <div className="mt-5 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                   Linked Flags
                 </p>
@@ -288,9 +290,9 @@ export default function SubmissionDetailPage() {
                   {linkedFlags.map((flag) => (
                     <div key={flag.id} className="rounded-2xl border border-line bg-card px-4 py-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge className="capitalize">{flag.flagType.replace(/_/g, " ")}</Badge>
-                        <Badge className="capitalize">{flag.severity}</Badge>
-                        <Badge className="capitalize">{flag.status}</Badge>
+                        <DetailBadge>{flag.flagType.replace(/_/g, " ")}</DetailBadge>
+                        <DetailBadge tone="warning">{flag.severity}</DetailBadge>
+                        <DetailBadge>{flag.status}</DetailBadge>
                       </div>
                       <p className="mt-3 text-sm text-sub">{flag.reason}</p>
                     </div>
@@ -298,14 +300,12 @@ export default function SubmissionDetailPage() {
                 </div>
               </div>
             ) : null}
-          </div>
+          </DetailSurface>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Moderation Actions</h2>
-            <p className="mt-2 text-sm text-sub">
-              Use these actions after reviewing both the proof and the automation context.
-            </p>
-
+          <DetailSurface
+            title="Moderation Actions"
+            description="Use these actions after checking both the proof and the automation context."
+          >
             <div className="mt-6">
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-text">Reviewer Note</span>
@@ -336,16 +336,14 @@ export default function SubmissionDetailPage() {
                 {working ? "Working..." : "Reject"}
               </button>
             </div>
-          </div>
+          </DetailSurface>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Proof</h2>
-            <p className="mt-2 text-sm text-sub">
-              Review the submitted proof carefully before moderating.
-            </p>
-
+          <DetailSurface
+            title="Proof"
+            description="Review the submitted proof carefully before you confirm or reject the task."
+          >
             <div className="mt-6 rounded-[24px] border border-line bg-card2 p-5">
               {proofLooksLikeUrl ? (
                 <a
@@ -360,25 +358,22 @@ export default function SubmissionDetailPage() {
                 <p className="whitespace-pre-wrap break-words text-sm text-text">
                   {currentSubmission.proof}
                 </p>
-              )}
-            </div>
-          </div>
+                )}
+              </div>
+          </DetailSurface>
 
           <div className="space-y-6">
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Submission Data</h2>
-
+            <DetailSidebarSurface title="Submission Data">
               <div className="mt-4 space-y-4">
-                <DetailRow label="Submission ID" value={currentSubmission.id} />
-                <DetailRow label="User ID" value={currentSubmission.userId || "-"} />
-                <DetailRow label="Quest ID" value={currentSubmission.questId} />
-                <DetailRow label="Campaign ID" value={currentSubmission.campaignId} />
-                <DetailRow label="Submitted At" value={formatDate(currentSubmission.submittedAt)} />
+                <DetailMetaRow label="Submission ID" value={currentSubmission.id} />
+                <DetailMetaRow label="User ID" value={currentSubmission.userId || "-"} />
+                <DetailMetaRow label="Quest ID" value={currentSubmission.questId} />
+                <DetailMetaRow label="Campaign ID" value={currentSubmission.campaignId} />
+                <DetailMetaRow label="Submitted At" value={formatDate(currentSubmission.submittedAt)} />
               </div>
-            </div>
+            </DetailSidebarSurface>
 
-            <div className="rounded-[28px] border border-line bg-card p-6">
-              <h2 className="text-xl font-extrabold text-text">Audit Trail</h2>
+            <DetailSidebarSurface title="Audit Trail">
               <div className="mt-4 space-y-3">
                 {auditLogs.map((log) => (
                   <div key={log.id} className="rounded-2xl border border-line bg-card2 p-4">
@@ -403,37 +398,11 @@ export default function SubmissionDetailPage() {
                   </p>
                 ) : null}
               </div>
-            </div>
+            </DetailSidebarSurface>
           </div>
         </div>
       </div>
     </AdminShell>
-  );
-}
-
-function InfoCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold capitalize text-text">{value}</p>
-    </div>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-        {label}
-      </p>
-      <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
-    </div>
   );
 }
 
@@ -462,22 +431,6 @@ function DecisionCard({
         </span>
       </div>
     </div>
-  );
-}
-
-function Badge({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={`rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold text-text ${className}`}
-    >
-      {children}
-    </span>
   );
 }
 
