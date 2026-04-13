@@ -61,6 +61,14 @@ export type DbProject = {
   x_url: string | null;
   telegram_url: string | null;
   discord_url: string | null;
+  docs_url?: string | null;
+  waitlist_url?: string | null;
+  launch_post_url?: string | null;
+  token_contract_address?: string | null;
+  nft_contract_address?: string | null;
+  primary_wallet?: string | null;
+  brand_accent?: string | null;
+  brand_mood?: string | null;
 
   contact_email: string | null;
 

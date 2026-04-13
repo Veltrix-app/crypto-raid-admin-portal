@@ -147,6 +147,14 @@ function mapProject(row: DbProject): AdminProject {
     xUrl: row.x_url ?? "",
     telegramUrl: row.telegram_url ?? "",
     discordUrl: row.discord_url ?? "",
+    docsUrl: row.docs_url ?? "",
+    waitlistUrl: row.waitlist_url ?? "",
+    launchPostUrl: row.launch_post_url ?? "",
+    tokenContractAddress: row.token_contract_address ?? "",
+    nftContractAddress: row.nft_contract_address ?? "",
+    primaryWallet: row.primary_wallet ?? "",
+    brandAccent: row.brand_accent ?? "",
+    brandMood: row.brand_mood ?? "",
 
     contactEmail: row.contact_email ?? "",
 
@@ -715,40 +723,72 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
   createProject: async (input) => {
     const supabase = createClient();
+    const payload = {
+      name: input.name,
+      slug: input.slug,
 
-    const { data, error } = await supabase
+      chain: input.chain,
+      category: input.category,
+
+      status: input.status,
+      onboarding_status: input.onboardingStatus,
+
+      description: input.description,
+      long_description: input.longDescription,
+
+      members: input.members,
+      campaigns: input.campaigns,
+
+      logo: input.logo,
+      banner_url: input.bannerUrl,
+
+      website: input.website,
+      x_url: input.xUrl,
+      telegram_url: input.telegramUrl,
+      discord_url: input.discordUrl,
+      docs_url: input.docsUrl,
+      waitlist_url: input.waitlistUrl,
+      launch_post_url: input.launchPostUrl,
+      token_contract_address: input.tokenContractAddress,
+      nft_contract_address: input.nftContractAddress,
+      primary_wallet: input.primaryWallet,
+      brand_accent: input.brandAccent,
+      brand_mood: input.brandMood,
+
+      contact_email: input.contactEmail,
+
+      is_featured: input.isFeatured,
+      is_public: input.isPublic,
+    };
+
+    let { data, error } = await supabase
       .from("projects")
-      .insert({
-        name: input.name,
-        slug: input.slug,
-
-        chain: input.chain,
-        category: input.category,
-
-        status: input.status,
-        onboarding_status: input.onboardingStatus,
-
-        description: input.description,
-        long_description: input.longDescription,
-
-        members: input.members,
-        campaigns: input.campaigns,
-
-        logo: input.logo,
-        banner_url: input.bannerUrl,
-
-        website: input.website,
-        x_url: input.xUrl,
-        telegram_url: input.telegramUrl,
-        discord_url: input.discordUrl,
-
-        contact_email: input.contactEmail,
-
-        is_featured: input.isFeatured,
-        is_public: input.isPublic,
-      })
+      .insert(payload)
       .select()
       .single();
+
+    if (error?.message?.toLowerCase().includes("column")) {
+      const {
+        docs_url: _docsUrl,
+        waitlist_url: _waitlistUrl,
+        launch_post_url: _launchPostUrl,
+        token_contract_address: _tokenContractAddress,
+        nft_contract_address: _nftContractAddress,
+        primary_wallet: _primaryWallet,
+        brand_accent: _brandAccent,
+        brand_mood: _brandMood,
+        ...fallbackPayload
+      } = payload;
+
+      const fallback = await supabase
+        .from("projects")
+        .insert(fallbackPayload)
+        .select()
+        .single();
+
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) throw error;
 
@@ -759,41 +799,74 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
   updateProject: async (id, input) => {
     const supabase = createClient();
+    const payload = {
+      name: input.name,
+      slug: input.slug,
 
-    const { data, error } = await supabase
+      chain: input.chain,
+      category: input.category,
+
+      status: input.status,
+      onboarding_status: input.onboardingStatus,
+
+      description: input.description,
+      long_description: input.longDescription,
+
+      members: input.members,
+      campaigns: input.campaigns,
+
+      logo: input.logo,
+      banner_url: input.bannerUrl,
+
+      website: input.website,
+      x_url: input.xUrl,
+      telegram_url: input.telegramUrl,
+      discord_url: input.discordUrl,
+      docs_url: input.docsUrl,
+      waitlist_url: input.waitlistUrl,
+      launch_post_url: input.launchPostUrl,
+      token_contract_address: input.tokenContractAddress,
+      nft_contract_address: input.nftContractAddress,
+      primary_wallet: input.primaryWallet,
+      brand_accent: input.brandAccent,
+      brand_mood: input.brandMood,
+
+      contact_email: input.contactEmail,
+
+      is_featured: input.isFeatured,
+      is_public: input.isPublic,
+    };
+
+    let { data, error } = await supabase
       .from("projects")
-      .update({
-        name: input.name,
-        slug: input.slug,
-
-        chain: input.chain,
-        category: input.category,
-
-        status: input.status,
-        onboarding_status: input.onboardingStatus,
-
-        description: input.description,
-        long_description: input.longDescription,
-
-        members: input.members,
-        campaigns: input.campaigns,
-
-        logo: input.logo,
-        banner_url: input.bannerUrl,
-
-        website: input.website,
-        x_url: input.xUrl,
-        telegram_url: input.telegramUrl,
-        discord_url: input.discordUrl,
-
-        contact_email: input.contactEmail,
-
-        is_featured: input.isFeatured,
-        is_public: input.isPublic,
-      })
+      .update(payload)
       .eq("id", id)
       .select()
       .single();
+
+    if (error?.message?.toLowerCase().includes("column")) {
+      const {
+        docs_url: _docsUrl,
+        waitlist_url: _waitlistUrl,
+        launch_post_url: _launchPostUrl,
+        token_contract_address: _tokenContractAddress,
+        nft_contract_address: _nftContractAddress,
+        primary_wallet: _primaryWallet,
+        brand_accent: _brandAccent,
+        brand_mood: _brandMood,
+        ...fallbackPayload
+      } = payload;
+
+      const fallback = await supabase
+        .from("projects")
+        .update(fallbackPayload)
+        .eq("id", id)
+        .select()
+        .single();
+
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) throw error;
 

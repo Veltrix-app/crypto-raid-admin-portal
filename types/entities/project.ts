@@ -23,6 +23,14 @@ export type AdminProject = {
   xUrl?: string;
   telegramUrl?: string;
   discordUrl?: string;
+  docsUrl?: string;
+  waitlistUrl?: string;
+  launchPostUrl?: string;
+  tokenContractAddress?: string;
+  nftContractAddress?: string;
+  primaryWallet?: string;
+  brandAccent?: string;
+  brandMood?: string;
 
   contactEmail?: string;
 

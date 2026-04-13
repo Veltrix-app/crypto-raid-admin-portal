@@ -26,6 +26,14 @@ const defaultValues: Omit<AdminProject, "id"> = {
   xUrl: "",
   telegramUrl: "",
   discordUrl: "",
+  docsUrl: "",
+  waitlistUrl: "",
+  launchPostUrl: "",
+  tokenContractAddress: "",
+  nftContractAddress: "",
+  primaryWallet: "",
+  brandAccent: "",
+  brandMood: "",
   contactEmail: "",
   isFeatured: false,
   isPublic: true,
@@ -45,8 +53,23 @@ export default function ProjectForm({
   }, [slugTouched, values.name]);
 
   const connectedLinks = useMemo(
-    () => [values.website, values.xUrl, values.telegramUrl, values.discordUrl].filter(Boolean).length,
-    [values.discordUrl, values.telegramUrl, values.website, values.xUrl]
+    () =>
+      [
+        values.website,
+        values.xUrl,
+        values.telegramUrl,
+        values.discordUrl,
+        values.docsUrl,
+        values.waitlistUrl,
+      ].filter(Boolean).length,
+    [
+      values.discordUrl,
+      values.docsUrl,
+      values.telegramUrl,
+      values.waitlistUrl,
+      values.website,
+      values.xUrl,
+    ]
   );
 
   const brandingReadiness = [
@@ -64,6 +87,14 @@ export default function ProjectForm({
       label: "Distribution links",
       value: connectedLinks > 0 ? `${connectedLinks} channels connected` : "No channels linked yet",
       complete: connectedLinks > 0,
+    },
+    {
+      label: "Campaign context",
+      value:
+        values.launchPostUrl || values.docsUrl || values.waitlistUrl
+          ? "Template autofill context is expanding"
+          : "Add docs, waitlist or launch links for richer templates",
+      complete: Boolean(values.launchPostUrl || values.docsUrl || values.waitlistUrl),
     },
     {
       label: "Visibility",
@@ -295,6 +326,94 @@ export default function ProjectForm({
               onChange={(e) => setValues({ ...values, discordUrl: e.target.value })}
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
               placeholder="https://discord.gg/..."
+            />
+          </Field>
+
+          <Field label="Docs URL">
+            <input
+              value={values.docsUrl || ""}
+              onChange={(e) => setValues({ ...values, docsUrl: e.target.value })}
+              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              placeholder="https://docs...."
+            />
+          </Field>
+
+          <Field label="Waitlist URL">
+            <input
+              value={values.waitlistUrl || ""}
+              onChange={(e) => setValues({ ...values, waitlistUrl: e.target.value })}
+              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              placeholder="https://...."
+            />
+          </Field>
+
+          <Field label="Launch Post URL">
+            <input
+              value={values.launchPostUrl || ""}
+              onChange={(e) => setValues({ ...values, launchPostUrl: e.target.value })}
+              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              placeholder="https://x.com/.../status/..."
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+          Template Context
+        </p>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Token Contract">
+            <input
+              value={values.tokenContractAddress || ""}
+              onChange={(e) =>
+                setValues({ ...values, tokenContractAddress: e.target.value })
+              }
+              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              placeholder="0x..."
+            />
+          </Field>
+
+          <Field label="NFT Contract">
+            <input
+              value={values.nftContractAddress || ""}
+              onChange={(e) =>
+                setValues({ ...values, nftContractAddress: e.target.value })
+              }
+              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              placeholder="0x..."
+            />
+          </Field>
+
+          <Field label="Primary Wallet">
+            <input
+              value={values.primaryWallet || ""}
+              onChange={(e) =>
+                setValues({ ...values, primaryWallet: e.target.value })
+              }
+              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              placeholder="0x..."
+            />
+          </Field>
+
+          <Field label="Brand Accent">
+            <input
+              value={values.brandAccent || ""}
+              onChange={(e) =>
+                setValues({ ...values, brandAccent: e.target.value })
+              }
+              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              placeholder="#C7FF00"
+            />
+          </Field>
+
+          <Field label="Brand Mood">
+            <input
+              value={values.brandMood || ""}
+              onChange={(e) => setValues({ ...values, brandMood: e.target.value })}
+              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              placeholder="Launch, premium, playful..."
             />
           </Field>
         </div>
