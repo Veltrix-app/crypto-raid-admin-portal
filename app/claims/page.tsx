@@ -3,6 +3,15 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import {
+  OpsFilterBar,
+  OpsHero,
+  OpsMetricCard,
+  OpsPanel,
+  OpsSearchInput,
+  OpsSelect,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function ClaimsPage() {
@@ -16,9 +25,7 @@ export default function ClaimsPage() {
   const [workingId, setWorkingId] = useState<string | null>(null);
 
   const usersByAuthId = new Map(
-    users
-      .filter((user) => !!user.authUserId)
-      .map((user) => [user.authUserId as string, user])
+    users.filter((user) => !!user.authUserId).map((user) => [user.authUserId as string, user])
   );
   const flagsByClaimId = reviewFlags.reduce((acc, flag) => {
     if (flag.sourceTable !== "reward_claims") return acc;
@@ -30,11 +37,12 @@ export default function ClaimsPage() {
 
   const filteredClaims = useMemo(() => {
     return claims.filter((claim) => {
+      const term = search.toLowerCase();
       const matchesSearch =
-        claim.username.toLowerCase().includes(search.toLowerCase()) ||
-        claim.rewardTitle.toLowerCase().includes(search.toLowerCase()) ||
-        (claim.projectName || "").toLowerCase().includes(search.toLowerCase()) ||
-        (claim.campaignTitle || "").toLowerCase().includes(search.toLowerCase());
+        claim.username.toLowerCase().includes(term) ||
+        claim.rewardTitle.toLowerCase().includes(term) ||
+        (claim.projectName || "").toLowerCase().includes(term) ||
+        (claim.campaignTitle || "").toLowerCase().includes(term);
 
       const matchesStatus = status === "all" || claim.status === status;
 
@@ -58,10 +66,7 @@ export default function ClaimsPage() {
     return user?.status === "flagged" || linkedFlags.length > 0 || (claim.rewardCost ?? 0) >= 500;
   });
 
-  async function handleQuickStatus(
-    claimId: string,
-    nextStatus: "processing" | "fulfilled"
-  ) {
+  async function handleQuickStatus(claimId: string, nextStatus: "processing" | "fulfilled") {
     try {
       setWorkingId(claimId);
       await reviewClaim(claimId, nextStatus);
@@ -73,192 +78,170 @@ export default function ClaimsPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Reward Claim Management
-            </p>
-            <h1 className="mt-2 text-3xl font-extrabold text-text">Claims</h1>
-          </div>
-        </div>
+        <OpsHero
+          eyebrow="Reward Claim Management"
+          title="Claims"
+          description="Monitor payout pressure, prioritize risky requests and move reward fulfillment through one clear workspace."
+        />
 
         <div className="grid gap-4 md:grid-cols-4">
-          <InfoCard label="Pending" value={pendingCount} />
-          <InfoCard label="Processing" value={processingCount} />
-          <InfoCard label="Fulfilled" value={fulfilledCount} />
-          <InfoCard label="Rejected" value={rejectedCount} />
+          <OpsMetricCard label="Pending" value={pendingCount} emphasis={pendingCount > 0 ? "warning" : "default"} />
+          <OpsMetricCard label="Processing" value={processingCount} emphasis={processingCount > 0 ? "primary" : "default"} />
+          <OpsMetricCard label="Fulfilled" value={fulfilledCount} />
+          <OpsMetricCard label="Rejected" value={rejectedCount} />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <InfoCard label="High Priority" value={highPriorityCount} />
-          <InfoCard
-            label="Manual Fulfillment"
-            value={manualClaims.length}
-          />
-          <InfoCard
-            label="High Value"
-            value={highValueClaims.length}
-          />
-        </div>
-
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                Operations Focus
-              </p>
-              <h2 className="mt-2 text-xl font-extrabold text-text">
-                Claims that need hands-on attention first
-              </h2>
-            </div>
-            <span className="rounded-full border border-line bg-card2 px-4 py-2 text-sm font-bold text-text">
-              {highPriorityClaims.length}
-            </span>
-          </div>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            <FocusCard
-              label="High Priority"
-              value={highPriorityClaims.length}
-              hint="Flagged users, high-value rewards or explicit review flags."
-            />
-            <FocusCard
-              label="Manual Queue"
-              value={manualClaims.filter((claim) => claim.status !== "fulfilled").length}
-              hint="Claims that still need human delivery or confirmation."
-            />
-            <FocusCard
-              label="Ready To Fulfill"
-              value={claims.filter((claim) => claim.status === "processing").length}
-              hint="Claims already triaged and ready for final delivery."
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-[1.4fr_220px]">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search user, reward, project or campaign..."
-            className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
-          />
-
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+        <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <OpsPanel
+            eyebrow="Operations Focus"
+            title="Claims that deserve hands-on attention first"
+            description="Flagged users, high-value rewards and manual fulfillment routes get surfaced ahead of the normal queue."
+            tone="accent"
           >
+            <div className="grid gap-4 md:grid-cols-3">
+              <FocusCard
+                label="High priority"
+                value={highPriorityClaims.length}
+                hint="Flagged users, high-value rewards or explicit review flags."
+              />
+              <FocusCard
+                label="Manual queue"
+                value={manualClaims.filter((claim) => claim.status !== "fulfilled").length}
+                hint="Claims that still need human delivery or confirmation."
+              />
+              <FocusCard
+                label="Ready to fulfill"
+                value={claims.filter((claim) => claim.status === "processing").length}
+                hint="Claims already triaged and ready for final delivery."
+              />
+            </div>
+          </OpsPanel>
+
+          <OpsPanel
+            eyebrow="Volume mix"
+            title="Reward pressure by route"
+            description="A compact read on expensive and manual claim inventory."
+          >
+            <div className="grid gap-4">
+              <OpsMetricCard label="High priority" value={highPriorityCount} emphasis={highPriorityCount > 0 ? "warning" : "default"} />
+              <OpsMetricCard label="Manual fulfillment" value={manualClaims.length} />
+              <OpsMetricCard label="High value" value={highValueClaims.length} emphasis={highValueClaims.length > 0 ? "warning" : "default"} />
+            </div>
+          </OpsPanel>
+        </div>
+
+        <OpsFilterBar>
+          <OpsSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search user, reward, project or campaign..."
+          />
+          <OpsSelect value={status} onChange={setStatus}>
             <option value="all">all statuses</option>
             <option value="pending">pending</option>
             <option value="processing">processing</option>
             <option value="fulfilled">fulfilled</option>
             <option value="rejected">rejected</option>
-          </select>
-        </div>
-
-        <div className="overflow-hidden rounded-[24px] border border-line bg-card">
-          <div className="grid grid-cols-9 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
-            <div>User</div>
-            <div>Reward</div>
-            <div>Project</div>
-            <div>Campaign</div>
-            <div>Risk</div>
-            <div>Status</div>
-            <div>Created</div>
-            <div>Quick Action</div>
-            <div>Open</div>
+          </OpsSelect>
+          <div className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-sub">
+            {filteredClaims.length} claims in view
           </div>
+        </OpsFilterBar>
 
-          {filteredClaims.map((claim) => {
-            const user = usersByAuthId.get(claim.authUserId);
-            const linkedFlags = flagsByClaimId.get(claim.id) ?? [];
-            const riskLabel =
-              user?.status === "flagged"
-                ? `Watch • Sybil ${user.sybilScore}`
-                : `Trust ${user?.trustScore ?? 50}`;
-            const priorityLabel =
-              linkedFlags.length > 0
-                ? linkedFlags[0].flagType.replace(/_/g, " ")
-                : (claim.rewardCost ?? 0) >= 500
-                  ? "High value"
+        <OpsPanel
+          eyebrow="Fulfillment queue"
+          title="Claim operations"
+          description="Every claim includes risk context, the current decision route and a quick action when it is safe to move forward."
+        >
+          <div className="overflow-hidden rounded-[24px] border border-line bg-card2">
+            <div className="grid grid-cols-9 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
+              <div>User</div>
+              <div>Reward</div>
+              <div>Project</div>
+              <div>Campaign</div>
+              <div>Risk</div>
+              <div>Status</div>
+              <div>Created</div>
+              <div>Quick action</div>
+              <div>Open</div>
+            </div>
+
+            {filteredClaims.map((claim) => {
+              const user = usersByAuthId.get(claim.authUserId);
+              const linkedFlags = flagsByClaimId.get(claim.id) ?? [];
+              const riskLabel =
+                user?.status === "flagged" ? `Watch • Sybil ${user.sybilScore}` : `Trust ${user?.trustScore ?? 50}`;
+              const priorityLabel =
+                linkedFlags.length > 0
+                  ? linkedFlags[0].flagType.replace(/_/g, " ")
+                  : (claim.rewardCost ?? 0) >= 500
+                    ? "High value"
+                    : claim.claimMethod === "manual_fulfillment"
+                      ? "Manual"
+                      : "Normal";
+              const decisionReason =
+                linkedFlags[0]?.reason ??
+                ((claim.rewardCost ?? 0) >= 500
+                  ? "This reward is valuable enough to deserve an extra fulfillment checkpoint."
                   : claim.claimMethod === "manual_fulfillment"
-                    ? "Manual"
-                    : "Normal";
-            const decisionReason =
-              linkedFlags[0]?.reason ??
-              ((claim.rewardCost ?? 0) >= 500
-                ? "This reward is valuable enough to deserve an extra fulfillment checkpoint."
-                : claim.claimMethod === "manual_fulfillment"
-                  ? "This claim depends on a manual delivery step from the project team."
-                  : "This claim can move through the standard fulfillment flow.");
+                    ? "This claim depends on a manual delivery step from the project team."
+                    : "This claim can move through the standard fulfillment flow.");
 
-            return (
-              <div
-                key={claim.id}
-                className="grid grid-cols-9 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
-              >
-                <div className="font-semibold">{claim.username}</div>
-                <div>{claim.rewardTitle}</div>
-                <div>{claim.projectName || "-"}</div>
-                <div>{claim.campaignTitle || "-"}</div>
-                <div>
+              return (
+                <div
+                  key={claim.id}
+                  className="grid grid-cols-9 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
+                >
+                  <div className="font-semibold">{claim.username}</div>
+                  <div>{claim.rewardTitle}</div>
+                  <div>{claim.projectName || "-"}</div>
+                  <div>{claim.campaignTitle || "-"}</div>
+                  <div>
+                    <div className="space-y-2">
+                      <OpsStatusPill tone={user?.status === "flagged" ? "danger" : "default"}>{riskLabel}</OpsStatusPill>
+                      <span className="block text-xs text-sub capitalize">{priorityLabel}</span>
+                    </div>
+                  </div>
                   <div className="space-y-2">
-                    <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
-                        user?.status === "flagged"
-                          ? "bg-rose-500/15 text-rose-300"
-                          : "bg-card2 text-sub"
-                      }`}
-                    >
-                      {riskLabel}
-                    </span>
-                    <span className="block text-xs text-sub capitalize">{priorityLabel}</span>
+                    <p className="capitalize text-primary">{claim.status}</p>
+                    <p className="line-clamp-2 text-xs text-sub">{decisionReason}</p>
+                  </div>
+                  <div>{formatDate(claim.createdAt)}</div>
+                  <div>
+                    {claim.status === "pending" ? (
+                      <button
+                        onClick={() => handleQuickStatus(claim.id, "processing")}
+                        disabled={workingId === claim.id}
+                        className="rounded-xl bg-amber-300 px-3 py-2 text-xs font-bold text-black disabled:opacity-50"
+                      >
+                        {workingId === claim.id ? "Working..." : "Start"}
+                      </button>
+                    ) : claim.status === "processing" ? (
+                      <button
+                        onClick={() => handleQuickStatus(claim.id, "fulfilled")}
+                        disabled={workingId === claim.id}
+                        className="rounded-xl bg-emerald-400 px-3 py-2 text-xs font-bold text-black disabled:opacity-50"
+                      >
+                        {workingId === claim.id ? "Working..." : "Fulfill"}
+                      </button>
+                    ) : (
+                      <span className="text-xs text-sub">-</span>
+                    )}
+                  </div>
+                  <div>
+                    <Link href={`/claims/${claim.id}`} className="rounded-xl border border-line bg-card px-3 py-2 font-semibold">
+                      Review
+                    </Link>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="capitalize text-primary">{claim.status}</p>
-                  <p className="line-clamp-2 text-xs text-sub">{decisionReason}</p>
-                </div>
-                <div>{formatDate(claim.createdAt)}</div>
-                <div>
-                  {claim.status === "pending" ? (
-                    <button
-                      onClick={() => handleQuickStatus(claim.id, "processing")}
-                      disabled={workingId === claim.id}
-                      className="rounded-xl bg-amber-300 px-3 py-2 text-xs font-bold text-black disabled:opacity-50"
-                    >
-                      {workingId === claim.id ? "Working..." : "Start"}
-                    </button>
-                  ) : claim.status === "processing" ? (
-                    <button
-                      onClick={() => handleQuickStatus(claim.id, "fulfilled")}
-                      disabled={workingId === claim.id}
-                      className="rounded-xl bg-emerald-400 px-3 py-2 text-xs font-bold text-black disabled:opacity-50"
-                    >
-                      {workingId === claim.id ? "Working..." : "Fulfill"}
-                    </button>
-                  ) : (
-                    <span className="text-xs text-sub">-</span>
-                  )}
-                </div>
-                <div>
-                  <Link
-                    href={`/claims/${claim.id}`}
-                    className="rounded-xl border border-line bg-card2 px-3 py-2 font-semibold"
-                  >
-                    Review
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {filteredClaims.length === 0 ? (
-            <div className="px-5 py-8 text-sm text-sub">
-              No claims match your filters.
-            </div>
-          ) : null}
-        </div>
+            {filteredClaims.length === 0 ? (
+              <div className="px-5 py-8 text-sm text-sub">No claims match your filters.</div>
+            ) : null}
+          </div>
+        </OpsPanel>
       </div>
     </AdminShell>
   );
@@ -278,15 +261,6 @@ function FocusCard({
       <p className="text-sm text-sub">{label}</p>
       <p className="mt-2 text-2xl font-extrabold text-text">{value}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
-    </div>
-  );
-}
-
-function InfoCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold text-text">{value}</p>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import { OpsHero, OpsPanel, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -40,35 +41,33 @@ export default function SettingsPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Workspace Settings
-            </p>
-            <h1 className="mt-2 text-3xl font-extrabold text-text">Settings</h1>
-            <p className="mt-2 text-sm text-sub">
-              Keep identity, team structure and billing posture aligned for this workspace.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-card px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Active workspace</p>
-            <p className="mt-2 text-lg font-extrabold text-text">
-              {activeMembership?.projectName || activeProject?.name || "Workspace"}
-            </p>
-          </div>
-        </div>
+        <OpsHero
+          eyebrow="Workspace Settings"
+          title="Settings"
+          description="Keep identity, team structure and billing posture aligned for this workspace."
+          aside={
+            <>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Active workspace</p>
+              <p className="mt-2 text-lg font-extrabold text-text">
+                {activeMembership?.projectName || activeProject?.name || "Workspace"}
+              </p>
+              <div className="mt-3">
+                <OpsStatusPill tone={activeProject?.isPublic ? "success" : "warning"}>
+                  {activeProject?.isPublic ? "Public profile live" : "Private workspace"}
+                </OpsStatusPill>
+              </div>
+            </>
+          }
+        />
 
         <div className="grid gap-4 md:grid-cols-3">
           {settingsCards.map((item) => (
             <Link
               key={item.title}
               href={item.href}
-              className="rounded-[24px] border border-line bg-card p-6 transition hover:border-primary/40"
+              className="rounded-[28px] border border-line bg-card p-6 transition hover:border-primary/40 hover:bg-card2"
             >
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                Workspace module
-              </p>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Workspace module</p>
               <h2 className="mt-3 text-xl font-extrabold text-text">{item.title}</h2>
               <p className="mt-3 text-sm leading-6 text-sub">{item.description}</p>
               <div className="mt-5 rounded-2xl border border-line bg-card2 px-4 py-3">
@@ -80,10 +79,14 @@ export default function SettingsPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Configuration Priorities</h2>
-            <div className="mt-5 space-y-3">
-              <PriorityRow
+          <OpsPanel
+            eyebrow="Configuration priorities"
+            title="What still deserves cleanup"
+            description="A concise read on identity, team structure and plan posture before a workspace feels truly launch-ready."
+            tone="accent"
+          >
+            <div className="space-y-3">
+              <OpsSnapshotRow
                 label="Brand and public profile"
                 value={
                   activeProject?.description && activeProject?.website
@@ -91,7 +94,7 @@ export default function SettingsPage() {
                     : "Profile still needs stronger public context"
                 }
               />
-              <PriorityRow
+              <OpsSnapshotRow
                 label="Team structure"
                 value={
                   workspaceTeam.length > 1
@@ -99,36 +102,27 @@ export default function SettingsPage() {
                     : "Still dependent on a very small operator set"
                 }
               />
-              <PriorityRow
+              <OpsSnapshotRow
                 label="Billing posture"
                 value={currentPlan ? `${currentPlan.name} plan active` : "Billing plan not detected"}
               />
             </div>
-          </div>
+          </OpsPanel>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Workspace Snapshot</h2>
-            <div className="mt-5 space-y-3">
-              <PriorityRow label="Role" value={activeMembership?.role || "project admin"} />
-              <PriorityRow label="Contact email" value={activeProject?.contactEmail || "Not set"} />
-              <PriorityRow
-                label="Visibility"
-                value={activeProject?.isPublic ? "Public workspace" : "Private workspace"}
-              />
-              <PriorityRow label="Current plan" value={currentPlan?.name || "No plan"} />
+          <OpsPanel
+            eyebrow="Workspace snapshot"
+            title="Core settings state"
+            description="The smallest possible summary of role, contactability, visibility and plan."
+          >
+            <div className="space-y-3">
+              <OpsSnapshotRow label="Role" value={activeMembership?.role || "project admin"} />
+              <OpsSnapshotRow label="Contact email" value={activeProject?.contactEmail || "Not set"} />
+              <OpsSnapshotRow label="Visibility" value={activeProject?.isPublic ? "Public workspace" : "Private workspace"} />
+              <OpsSnapshotRow label="Current plan" value={currentPlan?.name || "No plan"} />
             </div>
-          </div>
+          </OpsPanel>
         </div>
       </div>
     </AdminShell>
-  );
-}
-
-function PriorityRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-sm font-bold text-text">{value}</p>
-    </div>
   );
 }

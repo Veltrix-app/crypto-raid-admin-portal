@@ -2,6 +2,15 @@
 
 import { useMemo, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import {
+  OpsFilterBar,
+  OpsHero,
+  OpsMetricCard,
+  OpsPanel,
+  OpsSearchInput,
+  OpsSelect,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function ModerationPage() {
@@ -17,23 +26,25 @@ export default function ModerationPage() {
   const openFlags = reviewFlags.filter((flag) => flag.status === "open");
   const filteredFlags = useMemo(() => {
     return openFlags.filter((flag) => {
+      const term = search.toLowerCase();
       const matchesSearch =
-        (flag.username || "").toLowerCase().includes(search.toLowerCase()) ||
-        flag.flagType.toLowerCase().includes(search.toLowerCase()) ||
-        flag.reason.toLowerCase().includes(search.toLowerCase());
+        (flag.username || "").toLowerCase().includes(term) ||
+        flag.flagType.toLowerCase().includes(term) ||
+        flag.reason.toLowerCase().includes(term);
       const matchesSeverity = flagSeverity === "all" || flag.severity === flagSeverity;
       return matchesSearch && matchesSeverity;
     });
   }, [openFlags, search, flagSeverity]);
+
   const filteredSubmissions = useMemo(() => {
     return submissions.filter((submission) => {
+      const term = search.toLowerCase();
       const matchesSearch =
-        submission.username.toLowerCase().includes(search.toLowerCase()) ||
-        submission.questTitle.toLowerCase().includes(search.toLowerCase()) ||
-        submission.campaignTitle.toLowerCase().includes(search.toLowerCase()) ||
-        submission.proof.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus =
-        submissionStatus === "all" || submission.status === submissionStatus;
+        submission.username.toLowerCase().includes(term) ||
+        submission.questTitle.toLowerCase().includes(term) ||
+        submission.campaignTitle.toLowerCase().includes(term) ||
+        submission.proof.toLowerCase().includes(term);
+      const matchesStatus = submissionStatus === "all" || submission.status === submissionStatus;
       return matchesSearch && matchesStatus;
     });
   }, [submissions, search, submissionStatus]);
@@ -41,111 +52,89 @@ export default function ModerationPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-            Moderation Queue
-          </p>
-          <h1 className="mt-2 text-3xl font-extrabold text-text">Proof Reviews</h1>
-          <p className="mt-2 text-sm text-sub">
-            Review quest proofs, investigate suspicious behavior and resolve flagged cases from one queue.
-          </p>
-        </div>
+        <OpsHero
+          eyebrow="Moderation Queue"
+          title="Proof Reviews"
+          description="Review quest proofs, investigate suspicious behavior and resolve flagged cases from one queue."
+        />
 
         <div className="grid gap-4 md:grid-cols-4">
-          <InfoCard
-            label="Pending Submissions"
+          <OpsMetricCard
+            label="Pending submissions"
             value={submissions.filter((submission) => submission.status === "pending").length}
+            emphasis={submissions.some((submission) => submission.status === "pending") ? "warning" : "default"}
           />
-          <InfoCard label="Open Flags" value={openFlags.length} />
-          <InfoCard
-            label="High Severity"
+          <OpsMetricCard
+            label="Open flags"
+            value={openFlags.length}
+            emphasis={openFlags.length > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="High severity"
             value={openFlags.filter((flag) => flag.severity === "high").length}
+            emphasis="warning"
           />
-          <InfoCard
-            label="Duplicate Signals"
-            value={
-              openFlags.filter((flag) =>
-                ["duplicate_proof", "duplicate_wallet"].includes(flag.flagType)
-              ).length
-            }
+          <OpsMetricCard
+            label="Duplicate signals"
+            value={openFlags.filter((flag) => ["duplicate_proof", "duplicate_wallet"].includes(flag.flagType)).length}
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-[1.4fr_220px_220px]">
-          <input
+        <OpsFilterBar>
+          <OpsSearchInput
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={setSearch}
             placeholder="Search user, quest, flag type or reason..."
-            className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
           />
-
-          <select
+          <OpsSelect
             value={flagSeverity}
-            onChange={(e) =>
-              setFlagSeverity(e.target.value as "all" | "high" | "medium" | "low")
-            }
-            className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+            onChange={(value) => setFlagSeverity(value as "all" | "high" | "medium" | "low")}
           >
             <option value="all">all severities</option>
             <option value="high">high</option>
             <option value="medium">medium</option>
             <option value="low">low</option>
-          </select>
-
-          <select
+          </OpsSelect>
+          <OpsSelect
             value={submissionStatus}
-            onChange={(e) =>
-              setSubmissionStatus(
-                e.target.value as "all" | "pending" | "approved" | "rejected"
-              )
-            }
-            className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+            onChange={(value) => setSubmissionStatus(value as "all" | "pending" | "approved" | "rejected")}
           >
             <option value="pending">pending submissions</option>
             <option value="all">all submissions</option>
             <option value="approved">approved</option>
             <option value="rejected">rejected</option>
-          </select>
-        </div>
+          </OpsSelect>
+        </OpsFilterBar>
 
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                Review Flags
-              </p>
-              <h2 className="mt-2 text-xl font-extrabold text-text">
-                Suspicious behavior and trust alerts
-              </h2>
-            </div>
+        <OpsPanel
+          eyebrow="Review Flags"
+          title="Suspicious behavior and trust alerts"
+          description="Duplicate identities, suspicious proof and elevated-risk users land here first."
+          action={
             <div className="rounded-full border border-line bg-card2 px-4 py-2 text-sm font-bold text-text">
               {openFlags.length}
             </div>
-          </div>
-
-          <div className="mt-5 grid gap-4">
-              {filteredFlags.map((flag) => (
-                <div
-                  key={flag.id}
-                className="rounded-2xl border border-line bg-card2 p-5"
-              >
+          }
+          tone="accent"
+        >
+          <div className="grid gap-4">
+            {filteredFlags.map((flag) => (
+              <div key={flag.id} className="rounded-[24px] border border-line bg-card2 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
-                      <p className="text-lg font-extrabold text-text">
-                        {flag.username || "Unknown User"}
-                      </p>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+                      <p className="text-lg font-extrabold text-text">{flag.username || "Unknown user"}</p>
+                      <OpsStatusPill
+                        tone={
                           flag.severity === "high"
-                            ? "bg-rose-500/15 text-rose-300"
+                            ? "danger"
                             : flag.severity === "medium"
-                              ? "bg-amber-500/15 text-amber-300"
-                              : "bg-card text-sub"
-                        }`}
+                              ? "warning"
+                              : "default"
+                        }
                       >
                         {flag.severity}
-                      </span>
+                      </OpsStatusPill>
                       <span className="rounded-full border border-line px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
                         {flag.flagType.replace(/_/g, " ")}
                       </span>
@@ -156,11 +145,10 @@ export default function ModerationPage() {
                     {["duplicate_proof", "duplicate_wallet"].includes(flag.flagType) ? (
                       <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
                         <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-300">
-                          Duplicate Detection
+                          Duplicate detection
                         </p>
                         <p className="mt-2 text-sm leading-6 text-sub">
                           This case was escalated automatically because Veltrix detected overlapping proof or wallet identity signals.
-                          Treat it as a manual verification checkpoint before approving the linked submission.
                         </p>
                       </div>
                     ) : null}
@@ -173,12 +161,8 @@ export default function ModerationPage() {
 
                     {flag.metadata ? (
                       <div className="mt-4 rounded-2xl border border-line bg-card p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                          Metadata
-                        </p>
-                        <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">
-                          {flag.metadata}
-                        </pre>
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Metadata</p>
+                        <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">{flag.metadata}</pre>
                       </div>
                     ) : null}
                   </div>
@@ -207,87 +191,75 @@ export default function ModerationPage() {
               </div>
             ) : null}
           </div>
-        </div>
+        </OpsPanel>
 
-        <div className="grid gap-4">
-          {filteredSubmissions.map((submission) => (
-            <div
-              key={submission.id}
-              className="rounded-[24px] border border-line bg-card p-5"
-            >
-              <div className="flex items-start justify-between gap-6">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <p className="text-lg font-extrabold text-text">
-                      {submission.username}
+        <OpsPanel
+          eyebrow="Proof queue"
+          title="Submission review stream"
+          description="Pending proofs stay at the top of the daily queue so reviewers can move quickly."
+        >
+          <div className="grid gap-4">
+            {filteredSubmissions.map((submission) => (
+              <div key={submission.id} className="rounded-[24px] border border-line bg-card p-5">
+                <div className="flex items-start justify-between gap-6">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <p className="text-lg font-extrabold text-text">{submission.username}</p>
+                      <span className="rounded-full border border-line bg-card2 px-3 py-1 text-xs capitalize text-sub">
+                        {submission.status}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-sm text-sub">
+                      Quest: {submission.questTitle} • Campaign: {submission.campaignTitle}
                     </p>
-                    <span className="rounded-full border border-line bg-card2 px-3 py-1 text-xs capitalize text-sub">
-                      {submission.status}
-                    </span>
+
+                    <div className="mt-4 rounded-2xl border border-line bg-card2 p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Proof</p>
+                      <p className="mt-2 break-all text-sm text-text">{submission.proof}</p>
+                    </div>
+
+                    <p className="mt-3 text-xs text-sub">
+                      Submitted: {new Date(submission.submittedAt).toLocaleString()}
+                    </p>
                   </div>
 
-                  <p className="mt-2 text-sm text-sub">
-                    Quest: {submission.questTitle} • Campaign: {submission.campaignTitle}
-                  </p>
-
-                  <div className="mt-4 rounded-2xl border border-line bg-card2 p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                      Proof
-                    </p>
-                    <p className="mt-2 break-all text-sm text-text">{submission.proof}</p>
-                  </div>
-
-                  <p className="mt-3 text-xs text-sub">
-                    Submitted: {new Date(submission.submittedAt).toLocaleString()}
-                  </p>
+                  {submission.status === "pending" ? (
+                    <div className="flex shrink-0 flex-col gap-3">
+                      <button
+                        onClick={() => approveSubmission(submission.id)}
+                        className="rounded-2xl bg-primary px-4 py-3 font-bold text-black"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => rejectSubmission(submission.id)}
+                        className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
-
-                {submission.status === "pending" ? (
-                  <div className="flex shrink-0 flex-col gap-3">
-                    <button
-                      onClick={() => approveSubmission(submission.id)}
-                      className="rounded-2xl bg-primary px-4 py-3 font-bold text-black"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => rejectSubmission(submission.id)}
-                      className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                ) : null}
               </div>
-            </div>
-          ))}
+            ))}
 
-          {filteredSubmissions.length === 0 ? (
-            <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
-              No submissions match the current moderation filters.
-            </div>
-          ) : null}
-        </div>
+            {filteredSubmissions.length === 0 ? (
+              <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
+                No submissions match the current moderation filters.
+              </div>
+            ) : null}
+          </div>
+        </OpsPanel>
       </div>
     </AdminShell>
-  );
-}
-
-function InfoCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold text-text">{value}</p>
-    </div>
   );
 }
 
 function DetailRow({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-2xl border border-line bg-card px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-        {label}
-      </p>
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
     </div>
   );

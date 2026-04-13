@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import AdminShell from "@/components/layout/shell/AdminShell";
-import StatCard from "@/components/cards/stats/StatCard";
+import {
+  OpsHero,
+  OpsMetricCard,
+  OpsPanel,
+  OpsSnapshotRow,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -73,77 +79,76 @@ export default function DashboardPage() {
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Control Room
-            </p>
-            <h1 className="mt-2 text-3xl font-extrabold text-text">Dashboard</h1>
-            <p className="mt-2 text-sm text-sub">
-              Overview of onboarding, campaign execution and moderation load.
-            </p>
-          </div>
+        <OpsHero
+          eyebrow="Control Room"
+          title="Dashboard"
+          description="Overview of onboarding, campaign execution, moderation pressure and the work that deserves attention next."
+          aside={
+            <>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                Active workspace
+              </p>
+              <p className="mt-2 text-lg font-extrabold text-text">
+                {activeMembership?.projectName || activeProject?.name || "Workspace"}
+              </p>
+              <p className="mt-1 text-xs uppercase tracking-[0.12em] text-primary">
+                {role === "super_admin" ? "Super admin" : activeMembership?.role || "Project operator"}
+              </p>
+            </>
+          }
+        />
 
-          <div className="rounded-2xl border border-line bg-card px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-              Active workspace
-            </p>
-            <p className="mt-2 text-lg font-extrabold text-text">
-              {activeMembership?.projectName || activeProject?.name || "Workspace"}
-            </p>
-            <p className="mt-1 text-xs uppercase tracking-[0.12em] text-primary">
-              {role === "super_admin" ? "Super admin" : activeMembership?.role || "Project operator"}
-            </p>
-          </div>
-        </div>
+        <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+          <OpsPanel
+            eyebrow="System Pulse"
+            title="Where the network stands"
+            description="A compressed read on active inventory, user load and moderation pressure across the platform."
+            tone="accent"
+          >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <OpsMetricCard label="Projects" value={projects.length} />
+              <OpsMetricCard label="Approved projects" value={approvedProjects} />
+              <OpsMetricCard label="Campaigns" value={campaigns.length} />
+              <OpsMetricCard label="Tracked users" value={totalUsers.toLocaleString()} />
+              <OpsMetricCard
+                label="Pending reviews"
+                value={pendingSubmissions}
+                emphasis={pendingSubmissions > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard label="Open flags" value={openFlags} emphasis={openFlags > 0 ? "warning" : "default"} />
+            </div>
+          </OpsPanel>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <StatCard label="Projects" value={projects.length} />
-          <StatCard label="Approved Projects" value={approvedProjects} />
-          <StatCard label="Campaigns" value={campaigns.length} />
-          <StatCard label="Raids" value={raids.length} />
-          <StatCard label="Quests" value={quests.length} />
-          <StatCard label="Rewards" value={rewards.length} />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard label="Tracked Users" value={totalUsers.toLocaleString()} />
-          <StatCard
-            label="Active Campaigns"
-            value={campaigns.filter((c) => c.status === "active").length}
-          />
-          <StatCard label="Pending Reviews" value={pendingSubmissions} />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard label="Open Review Flags" value={openFlags} />
-          <StatCard
-            label="High Risk Flags"
-            value={reviewFlags.filter((flag) => flag.severity === "high" && flag.status === "open").length}
-          />
-          <StatCard label="Claim Escalations" value={openClaimFlags} />
+          <OpsPanel
+            eyebrow="Workspace Snapshot"
+            title="Current operator context"
+            description="The active workspace view and the pressure points that matter inside it."
+          >
+            <div className="space-y-3">
+              <OpsSnapshotRow label="Active campaigns" value={String(workspaceCampaigns.length)} />
+              <OpsSnapshotRow label="Reward inventory" value={String(workspaceRewards.length)} />
+              <OpsSnapshotRow label="Claims in motion" value={String(highPriorityClaims)} />
+              <OpsSnapshotRow label="Pending invites" value={String(pendingInvites)} />
+              <OpsSnapshotRow label="Public profile" value={activeProject?.isPublic ? "Public" : "Private"} />
+            </div>
+          </OpsPanel>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                  Control Priorities
-                </p>
-                <h2 className="mt-2 text-2xl font-extrabold text-text">
-                  What deserves attention next
-                </h2>
-              </div>
-
+          <OpsPanel
+            eyebrow="Control Priorities"
+            title="What deserves attention next"
+            description="The three queues that matter most right now for operations, trust and launch readiness."
+            action={
               <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Workspace load</p>
                 <p className="mt-2 text-2xl font-extrabold text-text">
                   {workspaceCampaigns.length + workspaceRewards.length}
                 </p>
               </div>
-            </div>
-
+            }
+            tone="accent"
+          >
             <div className="mt-6 grid gap-4">
               {controlPriorities.map((item) => (
                 <Link
@@ -159,32 +164,40 @@ export default function DashboardPage() {
                       <p className="mt-3 text-sm leading-6 text-sub">{item.body}</p>
                     </div>
 
-                    <span className="text-sm font-semibold text-primary">{item.cta}</span>
+                      <span className="text-sm font-semibold text-primary">{item.cta}</span>
                   </div>
                 </Link>
               ))}
             </div>
-          </div>
+          </OpsPanel>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Workspace Snapshot</h2>
-
-            <div className="mt-5 space-y-3">
-              <SnapshotRow label="Active campaigns" value={String(workspaceCampaigns.length)} />
-              <SnapshotRow label="Reward inventory" value={String(workspaceRewards.length)} />
-              <SnapshotRow label="Claims in motion" value={String(highPriorityClaims)} />
-              <SnapshotRow label="Pending invites" value={String(pendingInvites)} />
-              <SnapshotRow
-                label="Public profile"
-                value={activeProject?.isPublic ? "Public" : "Private"}
-              />
+          <OpsPanel
+            eyebrow="Risk posture"
+            title="Moderation and escalation pressure"
+            description="A quick read on where trust systems are likely to consume operator time."
+          >
+            <div className="grid gap-4">
+              <OpsMetricCard label="High risk flags" value={reviewFlags.filter((flag) => flag.severity === "high" && flag.status === "open").length} emphasis="warning" />
+              <OpsMetricCard label="Claim escalations" value={openClaimFlags} emphasis={openClaimFlags > 0 ? "warning" : "default"} />
+              <div className="rounded-[24px] border border-line bg-card2 p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Launch posture</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-sm text-sub">Workspace state</span>
+                  <OpsStatusPill tone={activeProject?.isPublic ? "success" : "warning"}>
+                    {activeProject?.isPublic ? "Public ready" : "Private"}
+                  </OpsStatusPill>
+                </div>
+              </div>
             </div>
-          </div>
+          </OpsPanel>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-2">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Onboarding Pipeline</h2>
+          <OpsPanel
+            eyebrow="Onboarding pipeline"
+            title="How projects are moving through setup"
+            description="A simple pipeline read on draft, pending and approved workspaces."
+          >
             <div className="mt-5 space-y-4">
               {["draft", "pending", "approved"].map((status) => {
                 const count = projects.filter((p) => p.onboardingStatus === status).length;
@@ -203,10 +216,13 @@ export default function DashboardPage() {
                 );
               })}
             </div>
-          </div>
+          </OpsPanel>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Moderation Snapshot</h2>
+          <OpsPanel
+            eyebrow="Moderation snapshot"
+            title="Queue status at a glance"
+            description="Pending, approved and rejected proof traffic, plus risk flags and claim escalations."
+          >
             <div className="mt-5 space-y-4">
               {["pending", "approved", "rejected"].map((status) => {
                 const count = submissions.filter((s) => s.status === status).length;
@@ -231,18 +247,9 @@ export default function DashboardPage() {
                 <span className="font-bold text-primary">{openClaimFlags}</span>
               </div>
             </div>
-          </div>
+          </OpsPanel>
         </div>
       </div>
     </AdminShell>
-  );
-}
-
-function SnapshotRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-base font-bold text-text">{value}</p>
-    </div>
   );
 }
