@@ -16,7 +16,7 @@ export function BuilderHero({
   progressPercent: number;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[40px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(199,255,0,0.16),transparent_24%),radial-gradient(circle_at_85%_20%,rgba(88,146,255,0.14),transparent_22%),linear-gradient(180deg,rgba(15,20,29,0.98),rgba(8,10,15,0.98))] p-7 shadow-[0_30px_100px_rgba(0,0,0,0.42)] md:p-8">
+    <div className="relative overflow-hidden rounded-[40px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(199,255,0,0.16),transparent_24%),radial-gradient(circle_at_85%_20%,rgba(88,146,255,0.14),transparent_22%),linear-gradient(180deg,rgba(15,20,29,0.98),rgba(8,10,15,0.98))] p-7 shadow-[0_30px_100px_rgba(0,0,0,0.42)] transition-transform duration-500 hover:-translate-y-0.5 md:p-8">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),transparent_24%,transparent_72%,rgba(199,255,0,0.05))]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)]" />
       <div className="pointer-events-none absolute -right-16 top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
@@ -77,10 +77,10 @@ export function BuilderStepRail<TStep extends string>({
               key={step.id}
               type="button"
               onClick={() => onSelect(step.id)}
-              className={`group relative w-full overflow-hidden rounded-[24px] border px-4 py-4 text-left transition ${
+              className={`group relative w-full overflow-hidden rounded-[24px] border px-4 py-4 text-left transition-all duration-300 ${
                 active
                   ? "border-primary/45 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))] shadow-[0_18px_34px_rgba(0,0,0,0.24)]"
-                  : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+                  : "border-white/8 bg-white/[0.02] hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.04]"
               }`}
             >
               <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-[linear-gradient(180deg,rgba(199,255,0,0.9),rgba(102,255,198,0.5))] opacity-0 transition group-hover:opacity-60 group-focus-visible:opacity-60" />
@@ -183,7 +183,7 @@ export function BuilderBottomNav({
           type="button"
           onClick={onBack}
           disabled={!canGoBack}
-          className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-3 font-bold text-text transition hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-3 font-bold text-text transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.05] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {previousLabel}
         </button>
@@ -194,7 +194,7 @@ export function BuilderBottomNav({
               <button
                 type="button"
                 onClick={onNext}
-                className="rounded-[20px] bg-[linear-gradient(90deg,rgba(199,255,0,0.92),rgba(102,255,198,0.95))] px-5 py-3 font-bold text-black shadow-[0_16px_36px_rgba(141,255,89,0.22)] transition hover:-translate-y-0.5 hover:brightness-105"
+                className="rounded-[20px] bg-[linear-gradient(90deg,rgba(199,255,0,0.92),rgba(102,255,198,0.95))] px-5 py-3 font-bold text-black shadow-[0_16px_36px_rgba(141,255,89,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0"
               >
                 {nextLabel}
               </button>
@@ -221,7 +221,7 @@ export function BuilderSidebarCard({
   children: ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.96),rgba(10,12,18,0.94))] p-5 shadow-[0_22px_60px_rgba(0,0,0,0.22)]">
+    <div className="relative overflow-hidden rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.96),rgba(10,12,18,0.94))] p-5 shadow-[0_22px_60px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_70px_rgba(0,0,0,0.26)]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)]" />
       <div className="flex items-center gap-3">
         <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">{title}</p>
@@ -242,7 +242,7 @@ export function BuilderMetricCard({
   sublabel?: string;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_14px_34px_rgba(0,0,0,0.14)]">
+    <div className="relative overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_14px_34px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/20">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.16),transparent)]" />
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-2 text-lg font-black tracking-[-0.02em] text-text">{value}</p>
@@ -253,7 +253,7 @@ export function BuilderMetricCard({
 
 export function BuilderSignalRow({ label, ready }: { label: string; ready: boolean }) {
   return (
-    <div className="flex items-center justify-between rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-3">
+    <div className="flex items-center justify-between rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-3 transition-all duration-300 hover:border-primary/20 hover:bg-white/[0.045]">
       <div className="flex items-center gap-3">
         <span
           className={`h-2.5 w-2.5 rounded-full ${

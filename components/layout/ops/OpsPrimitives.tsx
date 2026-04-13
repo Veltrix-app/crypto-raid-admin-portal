@@ -18,7 +18,7 @@ export function OpsHero({
   aside?: ReactNode;
 }) {
   return (
-    <div className="rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(180,255,20,0.16),transparent_32%),linear-gradient(180deg,rgba(17,24,39,0.98),rgba(10,14,22,0.96))] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.35)]">
+    <div className="rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(180,255,20,0.16),transparent_32%),linear-gradient(180deg,rgba(17,24,39,0.98),rgba(10,14,22,0.96))] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.35)] transition-transform duration-500 hover:-translate-y-0.5">
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="max-w-3xl">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-primary">{eyebrow}</p>
@@ -58,7 +58,7 @@ export function OpsPanel({
   return (
     <section
       className={cx(
-        "rounded-[28px] border p-6 shadow-[0_18px_60px_rgba(0,0,0,0.22)]",
+        "rounded-[28px] border p-6 shadow-[0_18px_60px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(0,0,0,0.24)]",
         tone === "accent"
           ? "border-primary/30 bg-[linear-gradient(180deg,rgba(186,255,59,0.08),rgba(17,24,39,0.95))]"
           : "border-line bg-card",
@@ -95,7 +95,7 @@ export function OpsMetricCard({
   return (
     <div
       className={cx(
-        "rounded-[24px] border px-5 py-5",
+        "rounded-[24px] border px-5 py-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/20",
         emphasis === "primary"
           ? "border-primary/35 bg-[linear-gradient(180deg,rgba(186,255,59,0.13),rgba(15,23,42,0.96))]"
           : emphasis === "warning"
@@ -136,7 +136,7 @@ export function OpsPriorityLink({
     <a
       href={href}
       className={cx(
-        "block rounded-[24px] border p-5 transition hover:border-primary/40",
+        "block rounded-[24px] border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40",
         emphasis ? "border-primary/35 bg-primary/10" : "border-line bg-card2"
       )}
     >
@@ -153,7 +153,7 @@ export function OpsPriorityLink({
 
 export function OpsFilterBar({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[24px] border border-line bg-card p-4 shadow-[0_10px_35px_rgba(0,0,0,0.18)]">
+    <div className="rounded-[24px] border border-line bg-card p-4 shadow-[0_10px_35px_rgba(0,0,0,0.18)] transition-all duration-300 hover:border-white/12">
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_220px]">{children}</div>
     </div>
   );
@@ -173,7 +173,7 @@ export function OpsSearchInput({
   name?: string;
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-[20px] border border-line bg-card2 px-4 py-3 transition focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/30">
+    <label className="flex items-center gap-3 rounded-[20px] border border-line bg-card2 px-4 py-3 transition-all duration-200 hover:border-white/12 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/30">
       <span className="text-sub">Search</span>
       <input
         type="search"
@@ -209,7 +209,7 @@ export function OpsSelect({
       aria-label={ariaLabel}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-text transition focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+      className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-text transition-all duration-200 hover:border-white/12 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
     >
       {children}
     </select>
