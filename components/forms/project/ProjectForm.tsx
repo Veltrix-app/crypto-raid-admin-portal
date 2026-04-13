@@ -951,10 +951,10 @@ function ConnectedModuleCard({
 }) {
   return (
     <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="space-y-3">
         <p className="text-sm font-bold text-text">{label}</p>
         <span
-          className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+          className={`inline-flex max-w-full self-start rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
             ready ? "bg-primary/15 text-primary" : "bg-white/5 text-sub"
           }`}
         >
