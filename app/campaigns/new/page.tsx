@@ -144,6 +144,8 @@ export default function NewCampaignPage() {
   } | null>(null);
   const [customPlaybookSummary, setCustomPlaybookSummary] = useState("");
   const [customPlaybookGoal, setCustomPlaybookGoal] = useState("");
+  const [expandedQuestKeys, setExpandedQuestKeys] = useState<string[]>([]);
+  const [expandedRewardKeys, setExpandedRewardKeys] = useState<string[]>([]);
 
   const selectedProject = useMemo(
     () =>
@@ -192,6 +194,10 @@ export default function NewCampaignPage() {
   const selectedTemplate = templateOptions.find(
     (template) => template.id === selectedTemplateId
   );
+  const featuredTemplate = templateOptions[0] ?? null;
+  const secondaryTemplates = templateOptions.filter(
+    (template) => template.id !== featuredTemplate?.id
+  );
   const builderSteps = useMemo(
     () =>
       baseBuilderSteps.filter((step) =>
@@ -226,6 +232,8 @@ export default function NewCampaignPage() {
     setSavedTemplateMessage(null);
     setCustomPlaybookSummary("");
     setCustomPlaybookGoal("");
+    setExpandedQuestKeys([]);
+    setExpandedRewardKeys([]);
   }, [selectedProject?.id, selectedTemplateId]);
 
   useEffect(() => {
@@ -475,6 +483,12 @@ export default function NewCampaignPage() {
     }
   }
 
+  function chooseTemplate(templateId: CampaignTemplateId) {
+    setSelectedTemplateId(templateId);
+    setVisitedSteps(["template"]);
+    setCurrentStep(templateId === "blank_campaign_canvas" ? "custom" : "autofill");
+  }
+
   function validateCurrentStep(step: BuilderStepId) {
     if (step === "template" && !selectedTemplateId) {
       return "Choose a playbook or blank campaign canvas before continuing.";
@@ -650,75 +664,27 @@ export default function NewCampaignPage() {
                 </div>
               ) : null}
 
-              {templateOptions.map((template) => {
-                const isActive = template.id === selectedTemplateId;
+              {featuredTemplate ? (
+                <TemplateOptionCard
+                  template={featuredTemplate}
+                  active={featuredTemplate.id === selectedTemplateId}
+                  featured
+                  onSelect={() => chooseTemplate(featuredTemplate.id)}
+                />
+              ) : null}
 
-                return (
-                  <button
-                    key={template.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedTemplateId(template.id);
-                      setVisitedSteps(["template"]);
-                      setCurrentStep(
-                        template.id === "blank_campaign_canvas" ? "custom" : "autofill"
-                      );
-                    }}
-                    className={`rounded-[26px] border p-5 text-left transition ${
-                      isActive
-                        ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))] shadow-[0_18px_36px_rgba(0,0,0,0.24)]"
-                        : "border-white/8 bg-white/[0.03] hover:border-white/14 hover:bg-white/[0.05]"
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-bold text-text">
-                          {template.label}
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-sub">
-                          {template.summary}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                            template.fitLabel === "Best fit"
-                              ? "bg-primary/20 text-primary"
-                              : template.fitLabel === "Strong fit"
-                              ? "bg-emerald-500/15 text-emerald-300"
-                              : template.fitLabel === "Good fit"
-                              ? "bg-white/5 text-text"
-                              : "bg-amber-500/15 text-amber-300"
-                          }`}
-                        >
-                          {template.fitLabel}
-                        </span>
-                        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
-                          {template.fitScore}/100 fit
-                        </span>
-                        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
-                          {template.quests.length} quests / {template.rewards.length} rewards
-                        </span>
-                      </div>
-                    </div>
-
-                    {template.fitReasons.length > 0 ? (
-                      <div className="mt-4 rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
-                          Why this fit
-                        </p>
-                        <div className="mt-2 space-y-2">
-                          {template.fitReasons.map((reason) => (
-                            <p key={reason} className="text-sm leading-6 text-sub">
-                              {reason}
-                            </p>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                  </button>
-                );
-              })}
+              {secondaryTemplates.length > 0 ? (
+                <div className="grid gap-3 lg:grid-cols-2">
+                  {secondaryTemplates.map((template) => (
+                    <TemplateOptionCard
+                      key={template.id}
+                      template={template}
+                      active={template.id === selectedTemplateId}
+                      onSelect={() => chooseTemplate(template.id)}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
           ) : null}
@@ -801,20 +767,27 @@ export default function NewCampaignPage() {
                   }
                 >
                   <div className="space-y-5">
-                    {currentStep !== "flow" ? (
-                    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
-                      <p className="text-sm font-bold text-text">
-                        {selectedTemplate.id === "blank_campaign_canvas"
+                    <CampaignPreviewSurface
+                      templateLabel={
+                        selectedTemplate.id === "blank_campaign_canvas"
                           ? "Custom Playbook"
-                          : selectedTemplate.label}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-sub">
-                        {selectedTemplate.id === "blank_campaign_canvas" && customPlaybookGoal
-                          ? customPlaybookGoal
-                          : selectedTemplate.goal}
-                      </p>
-                    </div>
-                    ) : null}
+                          : selectedTemplate.label
+                      }
+                      title={
+                        campaignTitleDraft ||
+                        customPlaybookSummary ||
+                        templatePlan.campaignDraft.title
+                      }
+                      summary={
+                        customPlaybookSummary ||
+                        templatePlan.campaignDraft.shortDescription
+                      }
+                      fitLabel={selectedTemplate.fitLabel}
+                      fitScore={selectedTemplate.fitScore}
+                      questCount={`${includedQuestDrafts.length}/${templatePlan.questDrafts.length}`}
+                      rewardCount={`${includedRewardDrafts.length}/${templatePlan.rewardDrafts.length}`}
+                      missingContext={currentMissingContextFields.length}
+                    />
 
                     {contextSections.length > 0 && currentStep === "autofill" ? (
                       <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
@@ -836,25 +809,6 @@ export default function NewCampaignPage() {
 
                     <div className="grid gap-3 md:grid-cols-2">
                       <PreviewStat
-                        label="Selected quests"
-                        value={`${includedQuestDrafts.length}/${templatePlan.questDrafts.length}`}
-                      />
-                      <PreviewStat
-                        label="Template fit"
-                        value={`${selectedTemplate.fitLabel} (${selectedTemplate.fitScore}/100)`}
-                      />
-                      <PreviewStat
-                        label="Reward drafts"
-                        value={`${includedRewardDrafts.length}/${templatePlan.rewardDrafts.length}`}
-                      />
-                      <PreviewStat
-                        label="Campaign mode"
-                        value={selectedTemplate.id === "blank_campaign_canvas" ? "Custom start" : "Playbook"}
-                      />
-                    </div>
-
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <PreviewStat
                         label="Campaign title"
                         value={
                           campaignTitleDraft ||
@@ -865,10 +819,6 @@ export default function NewCampaignPage() {
                       <PreviewStat
                         label="Edited drafts"
                         value={editedQuestCount + editedRewardCount}
-                      />
-                      <PreviewStat
-                        label="Missing context"
-                        value={currentMissingContextFields.length}
                       />
                       <PreviewStat
                         label="Launch route"
@@ -1041,8 +991,16 @@ export default function NewCampaignPage() {
                         }}
                         index={index}
                         included={selectedQuestKeys.includes(quest.key)}
+                        expanded={expandedQuestKeys.includes(quest.key)}
                         onToggle={() =>
                           setSelectedQuestKeys((current) =>
+                            current.includes(quest.key)
+                              ? current.filter((key) => key !== quest.key)
+                              : [...current, quest.key]
+                          )
+                        }
+                        onToggleExpand={() =>
+                          setExpandedQuestKeys((current) =>
                             current.includes(quest.key)
                               ? current.filter((key) => key !== quest.key)
                               : [...current, quest.key]
@@ -1075,8 +1033,16 @@ export default function NewCampaignPage() {
                           },
                         }}
                         included={selectedRewardKeys.includes(reward.key)}
+                        expanded={expandedRewardKeys.includes(reward.key)}
                         onToggle={() =>
                           setSelectedRewardKeys((current) =>
+                            current.includes(reward.key)
+                              ? current.filter((key) => key !== reward.key)
+                              : [...current, reward.key]
+                          )
+                        }
+                        onToggleExpand={() =>
+                          setExpandedRewardKeys((current) =>
                             current.includes(reward.key)
                               ? current.filter((key) => key !== reward.key)
                               : [...current, reward.key]
@@ -1351,6 +1317,133 @@ function SuccessCampaignModal({
   );
 }
 
+function TemplateOptionCard({
+  template,
+  active,
+  featured = false,
+  onSelect,
+}: {
+  template: CampaignTemplateOption;
+  active: boolean;
+  featured?: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`rounded-[26px] border text-left transition ${
+        featured ? "p-6" : "p-4"
+      } ${
+        active
+          ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))] shadow-[0_18px_36px_rgba(0,0,0,0.24)]"
+          : "border-white/8 bg-white/[0.03] hover:border-white/14 hover:bg-white/[0.05]"
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className={featured ? "max-w-2xl" : "min-w-0"}>
+          <div className="flex flex-wrap items-center gap-2">
+            {featured ? (
+              <span className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+                Featured fit
+              </span>
+            ) : null}
+            <span
+              className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
+                template.fitLabel === "Best fit"
+                  ? "bg-primary/20 text-primary"
+                  : template.fitLabel === "Strong fit"
+                    ? "bg-emerald-500/15 text-emerald-300"
+                    : template.fitLabel === "Good fit"
+                      ? "bg-white/5 text-text"
+                      : "bg-amber-500/15 text-amber-300"
+              }`}
+            >
+              {template.fitLabel}
+            </span>
+          </div>
+          <p className={`mt-3 font-bold text-text ${featured ? "text-xl" : "text-sm"}`}>
+            {template.label}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-sub">{template.summary}</p>
+          {template.fitReasons[0] ? (
+            <p className="mt-4 text-sm leading-6 text-sub">
+              <span className="font-semibold text-text">Why it fits:</span>{" "}
+              {template.fitReasons[0]}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
+            {template.fitScore}/100
+          </span>
+          <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
+            {template.quests.length}Q / {template.rewards.length}R
+          </span>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+              active ? "bg-primary/15 text-primary" : "bg-black/20 text-sub"
+            }`}
+          >
+            {active ? "Selected" : "Choose"}
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function CampaignPreviewSurface({
+  templateLabel,
+  title,
+  summary,
+  fitLabel,
+  fitScore,
+  questCount,
+  rewardCount,
+  missingContext,
+}: {
+  templateLabel: string;
+  title: string;
+  summary: string;
+  fitLabel: string;
+  fitScore: number;
+  questCount: string;
+  rewardCount: string;
+  missingContext: number;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="max-w-xl">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+            {templateLabel}
+          </p>
+          <h3 className="mt-3 text-2xl font-extrabold tracking-[-0.03em] text-text">
+            {title}
+          </h3>
+          <p className="mt-3 text-sm leading-7 text-sub">{summary}</p>
+        </div>
+        <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+            Template fit
+          </p>
+          <p className="mt-2 text-lg font-extrabold text-text">
+            {fitLabel} <span className="text-sub">({fitScore}/100)</span>
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <PreviewStat label="Quest flow" value={questCount} />
+        <PreviewStat label="Reward flow" value={rewardCount} />
+        <PreviewStat label="Missing context" value={missingContext} />
+      </div>
+    </div>
+  );
+}
+
 function PreviewStat({
   label,
   value,
@@ -1437,13 +1530,17 @@ function TemplateQuestCard({
   item,
   index,
   included,
+  expanded,
   onToggle,
+  onToggleExpand,
   onEdit,
 }: {
   item: ResolvedQuestDraft;
   index: number;
   included: boolean;
+  expanded: boolean;
   onToggle: () => void;
+  onToggleExpand: () => void;
   onEdit: (
     key: string,
     field: keyof EditableQuestDraft,
@@ -1461,17 +1558,26 @@ function TemplateQuestCard({
             {item.draft.description}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-            included
-              ? "bg-primary/15 text-primary"
-              : "bg-white/5 text-sub"
-          }`}
-        >
-          {included ? "Included" : "Skipped"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text"
+          >
+            {expanded ? "Collapse" : "Edit"}
+          </button>
+          <button
+            type="button"
+            onClick={onToggle}
+            className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+              included
+                ? "bg-primary/15 text-primary"
+                : "bg-white/5 text-sub"
+            }`}
+          >
+            {included ? "Included" : "Skipped"}
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
@@ -1492,23 +1598,7 @@ function TemplateQuestCard({
         </span>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <TemplateMeta
-          label="Needs input"
-          value={
-            item.missingProjectFields.length > 0
-              ? item.missingProjectFields
-                  .map((field) => formatProjectFieldLabel(field))
-                  .join(", ")
-              : "Nothing missing"
-          }
-        />
-        <TemplateMeta
-          label="Editable before generate"
-          value="Title, description, XP, action label and action URL"
-        />
-      </div>
-
+      {expanded ? (
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <label className="block">
           <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
@@ -1577,6 +1667,20 @@ function TemplateQuestCard({
           />
         </label>
       </div>
+      ) : (
+        <div className="mt-4 rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+            Quick read
+          </p>
+          <p className="mt-2 text-sm leading-6 text-text">
+            {item.missingProjectFields.length > 0
+              ? `Needs ${item.missingProjectFields
+                  .map((field) => formatProjectFieldLabel(field))
+                  .join(", ")} before it is fully ready.`
+              : "Ready to generate with the current campaign setup."}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -1584,12 +1688,16 @@ function TemplateQuestCard({
 function TemplateRewardCard({
   item,
   included,
+  expanded,
   onToggle,
+  onToggleExpand,
   onEdit,
 }: {
   item: ResolvedRewardDraft;
   included: boolean;
+  expanded: boolean;
   onToggle: () => void;
+  onToggleExpand: () => void;
   onEdit: (
     key: string,
     field: keyof EditableRewardDraft,
@@ -1605,17 +1713,26 @@ function TemplateRewardCard({
             {item.draft.description}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-            included
-              ? "bg-primary/15 text-primary"
-              : "bg-white/5 text-sub"
-          }`}
-        >
-          {included ? "Included" : "Skipped"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text"
+          >
+            {expanded ? "Collapse" : "Edit"}
+          </button>
+          <button
+            type="button"
+            onClick={onToggle}
+            className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+              included
+                ? "bg-primary/15 text-primary"
+                : "bg-white/5 text-sub"
+            }`}
+          >
+            {included ? "Included" : "Skipped"}
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
@@ -1630,13 +1747,7 @@ function TemplateRewardCard({
         </span>
       </div>
 
-      <div className="mt-3">
-        <TemplateMeta
-          label="Editable before generate"
-          value="Title, description and reward cost"
-        />
-      </div>
-
+      {expanded ? (
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <label className="block">
           <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
@@ -1678,6 +1789,17 @@ function TemplateRewardCard({
           />
         </label>
       </div>
+      ) : (
+        <div className="mt-4 rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+            Quick read
+          </p>
+          <p className="mt-2 text-sm leading-6 text-text">
+            This reward will ship as a {item.draft.rarity} {item.draft.rewardType} reward
+            worth {item.draft.cost} XP.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
