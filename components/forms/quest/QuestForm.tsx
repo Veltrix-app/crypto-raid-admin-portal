@@ -203,37 +203,31 @@ const QUEST_TYPE_PRESETS: Record<
 
 const questBuilderSteps: Array<{
   id: QuestBuilderStepId;
-  eyebrow: string;
   label: string;
   description: string;
 }> = [
   {
     id: "blueprint",
-    eyebrow: "Step 1",
     label: "Pick blueprint",
     description: "Start from the mechanic that best matches the contributor action you want.",
   },
   {
     id: "setup",
-    eyebrow: "Step 2",
     label: "Set destination",
     description: "Place the quest inside the right project and campaign, then define its core copy.",
   },
   {
     id: "logic",
-    eyebrow: "Step 3",
     label: "Shape quest logic",
     description: "Tune quest type, platform, XP, CTA, and the contributor journey.",
   },
   {
     id: "verification",
-    eyebrow: "Step 4",
     label: "Proof and verification",
     description: "Decide how the quest is checked and what signals route it into review.",
   },
   {
     id: "launch",
-    eyebrow: "Step 5",
     label: "Review and launch",
     description: "Set limits, timing, and launch readiness before saving the quest.",
   },
@@ -303,6 +297,14 @@ export default function QuestForm({
   const previousStep = questBuilderSteps[currentStepIndex - 1];
   const nextStep = questBuilderSteps[currentStepIndex + 1];
   const progressPercent = Math.round(((currentStepIndex + 1) / questBuilderSteps.length) * 100);
+  const featuredBlueprints = [
+    "social_follow",
+    "telegram_join",
+    "wallet_connect",
+    "token_hold",
+    "manual_proof",
+    "referral",
+  ] as AdminQuest["questType"][];
   const readinessItems = [
     {
       label: "Project placement",
@@ -416,16 +418,23 @@ export default function QuestForm({
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[0.78fr_1.42fr_0.9fr]">
-        <BuilderStepRail
-          steps={questBuilderSteps.map((step) => ({ ...step, complete: stepCompletion[step.id] }))}
-          currentStep={currentStep}
-          onSelect={setCurrentStep}
-        />
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="space-y-6">
+          <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+            <BuilderStepRail
+              steps={questBuilderSteps.map((step, index) => ({
+                ...step,
+                eyebrow: `Step ${index + 1}`,
+                complete: stepCompletion[step.id],
+              }))}
+              currentStep={currentStep}
+              onSelect={setCurrentStep}
+            />
+          </div>
 
-        <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
+          <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
           <BuilderStepHeader
-            eyebrow={currentStepMeta.eyebrow}
+            eyebrow={`Step ${currentStepIndex + 1}`}
             title={currentStepMeta.label}
             description={currentStepMeta.description}
             stepIndex={currentStepIndex + 1}
@@ -439,16 +448,7 @@ export default function QuestForm({
         </p>
 
         <div className="grid gap-3 xl:grid-cols-2">
-          {(
-            [
-              "social_follow",
-              "telegram_join",
-              "wallet_connect",
-              "token_hold",
-              "referral",
-              "manual_proof",
-            ] as AdminQuest["questType"][]
-          ).map((questType) => {
+          {featuredBlueprints.map((questType) => {
             const preset = QUEST_TYPE_PRESETS[questType];
             const isActive = values.questType === questType;
 
@@ -457,14 +457,21 @@ export default function QuestForm({
                 key={questType}
                 type="button"
                 onClick={() => applyPreset(questType)}
-                className={`rounded-2xl border p-4 text-left transition ${
+                className={`rounded-[24px] border p-4 text-left transition ${
                   isActive
-                    ? "border-primary bg-primary/10"
+                    ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))]"
                     : "border-line bg-card2 hover:border-primary/40"
                 }`}
               >
-                <p className="text-sm font-bold text-text">{preset.label}</p>
-                <p className="mt-2 text-sm leading-6 text-sub">{preset.summary}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-text">{preset.label}</p>
+                    <p className="mt-2 text-sm leading-6 text-sub">{preset.summary}</p>
+                  </div>
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-text">
+                    {preset.platform}
+                  </span>
+                </div>
               </button>
             );
           })}
@@ -924,7 +931,7 @@ export default function QuestForm({
             onBack={() => previousStep && setCurrentStep(previousStep.id)}
             nextLabel={nextStep ? `Continue to ${nextStep.label}` : undefined}
             onNext={nextStep ? () => setCurrentStep(nextStep.id) : undefined}
-            footerLabel={`${currentStepMeta.eyebrow} • ${currentStepMeta.label}`}
+            footerLabel={`Step ${currentStepIndex + 1} - ${currentStepMeta.label}`}
             submitButton={
               nextStep ? undefined : (
                 <button
@@ -938,22 +945,22 @@ export default function QuestForm({
             }
           />
         </div>
+        </div>
 
         <BuilderSidebarStack>
-          <BuilderSidebarCard title="Blueprint Summary">
-            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-bold text-text">{activePreset.label}</p>
-                  <p className="mt-2 text-sm leading-6 text-sub">{activePreset.summary}</p>
-                </div>
-                <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
-                  <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.type}</span>
-                  <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">{activePreset.platform}</span>
-                  <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.verificationType}</span>
-                </div>
-              </div>
-            </div>
+          <BuilderSidebarCard title="Quest Preview">
+            <QuestPreviewSurface
+              preset={activePreset}
+              title={values.title || activePreset.label}
+              description={
+                values.description ||
+                values.shortDescription ||
+                activePreset.summary
+              }
+              actionLabel={values.actionLabel}
+              xp={values.xp}
+              routeLabel={verificationPreview.routeLabel}
+            />
           </BuilderSidebarCard>
 
           <BuilderSidebarCard title="Readiness Guide">
@@ -1009,6 +1016,69 @@ function RouteInfoCard({
     <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm leading-6 text-text">{value}</p>
+    </div>
+  );
+}
+
+function QuestPreviewSurface({
+  preset,
+  title,
+  description,
+  actionLabel,
+  xp,
+  routeLabel,
+}: {
+  preset: {
+    label: string;
+    summary: string;
+    platform: string;
+    verificationType: string;
+    type: string;
+  };
+  title: string;
+  description: string;
+  actionLabel: string;
+  xp: number;
+  routeLabel: string;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="max-w-xl">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+            {preset.label}
+          </p>
+          <h3 className="mt-3 text-2xl font-extrabold tracking-[-0.03em] text-text">
+            {title}
+          </h3>
+          <p className="mt-3 text-sm leading-7 text-sub">{description}</p>
+        </div>
+        <span className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3 text-sm font-bold text-text">
+          {routeLabel}
+        </span>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
+          {preset.type}
+        </span>
+        <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+          {preset.platform}
+        </span>
+        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
+          {preset.verificationType}
+        </span>
+        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
+          {xp} XP
+        </span>
+      </div>
+
+      <div className="mt-5 rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+          User CTA
+        </p>
+        <p className="mt-2 text-sm font-semibold text-text">{actionLabel || "Open Task"}</p>
+      </div>
     </div>
   );
 }
