@@ -7,9 +7,7 @@ import {
   BuilderHero,
   BuilderMetricCard,
   BuilderSidebarCard,
-  BuilderSidebarStack,
   BuilderStepHeader,
-  BuilderStepRail,
 } from "@/components/layout/builder/BuilderPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
@@ -133,6 +131,7 @@ export default function NewCampaignPage() {
   const [pendingSavedTemplateConfig, setPendingSavedTemplateConfig] =
     useState<SavedTemplateConfiguration | null>(null);
   const [currentStep, setCurrentStep] = useState<BuilderStepId>("template");
+  const [visitedSteps, setVisitedSteps] = useState<BuilderStepId[]>(["template"]);
 
   const selectedProject = useMemo(
     () =>
@@ -179,6 +178,12 @@ export default function NewCampaignPage() {
   const previousStep = builderSteps[currentStepIndex - 1];
   const nextStep = builderSteps[currentStepIndex + 1];
   const progressPercent = Math.round(((currentStepIndex + 1) / builderSteps.length) * 100);
+
+  useEffect(() => {
+    setVisitedSteps((current) =>
+      current.includes(currentStep) ? current : [...current, currentStep]
+    );
+  }, [currentStep]);
 
   useEffect(() => {
     setProjectContextDraft({});
@@ -443,20 +448,11 @@ export default function NewCampaignPage() {
           }
         />
 
-        <BuilderStepRail
-          title="Workflow"
-          steps={builderSteps.map((step) => ({
-            ...step,
-            complete:
-              step.id === "template"
-                ? Boolean(selectedTemplate)
-                : step.id === "autofill"
-                  ? Boolean(templatePlan && templatePlan.missingProjectFields.length === 0)
-                  : step.id === "flow"
-                    ? includedQuestDrafts.length + includedRewardDrafts.length > 0
-                    : Boolean(templatePlan?.campaignDraft.title),
-          }))}
+        <CampaignStepNavigator
+          steps={builderSteps}
           currentStep={currentStep}
+          currentStepIndex={currentStepIndex}
+          visitedSteps={visitedSteps}
           onSelect={setCurrentStep}
         />
 
@@ -583,7 +579,7 @@ export default function NewCampaignPage() {
           </div>
           ) : null}
 
-          <BuilderSidebarStack>
+          <div className="space-y-5 xl:self-start">
             {selectedTemplate && templatePlan ? (
               <div className="space-y-5">
                 <BuilderSidebarCard
@@ -850,7 +846,7 @@ export default function NewCampaignPage() {
                 </p>
               </BuilderSidebarCard>
             )}
-          </BuilderSidebarStack>
+          </div>
         </div>
         ) : null}
 
@@ -970,6 +966,72 @@ function PreviewStat({
         {label}
       </p>
       <p className="mt-2 text-lg font-extrabold text-text">{value}</p>
+    </div>
+  );
+}
+
+function CampaignStepNavigator({
+  steps,
+  currentStep,
+  currentStepIndex,
+  visitedSteps,
+  onSelect,
+}: {
+  steps: Array<{
+    id: BuilderStepId;
+    eyebrow: string;
+    label: string;
+    description: string;
+  }>;
+  currentStep: BuilderStepId;
+  currentStepIndex: number;
+  visitedSteps: BuilderStepId[];
+  onSelect: (step: BuilderStepId) => void;
+}) {
+  return (
+    <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+      <div className="grid gap-3 xl:grid-cols-4">
+        {steps.map((step, index) => {
+          const active = step.id === currentStep;
+          const complete = index < currentStepIndex && visitedSteps.includes(step.id);
+
+          return (
+            <button
+              key={step.id}
+              type="button"
+              onClick={() => onSelect(step.id)}
+              className={`rounded-[22px] border px-4 py-4 text-left transition ${
+                active
+                  ? "border-primary/35 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))]"
+                  : "border-white/8 bg-white/[0.03] hover:bg-white/[0.05]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
+                    {step.eyebrow}
+                  </p>
+                  <p className="mt-2 text-sm font-bold tracking-[-0.01em] text-text">
+                    {step.label}
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
+                    complete
+                      ? "bg-primary/15 text-primary"
+                      : active
+                        ? "bg-white/[0.08] text-text"
+                        : "bg-black/20 text-sub"
+                  }`}
+                >
+                  {complete ? "Done" : active ? "Current" : "Next"}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-sub">{step.description}</p>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
