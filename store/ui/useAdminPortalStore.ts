@@ -13,6 +13,7 @@ import { AdminTeamMember } from "@/types/entities/team-member";
 import { AdminBillingPlan } from "@/types/entities/billing-plan";
 import { AdminClaim } from "@/types/entities/claim";
 import { AdminOnboardingRequest } from "@/types/entities/onboarding-request";
+import { AdminProjectCampaignTemplate } from "@/types/entities/project-campaign-template";
 import { AdminReviewFlag } from "@/types/entities/review-flag";
 import { AdminUser } from "@/types/entities/user";
 import { AdminAuditLog } from "@/types/entities/audit-log";
@@ -22,6 +23,7 @@ import {
   DbCampaign,
   DbClaim,
   DbOnboardingRequest,
+  DbProjectCampaignTemplate,
   DbProject,
   DbQuest,
   DbRaid,
@@ -51,6 +53,7 @@ type AdminPortalState = {
   onboardingRequests: AdminOnboardingRequest[];
   teamMembers: AdminTeamMember[];
   billingPlans: AdminBillingPlan[];
+  projectCampaignTemplates: AdminProjectCampaignTemplate[];
 
   loadAll: () => Promise<void>;
 
@@ -114,6 +117,10 @@ type AdminPortalState = {
     id: string,
     input: Pick<AdminTeamMember, "role" | "status">
   ) => Promise<void>;
+  createProjectCampaignTemplate: (
+    input: Omit<AdminProjectCampaignTemplate, "id" | "createdAt" | "updatedAt">
+  ) => Promise<string>;
+  deleteProjectCampaignTemplate: (id: string) => Promise<void>;
 };
 
 type DbUserProfileLite = {
@@ -477,6 +484,23 @@ function mapBillingPlan(row: DbBillingPlan): AdminBillingPlan {
   };
 }
 
+function mapProjectCampaignTemplate(
+  row: DbProjectCampaignTemplate
+): AdminProjectCampaignTemplate {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    name: row.name,
+    description: row.description ?? "",
+    baseTemplateId: row.base_template_id as AdminProjectCampaignTemplate["baseTemplateId"],
+    configuration: row.configuration
+      ? JSON.stringify(row.configuration, null, 2)
+      : "{}",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 function mapOnboardingRequest(row: DbOnboardingRequest): AdminOnboardingRequest {
   return {
     id: row.id,
@@ -558,6 +582,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   onboardingRequests: [],
   teamMembers: [],
   billingPlans: [],
+  projectCampaignTemplates: [],
 
   loadAll: async () => {
     const supabase = createClient();
@@ -592,6 +617,17 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
             .eq("project_id", activeProjectId)
             .order("created_at", { ascending: false })
         : supabase.from("review_flags").select("*").order("created_at", { ascending: false });
+    const scopedProjectTemplatesQuery =
+      !isSuperAdmin && activeProjectId
+        ? supabase
+            .from("project_campaign_templates")
+            .select("*")
+            .eq("project_id", activeProjectId)
+            .order("created_at", { ascending: false })
+        : supabase
+            .from("project_campaign_templates")
+            .select("*")
+            .order("created_at", { ascending: false });
     const scopedProjectReputationQuery =
       activeProjectId
         ? supabase
@@ -615,6 +651,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       globalReputationRes,
       projectReputationRes,
       reviewFlagsRes,
+      projectTemplatesRes,
     ] = await Promise.all([
       scopedProjectsQuery,
       scopedCampaignsQuery,
@@ -630,6 +667,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       supabase.from("user_global_reputation").select("*"),
       scopedProjectReputationQuery,
       scopedReviewFlagsQuery,
+      scopedProjectTemplatesQuery,
     ]);
 
     const campaignRows = (campaignsRes.data ?? []) as DbCampaign[];
@@ -718,6 +756,11 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       ),
       teamMembers: (teamRes.data ?? []).map(mapTeamMember),
       billingPlans: (billingRes.data ?? []).map(mapBillingPlan),
+      projectCampaignTemplates: projectTemplatesRes.error
+        ? []
+        : ((projectTemplatesRes.data ?? []) as DbProjectCampaignTemplate[]).map(
+            mapProjectCampaignTemplate
+          ),
     });
   },
 
@@ -1812,6 +1855,49 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     set((state) => ({
       teamMembers: state.teamMembers.map((member) =>
         member.id === id ? mapped : member
+      ),
+    }));
+  },
+
+  createProjectCampaignTemplate: async (input) => {
+    const supabase = createClient();
+    const parsedConfiguration = input.configuration?.trim()
+      ? JSON.parse(input.configuration)
+      : {};
+
+    const { data, error } = await supabase
+      .from("project_campaign_templates")
+      .insert({
+        project_id: input.projectId,
+        name: input.name,
+        description: input.description || null,
+        base_template_id: input.baseTemplateId,
+        configuration: parsedConfiguration,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const mapped = mapProjectCampaignTemplate(data as DbProjectCampaignTemplate);
+    set((state) => ({
+      projectCampaignTemplates: [mapped, ...state.projectCampaignTemplates],
+    }));
+    return mapped.id;
+  },
+
+  deleteProjectCampaignTemplate: async (id) => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("project_campaign_templates")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    set((state) => ({
+      projectCampaignTemplates: state.projectCampaignTemplates.filter(
+        (template) => template.id !== id
       ),
     }));
   },

@@ -42,13 +42,30 @@ type EditableQuestDraft = Pick<
 
 type EditableRewardDraft = Pick<AdminReward, "title" | "description" | "cost">;
 
+type SavedTemplateConfiguration = {
+  baseTemplateId: CampaignTemplateId;
+  selectedQuestKeys: string[];
+  selectedRewardKeys: string[];
+  questDraftEdits: Record<string, Partial<EditableQuestDraft>>;
+  rewardDraftEdits: Record<string, Partial<EditableRewardDraft>>;
+};
+
 export default function NewCampaignPage() {
   const router = useRouter();
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const createCampaign = useAdminPortalStore((s) => s.createCampaign);
   const createQuest = useAdminPortalStore((s) => s.createQuest);
   const createReward = useAdminPortalStore((s) => s.createReward);
+  const createProjectCampaignTemplate = useAdminPortalStore(
+    (s) => s.createProjectCampaignTemplate
+  );
+  const deleteProjectCampaignTemplate = useAdminPortalStore(
+    (s) => s.deleteProjectCampaignTemplate
+  );
   const updateProject = useAdminPortalStore((s) => s.updateProject);
+  const projectCampaignTemplates = useAdminPortalStore(
+    (s) => s.projectCampaignTemplates
+  );
   const projects = useAdminPortalStore((s) => s.projects);
 
   const [selectedTemplateId, setSelectedTemplateId] =
@@ -66,6 +83,12 @@ export default function NewCampaignPage() {
   >({});
   const [contextSaving, setContextSaving] = useState(false);
   const [contextMessage, setContextMessage] = useState<string | null>(null);
+  const [savedTemplateName, setSavedTemplateName] = useState("");
+  const [savedTemplateDescription, setSavedTemplateDescription] = useState("");
+  const [savedTemplateMessage, setSavedTemplateMessage] = useState<string | null>(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [pendingSavedTemplateConfig, setPendingSavedTemplateConfig] =
+    useState<SavedTemplateConfiguration | null>(null);
 
   const selectedProject = useMemo(
     () =>
@@ -89,6 +112,13 @@ export default function NewCampaignPage() {
     () => getRecommendedCampaignTemplateOptions(effectiveProject),
     [effectiveProject]
   );
+  const savedProjectTemplates = useMemo(
+    () =>
+      projectCampaignTemplates.filter(
+        (template) => template.projectId === selectedProject?.id
+      ),
+    [projectCampaignTemplates, selectedProject?.id]
+  );
   const templatePlan = useMemo(
     () =>
       effectiveProject
@@ -106,12 +136,31 @@ export default function NewCampaignPage() {
     setQuestDraftEdits({});
     setRewardDraftEdits({});
     setContextMessage(null);
+    setSavedTemplateMessage(null);
   }, [selectedProject?.id, selectedTemplateId]);
 
   useEffect(() => {
     setSelectedQuestKeys(templatePlan?.questDrafts.map((quest) => quest.key) ?? []);
     setSelectedRewardKeys(templatePlan?.rewardDrafts.map((reward) => reward.key) ?? []);
   }, [templatePlan]);
+
+  useEffect(() => {
+    if (!pendingSavedTemplateConfig || !templatePlan) return;
+
+    setSelectedQuestKeys(
+      pendingSavedTemplateConfig.selectedQuestKeys.length > 0
+        ? pendingSavedTemplateConfig.selectedQuestKeys
+        : templatePlan.questDrafts.map((quest) => quest.key)
+    );
+    setSelectedRewardKeys(
+      pendingSavedTemplateConfig.selectedRewardKeys.length > 0
+        ? pendingSavedTemplateConfig.selectedRewardKeys
+        : templatePlan.rewardDrafts.map((reward) => reward.key)
+    );
+    setQuestDraftEdits(pendingSavedTemplateConfig.questDraftEdits ?? {});
+    setRewardDraftEdits(pendingSavedTemplateConfig.rewardDraftEdits ?? {});
+    setPendingSavedTemplateConfig(null);
+  }, [pendingSavedTemplateConfig, templatePlan]);
 
   const includedQuestDrafts = useMemo(
     () =>
@@ -145,6 +194,45 @@ export default function NewCampaignPage() {
   const editedRewardCount = Object.values(rewardDraftEdits).filter(
     (draft) => Object.keys(draft).length > 0
   ).length;
+  const contextSections = useMemo(() => {
+    if (!effectiveProject) return [];
+
+    const sections: Array<{ title: string; description: string; value: string }> = [];
+
+    if (effectiveProject.launchPostUrl) {
+      sections.push({
+        title: "Launch Context",
+        description: "The official launch post is set, so launch templates can route users to the exact social moment.",
+        value: effectiveProject.launchPostUrl,
+      });
+    }
+
+    if (effectiveProject.docsUrl) {
+      sections.push({
+        title: "Research Context",
+        description: "Docs are connected, which helps creator and education-heavy templates auto-wire better research flows.",
+        value: effectiveProject.docsUrl,
+      });
+    }
+
+    if (effectiveProject.waitlistUrl) {
+      sections.push({
+        title: "Conversion Context",
+        description: "The waitlist URL is connected, so referral and launch loops can point users straight at the conversion destination.",
+        value: effectiveProject.waitlistUrl,
+      });
+    }
+
+    if (effectiveProject.tokenContractAddress) {
+      sections.push({
+        title: "Holder Context",
+        description: "Token contract data is available, so wallet-first templates can set up onchain checks with less manual work.",
+        value: effectiveProject.tokenContractAddress,
+      });
+    }
+
+    return sections;
+  }, [effectiveProject]);
 
   function updateQuestDraftEdit(
     key: string,
@@ -227,6 +315,58 @@ export default function NewCampaignPage() {
     }
   }
 
+  async function saveCurrentTemplateVariant() {
+    if (!selectedProject || !selectedTemplate) return;
+
+    setSavingTemplate(true);
+    setSavedTemplateMessage(null);
+
+    try {
+      await createProjectCampaignTemplate({
+        projectId: selectedProject.id,
+        name:
+          savedTemplateName.trim() ||
+          `${selectedTemplate.label} - ${selectedProject.name}`,
+        description:
+          savedTemplateDescription.trim() ||
+          "Saved from the campaign builder with project-specific selections and edits.",
+        baseTemplateId: selectedTemplate.id,
+        configuration: JSON.stringify(
+          {
+            baseTemplateId: selectedTemplate.id,
+            selectedQuestKeys,
+            selectedRewardKeys,
+            questDraftEdits,
+            rewardDraftEdits,
+          } satisfies SavedTemplateConfiguration,
+          null,
+          2
+        ),
+      });
+
+      setSavedTemplateName("");
+      setSavedTemplateDescription("");
+      setSavedTemplateMessage("Saved as a reusable project template.");
+    } catch (error: any) {
+      setSavedTemplateMessage(
+        error?.message || "Failed to save the project template."
+      );
+    } finally {
+      setSavingTemplate(false);
+    }
+  }
+
+  function applySavedTemplate(configurationRaw: string) {
+    try {
+      const parsed = JSON.parse(configurationRaw) as SavedTemplateConfiguration;
+      setSelectedTemplateId(parsed.baseTemplateId);
+      setPendingSavedTemplateConfig(parsed);
+      setSavedTemplateMessage("Saved project template loaded.");
+    } catch {
+      setSavedTemplateMessage("This saved template could not be parsed.");
+    }
+  }
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -267,6 +407,49 @@ export default function NewCampaignPage() {
             </div>
 
             <div className="mt-5 grid gap-3">
+              {savedProjectTemplates.length > 0 ? (
+                <div className="rounded-2xl border border-line bg-card2 p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                    Saved Project Templates
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    {savedProjectTemplates.map((template) => (
+                      <div
+                        key={template.id}
+                        className="rounded-2xl border border-line bg-card px-4 py-4"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-bold text-text">
+                              {template.name}
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-sub">
+                              {template.description || "Reusable project-specific template"}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => applySavedTemplate(template.configuration)}
+                              className="rounded-xl border border-line px-3 py-2 text-sm font-bold text-text"
+                            >
+                              Load
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteProjectCampaignTemplate(template.id)}
+                              className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-bold text-rose-300"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               {templateOptions.map((template) => {
                 const isActive = template.id === selectedTemplateId;
 
@@ -351,6 +534,24 @@ export default function NewCampaignPage() {
                     {selectedTemplate.goal}
                   </p>
                 </div>
+
+                {contextSections.length > 0 ? (
+                  <div className="rounded-2xl border border-line bg-card2 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                      Context Signals
+                    </p>
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      {contextSections.map((section) => (
+                        <TemplateMetaCard
+                          key={section.title}
+                          title={section.title}
+                          description={section.description}
+                          value={section.value}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="grid gap-3 md:grid-cols-3">
                   <PreviewStat
@@ -563,6 +764,51 @@ export default function NewCampaignPage() {
         </div>
 
         <div className="rounded-[28px] border border-line bg-card p-6">
+          <div className="mb-6 rounded-2xl border border-line bg-card2 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+              Save this variant
+            </p>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-text">
+                  Template name
+                </span>
+                <input
+                  value={savedTemplateName}
+                  onChange={(event) => setSavedTemplateName(event.target.value)}
+                  className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+                  placeholder="Chainwars launch variant"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-text">
+                  Short note
+                </span>
+                <input
+                  value={savedTemplateDescription}
+                  onChange={(event) =>
+                    setSavedTemplateDescription(event.target.value)
+                  }
+                  className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+                  placeholder="For launch pushes with quote-post proof"
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={saveCurrentTemplateVariant}
+                disabled={!selectedProject || !selectedTemplate || savingTemplate}
+                className="rounded-2xl border border-line px-4 py-3 font-bold text-text disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {savingTemplate ? "Saving template..." : "Save as project template"}
+              </button>
+              {savedTemplateMessage ? (
+                <p className="text-sm text-sub">{savedTemplateMessage}</p>
+              ) : null}
+            </div>
+          </div>
+
           <CampaignForm
             projects={projects}
             defaultProjectId={selectedProject?.id}
@@ -901,6 +1147,24 @@ function TemplateMeta({
         {label}
       </p>
       <p className="mt-2 text-sm leading-6 text-text">{value}</p>
+    </div>
+  );
+}
+
+function TemplateMetaCard({
+  title,
+  description,
+  value,
+}: {
+  title: string;
+  description: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-line bg-card px-4 py-4">
+      <p className="text-sm font-bold text-text">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-sub">{description}</p>
+      <p className="mt-3 break-all text-sm font-semibold text-text">{value}</p>
     </div>
   );
 }

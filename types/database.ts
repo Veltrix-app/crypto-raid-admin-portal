@@ -257,6 +257,17 @@ export type DbBillingPlan = {
   current: boolean;
 };
 
+export type DbProjectCampaignTemplate = {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string | null;
+  base_template_id: string;
+  configuration: Record<string, any> | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type DbOnboardingRequest = {
   id: string;
   requested_by_auth_user_id: string | null;
