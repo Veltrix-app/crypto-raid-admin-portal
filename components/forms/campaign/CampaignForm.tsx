@@ -13,6 +13,8 @@ type Props = {
   submitLabel?: string;
 };
 
+type CampaignFormErrors = Partial<Record<keyof Omit<AdminCampaign, "id"> | "dateRange", string>>;
+
 function getDefaultCampaignValues(
   projects: AdminProject[],
   defaultProjectId?: string
@@ -120,6 +122,7 @@ export default function CampaignForm({
   const [selectedPreset, setSelectedPreset] = useState<AdminCampaign["campaignType"]>(
     initialValues?.campaignType || "hybrid"
   );
+  const [errors, setErrors] = useState<CampaignFormErrors>({});
   const activePreset = CAMPAIGN_TYPE_PRESETS[selectedPreset];
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === values.projectId),
@@ -136,6 +139,7 @@ export default function CampaignForm({
     if (!resetKey) return;
     setValues(initialValues || getDefaultCampaignValues(projects, defaultProjectId));
     setSelectedPreset(initialValues?.campaignType || "hybrid");
+    setErrors({});
   }, [defaultProjectId, projects, resetKey]);
 
   useEffect(() => {
@@ -171,14 +175,70 @@ export default function CampaignForm({
     }));
   }
 
+  function validate(nextValues: Omit<AdminCampaign, "id">) {
+    const nextErrors: CampaignFormErrors = {};
+
+    if (!nextValues.projectId) nextErrors.projectId = "Select a project workspace.";
+    if (!nextValues.title.trim()) nextErrors.title = "Campaign title is required.";
+    if (!nextValues.slug.trim()) nextErrors.slug = "Slug is required.";
+    if (!nextValues.shortDescription.trim()) {
+      nextErrors.shortDescription = "Add a short campaign hook.";
+    }
+
+    if (nextValues.startsAt && nextValues.endsAt) {
+      const start = new Date(nextValues.startsAt).getTime();
+      const end = new Date(nextValues.endsAt).getTime();
+      if (!Number.isNaN(start) && !Number.isNaN(end) && end < start) {
+        nextErrors.dateRange = "End time cannot be earlier than the start time.";
+      }
+    }
+
+    return nextErrors;
+  }
+
+  function updateField<K extends keyof Omit<AdminCampaign, "id">>(
+    key: K,
+    value: Omit<AdminCampaign, "id">[K]
+  ) {
+    setValues((current) => ({ ...current, [key]: value }));
+    setErrors((current) => {
+      if (!current[key] && !(key === "startsAt" || key === "endsAt" || current.dateRange)) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[key];
+      if (key === "startsAt" || key === "endsAt") {
+        delete next.dateRange;
+      }
+      return next;
+    });
+  }
+
   return (
     <form
       className="space-y-8"
       onSubmit={async (e) => {
         e.preventDefault();
+        const nextErrors = validate(values);
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length > 0) return;
         await onSubmit(values);
       }}
     >
+      {Object.keys(errors).length > 0 ? (
+        <div className="rounded-[24px] border border-rose-500/30 bg-rose-500/10 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-rose-200">
+            Missing required campaign fields
+          </p>
+          <div className="mt-3 space-y-2 text-sm text-rose-100">
+            {Object.values(errors).map((error) => (
+              <p key={error}>{error}</p>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Campaign Blueprint
@@ -230,13 +290,11 @@ export default function CampaignForm({
         </p>
 
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Project">
+          <Field label="Project" required error={errors.projectId}>
             <select
               value={values.projectId}
-              onChange={(e) =>
-                setValues({ ...values, projectId: e.target.value })
-              }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              onChange={(e) => updateField("projectId", e.target.value)}
+              className={getInputClassName(Boolean(errors.projectId))}
               required
             >
               <option value="">Select project</option>
@@ -248,20 +306,20 @@ export default function CampaignForm({
             </select>
           </Field>
 
-          <Field label="Campaign Title">
+          <Field label="Campaign Title" required error={errors.title}>
             <input
               value={values.title}
-              onChange={(e) => setValues({ ...values, title: e.target.value })}
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              onChange={(e) => updateField("title", e.target.value)}
+              className={getInputClassName(Boolean(errors.title))}
               required
             />
           </Field>
 
-          <Field label="Slug">
+          <Field label="Slug" required error={errors.slug}>
             <input
               value={values.slug}
-              onChange={(e) => setValues({ ...values, slug: e.target.value })}
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              onChange={(e) => updateField("slug", e.target.value)}
+              className={getInputClassName(Boolean(errors.slug))}
               placeholder="weekly-meme-push"
               required
             />
@@ -273,7 +331,7 @@ export default function CampaignForm({
               onChange={(e) =>
                 applyPreset(e.target.value as AdminCampaign["campaignType"])
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className={getInputClassName(false)}
             >
               <option value="social_growth">social_growth</option>
               <option value="community_growth">community_growth</option>
@@ -288,12 +346,9 @@ export default function CampaignForm({
             <select
               value={values.visibility}
               onChange={(e) =>
-                setValues({
-                  ...values,
-                  visibility: e.target.value as AdminCampaign["visibility"],
-                })
+                updateField("visibility", e.target.value as AdminCampaign["visibility"])
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className={getInputClassName(false)}
             >
               <option value="public">public</option>
               <option value="private">private</option>
@@ -305,12 +360,9 @@ export default function CampaignForm({
             <select
               value={values.status}
               onChange={(e) =>
-                setValues({
-                  ...values,
-                  status: e.target.value as AdminCampaign["status"],
-                })
+                updateField("status", e.target.value as AdminCampaign["status"])
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className={getInputClassName(false)}
             >
               <option value="draft">draft</option>
               <option value="scheduled">scheduled</option>
@@ -337,14 +389,12 @@ export default function CampaignForm({
           Content
         </p>
 
-        <Field label="Short Description">
+        <Field label="Short Description" required error={errors.shortDescription}>
           <textarea
             value={values.shortDescription}
-            onChange={(e) =>
-              setValues({ ...values, shortDescription: e.target.value })
-            }
+            onChange={(e) => updateField("shortDescription", e.target.value)}
             rows={4}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className={getInputClassName(Boolean(errors.shortDescription))}
             required
           />
         </Field>
@@ -352,11 +402,9 @@ export default function CampaignForm({
         <Field label="Long Description">
           <textarea
             value={values.longDescription || ""}
-            onChange={(e) =>
-              setValues({ ...values, longDescription: e.target.value })
-            }
+            onChange={(e) => updateField("longDescription", e.target.value)}
             rows={8}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className={getInputClassName(false)}
           />
         </Field>
 
@@ -374,10 +422,8 @@ export default function CampaignForm({
           <Field label="Banner URL">
             <input
               value={values.bannerUrl || ""}
-              onChange={(e) =>
-                setValues({ ...values, bannerUrl: e.target.value })
-              }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              onChange={(e) => updateField("bannerUrl", e.target.value)}
+              className={getInputClassName(false)}
               placeholder="https://..."
             />
           </Field>
@@ -385,10 +431,8 @@ export default function CampaignForm({
           <Field label="Thumbnail URL">
             <input
               value={values.thumbnailUrl || ""}
-              onChange={(e) =>
-                setValues({ ...values, thumbnailUrl: e.target.value })
-              }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              onChange={(e) => updateField("thumbnailUrl", e.target.value)}
+              className={getInputClassName(false)}
               placeholder="https://..."
             />
           </Field>
@@ -406,10 +450,8 @@ export default function CampaignForm({
               type="number"
               min={0}
               value={values.xpBudget}
-              onChange={(e) =>
-                setValues({ ...values, xpBudget: Number(e.target.value) })
-              }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              onChange={(e) => updateField("xpBudget", Number(e.target.value))}
+              className={getInputClassName(false)}
             />
           </Field>
 
@@ -418,10 +460,8 @@ export default function CampaignForm({
               type="number"
               min={0}
               value={values.participants}
-              onChange={(e) =>
-                setValues({ ...values, participants: Number(e.target.value) })
-              }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              onChange={(e) => updateField("participants", Number(e.target.value))}
+              className={getInputClassName(false)}
             />
           </Field>
 
@@ -431,10 +471,8 @@ export default function CampaignForm({
               min={0}
               max={100}
               value={values.completionRate}
-              onChange={(e) =>
-                setValues({ ...values, completionRate: Number(e.target.value) })
-              }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              onChange={(e) => updateField("completionRate", Number(e.target.value))}
+              className={getInputClassName(false)}
             />
           </Field>
         </div>
@@ -446,25 +484,21 @@ export default function CampaignForm({
         </p>
 
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Starts At">
+          <Field label="Starts At" error={errors.dateRange}>
             <input
               type="datetime-local"
               value={values.startsAt || ""}
-              onChange={(e) =>
-                setValues({ ...values, startsAt: e.target.value })
-              }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              onChange={(e) => updateField("startsAt", e.target.value)}
+              className={getInputClassName(Boolean(errors.dateRange))}
             />
           </Field>
 
-          <Field label="Ends At">
+          <Field label="Ends At" error={errors.dateRange}>
             <input
               type="datetime-local"
               value={values.endsAt || ""}
-              onChange={(e) =>
-                setValues({ ...values, endsAt: e.target.value })
-              }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              onChange={(e) => updateField("endsAt", e.target.value)}
+              className={getInputClassName(Boolean(errors.dateRange))}
             />
           </Field>
         </div>
@@ -495,17 +529,33 @@ export default function CampaignForm({
 
 function Field({
   label,
+  required,
+  error,
   children,
 }: {
   label: string;
+  required?: boolean;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-semibold text-text">{label}</span>
+      <span className="mb-2 block text-sm font-semibold text-text">
+        {label}
+        {required ? <span className="ml-1 text-rose-300">*</span> : null}
+      </span>
       {children}
+      {error ? <span className="mt-2 block text-sm text-rose-200">{error}</span> : null}
     </label>
   );
+}
+
+function getInputClassName(hasError: boolean) {
+  return `w-full rounded-2xl border px-4 py-3 outline-none ${
+    hasError
+      ? "border-rose-400/60 bg-rose-500/10 text-text"
+      : "border-line bg-card2"
+  }`;
 }
 
 function ToggleField({

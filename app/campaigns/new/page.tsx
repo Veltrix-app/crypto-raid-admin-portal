@@ -133,6 +133,7 @@ export default function NewCampaignPage() {
   const [currentStep, setCurrentStep] = useState<BuilderStepId>("template");
   const [visitedSteps, setVisitedSteps] = useState<BuilderStepId[]>(["template"]);
   const [campaignTitleDraft, setCampaignTitleDraft] = useState("");
+  const [stepError, setStepError] = useState<string | null>(null);
 
   const selectedProject = useMemo(
     () =>
@@ -184,6 +185,7 @@ export default function NewCampaignPage() {
     setVisitedSteps((current) =>
       current.includes(currentStep) ? current : [...current, currentStep]
     );
+    setStepError(null);
   }, [currentStep]);
 
   useEffect(() => {
@@ -424,6 +426,28 @@ export default function NewCampaignPage() {
     } catch {
       setSavedTemplateMessage("This saved template could not be parsed.");
     }
+  }
+
+  function validateCurrentStep(step: BuilderStepId) {
+    if (step === "template" && !selectedTemplate) {
+      return "Choose a playbook or blank campaign canvas before continuing.";
+    }
+
+    if (step === "autofill" && templatePlan && templatePlan.missingProjectFields.length > 0) {
+      return `Add the missing workspace context first: ${templatePlan.missingProjectFields
+        .map((field) => formatProjectFieldLabel(field))
+        .join(", ")}.`;
+    }
+
+    if (
+      step === "flow" &&
+      selectedTemplateId !== "blank_campaign_canvas" &&
+      includedQuestDrafts.length + includedRewardDrafts.length === 0
+    ) {
+      return "Keep at least one generated draft, or switch to Blank Campaign Canvas for a fully custom setup.";
+    }
+
+    return null;
   }
 
   return (
@@ -964,11 +988,28 @@ export default function NewCampaignPage() {
         </div>
         ) : null}
 
+        {stepError ? (
+          <div className="rounded-[24px] border border-rose-500/30 bg-rose-500/10 px-4 py-4 text-sm text-rose-100">
+            {stepError}
+          </div>
+        ) : null}
+
         <BuilderBottomNav
           canGoBack={Boolean(previousStep)}
           onBack={() => previousStep && setCurrentStep(previousStep.id)}
           nextLabel={nextStep ? `Continue to ${nextStep.label}` : undefined}
-          onNext={nextStep ? () => setCurrentStep(nextStep.id) : undefined}
+          onNext={
+            nextStep
+              ? () => {
+                  const error = validateCurrentStep(currentStep);
+                  if (error) {
+                    setStepError(error);
+                    return;
+                  }
+                  setCurrentStep(nextStep.id);
+                }
+              : undefined
+          }
           footerLabel={`${currentStepMeta.eyebrow} - ${currentStepMeta.label}`}
         />
       </div>
