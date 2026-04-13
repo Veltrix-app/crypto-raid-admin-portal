@@ -18,6 +18,24 @@ export default function SettingsProfilePage() {
   const activeCampaignCount = projectCampaigns.filter((item) => item.status === "active").length;
   const pendingTeamInvites = projectTeamMembers.filter((item) => item.status === "invited").length;
   const openFlags = reviewFlags.filter((item) => item.status === "open").length;
+  const connectedPublicLinks = [
+    project?.website,
+    project?.xUrl,
+    project?.telegramUrl,
+    project?.discordUrl,
+    project?.docsUrl,
+    project?.waitlistUrl,
+  ].filter(Boolean).length;
+  const templateContextCount = [
+    project?.docsUrl,
+    project?.waitlistUrl,
+    project?.launchPostUrl,
+    project?.tokenContractAddress,
+    project?.nftContractAddress,
+    project?.primaryWallet,
+    project?.brandAccent,
+    project?.brandMood,
+  ].filter(Boolean).length;
 
   const profileReadiness = [
     {
@@ -32,14 +50,16 @@ export default function SettingsProfilePage() {
     },
     {
       label: "Public links",
+      value: connectedPublicLinks > 0 ? `${connectedPublicLinks} links connected` : "Not connected",
+      complete: connectedPublicLinks > 0,
+    },
+    {
+      label: "Template context",
       value:
-        [project?.website, project?.xUrl, project?.telegramUrl, project?.discordUrl].filter(Boolean)
-          .length > 0
-          ? "Connected"
-          : "Not connected",
-      complete:
-        [project?.website, project?.xUrl, project?.telegramUrl, project?.discordUrl].filter(Boolean)
-          .length > 0,
+        templateContextCount > 0
+          ? `${templateContextCount} advanced context fields ready`
+          : "Add launch, docs, waitlist or contract context",
+      complete: templateContextCount > 0,
     },
     {
       label: "Operations",
@@ -81,6 +101,7 @@ export default function SettingsProfilePage() {
           <MetricCard label="Active Campaigns" value={String(activeCampaignCount)} />
           <MetricCard label="Pending Invites" value={String(pendingTeamInvites)} />
           <MetricCard label="Open Flags" value={String(openFlags)} />
+          <MetricCard label="Template Context" value={String(templateContextCount)} />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -103,6 +124,13 @@ export default function SettingsProfilePage() {
                 {project?.description ||
                   "Add a short workspace description so project context is clear inside the portal and later across public surfaces."}
               </p>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <Field label="Docs URL" value={project?.docsUrl || "Not set"} />
+              <Field label="Waitlist URL" value={project?.waitlistUrl || "Not set"} />
+              <Field label="Launch Post URL" value={project?.launchPostUrl || "Not set"} />
+              <Field label="Primary Wallet" value={project?.primaryWallet || "Not set"} />
             </div>
           </div>
 
@@ -137,6 +165,36 @@ export default function SettingsProfilePage() {
             <Field label="X" value={project?.xUrl || "Not connected"} />
             <Field label="Telegram" value={project?.telegramUrl || "Not connected"} />
             <Field label="Discord" value={project?.discordUrl || "Not connected"} />
+            <Field label="Docs" value={project?.docsUrl || "Not connected"} />
+            <Field label="Waitlist" value={project?.waitlistUrl || "Not connected"} />
+            <Field label="Launch Post" value={project?.launchPostUrl || "Not connected"} />
+            <Field label="Contact" value={project?.contactEmail || "Not connected"} />
+          </div>
+        </div>
+
+        <div className="rounded-[28px] border border-line bg-card p-6">
+          <h2 className="text-xl font-extrabold text-text">Template Context</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <Field
+              label="Token Contract"
+              value={project?.tokenContractAddress || "Not set"}
+            />
+            <Field
+              label="NFT Contract"
+              value={project?.nftContractAddress || "Not set"}
+            />
+            <Field
+              label="Primary Wallet"
+              value={project?.primaryWallet || "Not set"}
+            />
+            <Field
+              label="Brand Accent"
+              value={project?.brandAccent || "Not set"}
+            />
+            <Field
+              label="Brand Mood"
+              value={project?.brandMood || "Not set"}
+            />
           </div>
         </div>
       </div>

@@ -53,7 +53,24 @@ export default function ProjectDetailPage() {
   const relatedQuests = quests.filter((quest) => quest.projectId === project.id);
   const relatedRewards = rewards.filter((reward) => reward.projectId === project.id);
   const relatedTeamMembers = teamMembers.filter((member) => member.projectId === project.id);
-  const connectedLinks = [project.website, project.xUrl, project.telegramUrl, project.discordUrl].filter(Boolean).length;
+  const connectedLinks = [
+    project.website,
+    project.xUrl,
+    project.telegramUrl,
+    project.discordUrl,
+    project.docsUrl,
+    project.waitlistUrl,
+  ].filter(Boolean).length;
+  const templateContextCount = [
+    project.docsUrl,
+    project.waitlistUrl,
+    project.launchPostUrl,
+    project.tokenContractAddress,
+    project.nftContractAddress,
+    project.primaryWallet,
+    project.brandAccent,
+    project.brandMood,
+  ].filter(Boolean).length;
   const publicProfileReadiness = [
     {
       label: "Brand identity",
@@ -74,6 +91,14 @@ export default function ProjectDetailPage() {
       label: "Social surface",
       value: connectedLinks > 0 ? `${connectedLinks} channels connected` : "No channels connected yet",
       complete: connectedLinks > 0,
+    },
+    {
+      label: "Template context",
+      value:
+        templateContextCount > 0
+          ? `${templateContextCount} advanced project inputs are ready`
+          : "Add docs, waitlist, launch or contract context",
+      complete: templateContextCount > 0,
     },
     {
       label: "Visibility state",
@@ -174,6 +199,7 @@ export default function ProjectDetailPage() {
           <InfoCard label="Members" value={project.members.toLocaleString()} />
           <InfoCard label="Campaigns" value={relatedCampaigns.length} />
           <InfoCard label="Onboarding" value={project.onboardingStatus} />
+          <InfoCard label="Template Context" value={templateContextCount} />
         </div>
 
         {showLaunchpad ? (
@@ -266,6 +292,14 @@ export default function ProjectDetailPage() {
                   xUrl: project.xUrl || "",
                   telegramUrl: project.telegramUrl || "",
                   discordUrl: project.discordUrl || "",
+                  docsUrl: project.docsUrl || "",
+                  waitlistUrl: project.waitlistUrl || "",
+                  launchPostUrl: project.launchPostUrl || "",
+                  tokenContractAddress: project.tokenContractAddress || "",
+                  nftContractAddress: project.nftContractAddress || "",
+                  primaryWallet: project.primaryWallet || "",
+                  brandAccent: project.brandAccent || "",
+                  brandMood: project.brandMood || "",
 
                   contactEmail: project.contactEmail || "",
 
@@ -348,6 +382,10 @@ export default function ProjectDetailPage() {
                     <DetailRow label="X URL" value={project.xUrl || "Not connected"} />
                     <DetailRow label="Telegram URL" value={project.telegramUrl || "Not connected"} />
                     <DetailRow label="Discord URL" value={project.discordUrl || "Not connected"} />
+                    <DetailRow label="Docs URL" value={project.docsUrl || "Not connected"} />
+                    <DetailRow label="Waitlist URL" value={project.waitlistUrl || "Not connected"} />
+                    <DetailRow label="Launch Post URL" value={project.launchPostUrl || "Not connected"} />
+                    <DetailRow label="Primary Wallet" value={project.primaryWallet || "Not set"} />
                   </div>
                 </div>
               </div>
@@ -362,6 +400,9 @@ export default function ProjectDetailPage() {
                 <DetailRow label="X URL" value={project.xUrl || "-"} />
                 <DetailRow label="Telegram URL" value={project.telegramUrl || "-"} />
                 <DetailRow label="Discord URL" value={project.discordUrl || "-"} />
+                <DetailRow label="Docs URL" value={project.docsUrl || "-"} />
+                <DetailRow label="Waitlist URL" value={project.waitlistUrl || "-"} />
+                <DetailRow label="Launch Post URL" value={project.launchPostUrl || "-"} />
                 <DetailRow label="Contact Email" value={project.contactEmail || "-"} />
                 <DetailRow
                   label="Featured"
@@ -385,6 +426,33 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
               ) : null}
+            </div>
+
+            <div className="rounded-[28px] border border-line bg-card p-6">
+              <h2 className="text-xl font-extrabold text-text">Template Context</h2>
+
+              <div className="mt-4 space-y-4">
+                <DetailRow
+                  label="Token Contract"
+                  value={project.tokenContractAddress || "-"}
+                />
+                <DetailRow
+                  label="NFT Contract"
+                  value={project.nftContractAddress || "-"}
+                />
+                <DetailRow
+                  label="Primary Wallet"
+                  value={project.primaryWallet || "-"}
+                />
+                <DetailRow
+                  label="Brand Accent"
+                  value={project.brandAccent || "-"}
+                />
+                <DetailRow
+                  label="Brand Mood"
+                  value={project.brandMood || "-"}
+                />
+              </div>
             </div>
 
             <div className="rounded-[28px] border border-line bg-card p-6">
