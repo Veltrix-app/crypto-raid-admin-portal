@@ -11,6 +11,8 @@ import {
   CampaignTemplateId,
   formatProjectFieldLabel,
   getCampaignTemplateOptions,
+  ResolvedQuestDraft,
+  ResolvedRewardDraft,
 } from "@/lib/campaign-templates";
 import { AdminProject } from "@/types/entities/project";
 
@@ -33,6 +35,8 @@ export default function NewCampaignPage() {
 
   const [selectedTemplateId, setSelectedTemplateId] =
     useState<CampaignTemplateId>("community_growth_starter");
+  const [selectedQuestKeys, setSelectedQuestKeys] = useState<string[]>([]);
+  const [selectedRewardKeys, setSelectedRewardKeys] = useState<string[]>([]);
   const [projectContextDraft, setProjectContextDraft] = useState<
     Partial<Pick<AdminProject, EditableProjectContextField>>
   >({});
@@ -74,6 +78,26 @@ export default function NewCampaignPage() {
     setProjectContextDraft({});
     setContextMessage(null);
   }, [selectedProject?.id, selectedTemplateId]);
+
+  useEffect(() => {
+    setSelectedQuestKeys(templatePlan?.questDrafts.map((quest) => quest.key) ?? []);
+    setSelectedRewardKeys(templatePlan?.rewardDrafts.map((reward) => reward.key) ?? []);
+  }, [templatePlan]);
+
+  const includedQuestDrafts = useMemo(
+    () =>
+      templatePlan?.questDrafts.filter((quest) =>
+        selectedQuestKeys.includes(quest.key)
+      ) ?? [],
+    [selectedQuestKeys, templatePlan]
+  );
+  const includedRewardDrafts = useMemo(
+    () =>
+      templatePlan?.rewardDrafts.filter((reward) =>
+        selectedRewardKeys.includes(reward.key)
+      ) ?? [],
+    [selectedRewardKeys, templatePlan]
+  );
 
   async function saveProjectContextFields() {
     if (!selectedProject || !templatePlan || templatePlan.missingProjectFields.length === 0) {
@@ -219,11 +243,11 @@ export default function NewCampaignPage() {
                   />
                   <PreviewStat
                     label="Quest drafts"
-                    value={templatePlan.questDrafts.length}
+                    value={`${includedQuestDrafts.length}/${templatePlan.questDrafts.length}`}
                   />
                   <PreviewStat
                     label="Reward drafts"
-                    value={templatePlan.rewardDrafts.length}
+                    value={`${includedRewardDrafts.length}/${templatePlan.rewardDrafts.length}`}
                   />
                 </div>
 
@@ -309,29 +333,19 @@ export default function NewCampaignPage() {
                   </p>
                   <div className="mt-4 space-y-3">
                     {templatePlan.questDrafts.map((quest, index) => (
-                      <div
-                        key={`${quest.title}-${index}`}
-                        className="rounded-2xl border border-line bg-card px-4 py-4"
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-bold text-text">
-                              {index + 1}. {quest.title}
-                            </p>
-                            <p className="mt-2 text-sm leading-6 text-sub">
-                              {quest.description}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
-                            <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">
-                              {quest.questType}
-                            </span>
-                            <span className="rounded-full bg-white/5 px-3 py-1 text-text">
-                              {quest.xp} xp
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                      <TemplateQuestCard
+                        key={quest.key}
+                        item={quest}
+                        index={index}
+                        included={selectedQuestKeys.includes(quest.key)}
+                        onToggle={() =>
+                          setSelectedQuestKeys((current) =>
+                            current.includes(quest.key)
+                              ? current.filter((key) => key !== quest.key)
+                              : [...current, quest.key]
+                          )
+                        }
+                      />
                     ))}
                   </div>
                 </div>
@@ -341,30 +355,19 @@ export default function NewCampaignPage() {
                     Generated rewards
                   </p>
                   <div className="mt-4 space-y-3">
-                    {templatePlan.rewardDrafts.map((reward, index) => (
-                      <div
-                        key={`${reward.title}-${index}`}
-                        className="rounded-2xl border border-line bg-card px-4 py-4"
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-bold text-text">
-                              {reward.title}
-                            </p>
-                            <p className="mt-2 text-sm leading-6 text-sub">
-                              {reward.description}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
-                            <span className="rounded-full bg-white/5 px-3 py-1 text-text">
-                              {reward.rewardType}
-                            </span>
-                            <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">
-                              {reward.cost} xp
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                    {templatePlan.rewardDrafts.map((reward) => (
+                      <TemplateRewardCard
+                        key={reward.key}
+                        item={reward}
+                        included={selectedRewardKeys.includes(reward.key)}
+                        onToggle={() =>
+                          setSelectedRewardKeys((current) =>
+                            current.includes(reward.key)
+                              ? current.filter((key) => key !== reward.key)
+                              : [...current, reward.key]
+                          )
+                        }
+                      />
                     ))}
                   </div>
                 </div>
@@ -387,23 +390,23 @@ export default function NewCampaignPage() {
               const campaignId = await createCampaign(values);
 
               if (templatePlan) {
-                for (const quest of templatePlan.questDrafts) {
+                for (const quest of includedQuestDrafts) {
                   await createQuest({
-                    ...quest,
+                    ...quest.draft,
                     projectId: values.projectId,
                     campaignId,
-                    startsAt: values.startsAt || quest.startsAt,
-                    endsAt: values.endsAt || quest.endsAt,
-                    status: values.status === "active" ? "active" : quest.status,
+                    startsAt: values.startsAt || quest.draft.startsAt,
+                    endsAt: values.endsAt || quest.draft.endsAt,
+                    status: values.status === "active" ? "active" : quest.draft.status,
                   });
                 }
 
-                for (const reward of templatePlan.rewardDrafts) {
+                for (const reward of includedRewardDrafts) {
                   await createReward({
-                    ...reward,
+                    ...reward.draft,
                     projectId: values.projectId,
                     campaignId,
-                    status: values.status === "active" ? "active" : reward.status,
+                    status: values.status === "active" ? "active" : reward.draft.status,
                   });
                 }
               }
@@ -431,6 +434,157 @@ function PreviewStat({
         {label}
       </p>
       <p className="mt-2 text-lg font-extrabold text-text">{value}</p>
+    </div>
+  );
+}
+
+function TemplateQuestCard({
+  item,
+  index,
+  included,
+  onToggle,
+}: {
+  item: ResolvedQuestDraft;
+  index: number;
+  included: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-line bg-card px-4 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold text-text">
+            {index + 1}. {item.draft.title}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-sub">
+            {item.draft.description}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+            included
+              ? "bg-primary/15 text-primary"
+              : "bg-white/5 text-sub"
+          }`}
+        >
+          {included ? "Included" : "Skipped"}
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
+        <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">
+          {item.draft.questType}
+        </span>
+        <span className="rounded-full bg-white/5 px-3 py-1 text-text">
+          {item.draft.xp} xp
+        </span>
+        <span
+          className={`rounded-full px-3 py-1 ${
+            item.missingProjectFields.length > 0
+              ? "bg-amber-500/15 text-amber-300"
+              : "bg-emerald-500/15 text-emerald-300"
+          }`}
+        >
+          {item.missingProjectFields.length > 0 ? "Needs context" : "Ready"}
+        </span>
+      </div>
+
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <TemplateMeta
+          label="Auto-filled"
+          value={
+            item.autofilledFields.length > 0
+              ? item.autofilledFields.join(", ")
+              : "Base defaults only"
+          }
+        />
+        <TemplateMeta
+          label="Needs input"
+          value={
+            item.missingProjectFields.length > 0
+              ? item.missingProjectFields
+                  .map((field) => formatProjectFieldLabel(field))
+                  .join(", ")
+              : "Nothing missing"
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+function TemplateRewardCard({
+  item,
+  included,
+  onToggle,
+}: {
+  item: ResolvedRewardDraft;
+  included: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-line bg-card px-4 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold text-text">{item.draft.title}</p>
+          <p className="mt-2 text-sm leading-6 text-sub">
+            {item.draft.description}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+            included
+              ? "bg-primary/15 text-primary"
+              : "bg-white/5 text-sub"
+          }`}
+        >
+          {included ? "Included" : "Skipped"}
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
+        <span className="rounded-full bg-white/5 px-3 py-1 text-text">
+          {item.draft.rewardType}
+        </span>
+        <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">
+          {item.draft.cost} xp
+        </span>
+        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-emerald-300">
+          Ready
+        </span>
+      </div>
+
+      <div className="mt-3">
+        <TemplateMeta
+          label="Auto-filled"
+          value={
+            item.autofilledFields.length > 0
+              ? item.autofilledFields.join(", ")
+              : "Base defaults only"
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+function TemplateMeta({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-line bg-card2 px-4 py-4">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+        {label}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-text">{value}</p>
     </div>
   );
 }

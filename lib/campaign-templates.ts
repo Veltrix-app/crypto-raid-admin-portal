@@ -36,9 +36,23 @@ type CampaignTemplateDefinition = {
 
 type BuildTemplateResult = {
   campaignDraft: Omit<AdminCampaign, "id">;
-  questDrafts: Omit<AdminQuest, "id">[];
-  rewardDrafts: Omit<AdminReward, "id">[];
+  questDrafts: ResolvedQuestDraft[];
+  rewardDrafts: ResolvedRewardDraft[];
   missingProjectFields: Array<keyof AdminProject>;
+};
+
+export type ResolvedQuestDraft = {
+  key: string;
+  draft: Omit<AdminQuest, "id">;
+  missingProjectFields: Array<keyof AdminProject>;
+  autofilledFields: string[];
+};
+
+export type ResolvedRewardDraft = {
+  key: string;
+  draft: Omit<AdminReward, "id">;
+  missingProjectFields: Array<keyof AdminProject>;
+  autofilledFields: string[];
 };
 
 const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinition> = {
@@ -544,8 +558,11 @@ function resolveQuestDraft(
   quest: CampaignTemplateDefinition["quests"][number],
   project: AdminProject,
   campaignDraft: Omit<AdminCampaign, "id">
-): Omit<AdminQuest, "id"> {
-  return {
+): ResolvedQuestDraft {
+  const missingProjectFields = (quest.requiredProjectFields ?? []).filter(
+    (field) => !getProjectFieldValue(project, field)
+  );
+  const draft = {
     projectId: project.id,
     campaignId: "",
     title: resolveTemplateText(quest.title, project),
@@ -570,13 +587,28 @@ function resolveQuestDraft(
     endsAt: campaignDraft.endsAt,
     status: quest.status,
   };
+
+  return {
+    key: `${quest.questType}-${quest.sortOrder}-${draft.title}`,
+    draft,
+    missingProjectFields,
+    autofilledFields: ["title", "description", "actionUrl", "verificationConfig"].filter(
+      (field) => {
+        if (field === "actionUrl") return !!draft.actionUrl;
+        if (field === "verificationConfig") return !!draft.verificationConfig;
+        if (field === "title") return quest.title.includes("{{");
+        if (field === "description") return quest.description.includes("{{");
+        return false;
+      }
+    ),
+  };
 }
 
 function resolveRewardDraft(
   reward: CampaignTemplateDefinition["rewards"][number],
   project: AdminProject
-): Omit<AdminReward, "id"> {
-  return {
+): ResolvedRewardDraft {
+  const draft = {
     projectId: project.id,
     campaignId: "",
     title: resolveTemplateText(reward.title, project),
@@ -594,6 +626,18 @@ function resolveRewardDraft(
     claimMethod: reward.claimMethod,
     deliveryConfig: resolveTemplateText(reward.deliveryConfig, project),
     status: reward.status,
+  };
+
+  return {
+    key: `${reward.rewardType}-${reward.title}`,
+    draft,
+    missingProjectFields: [],
+    autofilledFields: ["title", "description", "deliveryConfig"].filter((field) => {
+      if (field === "deliveryConfig") return !!draft.deliveryConfig;
+      if (field === "title") return reward.title.includes("{{");
+      if (field === "description") return reward.description.includes("{{");
+      return false;
+    }),
   };
 }
 
