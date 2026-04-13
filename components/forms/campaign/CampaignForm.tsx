@@ -123,6 +123,7 @@ export default function CampaignForm({
     initialValues?.campaignType || "hybrid"
   );
   const [errors, setErrors] = useState<CampaignFormErrors>({});
+  const [submitting, setSubmitting] = useState(false);
   const activePreset = CAMPAIGN_TYPE_PRESETS[selectedPreset];
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === values.projectId),
@@ -223,7 +224,12 @@ export default function CampaignForm({
         const nextErrors = validate(values);
         setErrors(nextErrors);
         if (Object.keys(nextErrors).length > 0) return;
-        await onSubmit(values);
+        setSubmitting(true);
+        try {
+          await onSubmit(values);
+        } finally {
+          setSubmitting(false);
+        }
       }}
     >
       {Object.keys(errors).length > 0 ? (
@@ -520,8 +526,11 @@ export default function CampaignForm({
         </div>
       </div>
 
-      <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
-        {submitLabel}
+      <button
+        disabled={submitting}
+        className="rounded-2xl bg-primary px-5 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {submitting ? "Saving..." : submitLabel}
       </button>
     </form>
   );

@@ -134,6 +134,8 @@ export default function NewCampaignPage() {
   const [visitedSteps, setVisitedSteps] = useState<BuilderStepId[]>(["template"]);
   const [campaignTitleDraft, setCampaignTitleDraft] = useState("");
   const [stepError, setStepError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationMessage, setGenerationMessage] = useState<string | null>(null);
 
   const selectedProject = useMemo(
     () =>
@@ -450,6 +452,27 @@ export default function NewCampaignPage() {
     return null;
   }
 
+  function attemptStepNavigation(targetStep: BuilderStepId) {
+    const targetIndex = builderSteps.findIndex((step) => step.id === targetStep);
+
+    if (targetIndex <= currentStepIndex) {
+      setCurrentStep(targetStep);
+      return;
+    }
+
+    for (let index = currentStepIndex; index < targetIndex; index += 1) {
+      const step = builderSteps[index];
+      const error = validateCurrentStep(step.id);
+      if (error) {
+        setStepError(error);
+        setCurrentStep(step.id);
+        return;
+      }
+    }
+
+    setCurrentStep(targetStep);
+  }
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -482,7 +505,7 @@ export default function NewCampaignPage() {
           currentStep={currentStep}
           currentStepIndex={currentStepIndex}
           visitedSteps={visitedSteps}
-          onSelect={setCurrentStep}
+          onSelect={attemptStepNavigation}
         />
 
         {currentStep !== "launch" ? (
@@ -938,6 +961,12 @@ export default function NewCampaignPage() {
             </div>
           </div>
 
+          {generationMessage ? (
+            <div className="rounded-[22px] border border-primary/25 bg-primary/10 px-4 py-4 text-sm text-primary">
+              {generationMessage}
+            </div>
+          ) : null}
+
           <CampaignForm
             projects={projects}
             defaultProjectId={selectedProject?.id}
@@ -957,33 +986,44 @@ export default function NewCampaignPage() {
                 : undefined
             }
             onSubmit={async (values) => {
-              const campaignId = await createCampaign(values);
+              setIsGenerating(true);
+              setGenerationMessage("Generating campaign and drafting linked quests and rewards...");
 
-              if (templatePlan) {
-                for (const quest of includedQuestDrafts) {
-                  await createQuest({
-                    ...quest.draft,
-                    projectId: values.projectId,
-                    campaignId,
-                    startsAt: values.startsAt || quest.draft.startsAt,
-                    endsAt: values.endsAt || quest.draft.endsAt,
-                    status: values.status === "active" ? "active" : quest.draft.status,
-                  });
+              try {
+                const campaignId = await createCampaign(values);
+
+                if (templatePlan) {
+                  for (const quest of includedQuestDrafts) {
+                    await createQuest({
+                      ...quest.draft,
+                      projectId: values.projectId,
+                      campaignId,
+                      startsAt: values.startsAt || quest.draft.startsAt,
+                      endsAt: values.endsAt || quest.draft.endsAt,
+                      status: values.status === "active" ? "active" : quest.draft.status,
+                    });
+                  }
+
+                  for (const reward of includedRewardDrafts) {
+                    await createReward({
+                      ...reward.draft,
+                      projectId: values.projectId,
+                      campaignId,
+                      status: values.status === "active" ? "active" : reward.draft.status,
+                    });
+                  }
                 }
 
-                for (const reward of includedRewardDrafts) {
-                  await createReward({
-                    ...reward.draft,
-                    projectId: values.projectId,
-                    campaignId,
-                    status: values.status === "active" ? "active" : reward.draft.status,
-                  });
-                }
+                setGenerationMessage("Campaign created. Opening the campaign workspace...");
+                router.push(`/campaigns/${campaignId}`);
+              } catch (error: any) {
+                setGenerationMessage(error?.message || "Failed to generate the campaign.");
+                throw error;
+              } finally {
+                setIsGenerating(false);
               }
-
-              router.push(`/campaigns/${campaignId}`);
             }}
-            submitLabel="Generate Campaign"
+            submitLabel={isGenerating ? "Generating Campaign..." : "Generate Campaign"}
           />
         </div>
         ) : null}
@@ -1006,7 +1046,7 @@ export default function NewCampaignPage() {
                     setStepError(error);
                     return;
                   }
-                  setCurrentStep(nextStep.id);
+                  attemptStepNavigation(nextStep.id);
                 }
               : undefined
           }
