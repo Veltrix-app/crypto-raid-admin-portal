@@ -6,6 +6,9 @@ import {
   BuilderBottomNav,
   BuilderHero,
   BuilderMetricCard,
+  BuilderSidebarCard,
+  BuilderSidebarStack,
+  BuilderStepHeader,
   BuilderStepRail,
 } from "@/components/layout/builder/BuilderPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
@@ -458,32 +461,20 @@ export default function NewCampaignPage() {
         />
 
         {currentStep !== "launch" ? (
-        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid gap-6 xl:grid-cols-[1.06fr_0.94fr]">
           {currentStep === "template" ? (
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                  Full Campaign Templates
-                </p>
-                <h2 className="mt-2 text-xl font-extrabold text-text">
-                  Start from a complete playbook
-                </h2>
-              </div>
-
-              <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-right">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                  Active Project
-                </p>
-                <p className="mt-2 text-lg font-extrabold text-text">
-                  {selectedProject?.name || "No project"}
-                </p>
-              </div>
-            </div>
+          <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
+            <BuilderStepHeader
+              eyebrow="Template Studio"
+              title="Start from a complete playbook"
+              description="Pick the campaign system that fits this workspace best. Veltrix scores templates against your project context so teams can move fast without building from scratch."
+              stepIndex={currentStepIndex + 1}
+              totalSteps={builderSteps.length}
+            />
 
             <div className="mt-5 grid gap-3">
               {savedProjectTemplates.length > 0 ? (
-                <div className="rounded-2xl border border-line bg-card2 p-4">
+                <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Saved Project Templates
                   </p>
@@ -491,7 +482,7 @@ export default function NewCampaignPage() {
                     {savedProjectTemplates.map((template) => (
                       <div
                         key={template.id}
-                        className="rounded-2xl border border-line bg-card px-4 py-4"
+                        className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
@@ -506,7 +497,7 @@ export default function NewCampaignPage() {
                             <button
                               type="button"
                               onClick={() => applySavedTemplate(template.configuration)}
-                              className="rounded-xl border border-line px-3 py-2 text-sm font-bold text-text"
+                              className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-bold text-text"
                             >
                               Load
                             </button>
@@ -533,10 +524,10 @@ export default function NewCampaignPage() {
                     key={template.id}
                     type="button"
                     onClick={() => setSelectedTemplateId(template.id)}
-                    className={`rounded-2xl border p-4 text-left transition ${
+                    className={`rounded-[26px] border p-5 text-left transition ${
                       isActive
-                        ? "border-primary bg-primary/10"
-                        : "border-line bg-card2 hover:border-primary/40"
+                        ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))] shadow-[0_18px_36px_rgba(0,0,0,0.24)]"
+                        : "border-white/8 bg-white/[0.03] hover:border-white/14 hover:bg-white/[0.05]"
                     }`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -572,7 +563,7 @@ export default function NewCampaignPage() {
                     </div>
 
                     {template.fitReasons.length > 0 ? (
-                      <div className="mt-3 rounded-2xl border border-line bg-card px-4 py-3">
+                      <div className="mt-4 rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
                         <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                           Why this fit
                         </p>
@@ -592,102 +583,99 @@ export default function NewCampaignPage() {
           </div>
           ) : null}
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-              {currentStep === "autofill"
-                ? "Autofill Preview"
-                : currentStep === "flow"
-                  ? "Generated Flow"
-                  : "Campaign Preview"}
-            </p>
-            <h2 className="mt-2 text-xl font-extrabold text-text">
-              {currentStep === "autofill"
-                ? "Wire the project context"
-                : currentStep === "flow"
-                  ? "Tune what gets generated"
-                  : "What Veltrix will generate for you"}
-            </h2>
-
+          <BuilderSidebarStack>
             {selectedTemplate && templatePlan ? (
-              <div className="mt-5 space-y-5">
-                {currentStep !== "flow" ? (
-                <div className="rounded-2xl border border-line bg-card2 p-4">
-                  <p className="text-sm font-bold text-text">
-                    {selectedTemplate.label}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
-                    {selectedTemplate.goal}
-                  </p>
-                </div>
-                ) : null}
+              <div className="space-y-5">
+                <BuilderSidebarCard
+                  title={
+                    currentStep === "autofill"
+                      ? "Autofill Preview"
+                      : currentStep === "flow"
+                        ? "Generated Flow"
+                        : "Campaign Preview"
+                  }
+                >
+                  <div className="space-y-5">
+                    {currentStep !== "flow" ? (
+                    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+                      <p className="text-sm font-bold text-text">
+                        {selectedTemplate.label}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-sub">
+                        {selectedTemplate.goal}
+                      </p>
+                    </div>
+                    ) : null}
 
-                {contextSections.length > 0 && currentStep === "autofill" ? (
-                  <div className="rounded-2xl border border-line bg-card2 p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                      Context Signals
-                    </p>
-                    <div className="mt-4 grid gap-3 md:grid-cols-2">
-                      {contextSections.map((section) => (
-                        <TemplateMetaCard
-                          key={section.title}
-                          title={section.title}
-                          description={section.description}
-                          value={section.value}
-                        />
-                      ))}
+                    {contextSections.length > 0 && currentStep === "autofill" ? (
+                      <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                          Context Signals
+                        </p>
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                          {contextSections.map((section) => (
+                            <TemplateMetaCard
+                              key={section.title}
+                              title={section.title}
+                              description={section.description}
+                              value={section.value}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <PreviewStat
+                        label="Campaign title"
+                        value={templatePlan.campaignDraft.title}
+                      />
+                      <PreviewStat
+                        label="Template fit"
+                        value={`${selectedTemplate.fitLabel} (${selectedTemplate.fitScore}/100)`}
+                      />
+                      <PreviewStat
+                        label="Quest drafts"
+                        value={`${includedQuestDrafts.length}/${templatePlan.questDrafts.length}`}
+                      />
+                      <PreviewStat
+                        label="Reward drafts"
+                        value={`${includedRewardDrafts.length}/${templatePlan.rewardDrafts.length}`}
+                      />
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <PreviewStat
+                        label="Auto-wired fields"
+                        value={
+                          templatePlan.questDrafts.reduce(
+                            (total, quest) => total + quest.autofilledFields.length,
+                            0
+                          ) +
+                          templatePlan.rewardDrafts.reduce(
+                            (total, reward) => total + reward.autofilledFields.length,
+                            0
+                          )
+                        }
+                      />
+                      <PreviewStat
+                        label="Edited drafts"
+                        value={editedQuestCount + editedRewardCount}
+                      />
+                      <PreviewStat
+                        label="Missing context"
+                        value={templatePlan.missingProjectFields.length}
+                      />
+                      <PreviewStat
+                        label="Launch route"
+                        value={currentStep === "flow" ? "Tune before generate" : "Review before generate"}
+                      />
                     </div>
                   </div>
-                ) : null}
+                </BuilderSidebarCard>
 
-                <div className="grid gap-3 md:grid-cols-3">
-                  <PreviewStat
-                    label="Campaign title"
-                    value={templatePlan.campaignDraft.title}
-                  />
-                  <PreviewStat
-                    label="Template fit"
-                    value={`${selectedTemplate.fitLabel} (${selectedTemplate.fitScore}/100)`}
-                  />
-                  <PreviewStat
-                    label="Quest drafts"
-                    value={`${includedQuestDrafts.length}/${templatePlan.questDrafts.length}`}
-                  />
-                  <PreviewStat
-                    label="Reward drafts"
-                    value={`${includedRewardDrafts.length}/${templatePlan.rewardDrafts.length}`}
-                  />
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-4">
-                  <PreviewStat
-                    label="Auto-wired fields"
-                    value={
-                      templatePlan.questDrafts.reduce(
-                        (total, quest) => total + quest.autofilledFields.length,
-                        0
-                      ) +
-                      templatePlan.rewardDrafts.reduce(
-                        (total, reward) => total + reward.autofilledFields.length,
-                        0
-                      )
-                    }
-                  />
-                  <PreviewStat
-                    label="Edited quests"
-                    value={editedQuestCount}
-                  />
-                  <PreviewStat
-                    label="Edited rewards"
-                    value={editedRewardCount}
-                  />
-                  <PreviewStat
-                    label="Missing context"
-                    value={templatePlan.missingProjectFields.length}
-                  />
-                </div>
-
-                {currentStep === "autofill" ? (
-                <div className="rounded-2xl border border-line bg-card2 p-4">
+                {currentStep !== "flow" ? (
+                <BuilderSidebarCard title="Generation Route">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Generation route
                   </p>
@@ -705,11 +693,11 @@ export default function NewCampaignPage() {
                       value="Selected rewards follow the same route, so launch-ready campaigns can publish in one pass."
                     />
                   </div>
-                </div>
+                </BuilderSidebarCard>
                 ) : null}
 
                 {currentStep === "autofill" ? (
-                <div className="rounded-2xl border border-line bg-card2 p-4">
+                <BuilderSidebarCard title="Project Context Usage">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Project context usage
                   </p>
@@ -756,7 +744,7 @@ export default function NewCampaignPage() {
                                   [field as EditableProjectContextField]: event.target.value,
                                 }))
                               }
-                              className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+                              className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
                               placeholder={`Add ${formatProjectFieldLabel(field)}`}
                             />
                           </label>
@@ -783,11 +771,11 @@ export default function NewCampaignPage() {
                       auto-fill immediately.
                     </p>
                   )}
-                </div>
+                </BuilderSidebarCard>
                 ) : null}
 
                 {currentStep === "flow" ? (
-                <div className="rounded-2xl border border-line bg-card2 p-4">
+                <BuilderSidebarCard title="Generated Quest Flow">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Generated quest flow
                   </p>
@@ -815,11 +803,11 @@ export default function NewCampaignPage() {
                       />
                     ))}
                   </div>
-                </div>
+                </BuilderSidebarCard>
                 ) : null}
 
                 {currentStep === "flow" ? (
-                <div className="rounded-2xl border border-line bg-card2 p-4">
+                <BuilderSidebarCard title="Generated Rewards">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Generated rewards
                   </p>
@@ -846,21 +834,30 @@ export default function NewCampaignPage() {
                       />
                     ))}
                   </div>
-                </div>
+                </BuilderSidebarCard>
                 ) : null}
               </div>
             ) : (
-              <p className="mt-4 text-sm text-sub">
-                Pick a project workspace and a template to see the generated plan.
-              </p>
+              <BuilderSidebarCard title="Campaign Preview">
+                <p className="text-sm text-sub">
+                  Pick a project workspace and a template to see the generated plan.
+                </p>
+              </BuilderSidebarCard>
             )}
-          </div>
+          </BuilderSidebarStack>
         </div>
         ) : null}
 
         {currentStep === "launch" ? (
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <div className="mb-6 rounded-2xl border border-line bg-card2 p-4">
+        <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
+          <BuilderStepHeader
+            eyebrow="Launch Studio"
+            title="Review the campaign and save the variant"
+            description="Lock in the reusable project variant, then generate the campaign with its selected quest and reward drafts."
+            stepIndex={currentStepIndex + 1}
+            totalSteps={builderSteps.length}
+          />
+          <div className="mb-6 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
               Save this variant
             </p>
@@ -872,7 +869,7 @@ export default function NewCampaignPage() {
                 <input
                   value={savedTemplateName}
                   onChange={(event) => setSavedTemplateName(event.target.value)}
-                  className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+                  className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
                   placeholder="Chainwars launch variant"
                 />
               </label>
@@ -885,7 +882,7 @@ export default function NewCampaignPage() {
                   onChange={(event) =>
                     setSavedTemplateDescription(event.target.value)
                   }
-                  className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+                  className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
                   placeholder="For launch pushes with quote-post proof"
                 />
               </label>
@@ -962,7 +959,7 @@ function PreviewStat({
   value: string | number;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-card2 p-4">
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 shadow-[0_12px_28px_rgba(0,0,0,0.12)]">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
         {label}
       </p>
@@ -989,7 +986,7 @@ function TemplateQuestCard({
   ) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-card px-4 py-4">
+    <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-text">
@@ -1030,7 +1027,7 @@ function TemplateQuestCard({
         </span>
       </div>
 
-      <div className="mt-3 grid gap-3 md:grid-cols-2">
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
         <TemplateMeta
           label="Auto-filled"
           value={
@@ -1055,7 +1052,7 @@ function TemplateQuestCard({
         />
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
         <label className="block">
           <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
             Quest title
@@ -1063,7 +1060,7 @@ function TemplateQuestCard({
           <input
             value={item.draft.title}
             onChange={(event) => onEdit(item.key, "title", event.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -1078,7 +1075,7 @@ function TemplateQuestCard({
             onChange={(event) =>
               onEdit(item.key, "xp", Number(event.target.value || 0))
             }
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -1092,7 +1089,7 @@ function TemplateQuestCard({
               onEdit(item.key, "description", event.target.value)
             }
             rows={3}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -1105,7 +1102,7 @@ function TemplateQuestCard({
             onChange={(event) =>
               onEdit(item.key, "actionLabel", event.target.value)
             }
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -1118,7 +1115,7 @@ function TemplateQuestCard({
             onChange={(event) =>
               onEdit(item.key, "actionUrl", event.target.value)
             }
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
             placeholder="https://..."
           />
         </label>
@@ -1143,7 +1140,7 @@ function TemplateRewardCard({
   ) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-card px-4 py-4">
+    <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-text">{item.draft.title}</p>
@@ -1194,7 +1191,7 @@ function TemplateRewardCard({
         />
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
         <label className="block">
           <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
             Reward title
@@ -1202,7 +1199,7 @@ function TemplateRewardCard({
           <input
             value={item.draft.title}
             onChange={(event) => onEdit(item.key, "title", event.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -1217,7 +1214,7 @@ function TemplateRewardCard({
             onChange={(event) =>
               onEdit(item.key, "cost", Number(event.target.value || 0))
             }
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -1231,7 +1228,7 @@ function TemplateRewardCard({
               onEdit(item.key, "description", event.target.value)
             }
             rows={3}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
           />
         </label>
       </div>
@@ -1247,7 +1244,7 @@ function TemplateMeta({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-4">
+    <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
         {label}
       </p>
@@ -1266,7 +1263,7 @@ function TemplateMetaCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-card px-4 py-4">
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
       <p className="text-sm font-bold text-text">{title}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{description}</p>
       <p className="mt-3 break-all text-sm font-semibold text-text">{value}</p>
