@@ -4,6 +4,7 @@ import { AdminQuest } from "@/types/entities/quest";
 import { AdminReward } from "@/types/entities/reward";
 
 export type CampaignTemplateId =
+  | "blank_campaign_canvas"
   | "community_growth_starter"
   | "launch_hype_sprint"
   | "content_creator_flywheel"
@@ -65,6 +66,28 @@ export type CampaignTemplateOption = CampaignTemplateDefinition & {
 };
 
 const TEMPLATE_DEFINITIONS: Record<CampaignTemplateId, CampaignTemplateDefinition> = {
+  blank_campaign_canvas: {
+    id: "blank_campaign_canvas",
+    label: "Blank Campaign Canvas",
+    summary:
+      "Start from a clean campaign shell when you want full control and do not want generated quests or rewards yet.",
+    goal: "Give project teams a flexible custom starting point instead of forcing a predefined playbook.",
+    requiredProjectFields: [],
+    campaign: {
+      campaignType: "hybrid",
+      visibility: "public",
+      featured: false,
+      xpBudget: 0,
+      title: "{{project.name}} Campaign",
+      shortDescription:
+        "Start from a blank campaign and shape the flow exactly how your project needs it.",
+      longDescription:
+        "Use this blank campaign canvas when you want the wizard structure without generated quest and reward scaffolding.",
+      bannerUrl: "{{project.bannerUrl}}",
+    },
+    quests: [],
+    rewards: [],
+  },
   community_growth_starter: {
     id: "community_growth_starter",
     label: "Community Growth Starter",

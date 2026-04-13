@@ -132,6 +132,7 @@ export default function NewCampaignPage() {
     useState<SavedTemplateConfiguration | null>(null);
   const [currentStep, setCurrentStep] = useState<BuilderStepId>("template");
   const [visitedSteps, setVisitedSteps] = useState<BuilderStepId[]>(["template"]);
+  const [campaignTitleDraft, setCampaignTitleDraft] = useState("");
 
   const selectedProject = useMemo(
     () =>
@@ -192,6 +193,10 @@ export default function NewCampaignPage() {
     setContextMessage(null);
     setSavedTemplateMessage(null);
   }, [selectedProject?.id, selectedTemplateId]);
+
+  useEffect(() => {
+    setCampaignTitleDraft(templatePlan?.campaignDraft.title ?? "");
+  }, [templatePlan?.campaignDraft.title]);
 
   useEffect(() => {
     setSelectedQuestKeys(templatePlan?.questDrafts.map((quest) => quest.key) ?? []);
@@ -623,36 +628,27 @@ export default function NewCampaignPage() {
 
                     <div className="grid gap-3 md:grid-cols-2">
                       <PreviewStat
-                        label="Campaign title"
-                        value={templatePlan.campaignDraft.title}
+                        label="Selected quests"
+                        value={`${includedQuestDrafts.length}/${templatePlan.questDrafts.length}`}
                       />
                       <PreviewStat
                         label="Template fit"
                         value={`${selectedTemplate.fitLabel} (${selectedTemplate.fitScore}/100)`}
                       />
                       <PreviewStat
-                        label="Quest drafts"
-                        value={`${includedQuestDrafts.length}/${templatePlan.questDrafts.length}`}
-                      />
-                      <PreviewStat
                         label="Reward drafts"
                         value={`${includedRewardDrafts.length}/${templatePlan.rewardDrafts.length}`}
+                      />
+                      <PreviewStat
+                        label="Campaign mode"
+                        value={selectedTemplate.id === "blank_campaign_canvas" ? "Custom start" : "Playbook"}
                       />
                     </div>
 
                     <div className="grid gap-3 md:grid-cols-2">
                       <PreviewStat
-                        label="Auto-wired fields"
-                        value={
-                          templatePlan.questDrafts.reduce(
-                            (total, quest) => total + quest.autofilledFields.length,
-                            0
-                          ) +
-                          templatePlan.rewardDrafts.reduce(
-                            (total, reward) => total + reward.autofilledFields.length,
-                            0
-                          )
-                        }
+                        label="Campaign title"
+                        value={campaignTitleDraft || templatePlan.campaignDraft.title}
                       />
                       <PreviewStat
                         label="Edited drafts"
@@ -666,6 +662,20 @@ export default function NewCampaignPage() {
                         label="Launch route"
                         value={currentStep === "flow" ? "Tune before generate" : "Review before generate"}
                       />
+                    </div>
+
+                    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+                      <label className="block">
+                        <span className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                          Campaign title
+                        </span>
+                        <input
+                          value={campaignTitleDraft}
+                          onChange={(event) => setCampaignTitleDraft(event.target.value)}
+                          className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                          placeholder="Give this campaign its public title"
+                        />
+                      </label>
                     </div>
                   </div>
                 </BuilderSidebarCard>
@@ -908,7 +918,20 @@ export default function NewCampaignPage() {
             projects={projects}
             defaultProjectId={selectedProject?.id}
             resetKey={`${selectedProject?.id || "none"}:${selectedTemplateId}`}
-            initialValues={templatePlan?.campaignDraft}
+            initialValues={
+              templatePlan
+                ? {
+                    ...templatePlan.campaignDraft,
+                    title: campaignTitleDraft || templatePlan.campaignDraft.title,
+                    slug: (campaignTitleDraft || templatePlan.campaignDraft.title)
+                      .toLowerCase()
+                      .trim()
+                      .replace(/[^a-z0-9\s-]/g, "")
+                      .replace(/\s+/g, "-")
+                      .replace(/-+/g, "-"),
+                  }
+                : undefined
+            }
             onSubmit={async (values) => {
               const campaignId = await createCampaign(values);
 
@@ -1097,14 +1120,6 @@ function TemplateQuestCard({
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <TemplateMeta
-          label="Auto-filled"
-          value={
-            item.autofilledFields.length > 0
-              ? item.autofilledFields.join(", ")
-              : "Base defaults only"
-          }
-        />
-        <TemplateMeta
           label="Needs input"
           value={
             item.missingProjectFields.length > 0
@@ -1239,17 +1254,6 @@ function TemplateRewardCard({
         <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-emerald-300">
           Ready
         </span>
-      </div>
-
-      <div className="mt-3">
-        <TemplateMeta
-          label="Auto-filled"
-          value={
-            item.autofilledFields.length > 0
-              ? item.autofilledFields.join(", ")
-              : "Base defaults only"
-          }
-        />
       </div>
 
       <div className="mt-3">
