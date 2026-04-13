@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   OpsFilterBar,
@@ -21,9 +21,15 @@ export default function UsersPage() {
   const memberships = useAdminAuthStore((s) => s.memberships);
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
-  const [status, setStatus] = useState(() => searchParams.get("status") ?? "all");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setSearch(params.get("search") ?? "");
+    setStatus(params.get("status") ?? "all");
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();

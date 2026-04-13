@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   OpsFilterBar,
@@ -21,10 +21,15 @@ export default function SubmissionsPage() {
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
 
-  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
-  const [status, setStatus] = useState(() => searchParams.get("status") ?? "all");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setSearch(params.get("search") ?? "");
+    setStatus(params.get("status") ?? "all");
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();
