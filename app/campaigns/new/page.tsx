@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
@@ -12,6 +12,15 @@ import {
   formatProjectFieldLabel,
   getCampaignTemplateOptions,
 } from "@/lib/campaign-templates";
+import { AdminProject } from "@/types/entities/project";
+
+type EditableProjectContextField =
+  | "website"
+  | "xUrl"
+  | "telegramUrl"
+  | "discordUrl"
+  | "bannerUrl"
+  | "contactEmail";
 
 export default function NewCampaignPage() {
   const router = useRouter();
@@ -19,10 +28,16 @@ export default function NewCampaignPage() {
   const createCampaign = useAdminPortalStore((s) => s.createCampaign);
   const createQuest = useAdminPortalStore((s) => s.createQuest);
   const createReward = useAdminPortalStore((s) => s.createReward);
+  const updateProject = useAdminPortalStore((s) => s.updateProject);
   const projects = useAdminPortalStore((s) => s.projects);
 
   const [selectedTemplateId, setSelectedTemplateId] =
     useState<CampaignTemplateId>("community_growth_starter");
+  const [projectContextDraft, setProjectContextDraft] = useState<
+    Partial<Pick<AdminProject, EditableProjectContextField>>
+  >({});
+  const [contextSaving, setContextSaving] = useState(false);
+  const [contextMessage, setContextMessage] = useState<string | null>(null);
 
   const selectedProject = useMemo(
     () =>
@@ -31,19 +46,79 @@ export default function NewCampaignPage() {
       null,
     [activeProjectId, projects]
   );
+  const effectiveProject = useMemo(
+    () =>
+      selectedProject
+        ? {
+            ...selectedProject,
+            ...projectContextDraft,
+          }
+        : null,
+    [projectContextDraft, selectedProject]
+  );
 
   const templateOptions = getCampaignTemplateOptions();
   const templatePlan = useMemo(
     () =>
-      selectedProject
-        ? buildCampaignTemplate(selectedProject, selectedTemplateId)
+      effectiveProject
+        ? buildCampaignTemplate(effectiveProject, selectedTemplateId)
         : null,
-    [selectedProject, selectedTemplateId]
+    [effectiveProject, selectedTemplateId]
   );
 
   const selectedTemplate = templateOptions.find(
     (template) => template.id === selectedTemplateId
   );
+
+  useEffect(() => {
+    setProjectContextDraft({});
+    setContextMessage(null);
+  }, [selectedProject?.id, selectedTemplateId]);
+
+  async function saveProjectContextFields() {
+    if (!selectedProject || !templatePlan || templatePlan.missingProjectFields.length === 0) {
+      return;
+    }
+
+    const nextProject = {
+      ...selectedProject,
+      ...projectContextDraft,
+    };
+
+    setContextSaving(true);
+    setContextMessage(null);
+
+    try {
+      await updateProject(selectedProject.id, {
+        name: nextProject.name,
+        slug: nextProject.slug,
+        chain: nextProject.chain,
+        category: nextProject.category ?? "",
+        status: nextProject.status,
+        onboardingStatus: nextProject.onboardingStatus,
+        description: nextProject.description,
+        longDescription: nextProject.longDescription ?? "",
+        members: nextProject.members,
+        campaigns: nextProject.campaigns,
+        logo: nextProject.logo,
+        bannerUrl: nextProject.bannerUrl ?? "",
+        website: nextProject.website ?? "",
+        xUrl: nextProject.xUrl ?? "",
+        telegramUrl: nextProject.telegramUrl ?? "",
+        discordUrl: nextProject.discordUrl ?? "",
+        contactEmail: nextProject.contactEmail ?? "",
+        isFeatured: nextProject.isFeatured ?? false,
+        isPublic: nextProject.isPublic ?? true,
+      });
+
+      setProjectContextDraft({});
+      setContextMessage("Project context updated. Template autofill refreshed.");
+    } catch (error: any) {
+      setContextMessage(error?.message || "Failed to update project context.");
+    } finally {
+      setContextSaving(false);
+    }
+  }
 
   return (
     <AdminShell>
@@ -171,13 +246,55 @@ export default function NewCampaignPage() {
                     ))}
                   </div>
                   {templatePlan.missingProjectFields.length > 0 ? (
-                    <p className="mt-3 text-sm leading-6 text-amber-200">
-                      Missing project fields:{" "}
-                      {templatePlan.missingProjectFields
-                        .map((field) => formatProjectFieldLabel(field))
-                        .join(", ")}
-                      . Add these on the project profile for full autofill.
-                    </p>
+                    <div className="mt-4 space-y-4">
+                      <p className="text-sm leading-6 text-amber-200">
+                        Missing project fields:{" "}
+                        {templatePlan.missingProjectFields
+                          .map((field) => formatProjectFieldLabel(field))
+                          .join(", ")}
+                        . Fill them here once and this template will auto-wire itself.
+                      </p>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {templatePlan.missingProjectFields.map((field) => (
+                          <label key={field} className="block">
+                            <span className="mb-2 block text-sm font-semibold text-text">
+                              {formatProjectFieldLabel(field)}
+                            </span>
+                            <input
+                              value={
+                                projectContextDraft[field as EditableProjectContextField] ??
+                                ((effectiveProject?.[
+                                  field as EditableProjectContextField
+                                ] as string | undefined) ?? "")
+                              }
+                              onChange={(event) =>
+                                setProjectContextDraft((current) => ({
+                                  ...current,
+                                  [field as EditableProjectContextField]: event.target.value,
+                                }))
+                              }
+                              className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+                              placeholder={`Add ${formatProjectFieldLabel(field)}`}
+                            />
+                          </label>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={saveProjectContextFields}
+                          disabled={contextSaving}
+                          className="rounded-2xl bg-primary px-4 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {contextSaving ? "Saving project context..." : "Save project context"}
+                        </button>
+                        {contextMessage ? (
+                          <p className="text-sm text-sub">{contextMessage}</p>
+                        ) : null}
+                      </div>
+                    </div>
                   ) : (
                     <p className="mt-3 text-sm leading-6 text-sub">
                       All required project links are present, so this template can
