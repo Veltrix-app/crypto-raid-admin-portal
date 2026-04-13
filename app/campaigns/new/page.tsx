@@ -173,6 +173,13 @@ export default function NewCampaignPage() {
         : null,
     [effectiveProject, selectedTemplateId]
   );
+  const persistedTemplatePlan = useMemo(
+    () =>
+      selectedProject
+        ? buildCampaignTemplate(selectedProject, selectedTemplateId)
+        : null,
+    [selectedProject, selectedTemplateId]
+  );
 
   const selectedTemplate = templateOptions.find(
     (template) => template.id === selectedTemplateId
@@ -296,6 +303,19 @@ export default function NewCampaignPage() {
 
     return sections;
   }, [effectiveProject]);
+  const editableContextFields = useMemo(() => {
+    const persistedMissing = persistedTemplatePlan?.missingProjectFields ?? [];
+    const draftKeys = Object.keys(projectContextDraft).filter(
+      (key) => key in projectContextDraft
+    ) as EditableProjectContextField[];
+
+    return Array.from(
+      new Set<EditableProjectContextField>([
+        ...(persistedMissing as EditableProjectContextField[]),
+        ...draftKeys,
+      ])
+    );
+  }, [persistedTemplatePlan?.missingProjectFields, projectContextDraft]);
 
   function updateQuestDraftEdit(
     key: string,
@@ -435,8 +455,8 @@ export default function NewCampaignPage() {
       return "Choose a playbook or blank campaign canvas before continuing.";
     }
 
-    if (step === "autofill" && templatePlan && templatePlan.missingProjectFields.length > 0) {
-      return `Add the missing workspace context first: ${templatePlan.missingProjectFields
+    if (step === "autofill" && persistedTemplatePlan && persistedTemplatePlan.missingProjectFields.length > 0) {
+      return `Add the missing workspace context first: ${persistedTemplatePlan.missingProjectFields
         .map((field) => formatProjectFieldLabel(field))
         .join(", ")}.`;
     }
@@ -494,7 +514,7 @@ export default function NewCampaignPage() {
               />
               <BuilderMetricCard
                 label="Missing context"
-                value={String(templatePlan?.missingProjectFields.length ?? 0)}
+                value={String(persistedTemplatePlan?.missingProjectFields.length ?? 0)}
               />
             </>
           }
@@ -703,7 +723,7 @@ export default function NewCampaignPage() {
                       />
                       <PreviewStat
                         label="Missing context"
-                        value={templatePlan.missingProjectFields.length}
+                        value={persistedTemplatePlan?.missingProjectFields.length ?? 0}
                       />
                       <PreviewStat
                         label="Launch route"
@@ -759,7 +779,7 @@ export default function NewCampaignPage() {
                       <span
                         key={field}
                         className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                          templatePlan.missingProjectFields.includes(field)
+                          (persistedTemplatePlan?.missingProjectFields ?? []).includes(field)
                             ? "bg-amber-500/15 text-amber-300"
                             : "bg-primary/15 text-primary"
                         }`}
@@ -768,18 +788,18 @@ export default function NewCampaignPage() {
                       </span>
                     ))}
                   </div>
-                  {templatePlan.missingProjectFields.length > 0 ? (
+                  {(persistedTemplatePlan?.missingProjectFields.length ?? 0) > 0 ? (
                     <div className="mt-4 space-y-4">
                       <p className="text-sm leading-6 text-amber-200">
                         Missing project fields:{" "}
-                        {templatePlan.missingProjectFields
+                        {(persistedTemplatePlan?.missingProjectFields ?? [])
                           .map((field) => formatProjectFieldLabel(field))
                           .join(", ")}
                         . Fill them here once and this template will auto-wire itself.
                       </p>
 
                       <div className="grid gap-4 md:grid-cols-2">
-                        {templatePlan.missingProjectFields.map((field) => (
+                        {editableContextFields.map((field) => (
                           <label key={field} className="block">
                             <span className="mb-2 block text-sm font-semibold text-text">
                               {formatProjectFieldLabel(field)}
@@ -787,7 +807,7 @@ export default function NewCampaignPage() {
                             <input
                               value={
                                 projectContextDraft[field as EditableProjectContextField] ??
-                                ((effectiveProject?.[
+                                ((selectedProject?.[
                                   field as EditableProjectContextField
                                 ] as string | undefined) ?? "")
                               }
