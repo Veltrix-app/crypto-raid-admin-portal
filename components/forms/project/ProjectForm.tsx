@@ -247,7 +247,7 @@ export default function ProjectForm({
           onSelect={setCurrentStep}
         />
 
-        <div className="space-y-6 rounded-[28px] border border-line bg-card p-6">
+        <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
           <BuilderStepHeader
             eyebrow={currentStepMeta.eyebrow}
             title={currentStepMeta.label}
@@ -282,7 +282,7 @@ export default function ProjectForm({
         </div>
 
         <BuilderSidebarStack>
-          <div className="overflow-hidden rounded-[28px] border border-line bg-card">
+          <div className="overflow-hidden rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.98),rgba(10,12,18,0.96))] shadow-[0_22px_60px_rgba(0,0,0,0.22)]">
             <div
               className="h-36 bg-gradient-to-br from-primary/15 via-card to-card2"
               style={
@@ -304,7 +304,7 @@ export default function ProjectForm({
 
             <div className="p-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-card2 text-2xl">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/8 bg-white/[0.04] text-2xl">
                   {values.logo || "\uD83D\uDE80"}
                 </div>
                 <div className="min-w-0">
@@ -334,9 +334,9 @@ export default function ProjectForm({
           </div>
 
           <BuilderSidebarCard title="Readiness Guide">
-            <div className="space-y-3">
+            <div className="space-y-2">
               {brandingReadiness.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
+                <div key={item.label} className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
                     <span
@@ -784,9 +784,9 @@ function renderReview(
 
 function SectionIntro({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-[24px] border border-line bg-card2 p-5">
-      <p className="text-lg font-extrabold text-text">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{body}</p>
+    <div className="border-b border-white/8 pb-4">
+      <p className="text-[1.05rem] font-extrabold tracking-[-0.02em] text-text">{title}</p>
+      <p className="mt-2 max-w-2xl text-sm leading-7 text-sub">{body}</p>
     </div>
   );
 }
@@ -800,7 +800,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-semibold text-text">{label}</span>
+      <span className="mb-2 block text-sm font-semibold tracking-[-0.01em] text-text">{label}</span>
       {children}
     </label>
   );
@@ -816,7 +816,7 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-4">
+    <label className="flex items-center justify-between rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-4">
       <span className="text-sm font-semibold text-text">{label}</span>
       <input
         type="checkbox"
@@ -830,7 +830,7 @@ function ToggleField({
 
 function PreviewBadge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold text-text">
+    <span className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-xs font-bold text-text">
       {children}
     </span>
   );
@@ -838,7 +838,7 @@ function PreviewBadge({ children }: { children: React.ReactNode }) {
 
 function PreviewStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-4">
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
       <p className="text-sm text-sub">{label}</p>
       <p className="mt-2 text-xl font-extrabold text-text">{value}</p>
     </div>
@@ -853,11 +853,11 @@ function SummaryPanel({
   items: Array<[string, string]>;
 }) {
   return (
-    <div className="rounded-[24px] border border-line bg-card2 p-5">
-      <p className="text-sm font-extrabold text-text">{title}</p>
+    <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+      <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-primary">{title}</p>
       <div className="mt-4 space-y-3">
         {items.map(([label, value]) => (
-          <div key={label} className="flex items-start justify-between gap-4">
+          <div key={label} className="flex items-start justify-between gap-4 border-b border-white/6 pb-3 last:border-b-0 last:pb-0">
             <p className="text-sm text-sub">{label}</p>
             <p className="max-w-[60%] text-right text-sm font-semibold text-text">{value}</p>
           </div>

@@ -302,7 +302,7 @@ export default function RewardForm({
           onSelect={setCurrentStep}
         />
 
-        <div className="space-y-6 rounded-[28px] border border-line bg-card p-6">
+        <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
           <BuilderStepHeader
             eyebrow={currentStepMeta.eyebrow}
             title={currentStepMeta.label}
@@ -342,7 +342,7 @@ export default function RewardForm({
           })}
         </div>
 
-        <div className="rounded-2xl border border-line bg-card2 p-5">
+        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">{activePreset.label}</p>
@@ -580,7 +580,7 @@ export default function RewardForm({
           </Field>
         </div>
 
-        <div className="rounded-2xl border border-line bg-card2 p-4 text-sm text-sub">
+        <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-sm text-sub">
           <span className="font-semibold text-text">Builder hint:</span> keep the cost and rarity aligned with the effort of the quests that unlock this reward. The stronger the reward, the more important it is to make fulfillment and stock rules explicit.
         </div>
       </div>
@@ -696,7 +696,7 @@ export default function RewardForm({
 
         <BuilderSidebarStack>
           <BuilderSidebarCard title="Reward Summary">
-            <div className="rounded-2xl border border-line bg-card2 p-4">
+            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-bold text-text">{activePreset.label}</p>
@@ -712,9 +712,9 @@ export default function RewardForm({
           </BuilderSidebarCard>
 
           <BuilderSidebarCard title="Readiness Guide">
-            <div className="space-y-3">
+            <div className="space-y-2">
               {readinessItems.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
+                <div key={item.label} className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
                     <span
@@ -745,7 +745,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-semibold text-text">{label}</span>
+      <span className="mb-2 block text-sm font-semibold tracking-[-0.01em] text-text">{label}</span>
       {children}
     </label>
   );
@@ -761,7 +761,7 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-4">
+    <label className="flex items-center justify-between rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-4">
       <span className="text-sm font-semibold text-text">{label}</span>
       <input
         type="checkbox"
