@@ -169,6 +169,7 @@ export default function NewCampaignPage() {
   const currentStepMeta = builderSteps[currentStepIndex];
   const previousStep = builderSteps[currentStepIndex - 1];
   const nextStep = builderSteps[currentStepIndex + 1];
+  const progressPercent = Math.round(((currentStepIndex + 1) / builderSteps.length) * 100);
 
   useEffect(() => {
     setProjectContextDraft({});
@@ -442,6 +443,15 @@ export default function NewCampaignPage() {
                 label="Missing context"
                 value={templatePlan?.missingProjectFields.length ?? 0}
               />
+            </div>
+          </div>
+          <div className="mt-6">
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.16em] text-sub">
+              <span>Builder progress</span>
+              <span>{progressPercent}%</span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-card2">
+              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
             </div>
           </div>
         </div>
@@ -997,13 +1007,13 @@ export default function NewCampaignPage() {
                 onClick={() => setCurrentStep(nextStep.id)}
                 className="rounded-2xl bg-primary px-5 py-3 font-bold text-black"
               >
-                Continue
+                Continue to {nextStep.label}
               </button>
             ) : null}
           </div>
 
           <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-sub">
-            {currentStepMeta.eyebrow} • {currentStepMeta.label}
+            {currentStepMeta.eyebrow} | {currentStepMeta.label}
           </div>
         </div>
       </div>

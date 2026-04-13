@@ -199,6 +199,7 @@ export default function ProjectForm({
   const previousStep = steps[currentStepIndex - 1];
   const nextStep = steps[currentStepIndex + 1];
   const readinessCount = brandingReadiness.filter((item) => item.complete).length;
+  const progressPercent = Math.round(((currentStepIndex + 1) / steps.length) * 100);
 
   const setField = <K extends keyof Omit<AdminProject, "id">>(
     key: K,
@@ -236,10 +237,19 @@ export default function ProjectForm({
             <MetricTile label="Template Context" value={String(templateContextCount)} sublabel="advanced fields" />
           </div>
         </div>
+        <div className="mt-6">
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.16em] text-sub">
+            <span>Builder progress</span>
+            <span>{progressPercent}%</span>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-card2">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.8fr_1.4fr_0.9fr]">
-        <aside className="rounded-[28px] border border-line bg-card p-5">
+        <aside className="rounded-[28px] border border-line bg-card p-5 xl:sticky xl:top-24 xl:self-start">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Progress</p>
           <div className="mt-4 space-y-3">
             {steps.map((step, index) => {
@@ -321,7 +331,7 @@ export default function ProjectForm({
                   onClick={() => setCurrentStep(nextStep.id)}
                   className="rounded-2xl bg-primary px-5 py-3 font-bold text-black"
                 >
-                  Continue
+                  Continue to {nextStep.label}
                 </button>
               ) : (
                 <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
@@ -340,7 +350,7 @@ export default function ProjectForm({
           </div>
         </div>
 
-        <aside className="space-y-6">
+        <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
           <div className="overflow-hidden rounded-[28px] border border-line bg-card">
             <div
               className="h-36 bg-gradient-to-br from-primary/15 via-card to-card2"

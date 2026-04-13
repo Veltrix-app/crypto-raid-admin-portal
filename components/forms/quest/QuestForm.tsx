@@ -293,6 +293,7 @@ export default function QuestForm({
   const currentStepMeta = questBuilderSteps[currentStepIndex];
   const previousStep = questBuilderSteps[currentStepIndex - 1];
   const nextStep = questBuilderSteps[currentStepIndex + 1];
+  const progressPercent = Math.round(((currentStepIndex + 1) / questBuilderSteps.length) * 100);
   const readinessItems = [
     {
       label: "Project placement",
@@ -410,10 +411,19 @@ export default function QuestForm({
             <RouteInfoCard label="Missing config" value={verificationPreview.invalidConfig ? "Invalid JSON" : String(verificationPreview.missingConfigKeys.length)} />
           </div>
         </div>
+        <div className="mt-6">
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.16em] text-sub">
+            <span>Builder progress</span>
+            <span>{progressPercent}%</span>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-card2">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.78fr_1.42fr_0.9fr]">
-        <aside className="rounded-[28px] border border-line bg-card p-5">
+        <aside className="rounded-[28px] border border-line bg-card p-5 xl:sticky xl:top-24 xl:self-start">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Progress</p>
           <div className="mt-4 space-y-3">
             {questBuilderSteps.map((step, index) => {
@@ -974,7 +984,7 @@ export default function QuestForm({
                   onClick={() => setCurrentStep(nextStep.id)}
                   className="rounded-2xl bg-primary px-5 py-3 font-bold text-black"
                 >
-                  Continue
+                  Continue to {nextStep.label}
                 </button>
               ) : (
                 <button
@@ -993,7 +1003,7 @@ export default function QuestForm({
           </div>
         </div>
 
-        <aside className="space-y-6">
+        <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
           <div className="rounded-[28px] border border-line bg-card p-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Blueprint Summary</p>
             <div className="mt-4 rounded-2xl border border-line bg-card2 p-4">
