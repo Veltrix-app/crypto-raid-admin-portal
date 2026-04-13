@@ -41,6 +41,8 @@ const QUEST_TYPE_PRESETS: Record<
     proofRequired: boolean;
     proofType: AdminQuest["proofType"];
     verificationType: AdminQuest["verificationType"];
+    verificationProvider?: NonNullable<AdminQuest["verificationProvider"]>;
+    completionMode?: NonNullable<AdminQuest["completionMode"]>;
     type: string;
     recommendedConfig: string;
   }
@@ -163,8 +165,11 @@ const QUEST_TYPE_PRESETS: Record<
     proofRequired: false,
     proofType: "none",
     verificationType: "event_check",
+    verificationProvider: "website",
+    completionMode: "integration_auto",
     type: "Traffic",
-    recommendedConfig: '{\n  "targetUrl": "https://veltrix.app/docs"\n}',
+    recommendedConfig:
+      '{\n  "targetUrl": "https://veltrix.app/docs",\n  "integrationProvider": "website",\n  "eventType": "website_visit_confirmed"\n}',
   },
   referral: {
     label: "Invite Friends",
@@ -266,6 +271,8 @@ export default function QuestForm({
 
       autoApprove: false,
       verificationType: "manual_review",
+      verificationProvider: "custom",
+      completionMode: "manual",
       verificationConfig: "",
 
       isRepeatable: false,
@@ -376,6 +383,14 @@ export default function QuestForm({
       proofRequired: preset.proofRequired,
       proofType: preset.proofType,
       verificationType: preset.verificationType,
+      verificationProvider: preset.verificationProvider ?? "custom",
+      completionMode:
+        preset.completionMode ??
+        (preset.verificationType === "manual_review"
+          ? "manual"
+          : preset.verificationType === "hybrid"
+          ? "hybrid"
+          : "rule_auto"),
       verificationConfig:
         current.verificationConfig?.trim() && current.questType === questType
           ? current.verificationConfig
@@ -410,6 +425,10 @@ export default function QuestForm({
           <>
             <BuilderMetricCard label="Blueprint" value={activePreset.label} />
             <BuilderMetricCard label="Verification route" value={verificationPreview.routeLabel} />
+            <BuilderMetricCard
+              label="Completion mode"
+              value={(values.completionMode || "manual").replace(/_/g, " ")}
+            />
             <BuilderMetricCard
               label="Missing config"
               value={verificationPreview.invalidConfig ? "Invalid JSON" : String(verificationPreview.missingConfigKeys.length)}
@@ -705,7 +724,18 @@ export default function QuestForm({
             label="Auto Approve"
             checked={values.autoApprove}
             onChange={(checked) =>
-              setValues({ ...values, autoApprove: checked })
+              setValues({
+                ...values,
+                autoApprove: checked,
+                completionMode:
+                  values.completionMode === "integration_auto"
+                    ? "integration_auto"
+                    : checked
+                    ? "rule_auto"
+                    : values.verificationType === "hybrid"
+                    ? "hybrid"
+                    : "manual",
+              })
             }
           />
 
@@ -736,6 +766,17 @@ export default function QuestForm({
                 setValues({
                   ...values,
                   verificationType: e.target.value as AdminQuest["verificationType"],
+                  completionMode:
+                    e.target.value === "hybrid"
+                      ? "hybrid"
+                      : e.target.value === "manual_review"
+                      ? "manual"
+                      : values.verificationProvider === "website" &&
+                        values.questType === "url_visit"
+                      ? "integration_auto"
+                      : values.autoApprove
+                      ? "rule_auto"
+                      : "manual",
                 })
               }
               className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
@@ -764,6 +805,12 @@ export default function QuestForm({
             <p className="mt-2 text-sm text-sub">
               Start from the recommended config for <span className="font-semibold text-text">{activePreset.label}</span> and adjust the values to match this campaign.
             </p>
+            {values.verificationProvider === "website" &&
+            values.completionMode === "integration_auto" ? (
+              <p className="mt-3 text-sm leading-6 text-primary">
+                This route is ready for tracked website verification. Contributors should complete the visit without uploading proof once the integration endpoint is wired.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -784,6 +831,10 @@ export default function QuestForm({
             <RouteInfoCard
               label="Proof expectation"
               value={verificationPreview.proofExpectation}
+            />
+            <RouteInfoCard
+              label="Provider"
+              value={(values.verificationProvider || "custom").replace(/_/g, " ")}
             />
             <RouteInfoCard
               label="Required config"
@@ -960,6 +1011,7 @@ export default function QuestForm({
               actionLabel={values.actionLabel}
               xp={values.xp}
               routeLabel={verificationPreview.routeLabel}
+              completionMode={values.completionMode}
             />
           </BuilderSidebarCard>
 
@@ -1027,6 +1079,7 @@ function QuestPreviewSurface({
   actionLabel,
   xp,
   routeLabel,
+  completionMode,
 }: {
   preset: {
     label: string;
@@ -1040,6 +1093,7 @@ function QuestPreviewSurface({
   actionLabel: string;
   xp: number;
   routeLabel: string;
+  completionMode?: string;
 }) {
   return (
     <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5">
@@ -1067,6 +1121,9 @@ function QuestPreviewSurface({
         </span>
         <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
           {preset.verificationType}
+        </span>
+        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
+          {(completionMode || "manual").replace(/_/g, " ")}
         </span>
         <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
           {xp} XP

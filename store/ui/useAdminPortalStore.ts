@@ -266,6 +266,11 @@ function mapQuest(row: DbQuest): AdminQuest {
     autoApprove: row.auto_approve ?? false,
     verificationType: (row.verification_type ??
       "manual_review") as AdminQuest["verificationType"],
+    verificationProvider: (row.verification_provider ?? "custom") as AdminQuest["verificationProvider"],
+    completionMode: (
+      row.completion_mode ??
+      (row.auto_approve ? "rule_auto" : "manual")
+    ) as AdminQuest["completionMode"],
 
     verificationConfig: row.verification_config
       ? JSON.stringify(row.verification_config, null, 2)
@@ -1190,6 +1195,9 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
       auto_approve: input.autoApprove,
       verification_type: input.verificationType,
+      verification_provider: input.verificationProvider ?? "custom",
+      completion_mode:
+        input.completionMode ?? (input.autoApprove ? "rule_auto" : "manual"),
       verification_config: parsedVerificationConfig,
 
       is_repeatable: input.isRepeatable,
@@ -1264,6 +1272,9 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
       auto_approve: input.autoApprove,
       verification_type: input.verificationType,
+      verification_provider: input.verificationProvider ?? "custom",
+      completion_mode:
+        input.completionMode ?? (input.autoApprove ? "rule_auto" : "manual"),
       verification_config: parsedVerificationConfig,
 
       is_repeatable: input.isRepeatable,

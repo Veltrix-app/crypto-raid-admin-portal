@@ -171,6 +171,8 @@ export type DbQuest = {
 
   auto_approve: boolean | null;
   verification_type: string | null;
+  verification_provider?: string | null;
+  completion_mode?: string | null;
   verification_config: Record<string, any> | null;
 
   is_repeatable: boolean | null;
@@ -231,6 +233,53 @@ export type DbSubmission = {
   reviewed_by_auth_user_id?: string | null;
   reviewed_at?: string | null;
   updated_at?: string | null;
+};
+
+export type DbUserConnectedAccount = {
+  id: string;
+  auth_user_id: string;
+  provider: string;
+  provider_user_id: string;
+  username: string | null;
+  access_token_encrypted: string | null;
+  refresh_token_encrypted: string | null;
+  status: string;
+  connected_at?: string;
+  updated_at?: string;
+};
+
+export type DbProjectIntegration = {
+  id: string;
+  project_id: string;
+  provider: string;
+  status: string;
+  config: Record<string, any> | null;
+  connected_at?: string;
+  updated_at?: string;
+};
+
+export type DbVerificationEvent = {
+  id: string;
+  auth_user_id: string;
+  project_id: string | null;
+  quest_id: string | null;
+  provider: string;
+  event_type: string;
+  external_ref: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbQuestVerificationRun = {
+  id: string;
+  auth_user_id: string;
+  project_id: string | null;
+  quest_id: string;
+  provider: string;
+  result: string;
+  reason: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
 };
 
 export type DbTeamMember = {

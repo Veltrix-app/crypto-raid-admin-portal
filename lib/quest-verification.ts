@@ -2,7 +2,14 @@ import { AdminQuest } from "@/types/entities/quest";
 
 type VerificationPreviewParams = Pick<
   AdminQuest,
-  "questType" | "verificationType" | "proofRequired" | "proofType" | "autoApprove" | "verificationConfig"
+  | "questType"
+  | "verificationType"
+  | "verificationProvider"
+  | "completionMode"
+  | "proofRequired"
+  | "proofType"
+  | "autoApprove"
+  | "verificationConfig"
 >;
 
 export type QuestVerificationPreview = {
@@ -92,6 +99,24 @@ export function getQuestVerificationPreview(
   const proofExpectation = !params.proofRequired || params.proofType === "none"
     ? "Contributors should be able to complete this without uploading proof."
     : `Contributors must submit ${params.proofType.replace(/_/g, " ")} proof.`;
+
+  if (
+    params.questType === "url_visit" &&
+    params.verificationProvider === "website" &&
+    params.completionMode === "integration_auto" &&
+    !invalid &&
+    missingConfigKeys.length === 0
+  ) {
+    return {
+      routeLabel: "Website auto-verify",
+      routeDescription:
+        "Veltrix will confirm the visit through a tracked website event instead of relying on blind rule auto-approval or manual proof.",
+      proofExpectation: "Contributors visit the destination and Veltrix completes the quest after the website signal lands.",
+      requiredConfigKeys,
+      missingConfigKeys,
+      invalidConfig: false,
+    };
+  }
 
   if (invalid) {
     return {

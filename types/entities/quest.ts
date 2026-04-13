@@ -43,6 +43,8 @@ export type AdminQuest = {
     | "event_check"
     | "manual_review"
     | "hybrid";
+  verificationProvider?: "website" | "x" | "discord" | "telegram" | "wallet" | "custom";
+  completionMode?: "manual" | "rule_auto" | "integration_auto" | "hybrid";
 
   verificationConfig?: string;
 
