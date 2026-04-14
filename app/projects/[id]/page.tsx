@@ -35,6 +35,16 @@ export default function ProjectDetailPage() {
   const [discordIntegrationStatus, setDiscordIntegrationStatus] = useState<string>("unknown");
   const [telegramIntegrationStatus, setTelegramIntegrationStatus] = useState<string>("unknown");
   const [xIntegrationStatus, setXIntegrationStatus] = useState<string>("unknown");
+  const [discordIntegrationConfig, setDiscordIntegrationConfig] = useState<{
+    guildId: string;
+    serverId: string;
+  }>({ guildId: "", serverId: "" });
+  const [telegramIntegrationConfig, setTelegramIntegrationConfig] = useState<{
+    chatId: string;
+    groupId: string;
+  }>({ chatId: "", groupId: "" });
+  const [savingIntegration, setSavingIntegration] = useState<"discord" | "telegram" | null>(null);
+  const [integrationNotice, setIntegrationNotice] = useState<string>("");
 
   const project = useMemo(
     () => getProjectById(params.id),
@@ -59,13 +69,13 @@ export default function ProjectDetailPage() {
       const [{ data: discordData }, { data: telegramData }, { data: xData }] = await Promise.all([
         supabase
           .from("project_integrations")
-          .select("status")
+          .select("status, config")
           .eq("project_id", project.id)
           .eq("provider", "discord")
           .maybeSingle(),
         supabase
           .from("project_integrations")
-          .select("status")
+          .select("status, config")
           .eq("project_id", project.id)
           .eq("provider", "telegram")
           .maybeSingle(),
@@ -81,6 +91,26 @@ export default function ProjectDetailPage() {
       setDiscordIntegrationStatus(discordData?.status ?? "not_connected");
       setTelegramIntegrationStatus(telegramData?.status ?? "not_connected");
       setXIntegrationStatus(xData?.status ?? "not_connected");
+      setDiscordIntegrationConfig({
+        guildId:
+          discordData?.config && typeof discordData.config === "object"
+            ? String((discordData.config as Record<string, unknown>).guildId ?? "")
+            : "",
+        serverId:
+          discordData?.config && typeof discordData.config === "object"
+            ? String((discordData.config as Record<string, unknown>).serverId ?? "")
+            : "",
+      });
+      setTelegramIntegrationConfig({
+        chatId:
+          telegramData?.config && typeof telegramData.config === "object"
+            ? String((telegramData.config as Record<string, unknown>).chatId ?? "")
+            : "",
+        groupId:
+          telegramData?.config && typeof telegramData.config === "object"
+            ? String((telegramData.config as Record<string, unknown>).groupId ?? "")
+            : "",
+      });
     }
 
     loadProjectIntegrations();
@@ -203,6 +233,63 @@ export default function ProjectDetailPage() {
     relatedCampaigns.length === 0 ||
     relatedQuests.length === 0 ||
     relatedTeamMembers.length <= 1;
+
+  async function saveProjectIntegration(provider: "discord" | "telegram") {
+    if (!project?.id) return;
+
+    const supabase = createClient();
+    const now = new Date().toISOString();
+    const config =
+      provider === "discord"
+        ? {
+            guildId: discordIntegrationConfig.guildId.trim(),
+            serverId: discordIntegrationConfig.serverId.trim(),
+          }
+        : {
+            chatId: telegramIntegrationConfig.chatId.trim(),
+            groupId: telegramIntegrationConfig.groupId.trim(),
+          };
+
+    const hasPrimaryIdentifier =
+      provider === "discord"
+        ? Boolean(config.guildId || config.serverId)
+        : Boolean(config.chatId || config.groupId);
+
+    setSavingIntegration(provider);
+    setIntegrationNotice("");
+
+    const { error } = await supabase.from("project_integrations").upsert(
+      {
+        project_id: project.id,
+        provider,
+        status: hasPrimaryIdentifier ? "connected" : "needs_attention",
+        config,
+        updated_at: now,
+      },
+      {
+        onConflict: "project_id,provider",
+      }
+    );
+
+    setSavingIntegration(null);
+
+    if (error) {
+      setIntegrationNotice(error.message || `Failed to save ${provider} integration.`);
+      return;
+    }
+
+    if (provider === "discord") {
+      setDiscordIntegrationStatus(hasPrimaryIdentifier ? "connected" : "needs_attention");
+    } else {
+      setTelegramIntegrationStatus(hasPrimaryIdentifier ? "connected" : "needs_attention");
+    }
+
+    setIntegrationNotice(
+      provider === "discord"
+        ? "Discord integration saved. Guild membership checks can now resolve the target server."
+        : "Telegram integration saved. Group membership checks can now resolve the target chat."
+    );
+  }
 
   return (
     <AdminShell>
@@ -505,6 +592,102 @@ export default function ProjectDetailPage() {
                   label="Telegram group"
                   value={project.telegramUrl || "No Telegram URL on project yet"}
                 />
+                <div className="rounded-[24px] border border-line bg-card2 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-text">Discord integration config</p>
+                      <p className="mt-2 text-sm text-sub">
+                        Save the Discord guild id that the community bot should verify against.
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+                      {discordIntegrationStatus}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3">
+                    <input
+                      value={discordIntegrationConfig.guildId}
+                      onChange={(event) =>
+                        setDiscordIntegrationConfig((current) => ({
+                          ...current,
+                          guildId: event.target.value,
+                        }))
+                      }
+                      placeholder="Discord guild ID"
+                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                    />
+                    <input
+                      value={discordIntegrationConfig.serverId}
+                      onChange={(event) =>
+                        setDiscordIntegrationConfig((current) => ({
+                          ...current,
+                          serverId: event.target.value,
+                        }))
+                      }
+                      placeholder="Optional legacy server ID"
+                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                    />
+                    <button
+                      onClick={() => void saveProjectIntegration("discord")}
+                      disabled={savingIntegration === "discord"}
+                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {savingIntegration === "discord" ? "Saving Discord config..." : "Save Discord integration"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] border border-line bg-card2 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-text">Telegram integration config</p>
+                      <p className="mt-2 text-sm text-sub">
+                        Save the Telegram chat id that the community bot should verify against.
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+                      {telegramIntegrationStatus}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3">
+                    <input
+                      value={telegramIntegrationConfig.chatId}
+                      onChange={(event) =>
+                        setTelegramIntegrationConfig((current) => ({
+                          ...current,
+                          chatId: event.target.value,
+                        }))
+                      }
+                      placeholder="Telegram chat ID"
+                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                    />
+                    <input
+                      value={telegramIntegrationConfig.groupId}
+                      onChange={(event) =>
+                        setTelegramIntegrationConfig((current) => ({
+                          ...current,
+                          groupId: event.target.value,
+                        }))
+                      }
+                      placeholder="Optional legacy group ID"
+                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                    />
+                    <button
+                      onClick={() => void saveProjectIntegration("telegram")}
+                      disabled={savingIntegration === "telegram"}
+                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {savingIntegration === "telegram" ? "Saving Telegram config..." : "Save Telegram integration"}
+                    </button>
+                  </div>
+                </div>
+                {integrationNotice ? (
+                  <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">
+                    {integrationNotice}
+                  </div>
+                ) : null}
                 <DetailMetaRow
                   label="What this unlocks"
                   value={[
