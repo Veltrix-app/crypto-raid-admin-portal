@@ -101,6 +101,24 @@ export function getQuestVerificationPreview(
     : `Contributors must submit ${params.proofType.replace(/_/g, " ")} proof.`;
 
   if (
+    params.questType === "social_follow" &&
+    params.verificationProvider === "x" &&
+    params.completionMode === "integration_auto" &&
+    !invalid &&
+    missingConfigKeys.length === 0
+  ) {
+    return {
+      routeLabel: "X auto-verify",
+      routeDescription:
+        "Veltrix will route this quest through linked X account verification instead of relying on a blind low-risk auto-approval rule.",
+      proofExpectation: "Contributors link X, follow the target account and wait for follow confirmation.",
+      requiredConfigKeys,
+      missingConfigKeys,
+      invalidConfig: false,
+    };
+  }
+
+  if (
     params.questType === "telegram_join" &&
     params.verificationProvider === "telegram" &&
     params.completionMode === "integration_auto" &&

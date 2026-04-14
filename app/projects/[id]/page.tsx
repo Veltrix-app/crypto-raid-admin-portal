@@ -34,6 +34,7 @@ export default function ProjectDetailPage() {
   const teamMembers = useAdminPortalStore((s) => s.teamMembers);
   const [discordIntegrationStatus, setDiscordIntegrationStatus] = useState<string>("unknown");
   const [telegramIntegrationStatus, setTelegramIntegrationStatus] = useState<string>("unknown");
+  const [xIntegrationStatus, setXIntegrationStatus] = useState<string>("unknown");
 
   const project = useMemo(
     () => getProjectById(params.id),
@@ -55,7 +56,7 @@ export default function ProjectDetailPage() {
       if (!project?.id) return;
 
       const supabase = createClient();
-      const [{ data: discordData }, { data: telegramData }] = await Promise.all([
+      const [{ data: discordData }, { data: telegramData }, { data: xData }] = await Promise.all([
         supabase
           .from("project_integrations")
           .select("status")
@@ -68,11 +69,18 @@ export default function ProjectDetailPage() {
           .eq("project_id", project.id)
           .eq("provider", "telegram")
           .maybeSingle(),
+        supabase
+          .from("project_integrations")
+          .select("status")
+          .eq("project_id", project.id)
+          .eq("provider", "x")
+          .maybeSingle(),
       ]);
 
       if (cancelled) return;
       setDiscordIntegrationStatus(discordData?.status ?? "not_connected");
       setTelegramIntegrationStatus(telegramData?.status ?? "not_connected");
+      setXIntegrationStatus(xData?.status ?? "not_connected");
     }
 
     loadProjectIntegrations();
@@ -456,6 +464,16 @@ export default function ProjectDetailPage() {
             <DetailSidebarSurface title="Integration Readiness">
               <div className="mt-4 space-y-4">
                 <DetailMetaRow
+                  label="X follow verification"
+                  value={
+                    xIntegrationStatus === "connected"
+                      ? "X integration connected"
+                      : xIntegrationStatus === "needs_attention"
+                      ? "X integration needs attention"
+                      : "X integration not connected"
+                  }
+                />
+                <DetailMetaRow
                   label="Discord quest verification"
                   value={
                     discordIntegrationStatus === "connected"
@@ -476,6 +494,10 @@ export default function ProjectDetailPage() {
                   }
                 />
                 <DetailMetaRow
+                  label="X profile"
+                  value={project.xUrl || "No X URL on project yet"}
+                />
+                <DetailMetaRow
                   label="Discord invite"
                   value={project.discordUrl || "No Discord URL on project yet"}
                 />
@@ -486,6 +508,9 @@ export default function ProjectDetailPage() {
                 <DetailMetaRow
                   label="What this unlocks"
                   value={[
+                    xIntegrationStatus === "connected"
+                      ? "X follow quests can route into integration verification."
+                      : "Connect the X integration to move follow quests beyond placeholder automation.",
                     discordIntegrationStatus === "connected"
                       ? "Discord join quests can route into integration verification."
                       : "Connect the Discord integration to move Discord join quests beyond placeholder automation.",
