@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { resolveQuestIntegration } from "@/lib/quest-integration";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     const { data: quest, error: questError } = await supabase
       .from("quests")
       .select(
-        "id, title, project_id, action_url, quest_type, verification_provider, completion_mode, verification_config"
+        "id, title, project_id, action_url, quest_type, verification_type, verification_provider, completion_mode, verification_config"
       )
       .eq("id", questId)
       .single();
@@ -77,10 +78,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Quest not found." }, { status: 404 });
     }
 
+    const resolvedIntegration = resolveQuestIntegration(quest);
+
     if (
-      quest.quest_type !== "discord_join" ||
-      quest.verification_provider !== "discord" ||
-      quest.completion_mode !== "integration_auto"
+      resolvedIntegration.questType !== "discord_join" ||
+      resolvedIntegration.verificationProvider !== "discord" ||
+      resolvedIntegration.completionMode !== "integration_auto"
     ) {
       return NextResponse.json(
         { ok: false, error: "Quest is not configured for Discord auto verification." },
@@ -88,10 +91,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const verificationConfig =
-      quest.verification_config && typeof quest.verification_config === "object"
-        ? (quest.verification_config as Record<string, unknown>)
-        : {};
+    const verificationConfig = resolvedIntegration.verificationConfig;
     const inviteUrl =
       typeof verificationConfig.inviteUrl === "string" && verificationConfig.inviteUrl.trim()
         ? verificationConfig.inviteUrl.trim()

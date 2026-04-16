@@ -17,6 +17,7 @@ import { AdminProjectCampaignTemplate } from "@/types/entities/project-campaign-
 import { AdminReviewFlag } from "@/types/entities/review-flag";
 import { AdminUser } from "@/types/entities/user";
 import { AdminAuditLog } from "@/types/entities/audit-log";
+import { resolveQuestIntegration } from "@/lib/quest-integration";
 import {
   DbAuditLog,
   DbBillingPlan,
@@ -242,6 +243,14 @@ function mapRaid(row: DbRaid): AdminRaid {
 }
 
 function mapQuest(row: DbQuest): AdminQuest {
+  const resolvedIntegration = resolveQuestIntegration({
+    quest_type: row.quest_type,
+    verification_type: row.verification_type,
+    verification_provider: row.verification_provider ?? null,
+    completion_mode: row.completion_mode ?? null,
+    verification_config: row.verification_config,
+  });
+
   return {
     id: row.id,
 
@@ -266,11 +275,9 @@ function mapQuest(row: DbQuest): AdminQuest {
     autoApprove: row.auto_approve ?? false,
     verificationType: (row.verification_type ??
       "manual_review") as AdminQuest["verificationType"],
-    verificationProvider: (row.verification_provider ?? "custom") as AdminQuest["verificationProvider"],
-    completionMode: (
-      row.completion_mode ??
-      (row.auto_approve ? "rule_auto" : "manual")
-    ) as AdminQuest["completionMode"],
+    verificationProvider: (resolvedIntegration.verificationProvider ??
+      "custom") as AdminQuest["verificationProvider"],
+    completionMode: resolvedIntegration.completionMode as AdminQuest["completionMode"],
 
     verificationConfig: row.verification_config
       ? JSON.stringify(row.verification_config, null, 2)
@@ -1174,6 +1181,14 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       }
     }
 
+    const resolvedIntegration = resolveQuestIntegration({
+      quest_type: input.questType,
+      verification_type: input.verificationType,
+      verification_provider: input.verificationProvider ?? null,
+      completion_mode: input.completionMode ?? null,
+      verification_config: parsedVerificationConfig,
+    });
+
     const payload = {
       project_id: input.projectId,
       campaign_id: input.campaignId,
@@ -1195,9 +1210,8 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
       auto_approve: input.autoApprove,
       verification_type: input.verificationType,
-      verification_provider: input.verificationProvider ?? "custom",
-      completion_mode:
-        input.completionMode ?? (input.autoApprove ? "rule_auto" : "manual"),
+      verification_provider: resolvedIntegration.verificationProvider ?? "custom",
+      completion_mode: resolvedIntegration.completionMode,
       verification_config: parsedVerificationConfig,
 
       is_repeatable: input.isRepeatable,
@@ -1251,6 +1265,14 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       }
     }
 
+    const resolvedIntegration = resolveQuestIntegration({
+      quest_type: input.questType,
+      verification_type: input.verificationType,
+      verification_provider: input.verificationProvider ?? null,
+      completion_mode: input.completionMode ?? null,
+      verification_config: parsedVerificationConfig,
+    });
+
     const payload = {
       project_id: input.projectId,
       campaign_id: input.campaignId,
@@ -1272,9 +1294,8 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
       auto_approve: input.autoApprove,
       verification_type: input.verificationType,
-      verification_provider: input.verificationProvider ?? "custom",
-      completion_mode:
-        input.completionMode ?? (input.autoApprove ? "rule_auto" : "manual"),
+      verification_provider: resolvedIntegration.verificationProvider ?? "custom",
+      completion_mode: resolvedIntegration.completionMode,
       verification_config: parsedVerificationConfig,
 
       is_repeatable: input.isRepeatable,

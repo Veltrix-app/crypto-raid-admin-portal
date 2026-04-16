@@ -57,6 +57,8 @@ export default function QuestDetailPage() {
   const verificationPreview = getQuestVerificationPreview({
     questType: quest.questType,
     verificationType: quest.verificationType,
+    verificationProvider: quest.verificationProvider,
+    completionMode: quest.completionMode,
     proofRequired: quest.proofRequired,
     proofType: quest.proofType,
     autoApprove: quest.autoApprove,
@@ -241,6 +243,8 @@ export default function QuestDetailPage() {
 
                   autoApprove: quest.autoApprove,
                   verificationType: quest.verificationType,
+                  verificationProvider: quest.verificationProvider,
+                  completionMode: quest.completionMode,
                   verificationConfig: quest.verificationConfig || "",
 
                   isRepeatable: quest.isRepeatable,

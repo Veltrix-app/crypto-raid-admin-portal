@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { resolveQuestIntegration } from "@/lib/quest-integration";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -43,11 +44,13 @@ export async function confirmQuestVerification(input: ConfirmQuestVerificationIn
     throw new Error("Quest not found.");
   }
 
-  if (quest.verification_provider !== input.provider) {
+  const resolvedIntegration = resolveQuestIntegration(quest);
+
+  if (resolvedIntegration.verificationProvider !== input.provider) {
     throw new Error("Quest provider does not match the confirmation provider.");
   }
 
-  if (quest.completion_mode !== "integration_auto") {
+  if (resolvedIntegration.completionMode !== "integration_auto") {
     throw new Error("Quest is not configured for integration-based auto verification.");
   }
 
