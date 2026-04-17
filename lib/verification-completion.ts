@@ -15,6 +15,26 @@ type ConfirmQuestVerificationInput = {
   metadata?: Record<string, unknown>;
 };
 
+function calculateLevelFromXp(xp: number) {
+  return Math.max(1, Math.floor(xp / 1000) + 1);
+}
+
+function calculateContributionTier(xp: number) {
+  if (xp >= 10000) {
+    return "legend";
+  }
+
+  if (xp >= 5000) {
+    return "champion";
+  }
+
+  if (xp >= 2000) {
+    return "contender";
+  }
+
+  return "explorer";
+}
+
 function getAdminClient() {
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error("Supabase service role environment variables are missing.");
@@ -35,7 +55,7 @@ export async function confirmQuestVerification(input: ConfirmQuestVerificationIn
   const { data: quest, error: questError } = await supabase
     .from("quests")
     .select(
-      "id, title, project_id, quest_type, verification_type, verification_provider, completion_mode, verification_config"
+      "id, title, project_id, xp, quest_type, verification_type, verification_provider, completion_mode, verification_config"
     )
     .eq("id", input.questId)
     .single();
@@ -70,12 +90,14 @@ export async function confirmQuestVerification(input: ConfirmQuestVerificationIn
 
   const { data: existingSubmission } = await supabase
     .from("quest_submissions")
-    .select("id")
+    .select("id, status")
     .eq("auth_user_id", input.authUserId)
     .eq("quest_id", quest.id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  const wasAlreadyApproved = existingSubmission?.status === "approved";
 
   let submissionId = existingSubmission?.id ?? null;
 
@@ -113,6 +135,97 @@ export async function confirmQuestVerification(input: ConfirmQuestVerificationIn
 
   if (!submissionId) {
     throw new Error("Missing submission id after verification confirmation.");
+  }
+
+  if (!wasAlreadyApproved) {
+    const questXp = typeof quest.xp === "number" ? quest.xp : 0;
+
+    const [{ data: profile }, { data: globalReputation }, { data: projectReputation }] = await Promise.all([
+      supabase
+        .from("user_profiles")
+        .select("auth_user_id, xp, level, streak, status")
+        .eq("auth_user_id", input.authUserId)
+        .maybeSingle(),
+      supabase
+        .from("user_global_reputation")
+        .select(
+          "auth_user_id, total_xp, level, streak, trust_score, sybil_score, contribution_tier, reputation_rank, quests_completed, raids_completed, rewards_claimed, status"
+        )
+        .eq("auth_user_id", input.authUserId)
+        .maybeSingle(),
+      quest.project_id
+        ? supabase
+            .from("user_project_reputation")
+            .select(
+              "auth_user_id, project_id, xp, level, streak, trust_score, contribution_tier, quests_completed, raids_completed, rewards_claimed"
+            )
+            .eq("auth_user_id", input.authUserId)
+            .eq("project_id", quest.project_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    const nextProfileXp = (profile?.xp ?? 0) + questXp;
+    const nextProfileLevel = calculateLevelFromXp(nextProfileXp);
+    const nextGlobalXp = (globalReputation?.total_xp ?? 0) + questXp;
+    const nextGlobalLevel = calculateLevelFromXp(nextGlobalXp);
+    const nextGlobalQuestsCompleted = (globalReputation?.quests_completed ?? 0) + 1;
+
+    const profileUpsert = supabase.from("user_profiles").upsert({
+      auth_user_id: input.authUserId,
+      xp: nextProfileXp,
+      level: nextProfileLevel,
+      streak: profile?.streak ?? 0,
+      status: profile?.status ?? "active",
+    });
+
+    const globalReputationUpsert = supabase.from("user_global_reputation").upsert({
+      auth_user_id: input.authUserId,
+      total_xp: nextGlobalXp,
+      level: nextGlobalLevel,
+      streak: globalReputation?.streak ?? 0,
+      trust_score: globalReputation?.trust_score ?? 50,
+      sybil_score: globalReputation?.sybil_score ?? 0,
+      contribution_tier: calculateContributionTier(nextGlobalXp),
+      reputation_rank: globalReputation?.reputation_rank ?? 0,
+      quests_completed: nextGlobalQuestsCompleted,
+      raids_completed: globalReputation?.raids_completed ?? 0,
+      rewards_claimed: globalReputation?.rewards_claimed ?? 0,
+      status: globalReputation?.status ?? "active",
+      updated_at: now,
+    });
+
+    const writes = [profileUpsert, globalReputationUpsert];
+
+    if (quest.project_id) {
+      const nextProjectXp = ((projectReputation as { xp?: number } | null)?.xp ?? 0) + questXp;
+      const nextProjectQuestsCompleted =
+        ((projectReputation as { quests_completed?: number } | null)?.quests_completed ?? 0) + 1;
+
+      writes.push(
+        supabase.from("user_project_reputation").upsert({
+          auth_user_id: input.authUserId,
+          project_id: quest.project_id,
+          xp: nextProjectXp,
+          level: calculateLevelFromXp(nextProjectXp),
+          streak: (projectReputation as { streak?: number } | null)?.streak ?? 0,
+          trust_score: (projectReputation as { trust_score?: number } | null)?.trust_score ?? 50,
+          contribution_tier: calculateContributionTier(nextProjectXp),
+          quests_completed: nextProjectQuestsCompleted,
+          raids_completed: (projectReputation as { raids_completed?: number } | null)?.raids_completed ?? 0,
+          rewards_claimed: (projectReputation as { rewards_claimed?: number } | null)?.rewards_claimed ?? 0,
+          last_activity_at: now,
+          updated_at: now,
+        })
+      );
+    }
+
+    const writeResults = await Promise.all(writes);
+    const writeError = writeResults.find((result) => "error" in result && result.error)?.error;
+
+    if (writeError) {
+      throw new Error(writeError.message || "Failed to update quest reputation progress.");
+    }
   }
 
   await supabase.from("quest_verification_runs").insert({
@@ -173,21 +286,23 @@ export async function confirmQuestVerification(input: ConfirmQuestVerificationIn
       .eq("id", userProgress.id);
   }
 
-  await supabase.from("app_notifications").insert({
-    auth_user_id: input.authUserId,
-    title: "Quest auto-approved",
-    body: `${quest.title} completed automatically after ${input.provider} verification was confirmed.`,
-    type: "quest",
-    read: false,
-    source_table: "quest_submissions",
-    source_id: submissionId,
-    metadata: {
-      questId: quest.id,
-      provider: input.provider,
-      eventType: input.eventType,
-      externalRef: input.externalRef ?? null,
-    },
-  });
+  if (!wasAlreadyApproved) {
+    await supabase.from("app_notifications").insert({
+      auth_user_id: input.authUserId,
+      title: "Quest auto-approved",
+      body: `${quest.title} completed automatically after ${input.provider} verification was confirmed.`,
+      type: "quest",
+      read: false,
+      source_table: "quest_submissions",
+      source_id: submissionId,
+      metadata: {
+        questId: quest.id,
+        provider: input.provider,
+        eventType: input.eventType,
+        externalRef: input.externalRef ?? null,
+      },
+    });
+  }
 
   return {
     ok: true,
