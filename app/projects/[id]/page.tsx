@@ -237,8 +237,6 @@ export default function ProjectDetailPage() {
   async function saveProjectIntegration(provider: "discord" | "telegram") {
     if (!project?.id) return;
 
-    const supabase = createClient();
-    const now = new Date().toISOString();
     const config =
       provider === "discord"
         ? {
@@ -258,23 +256,24 @@ export default function ProjectDetailPage() {
     setSavingIntegration(provider);
     setIntegrationNotice("");
 
-    const { error } = await supabase.from("project_integrations").upsert(
-      {
-        project_id: project.id,
-        provider,
-        status: hasPrimaryIdentifier ? "connected" : "needs_attention",
-        config,
-        updated_at: now,
+    const response = await fetch("/api/project-integrations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      {
-        onConflict: "project_id,provider",
-      }
-    );
+      body: JSON.stringify({
+        projectId: project.id,
+        provider,
+        config,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
 
     setSavingIntegration(null);
 
-    if (error) {
-      setIntegrationNotice(error.message || `Failed to save ${provider} integration.`);
+    if (!response.ok || !payload?.ok) {
+      setIntegrationNotice(payload?.error || `Failed to save ${provider} integration.`);
       return;
     }
 
@@ -285,9 +284,10 @@ export default function ProjectDetailPage() {
     }
 
     setIntegrationNotice(
-      provider === "discord"
-        ? "Discord integration saved. Guild membership checks can now resolve the target server."
-        : "Telegram integration saved. Group membership checks can now resolve the target chat."
+      payload?.message ||
+        (provider === "discord"
+          ? "Discord integration saved. Guild membership checks can now resolve the target server."
+          : "Telegram integration saved. Group membership checks can now resolve the target chat.")
     );
   }
 
