@@ -23,6 +23,10 @@ function isValidUrl(value: string) {
   }
 }
 
+function isPlaceholderUrl(value: string) {
+  return value.includes("...");
+}
+
 function getSupabaseClient(accessToken: string) {
   if (!supabaseUrl || !supabaseKey) {
     throw new Error("Supabase environment variables are missing.");
@@ -92,12 +96,16 @@ export async function POST(request: NextRequest) {
     }
 
     const verificationConfig = resolvedIntegration.verificationConfig;
-    const groupUrl =
+    const configuredGroupUrl =
       typeof verificationConfig.groupUrl === "string" && verificationConfig.groupUrl.trim()
         ? verificationConfig.groupUrl.trim()
-        : typeof quest.action_url === "string"
-        ? quest.action_url.trim()
         : "";
+    const actionUrl =
+      typeof quest.action_url === "string" ? quest.action_url.trim() : "";
+    const groupUrl =
+      configuredGroupUrl && !isPlaceholderUrl(configuredGroupUrl)
+        ? configuredGroupUrl
+        : actionUrl;
 
     if (!groupUrl || !isValidUrl(groupUrl)) {
       return NextResponse.json(

@@ -6,6 +6,10 @@ type QuestIntegrationShape = {
   verification_config?: Record<string, unknown> | null;
 };
 
+function isPlaceholderUrl(value: string) {
+  return value.includes("...");
+}
+
 export function resolveQuestIntegration(shape: QuestIntegrationShape) {
   const questType = shape.quest_type ?? "custom";
   const verificationType = shape.verification_type ?? "manual_review";
@@ -14,8 +18,12 @@ export function resolveQuestIntegration(shape: QuestIntegrationShape) {
       ? shape.verification_config
       : {};
 
-  const verificationProvider =
-    shape.verification_provider ??
+  const normalizedVerificationProvider =
+    shape.verification_provider && shape.verification_provider !== "custom"
+      ? shape.verification_provider
+      : null;
+
+  const inferredVerificationProvider =
     (questType === "telegram_join"
       ? "telegram"
       : questType === "discord_join"
@@ -35,22 +43,39 @@ export function resolveQuestIntegration(shape: QuestIntegrationShape) {
                 : verificationType === "api_check" &&
                     (typeof verificationConfig.profileUrl === "string" ||
                       typeof verificationConfig.handle === "string")
-                  ? "x"
+                    ? "x"
                   : verificationType === "event_check" &&
                       typeof verificationConfig.targetUrl === "string"
                     ? "website"
                     : null);
 
+  const verificationProvider =
+    normalizedVerificationProvider ?? inferredVerificationProvider;
+
+  const shouldForceIntegrationAuto =
+    (questType === "telegram_join" &&
+      verificationType === "bot_check" &&
+      (typeof verificationConfig.groupUrl !== "string" ||
+        !isPlaceholderUrl(verificationConfig.groupUrl))) ||
+    (questType === "discord_join" &&
+      verificationType === "bot_check" &&
+      (typeof verificationConfig.inviteUrl !== "string" ||
+        !isPlaceholderUrl(verificationConfig.inviteUrl))) ||
+    (questType === "social_follow" && verificationType === "api_check") ||
+    (questType === "url_visit" && verificationType === "event_check");
+
   const completionMode =
-    shape.completion_mode ??
-    (verificationProvider &&
-    ["bot_check", "api_check", "event_check"].includes(verificationType)
+    shouldForceIntegrationAuto
       ? "integration_auto"
-      : verificationType === "manual_review"
-        ? "manual"
-        : verificationType === "hybrid"
-          ? "hybrid"
-          : "rule_auto");
+      : shape.completion_mode ??
+        (verificationProvider &&
+        ["bot_check", "api_check", "event_check"].includes(verificationType)
+          ? "integration_auto"
+          : verificationType === "manual_review"
+            ? "manual"
+            : verificationType === "hybrid"
+              ? "hybrid"
+              : "rule_auto");
 
   return {
     questType,
