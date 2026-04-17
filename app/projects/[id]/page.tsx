@@ -286,8 +286,8 @@ export default function ProjectDetailPage() {
     setIntegrationNotice(
       payload?.message ||
         (provider === "discord"
-          ? "Discord integration saved. Guild membership checks can now resolve the target server."
-          : "Telegram integration saved. Group membership checks can now resolve the target chat.")
+          ? `Discord integration saved for ${project.name}. Guild membership checks can now resolve the target server.`
+          : `Telegram integration saved for ${project.name}. Group membership checks can now resolve the target chat.`)
     );
   }
 
@@ -597,7 +597,7 @@ export default function ProjectDetailPage() {
                     <div>
                       <p className="text-sm font-bold text-text">Discord integration config</p>
                       <p className="mt-2 text-sm text-sub">
-                        Save the Discord guild id that the community bot should verify against.
+                        Save the Discord guild id that the community bot should verify against for <span className="font-semibold text-text">{project.name}</span>.
                       </p>
                     </div>
                     <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
@@ -643,7 +643,7 @@ export default function ProjectDetailPage() {
                     <div>
                       <p className="text-sm font-bold text-text">Telegram integration config</p>
                       <p className="mt-2 text-sm text-sub">
-                        Save the Telegram chat id that the community bot should verify against.
+                        Save the Telegram chat id that the community bot should verify against for <span className="font-semibold text-text">{project.name}</span>.
                       </p>
                     </div>
                     <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
