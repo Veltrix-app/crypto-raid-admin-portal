@@ -19,6 +19,51 @@ function getServiceSupabaseClient() {
 
 type Provider = "discord" | "telegram";
 
+type ScopeMode = "project_only" | "all_public";
+type DeliveryMode = "broadcast" | "priority_only";
+
+function sanitizePushSettings(rawConfig: Record<string, unknown>, provider: Provider) {
+  const rawPushSettings =
+    rawConfig.pushSettings && typeof rawConfig.pushSettings === "object"
+      ? (rawConfig.pushSettings as Record<string, unknown>)
+      : {};
+
+  return {
+    enabled: rawPushSettings.enabled !== false,
+    scopeMode:
+      rawPushSettings.scopeMode === "all_public" ? ("all_public" as ScopeMode) : ("project_only" as ScopeMode),
+    deliveryMode:
+      rawPushSettings.deliveryMode === "priority_only"
+        ? ("priority_only" as DeliveryMode)
+        : ("broadcast" as DeliveryMode),
+    targetChannelId:
+      provider === "discord" && typeof rawPushSettings.targetChannelId === "string"
+        ? rawPushSettings.targetChannelId.trim()
+        : "",
+    targetThreadId:
+      provider === "discord" && typeof rawPushSettings.targetThreadId === "string"
+        ? rawPushSettings.targetThreadId.trim()
+        : "",
+    targetChatId:
+      provider === "telegram" && typeof rawPushSettings.targetChatId === "string"
+        ? rawPushSettings.targetChatId.trim()
+        : "",
+    allowCampaigns: rawPushSettings.allowCampaigns !== false,
+    allowQuests: rawPushSettings.allowQuests !== false,
+    allowRaids: rawPushSettings.allowRaids !== false,
+    allowRewards: rawPushSettings.allowRewards !== false,
+    allowAnnouncements: rawPushSettings.allowAnnouncements !== false,
+    featuredOnly: rawPushSettings.featuredOnly === true,
+    liveOnly: rawPushSettings.liveOnly === true,
+    minXp:
+      typeof rawPushSettings.minXp === "number"
+        ? rawPushSettings.minXp
+        : typeof rawPushSettings.minXp === "string" && rawPushSettings.minXp.trim()
+          ? Number(rawPushSettings.minXp)
+          : 0,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json().catch(() => null)) as
@@ -43,6 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date().toISOString();
+    const pushSettings = sanitizePushSettings(rawConfig, provider);
     const config =
       provider === "discord"
         ? {
@@ -50,12 +96,14 @@ export async function POST(request: NextRequest) {
               typeof rawConfig.guildId === "string" ? rawConfig.guildId.trim() : "",
             serverId:
               typeof rawConfig.serverId === "string" ? rawConfig.serverId.trim() : "",
+            pushSettings,
           }
         : {
             chatId:
               typeof rawConfig.chatId === "string" ? rawConfig.chatId.trim() : "",
             groupId:
               typeof rawConfig.groupId === "string" ? rawConfig.groupId.trim() : "",
+            pushSettings,
           };
 
     const hasPrimaryIdentifier =
@@ -91,8 +139,8 @@ export async function POST(request: NextRequest) {
       integration: data,
       message:
         provider === "discord"
-          ? "Discord integration saved. Guild membership checks can now resolve the target server."
-          : "Telegram integration saved. Group membership checks can now resolve the target chat.",
+          ? "Discord integration saved. Verification and community push settings are now attached to this project."
+          : "Telegram integration saved. Verification and community push settings are now attached to this project.",
     });
   } catch (error) {
     return NextResponse.json(

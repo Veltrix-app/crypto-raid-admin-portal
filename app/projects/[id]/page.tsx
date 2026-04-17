@@ -18,6 +18,87 @@ import { createClient } from "@/lib/supabase/client";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
+type PushScopeMode = "project_only" | "all_public";
+type PushDeliveryMode = "broadcast" | "priority_only";
+
+type CommunityPushSettings = {
+  enabled: boolean;
+  scopeMode: PushScopeMode;
+  deliveryMode: PushDeliveryMode;
+  targetChannelId: string;
+  targetThreadId: string;
+  targetChatId: string;
+  allowCampaigns: boolean;
+  allowQuests: boolean;
+  allowRaids: boolean;
+  allowRewards: boolean;
+  allowAnnouncements: boolean;
+  featuredOnly: boolean;
+  liveOnly: boolean;
+  minXp: string;
+};
+
+function createDefaultPushSettings(provider: "discord" | "telegram"): CommunityPushSettings {
+  return {
+    enabled: true,
+    scopeMode: "project_only",
+    deliveryMode: "broadcast",
+    targetChannelId: "",
+    targetThreadId: "",
+    targetChatId: "",
+    allowCampaigns: true,
+    allowQuests: true,
+    allowRaids: true,
+    allowRewards: false,
+    allowAnnouncements: true,
+    featuredOnly: false,
+    liveOnly: false,
+    minXp: "",
+  };
+}
+
+function readPushSettings(
+  config: Record<string, unknown> | null | undefined,
+  provider: "discord" | "telegram"
+): CommunityPushSettings {
+  const defaults = createDefaultPushSettings(provider);
+  const rawPushSettings =
+    config?.pushSettings && typeof config.pushSettings === "object"
+      ? (config.pushSettings as Record<string, unknown>)
+      : {};
+
+  return {
+    enabled: rawPushSettings.enabled !== false,
+    scopeMode: rawPushSettings.scopeMode === "all_public" ? "all_public" : "project_only",
+    deliveryMode: rawPushSettings.deliveryMode === "priority_only" ? "priority_only" : "broadcast",
+    targetChannelId:
+      provider === "discord" && typeof rawPushSettings.targetChannelId === "string"
+        ? rawPushSettings.targetChannelId
+        : defaults.targetChannelId,
+    targetThreadId:
+      provider === "discord" && typeof rawPushSettings.targetThreadId === "string"
+        ? rawPushSettings.targetThreadId
+        : defaults.targetThreadId,
+    targetChatId:
+      provider === "telegram" && typeof rawPushSettings.targetChatId === "string"
+        ? rawPushSettings.targetChatId
+        : defaults.targetChatId,
+    allowCampaigns: rawPushSettings.allowCampaigns !== false,
+    allowQuests: rawPushSettings.allowQuests !== false,
+    allowRaids: rawPushSettings.allowRaids !== false,
+    allowRewards: rawPushSettings.allowRewards === true,
+    allowAnnouncements: rawPushSettings.allowAnnouncements !== false,
+    featuredOnly: rawPushSettings.featuredOnly === true,
+    liveOnly: rawPushSettings.liveOnly === true,
+    minXp:
+      typeof rawPushSettings.minXp === "number"
+        ? String(rawPushSettings.minXp)
+        : typeof rawPushSettings.minXp === "string"
+          ? rawPushSettings.minXp
+          : defaults.minXp,
+  };
+}
+
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -43,6 +124,12 @@ export default function ProjectDetailPage() {
     chatId: string;
     groupId: string;
   }>({ chatId: "", groupId: "" });
+  const [discordPushSettings, setDiscordPushSettings] = useState<CommunityPushSettings>(
+    createDefaultPushSettings("discord")
+  );
+  const [telegramPushSettings, setTelegramPushSettings] = useState<CommunityPushSettings>(
+    createDefaultPushSettings("telegram")
+  );
   const [savingIntegration, setSavingIntegration] = useState<"discord" | "telegram" | null>(null);
   const [integrationNotice, setIntegrationNotice] = useState<string>("");
 
@@ -101,6 +188,14 @@ export default function ProjectDetailPage() {
             ? String((discordData.config as Record<string, unknown>).serverId ?? "")
             : "",
       });
+      setDiscordPushSettings(
+        readPushSettings(
+          discordData?.config && typeof discordData.config === "object"
+            ? (discordData.config as Record<string, unknown>)
+            : null,
+          "discord"
+        )
+      );
       setTelegramIntegrationConfig({
         chatId:
           telegramData?.config && typeof telegramData.config === "object"
@@ -111,6 +206,14 @@ export default function ProjectDetailPage() {
             ? String((telegramData.config as Record<string, unknown>).groupId ?? "")
             : "",
       });
+      setTelegramPushSettings(
+        readPushSettings(
+          telegramData?.config && typeof telegramData.config === "object"
+            ? (telegramData.config as Record<string, unknown>)
+            : null,
+          "telegram"
+        )
+      );
     }
 
     loadProjectIntegrations();
@@ -237,15 +340,27 @@ export default function ProjectDetailPage() {
   async function saveProjectIntegration(provider: "discord" | "telegram") {
     if (!project?.id) return;
 
+    const pushSettings = provider === "discord" ? discordPushSettings : telegramPushSettings;
     const config =
       provider === "discord"
         ? {
             guildId: discordIntegrationConfig.guildId.trim(),
             serverId: discordIntegrationConfig.serverId.trim(),
+            pushSettings: {
+              ...pushSettings,
+              targetChannelId: pushSettings.targetChannelId.trim(),
+              targetThreadId: pushSettings.targetThreadId.trim(),
+              minXp: pushSettings.minXp.trim(),
+            },
           }
         : {
             chatId: telegramIntegrationConfig.chatId.trim(),
             groupId: telegramIntegrationConfig.groupId.trim(),
+            pushSettings: {
+              ...pushSettings,
+              targetChatId: pushSettings.targetChatId.trim(),
+              minXp: pushSettings.minXp.trim(),
+            },
           };
 
     const hasPrimaryIdentifier =
@@ -286,8 +401,8 @@ export default function ProjectDetailPage() {
     setIntegrationNotice(
       payload?.message ||
         (provider === "discord"
-          ? `Discord integration saved for ${project.name}. Guild membership checks can now resolve the target server.`
-          : `Telegram integration saved for ${project.name}. Group membership checks can now resolve the target chat.`)
+          ? `Discord integration and push settings saved for ${project.name}.`
+          : `Telegram integration and push settings saved for ${project.name}.`)
     );
   }
 
@@ -628,6 +743,134 @@ export default function ProjectDetailPage() {
                       placeholder="Optional legacy server ID"
                       className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                     />
+                    <div className="rounded-2xl border border-line bg-card p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                        Community Push Settings
+                      </p>
+                      <div className="mt-4 grid gap-3">
+                        <label className="space-y-2 text-sm text-sub">
+                          <span className="font-semibold text-text">Push scope</span>
+                          <select
+                            value={discordPushSettings.scopeMode}
+                            onChange={(event) =>
+                              setDiscordPushSettings((current) => ({
+                                ...current,
+                                scopeMode: event.target.value as PushScopeMode,
+                              }))
+                            }
+                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          >
+                            <option value="project_only">Only this project</option>
+                            <option value="all_public">Everything public</option>
+                          </select>
+                        </label>
+                        <label className="space-y-2 text-sm text-sub">
+                          <span className="font-semibold text-text">Delivery mode</span>
+                          <select
+                            value={discordPushSettings.deliveryMode}
+                            onChange={(event) =>
+                              setDiscordPushSettings((current) => ({
+                                ...current,
+                                deliveryMode: event.target.value as PushDeliveryMode,
+                              }))
+                            }
+                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          >
+                            <option value="broadcast">Broadcast everything that matches</option>
+                            <option value="priority_only">High-priority only</option>
+                          </select>
+                        </label>
+                        <input
+                          value={discordPushSettings.targetChannelId}
+                          onChange={(event) =>
+                            setDiscordPushSettings((current) => ({
+                              ...current,
+                              targetChannelId: event.target.value,
+                            }))
+                          }
+                          placeholder="Target Discord channel ID"
+                          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        />
+                        <input
+                          value={discordPushSettings.targetThreadId}
+                          onChange={(event) =>
+                            setDiscordPushSettings((current) => ({
+                              ...current,
+                              targetThreadId: event.target.value,
+                            }))
+                          }
+                          placeholder="Optional Discord thread ID"
+                          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        />
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {[
+                            ["allowCampaigns", "Campaigns"],
+                            ["allowQuests", "Quests"],
+                            ["allowRaids", "Raids"],
+                            ["allowRewards", "Rewards"],
+                            ["allowAnnouncements", "Announcements"],
+                          ].map(([key, label]) => (
+                            <label
+                              key={key}
+                              className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text"
+                            >
+                              <span>{label}</span>
+                              <input
+                                type="checkbox"
+                                checked={Boolean(
+                                  discordPushSettings[key as keyof CommunityPushSettings]
+                                )}
+                                onChange={(event) =>
+                                  setDiscordPushSettings((current) => ({
+                                    ...current,
+                                    [key]: event.target.checked,
+                                  }))
+                                }
+                              />
+                            </label>
+                          ))}
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                            <span>Featured only</span>
+                            <input
+                              type="checkbox"
+                              checked={discordPushSettings.featuredOnly}
+                              onChange={(event) =>
+                                setDiscordPushSettings((current) => ({
+                                  ...current,
+                                  featuredOnly: event.target.checked,
+                                }))
+                              }
+                            />
+                          </label>
+                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                            <span>Live only</span>
+                            <input
+                              type="checkbox"
+                              checked={discordPushSettings.liveOnly}
+                              onChange={(event) =>
+                                setDiscordPushSettings((current) => ({
+                                  ...current,
+                                  liveOnly: event.target.checked,
+                                }))
+                              }
+                            />
+                          </label>
+                        </div>
+                        <input
+                          value={discordPushSettings.minXp}
+                          onChange={(event) =>
+                            setDiscordPushSettings((current) => ({
+                              ...current,
+                              minXp: event.target.value,
+                            }))
+                          }
+                          placeholder="Minimum XP threshold (optional)"
+                          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        />
+                      </div>
+                    </div>
                     <button
                       onClick={() => void saveProjectIntegration("discord")}
                       disabled={savingIntegration === "discord"}
@@ -674,6 +917,123 @@ export default function ProjectDetailPage() {
                       placeholder="Optional legacy group ID"
                       className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                     />
+                    <div className="rounded-2xl border border-line bg-card p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                        Community Push Settings
+                      </p>
+                      <div className="mt-4 grid gap-3">
+                        <label className="space-y-2 text-sm text-sub">
+                          <span className="font-semibold text-text">Push scope</span>
+                          <select
+                            value={telegramPushSettings.scopeMode}
+                            onChange={(event) =>
+                              setTelegramPushSettings((current) => ({
+                                ...current,
+                                scopeMode: event.target.value as PushScopeMode,
+                              }))
+                            }
+                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          >
+                            <option value="project_only">Only this project</option>
+                            <option value="all_public">Everything public</option>
+                          </select>
+                        </label>
+                        <label className="space-y-2 text-sm text-sub">
+                          <span className="font-semibold text-text">Delivery mode</span>
+                          <select
+                            value={telegramPushSettings.deliveryMode}
+                            onChange={(event) =>
+                              setTelegramPushSettings((current) => ({
+                                ...current,
+                                deliveryMode: event.target.value as PushDeliveryMode,
+                              }))
+                            }
+                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          >
+                            <option value="broadcast">Broadcast everything that matches</option>
+                            <option value="priority_only">High-priority only</option>
+                          </select>
+                        </label>
+                        <input
+                          value={telegramPushSettings.targetChatId}
+                          onChange={(event) =>
+                            setTelegramPushSettings((current) => ({
+                              ...current,
+                              targetChatId: event.target.value,
+                            }))
+                          }
+                          placeholder="Target Telegram chat ID for pushes"
+                          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        />
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {[
+                            ["allowCampaigns", "Campaigns"],
+                            ["allowQuests", "Quests"],
+                            ["allowRaids", "Raids"],
+                            ["allowRewards", "Rewards"],
+                            ["allowAnnouncements", "Announcements"],
+                          ].map(([key, label]) => (
+                            <label
+                              key={key}
+                              className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text"
+                            >
+                              <span>{label}</span>
+                              <input
+                                type="checkbox"
+                                checked={Boolean(
+                                  telegramPushSettings[key as keyof CommunityPushSettings]
+                                )}
+                                onChange={(event) =>
+                                  setTelegramPushSettings((current) => ({
+                                    ...current,
+                                    [key]: event.target.checked,
+                                  }))
+                                }
+                              />
+                            </label>
+                          ))}
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                            <span>Featured only</span>
+                            <input
+                              type="checkbox"
+                              checked={telegramPushSettings.featuredOnly}
+                              onChange={(event) =>
+                                setTelegramPushSettings((current) => ({
+                                  ...current,
+                                  featuredOnly: event.target.checked,
+                                }))
+                              }
+                            />
+                          </label>
+                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                            <span>Live only</span>
+                            <input
+                              type="checkbox"
+                              checked={telegramPushSettings.liveOnly}
+                              onChange={(event) =>
+                                setTelegramPushSettings((current) => ({
+                                  ...current,
+                                  liveOnly: event.target.checked,
+                                }))
+                              }
+                            />
+                          </label>
+                        </div>
+                        <input
+                          value={telegramPushSettings.minXp}
+                          onChange={(event) =>
+                            setTelegramPushSettings((current) => ({
+                              ...current,
+                              minXp: event.target.value,
+                            }))
+                          }
+                          placeholder="Minimum XP threshold (optional)"
+                          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        />
+                      </div>
+                    </div>
                     <button
                       onClick={() => void saveProjectIntegration("telegram")}
                       disabled={savingIntegration === "telegram"}

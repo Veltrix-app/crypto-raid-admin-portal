@@ -130,6 +130,48 @@ type DbUserProfileLite = {
   avatar_url?: string;
 };
 
+async function dispatchCommunityPush(contentType: "campaign" | "quest" | "raid" | "reward", contentId: string) {
+  try {
+    const response = await fetch("/api/community-push/dispatch", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contentType,
+        contentId,
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null);
+      throw new Error(payload?.error || "Failed to dispatch community push.");
+    }
+  } catch (error) {
+    console.error("[community-push] dispatch failed", {
+      contentType,
+      contentId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+function isCampaignDispatchEligible(campaign: Pick<AdminCampaign, "status" | "visibility">) {
+  return campaign.status === "active" && campaign.visibility === "public";
+}
+
+function isQuestDispatchEligible(quest: Pick<AdminQuest, "status">) {
+  return quest.status === "active";
+}
+
+function isRaidDispatchEligible(raid: Pick<AdminRaid, "status">) {
+  return raid.status === "active";
+}
+
+function isRewardDispatchEligible(reward: Pick<AdminReward, "status" | "visible">) {
+  return reward.status === "active" && reward.visible;
+}
+
 function mapProject(row: DbProject): AdminProject {
   return {
     id: row.id,
@@ -982,11 +1024,15 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
     const mapped = mapCampaign(data as DbCampaign);
     set((state) => ({ campaigns: [mapped, ...state.campaigns] }));
+    if (isCampaignDispatchEligible(mapped)) {
+      await dispatchCommunityPush("campaign", mapped.id);
+    }
     return mapped.id;
   },
 
   updateCampaign: async (id, input) => {
     const supabase = createClient();
+    const previous = get().campaigns.find((item) => item.id === id);
 
     const { data, error } = await supabase
       .from("campaigns")
@@ -1026,6 +1072,9 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     set((state) => ({
       campaigns: state.campaigns.map((item) => (item.id === id ? mapped : item)),
     }));
+    if (isCampaignDispatchEligible(mapped) && !isCampaignDispatchEligible(previous ?? { status: "draft", visibility: "private" })) {
+      await dispatchCommunityPush("campaign", mapped.id);
+    }
   },
 
   deleteCampaign: async (id) => {
@@ -1096,11 +1145,15 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
     const mapped = mapRaid(data as DbRaid);
     set((state) => ({ raids: [mapped, ...state.raids] }));
+    if (isRaidDispatchEligible(mapped)) {
+      await dispatchCommunityPush("raid", mapped.id);
+    }
     return mapped.id;
   },
 
   updateRaid: async (id, input) => {
     const supabase = createClient();
+    const previous = get().raids.find((item) => item.id === id);
 
     let parsedVerificationConfig: Record<string, any> = {};
     if (input.verificationConfig?.trim()) {
@@ -1155,6 +1208,9 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     set((state) => ({
       raids: state.raids.map((item) => (item.id === id ? mapped : item)),
     }));
+    if (isRaidDispatchEligible(mapped) && !isRaidDispatchEligible(previous ?? { status: "draft" })) {
+      await dispatchCommunityPush("raid", mapped.id);
+    }
   },
 
   deleteRaid: async (id) => {
@@ -1250,11 +1306,15 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
     const mapped = mapQuest(data as DbQuest);
     set((state) => ({ quests: [mapped, ...state.quests] }));
+    if (isQuestDispatchEligible(mapped)) {
+      await dispatchCommunityPush("quest", mapped.id);
+    }
     return mapped.id;
   },
 
   updateQuest: async (id, input) => {
     const supabase = createClient();
+    const previous = get().quests.find((item) => item.id === id);
 
     let parsedVerificationConfig: Record<string, any> = {};
     if (input.verificationConfig?.trim()) {
@@ -1338,6 +1398,9 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     set((state) => ({
       quests: state.quests.map((item) => (item.id === id ? mapped : item)),
     }));
+    if (isQuestDispatchEligible(mapped) && !isQuestDispatchEligible(previous ?? { status: "draft" })) {
+      await dispatchCommunityPush("quest", mapped.id);
+    }
   },
 
   deleteQuest: async (id) => {
@@ -1401,11 +1464,15 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
     const mapped = mapReward(data as DbReward);
     set((state) => ({ rewards: [mapped, ...state.rewards] }));
+    if (isRewardDispatchEligible(mapped)) {
+      await dispatchCommunityPush("reward", mapped.id);
+    }
     return mapped.id;
   },
 
   updateReward: async (id, input) => {
     const supabase = createClient();
+    const previous = get().rewards.find((item) => item.id === id);
 
     let parsedDeliveryConfig: Record<string, any> = {};
     if (input.deliveryConfig?.trim()) {
@@ -1455,6 +1522,12 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     set((state) => ({
       rewards: state.rewards.map((item) => (item.id === id ? mapped : item)),
     }));
+    if (
+      isRewardDispatchEligible(mapped) &&
+      !isRewardDispatchEligible(previous ?? { status: "draft", visible: false })
+    ) {
+      await dispatchCommunityPush("reward", mapped.id);
+    }
   },
 
   deleteReward: async (id) => {
