@@ -35,6 +35,10 @@ function calculateContributionTier(xp: number) {
   return "explorer";
 }
 
+function deriveFallbackUsername(authUserId: string) {
+  return `pilot-${authUserId.slice(0, 8)}`;
+}
+
 function getAdminClient() {
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error("Supabase service role environment variables are missing.");
@@ -143,7 +147,9 @@ export async function confirmQuestVerification(input: ConfirmQuestVerificationIn
     const [{ data: profile }, { data: globalReputation }, { data: projectReputation }] = await Promise.all([
       supabase
         .from("user_profiles")
-        .select("auth_user_id, xp, level, streak, status")
+        .select(
+          "auth_user_id, username, avatar_url, banner_url, title, faction, bio, wallet, xp, level, streak, status"
+        )
         .eq("auth_user_id", input.authUserId)
         .maybeSingle(),
       supabase
@@ -173,6 +179,13 @@ export async function confirmQuestVerification(input: ConfirmQuestVerificationIn
 
     const profileUpsert = supabase.from("user_profiles").upsert({
       auth_user_id: input.authUserId,
+      username: profile?.username ?? deriveFallbackUsername(input.authUserId),
+      avatar_url: profile?.avatar_url ?? "",
+      banner_url: profile?.banner_url ?? "",
+      title: profile?.title ?? "Explorer",
+      faction: profile?.faction ?? "Unassigned",
+      bio: profile?.bio ?? "No bio set yet.",
+      wallet: profile?.wallet ?? "",
       xp: nextProfileXp,
       level: nextProfileLevel,
       streak: profile?.streak ?? 0,
