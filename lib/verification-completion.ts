@@ -177,7 +177,7 @@ export async function confirmQuestVerification(input: ConfirmQuestVerificationIn
     const nextGlobalLevel = calculateLevelFromXp(nextGlobalXp);
     const nextGlobalQuestsCompleted = (globalReputation?.quests_completed ?? 0) + 1;
 
-    const profileUpsert = supabase.from("user_profiles").upsert({
+    const profilePayload = {
       auth_user_id: input.authUserId,
       username: profile?.username ?? deriveFallbackUsername(input.authUserId),
       avatar_url: profile?.avatar_url ?? "",
@@ -190,7 +190,14 @@ export async function confirmQuestVerification(input: ConfirmQuestVerificationIn
       level: nextProfileLevel,
       streak: profile?.streak ?? 0,
       status: profile?.status ?? "active",
-    });
+    };
+
+    const profileWrite = profile?.auth_user_id
+      ? supabase
+          .from("user_profiles")
+          .update(profilePayload)
+          .eq("auth_user_id", input.authUserId)
+      : supabase.from("user_profiles").insert(profilePayload);
 
     const globalReputationUpsert = supabase.from("user_global_reputation").upsert({
       auth_user_id: input.authUserId,
@@ -208,28 +215,36 @@ export async function confirmQuestVerification(input: ConfirmQuestVerificationIn
       updated_at: now,
     });
 
-    const writes = [profileUpsert, globalReputationUpsert];
+    const writes = [profileWrite, globalReputationUpsert];
 
     if (quest.project_id) {
       const nextProjectXp = ((projectReputation as { xp?: number } | null)?.xp ?? 0) + questXp;
       const nextProjectQuestsCompleted =
         ((projectReputation as { quests_completed?: number } | null)?.quests_completed ?? 0) + 1;
 
+      const projectReputationPayload = {
+        auth_user_id: input.authUserId,
+        project_id: quest.project_id,
+        xp: nextProjectXp,
+        level: calculateLevelFromXp(nextProjectXp),
+        streak: (projectReputation as { streak?: number } | null)?.streak ?? 0,
+        trust_score: (projectReputation as { trust_score?: number } | null)?.trust_score ?? 50,
+        contribution_tier: calculateContributionTier(nextProjectXp),
+        quests_completed: nextProjectQuestsCompleted,
+        raids_completed: (projectReputation as { raids_completed?: number } | null)?.raids_completed ?? 0,
+        rewards_claimed: (projectReputation as { rewards_claimed?: number } | null)?.rewards_claimed ?? 0,
+        last_activity_at: now,
+        updated_at: now,
+      };
+
       writes.push(
-        supabase.from("user_project_reputation").upsert({
-          auth_user_id: input.authUserId,
-          project_id: quest.project_id,
-          xp: nextProjectXp,
-          level: calculateLevelFromXp(nextProjectXp),
-          streak: (projectReputation as { streak?: number } | null)?.streak ?? 0,
-          trust_score: (projectReputation as { trust_score?: number } | null)?.trust_score ?? 50,
-          contribution_tier: calculateContributionTier(nextProjectXp),
-          quests_completed: nextProjectQuestsCompleted,
-          raids_completed: (projectReputation as { raids_completed?: number } | null)?.raids_completed ?? 0,
-          rewards_claimed: (projectReputation as { rewards_claimed?: number } | null)?.rewards_claimed ?? 0,
-          last_activity_at: now,
-          updated_at: now,
-        })
+        projectReputation
+          ? supabase
+              .from("user_project_reputation")
+              .update(projectReputationPayload)
+              .eq("auth_user_id", input.authUserId)
+              .eq("project_id", quest.project_id)
+          : supabase.from("user_project_reputation").insert(projectReputationPayload)
       );
     }
 
