@@ -395,27 +395,28 @@ export default function ProjectDetailPage() {
     async function loadProjectIntegrations() {
       if (!project?.id) return;
 
-      const supabase = createClient();
-      const [{ data: discordData }, { data: telegramData }, { data: xData }] = await Promise.all([
-        supabase
-          .from("project_integrations")
-          .select("status, config")
-          .eq("project_id", project.id)
-          .eq("provider", "discord")
-          .maybeSingle(),
-        supabase
-          .from("project_integrations")
-          .select("status, config")
-          .eq("project_id", project.id)
-          .eq("provider", "telegram")
-          .maybeSingle(),
-        supabase
-          .from("project_integrations")
-          .select("status")
-          .eq("project_id", project.id)
-          .eq("provider", "x")
-          .maybeSingle(),
-      ]);
+      const response = await fetch(
+        `/api/project-integrations?projectId=${encodeURIComponent(project.id)}`,
+        { cache: "no-store" }
+      );
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok || !payload?.ok) {
+        if (cancelled) return;
+        setIntegrationNotice(payload?.error || "Could not load project integrations.");
+        return;
+      }
+
+      const integrations = Array.isArray(payload.integrations) ? payload.integrations : [];
+      const discordData = integrations.find(
+        (integration: { provider?: string }) => integration.provider === "discord"
+      ) as { status?: string; config?: Record<string, unknown> } | undefined;
+      const telegramData = integrations.find(
+        (integration: { provider?: string }) => integration.provider === "telegram"
+      ) as { status?: string; config?: Record<string, unknown> } | undefined;
+      const xData = integrations.find(
+        (integration: { provider?: string }) => integration.provider === "x"
+      ) as { status?: string } | undefined;
 
       if (cancelled) return;
       setDiscordIntegrationStatus(discordData?.status ?? "not_connected");

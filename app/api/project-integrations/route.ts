@@ -82,6 +82,225 @@ function sanitizePushSettings(rawConfig: Record<string, unknown>, provider: Prov
   };
 }
 
+type CommunitySubscriptionRow = {
+  id: string;
+  integration_id: string;
+  enabled: boolean;
+  scope_mode: ScopeMode;
+  delivery_mode: DeliveryMode;
+  target_channel_id: string | null;
+  target_thread_id: string | null;
+  target_chat_id: string | null;
+};
+
+type CommunitySubscriptionFilterRow = {
+  subscription_id: string;
+  featured_only: boolean;
+  live_only: boolean;
+  min_xp: number;
+  allow_campaigns: boolean;
+  allow_quests: boolean;
+  allow_raids: boolean;
+  allow_rewards: boolean;
+  allow_announcements: boolean;
+};
+
+type CommunitySubscriptionScopeRow = {
+  subscription_id: string;
+  scope_type: "project" | "campaign";
+  scope_ref_id: string;
+};
+
+async function loadNormalizedPushSettings(
+  supabase: ReturnType<typeof getServiceSupabaseClient>,
+  integrations: Array<{
+    id: string;
+    provider: Provider;
+    config: Record<string, unknown> | null;
+  }>
+) {
+  if (integrations.length === 0) {
+    return new Map<string, Record<string, unknown>>();
+  }
+
+  const integrationIds = integrations.map((integration) => integration.id);
+  const { data: subscriptions, error: subscriptionsError } = await supabase
+    .from("community_subscriptions")
+    .select("id, integration_id, enabled, scope_mode, delivery_mode, target_channel_id, target_thread_id, target_chat_id")
+    .in("integration_id", integrationIds);
+
+  if (subscriptionsError) {
+    throw subscriptionsError;
+  }
+
+  const subscriptionIds = ((subscriptions ?? []) as CommunitySubscriptionRow[]).map(
+    (subscription) => subscription.id
+  );
+
+  const [{ data: filters, error: filtersError }, { data: scopes, error: scopesError }] =
+    subscriptionIds.length > 0
+      ? await Promise.all([
+          supabase
+            .from("community_subscription_filters")
+            .select(
+              "subscription_id, featured_only, live_only, min_xp, allow_campaigns, allow_quests, allow_raids, allow_rewards, allow_announcements"
+            )
+            .in("subscription_id", subscriptionIds),
+          supabase
+            .from("community_subscription_scopes")
+            .select("subscription_id, scope_type, scope_ref_id")
+            .in("subscription_id", subscriptionIds),
+        ])
+      : [{ data: [], error: null }, { data: [], error: null }];
+
+  if (filtersError) {
+    throw filtersError;
+  }
+
+  if (scopesError) {
+    throw scopesError;
+  }
+
+  const subscriptionByIntegrationId = new Map<string, CommunitySubscriptionRow>(
+    ((subscriptions ?? []) as CommunitySubscriptionRow[]).map((subscription) => [
+      subscription.integration_id,
+      subscription,
+    ])
+  );
+  const filtersBySubscriptionId = new Map<string, CommunitySubscriptionFilterRow>(
+    ((filters ?? []) as CommunitySubscriptionFilterRow[]).map((filter) => [
+      filter.subscription_id,
+      filter,
+    ])
+  );
+  const scopesBySubscriptionId = new Map<string, CommunitySubscriptionScopeRow[]>();
+
+  for (const scope of (scopes ?? []) as CommunitySubscriptionScopeRow[]) {
+    const existing = scopesBySubscriptionId.get(scope.subscription_id) ?? [];
+    existing.push(scope);
+    scopesBySubscriptionId.set(scope.subscription_id, existing);
+  }
+
+  const normalizedByIntegrationId = new Map<string, Record<string, unknown>>();
+
+  for (const integration of integrations) {
+    const legacyPushSettings = sanitizePushSettings(integration.config ?? {}, integration.provider);
+    const subscription = subscriptionByIntegrationId.get(integration.id);
+
+    if (!subscription) {
+      normalizedByIntegrationId.set(integration.id, legacyPushSettings);
+      continue;
+    }
+
+    const filter = filtersBySubscriptionId.get(subscription.id);
+    const subscriptionScopes = scopesBySubscriptionId.get(subscription.id) ?? [];
+
+    normalizedByIntegrationId.set(integration.id, {
+      enabled: subscription.enabled !== false,
+      scopeMode: subscription.scope_mode ?? "project_only",
+      deliveryMode: subscription.delivery_mode ?? "broadcast",
+      selectedProjectIds: subscriptionScopes
+        .filter((scope) => scope.scope_type === "project")
+        .map((scope) => scope.scope_ref_id),
+      selectedCampaignIds: subscriptionScopes
+        .filter((scope) => scope.scope_type === "campaign")
+        .map((scope) => scope.scope_ref_id),
+      targetChannelId: subscription.target_channel_id ?? "",
+      targetThreadId: subscription.target_thread_id ?? "",
+      targetChatId: subscription.target_chat_id ?? "",
+      allowCampaigns: filter?.allow_campaigns !== false,
+      allowQuests: filter?.allow_quests !== false,
+      allowRaids: filter?.allow_raids !== false,
+      allowRewards: filter?.allow_rewards === true,
+      allowAnnouncements: filter?.allow_announcements !== false,
+      featuredOnly: filter?.featured_only === true,
+      liveOnly: filter?.live_only === true,
+      minXp: Number.isFinite(Number(filter?.min_xp ?? 0)) ? Number(filter?.min_xp ?? 0) : 0,
+    });
+  }
+
+  return normalizedByIntegrationId;
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const projectId = request.nextUrl.searchParams.get("projectId")?.trim() ?? "";
+
+    if (!projectId) {
+      return NextResponse.json({ ok: false, error: "Missing projectId." }, { status: 400 });
+    }
+
+    const supabase = getServiceSupabaseClient();
+    const { data, error } = await supabase
+      .from("project_integrations")
+      .select("id, project_id, provider, status, config")
+      .eq("project_id", projectId)
+      .in("provider", ["discord", "telegram", "x"]);
+
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    }
+
+    const integrations = ((data ?? []) as Array<{
+      id: string;
+      project_id: string;
+      provider: string;
+      status: string;
+      config: Record<string, unknown> | null;
+    }>).filter((integration) =>
+      integration.provider === "discord" ||
+      integration.provider === "telegram" ||
+      integration.provider === "x"
+    );
+
+    const pushSettingsByIntegrationId = await loadNormalizedPushSettings(
+      supabase,
+      integrations.filter(
+        (integration): integration is {
+          id: string;
+          project_id: string;
+          provider: Provider;
+          status: string;
+          config: Record<string, unknown> | null;
+        } => integration.provider === "discord" || integration.provider === "telegram"
+      )
+    );
+
+    return NextResponse.json({
+      ok: true,
+      integrations: integrations.map((integration) => ({
+        id: integration.id,
+        projectId: integration.project_id,
+        provider: integration.provider,
+        status: integration.status,
+        config:
+          integration.provider === "discord" || integration.provider === "telegram"
+            ? {
+                ...(integration.config ?? {}),
+                pushSettings:
+                  pushSettingsByIntegrationId.get(integration.id) ??
+                  sanitizePushSettings(
+                    integration.config ?? {},
+                    integration.provider
+                  ),
+              }
+            : integration.config ?? null,
+      })),
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to load project integrations.",
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json().catch(() => null)) as
