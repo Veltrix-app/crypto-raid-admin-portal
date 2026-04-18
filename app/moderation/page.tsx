@@ -227,6 +227,10 @@ export default function ModerationPage() {
   const enrichmentRunCount = onchainJobRuns.filter((row) => row.action === "onchain_enrichment_job_completed").length;
   const retryRecoveryCount = onchainJobRuns.filter((row) => row.action === "onchain_ingress_retry_completed").length;
   const retryFailureCount = onchainJobRuns.filter((row) => ["onchain_ingress_retry_rejected", "onchain_ingress_retry_failed"].includes(row.action)).length;
+  const netBuyRejectCount = onchainFailures.filter((row) => row.summary.toLowerCase().includes("net exposure")).length;
+  const holdRejectCount = onchainFailures.filter((row) => row.summary.toLowerCase().includes("hold activity")).length;
+  const lpRejectCount = onchainFailures.filter((row) => row.summary.toLowerCase().includes("lp activity")).length;
+  const allowlistRejectCount = onchainFailures.filter((row) => row.summary.toLowerCase().includes("allowlist")).length;
 
   async function handleTrustAction(input: {
     key: string;
@@ -401,6 +405,12 @@ export default function ModerationPage() {
             <OpsMetricCard label="Retry recoveries" value={retryRecoveryCount} emphasis={retryRecoveryCount > 0 ? "primary" : "default"} />
             <OpsMetricCard label="Retry misses" value={retryFailureCount} emphasis={retryFailureCount > 0 ? "warning" : "default"} />
             <OpsMetricCard label="Enrichment runs" value={enrichmentRunCount} emphasis={enrichmentRunCount > 0 ? "primary" : "default"} />
+          </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-4">
+            <OpsMetricCard label="Net-buy rejects" value={netBuyRejectCount} emphasis={netBuyRejectCount > 0 ? "warning" : "default"} />
+            <OpsMetricCard label="Hold rejects" value={holdRejectCount} emphasis={holdRejectCount > 0 ? "warning" : "default"} />
+            <OpsMetricCard label="LP retention rejects" value={lpRejectCount} emphasis={lpRejectCount > 0 ? "warning" : "default"} />
+            <OpsMetricCard label="Allowlist rejects" value={allowlistRejectCount} emphasis={allowlistRejectCount > 0 ? "warning" : "default"} />
           </div>
           {pipelineNotice ? (
             <div className="mt-5 rounded-[24px] border border-line bg-card2 p-4 text-sm text-sub">
