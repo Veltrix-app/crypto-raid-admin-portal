@@ -82,6 +82,7 @@ type DispatchItem = {
   projectName: string;
   campaignTitle?: string | null;
   imageUrl?: string | null;
+  fallbackImageUrl?: string | null;
   accentColor?: string | null;
   meta: Array<{ label: string; value: string }>;
   isFeatured: boolean;
@@ -494,6 +495,7 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
       projectName: context.project?.name || "Veltrix",
       campaignTitle: campaign.title,
       imageUrl,
+      fallbackImageUrl: getDefaultPushArtwork("campaign"),
       accentColor: context.project?.brand_accent || null,
       meta,
       isFeatured: Boolean(campaign.featured),
@@ -546,6 +548,7 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
       projectName: context.project?.name || "Veltrix",
       campaignTitle: context.campaign?.title || null,
       imageUrl,
+      fallbackImageUrl: getDefaultPushArtwork("quest"),
       accentColor: context.project?.brand_accent || null,
       meta,
       isFeatured: false,
@@ -604,6 +607,7 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
       projectName: context.project?.name || "Veltrix",
       campaignTitle: context.campaign?.title || null,
       imageUrl,
+      fallbackImageUrl: getDefaultPushArtwork("raid"),
       accentColor: context.project?.brand_accent || null,
       meta,
       isFeatured: false,
@@ -648,20 +652,21 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
     { label: "Rarity", value: reward.rarity || "Standard" },
   ];
 
-  return {
-    id: reward.id,
-    projectId: reward.project_id,
+    return {
+      id: reward.id,
+      projectId: reward.project_id,
     campaignId: reward.campaign_id,
     title: reward.title,
     body: reward.description || `A ${reward.rarity ?? "new"} reward is now available.`,
     url: `${webAppUrl}/rewards/${reward.id}`,
     buttonLabel: "Open reward",
-    eyebrow: "REWARD DROP",
-    projectName: context.project?.name || "Veltrix",
-    campaignTitle: context.campaign?.title || null,
-    imageUrl,
-    accentColor: context.project?.brand_accent || null,
-    meta,
+      eyebrow: "REWARD DROP",
+      projectName: context.project?.name || "Veltrix",
+      campaignTitle: context.campaign?.title || null,
+      imageUrl,
+      fallbackImageUrl: null,
+      accentColor: context.project?.brand_accent || null,
+      meta,
     isFeatured: reward.rarity === "legendary" || reward.rarity === "epic",
     isLive: reward.status === "active" && reward.visible === true,
     xpValue: reward.cost ?? 0,
@@ -747,6 +752,10 @@ export async function POST(request: NextRequest) {
               projectName: item.projectName,
               campaignTitle: item.campaignTitle || undefined,
               imageUrl: item.imageUrl || undefined,
+              fallbackImageUrl:
+                item.fallbackImageUrl && item.fallbackImageUrl !== item.imageUrl
+                  ? item.fallbackImageUrl
+                  : undefined,
               meta: item.meta,
               url: item.url,
               buttonLabel: item.buttonLabel,
