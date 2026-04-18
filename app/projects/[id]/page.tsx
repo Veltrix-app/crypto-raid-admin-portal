@@ -352,6 +352,13 @@ export default function ProjectDetailPage() {
   );
   const [savingIntegration, setSavingIntegration] = useState<"discord" | "telegram" | null>(null);
   const [integrationNotice, setIntegrationNotice] = useState<string>("");
+  const [testingIntegration, setTestingIntegration] = useState<"discord" | "telegram" | null>(
+    null
+  );
+  const [integrationTestNotice, setIntegrationTestNotice] = useState<string>("");
+  const [integrationTestTone, setIntegrationTestTone] = useState<"success" | "error">(
+    "success"
+  );
   const [projectWallets, setProjectWallets] = useState<OnchainProjectWallet[]>([]);
   const [projectAssets, setProjectAssets] = useState<OnchainProjectAsset[]>([]);
   const [walletForm, setWalletForm] = useState<OnchainWalletForm>({
@@ -762,6 +769,59 @@ export default function ProjectDetailPage() {
         (provider === "discord"
           ? `Discord integration and push settings saved for ${project.name}.`
           : `Telegram integration and push settings saved for ${project.name}.`)
+    );
+  }
+
+  async function sendIntegrationTestPush(provider: "discord" | "telegram") {
+    if (!project?.id) return;
+
+    setTestingIntegration(provider);
+    setIntegrationTestNotice("");
+    setIntegrationTestTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-push-test`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        provider,
+        integrationConfig:
+          provider === "discord" ? discordIntegrationConfig : telegramIntegrationConfig,
+        pushSettings: provider === "discord" ? discordPushSettings : telegramPushSettings,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setTestingIntegration(null);
+
+    if (!response.ok || !payload?.ok) {
+      setIntegrationTestTone("error");
+      setIntegrationTestNotice(
+        payload?.error ||
+          (provider === "discord"
+            ? "Discord test push failed."
+            : "Telegram test push failed.")
+      );
+      return;
+    }
+
+    const target =
+      typeof payload.target === "string" && payload.target.trim()
+        ? payload.target.trim()
+        : provider === "discord"
+          ? "the configured Discord rail"
+          : "the configured Telegram rail";
+    const messageId =
+      payload?.result && typeof payload.result === "object" && "messageId" in payload.result
+        ? String(payload.result.messageId)
+        : "";
+
+    setIntegrationTestTone("success");
+    setIntegrationTestNotice(
+      provider === "discord"
+        ? `Discord test push delivered to ${target}${messageId ? ` (message ${messageId})` : ""}.`
+        : `Telegram test push delivered to ${target}${messageId ? ` (message ${messageId})` : ""}.`
     );
   }
 
@@ -1976,13 +2036,26 @@ export default function ProjectDetailPage() {
                         />
                       </div>
                     </div>
-                    <button
-                      onClick={() => void saveProjectIntegration("discord")}
-                      disabled={savingIntegration === "discord"}
-                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {savingIntegration === "discord" ? "Saving Discord config..." : "Save Discord integration"}
-                    </button>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <button
+                        onClick={() => void saveProjectIntegration("discord")}
+                        disabled={savingIntegration === "discord"}
+                        className="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {savingIntegration === "discord"
+                          ? "Saving Discord config..."
+                          : "Save Discord integration"}
+                      </button>
+                      <button
+                        onClick={() => void sendIntegrationTestPush("discord")}
+                        disabled={testingIntegration === "discord"}
+                        className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {testingIntegration === "discord"
+                          ? "Sending Discord test..."
+                          : "Send Discord test push"}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -2216,18 +2289,42 @@ export default function ProjectDetailPage() {
                         />
                       </div>
                     </div>
-                    <button
-                      onClick={() => void saveProjectIntegration("telegram")}
-                      disabled={savingIntegration === "telegram"}
-                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {savingIntegration === "telegram" ? "Saving Telegram config..." : "Save Telegram integration"}
-                    </button>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <button
+                        onClick={() => void saveProjectIntegration("telegram")}
+                        disabled={savingIntegration === "telegram"}
+                        className="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {savingIntegration === "telegram"
+                          ? "Saving Telegram config..."
+                          : "Save Telegram integration"}
+                      </button>
+                      <button
+                        onClick={() => void sendIntegrationTestPush("telegram")}
+                        disabled={testingIntegration === "telegram"}
+                        className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {testingIntegration === "telegram"
+                          ? "Sending Telegram test..."
+                          : "Send Telegram test push"}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {integrationNotice ? (
                   <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">
                     {integrationNotice}
+                  </div>
+                ) : null}
+                {integrationTestNotice ? (
+                  <div
+                    className={`rounded-2xl px-4 py-3 text-sm ${
+                      integrationTestTone === "error"
+                        ? "border border-rose-500/25 bg-rose-500/10 text-rose-200"
+                        : "border border-primary/20 bg-primary/10 text-primary"
+                    }`}
+                  >
+                    {integrationTestNotice}
                   </div>
                 ) : null}
                 <DetailMetaRow
