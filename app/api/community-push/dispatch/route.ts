@@ -37,6 +37,12 @@ type DispatchItem = {
   body: string;
   url: string;
   buttonLabel: string;
+  eyebrow: string;
+  projectName: string;
+  campaignTitle?: string | null;
+  imageUrl?: string | null;
+  accentColor?: string | null;
+  meta: Array<{ label: string; value: string }>;
   isFeatured: boolean;
   isLive: boolean;
   xpValue: number;
@@ -156,11 +162,52 @@ async function sendCommunityPush(provider: Provider, payload: Record<string, unk
   return data;
 }
 
+async function loadProjectContext(
+  supabase: any,
+  projectId: string,
+  campaignId?: string | null
+) {
+  const [{ data: project }, { data: campaign }] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("id, name, logo, banner_url, brand_accent")
+      .eq("id", projectId)
+      .maybeSingle(),
+    campaignId
+      ? supabase
+          .from("campaigns")
+          .select("id, title, thumbnail_url, banner_url")
+          .eq("id", campaignId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  return {
+    project: (project as
+      | {
+          id: string;
+          name: string;
+          logo: string | null;
+          banner_url: string | null;
+          brand_accent: string | null;
+        }
+      | null) ?? null,
+    campaign: (campaign as
+      | {
+          id: string;
+          title: string;
+          thumbnail_url: string | null;
+          banner_url: string | null;
+        }
+      | null) ?? null,
+  };
+}
+
 async function loadDispatchItem(supabase: any, contentType: ContentType, contentId: string): Promise<DispatchItem | null> {
   if (contentType === "campaign") {
     const { data } = await supabase
       .from("campaigns")
-      .select("id, project_id, title, short_description, featured, status, visibility, xp_budget")
+      .select("id, project_id, title, short_description, featured, status, visibility, xp_budget, thumbnail_url, banner_url")
       .eq("id", contentId)
       .maybeSingle();
 
@@ -173,9 +220,24 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
       status: string;
       visibility: string;
       xp_budget: number | null;
+      thumbnail_url: string | null;
+      banner_url: string | null;
     } | null;
 
     if (!campaign) return null;
+
+    const context = await loadProjectContext(supabase, campaign.project_id, campaign.id);
+    const imageUrl =
+      campaign.banner_url ||
+      campaign.thumbnail_url ||
+      context.project?.banner_url ||
+      context.project?.logo ||
+      null;
+    const meta = [
+      { label: "Track", value: context.project?.name || "Veltrix" },
+      { label: "XP Pool", value: `+${campaign.xp_budget ?? 0} XP` },
+      { label: "State", value: "Campaign live" },
+    ];
 
     return {
       id: campaign.id,
@@ -184,6 +246,12 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
       body: campaign.short_description || "A campaign just went live in Veltrix.",
       url: `${webAppUrl}/campaigns/${campaign.id}`,
       buttonLabel: "Open campaign",
+      eyebrow: "CAMPAIGN LIVE",
+      projectName: context.project?.name || "Veltrix",
+      campaignTitle: campaign.title,
+      imageUrl,
+      accentColor: context.project?.brand_accent || null,
+      meta,
       isFeatured: Boolean(campaign.featured),
       isLive: campaign.status === "active" && campaign.visibility === "public",
       xpValue: campaign.xp_budget ?? 0,
@@ -209,6 +277,19 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
 
     if (!quest) return null;
 
+    const context = await loadProjectContext(supabase, quest.project_id, quest.campaign_id);
+    const imageUrl =
+      context.campaign?.banner_url ||
+      context.campaign?.thumbnail_url ||
+      context.project?.banner_url ||
+      context.project?.logo ||
+      null;
+    const meta = [
+      { label: "Project", value: context.project?.name || "Veltrix" },
+      ...(context.campaign?.title ? [{ label: "Campaign", value: context.campaign.title }] : []),
+      { label: "XP", value: `+${quest.xp ?? 0} XP` },
+    ];
+
     return {
       id: quest.id,
       projectId: quest.project_id,
@@ -217,6 +298,12 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
       body: quest.short_description || "A new mission is now live.",
       url: `${webAppUrl}/quests/${quest.id}`,
       buttonLabel: "Open mission",
+      eyebrow: "MISSION LIVE",
+      projectName: context.project?.name || "Veltrix",
+      campaignTitle: context.campaign?.title || null,
+      imageUrl,
+      accentColor: context.project?.brand_accent || null,
+      meta,
       isFeatured: false,
       isLive: quest.status === "active",
       xpValue: quest.xp ?? 0,
@@ -242,6 +329,25 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
 
     if (!raid) return null;
 
+    const context = await loadProjectContext(supabase, raid.project_id, raid.campaign_id);
+    const { data: raidDetail } = await supabase
+      .from("raids")
+      .select("banner")
+      .eq("id", raid.id)
+      .maybeSingle();
+    const imageUrl =
+      (raidDetail as { banner: string | null } | null)?.banner ||
+      context.campaign?.banner_url ||
+      context.campaign?.thumbnail_url ||
+      context.project?.banner_url ||
+      context.project?.logo ||
+      null;
+    const meta = [
+      { label: "Project", value: context.project?.name || "Veltrix" },
+      ...(context.campaign?.title ? [{ label: "Campaign", value: context.campaign.title }] : []),
+      { label: "Raid XP", value: `+${raid.reward_xp ?? 0} XP` },
+    ];
+
     return {
       id: raid.id,
       projectId: raid.project_id,
@@ -250,6 +356,12 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
       body: raid.short_description || "A raid is now live and needs pressure.",
       url: `${webAppUrl}/raids/${raid.id}`,
       buttonLabel: "Open raid",
+      eyebrow: "RAID ALERT",
+      projectName: context.project?.name || "Veltrix",
+      campaignTitle: context.campaign?.title || null,
+      imageUrl,
+      accentColor: context.project?.brand_accent || null,
+      meta,
       isFeatured: false,
       isLive: raid.status === "active",
       xpValue: raid.reward_xp ?? 0,
@@ -258,7 +370,7 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
 
   const { data } = await supabase
     .from("rewards")
-    .select("id, project_id, campaign_id, title, description, status, visible, cost, rarity")
+    .select("id, project_id, campaign_id, title, description, status, visible, cost, rarity, image_url")
     .eq("id", contentId)
     .maybeSingle();
 
@@ -272,9 +384,25 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
     visible: boolean | null;
     cost: number | null;
     rarity: string | null;
+    image_url: string | null;
   } | null;
 
   if (!reward) return null;
+
+  const context = await loadProjectContext(supabase, reward.project_id, reward.campaign_id);
+  const imageUrl =
+    reward.image_url ||
+    context.campaign?.banner_url ||
+    context.campaign?.thumbnail_url ||
+    context.project?.banner_url ||
+    context.project?.logo ||
+    null;
+  const meta = [
+    { label: "Project", value: context.project?.name || "Veltrix" },
+    ...(context.campaign?.title ? [{ label: "Campaign", value: context.campaign.title }] : []),
+    { label: "Cost", value: `${reward.cost ?? 0} XP` },
+    { label: "Rarity", value: reward.rarity || "Standard" },
+  ];
 
   return {
     id: reward.id,
@@ -284,6 +412,12 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
     body: reward.description || `A ${reward.rarity ?? "new"} reward is now available.`,
     url: `${webAppUrl}/rewards/${reward.id}`,
     buttonLabel: "Open reward",
+    eyebrow: "REWARD DROP",
+    projectName: context.project?.name || "Veltrix",
+    campaignTitle: context.campaign?.title || null,
+    imageUrl,
+    accentColor: context.project?.brand_accent || null,
+    meta,
     isFeatured: reward.rarity === "legendary" || reward.rarity === "epic",
     isLive: reward.status === "active" && reward.visible === true,
     xpValue: reward.cost ?? 0,
@@ -367,6 +501,12 @@ export async function POST(request: NextRequest) {
               targetThreadId: settings.targetThreadId || undefined,
               title: item.title,
               body: item.body,
+              eyebrow: item.eyebrow,
+              projectName: item.projectName,
+              campaignTitle: item.campaignTitle || undefined,
+              imageUrl: item.imageUrl || undefined,
+              accentColor: item.accentColor || undefined,
+              meta: item.meta,
               url: item.url,
               buttonLabel: item.buttonLabel,
             }
@@ -374,6 +514,11 @@ export async function POST(request: NextRequest) {
               targetChatId: settings.targetChatId,
               title: item.title,
               body: item.body,
+              eyebrow: item.eyebrow,
+              projectName: item.projectName,
+              campaignTitle: item.campaignTitle || undefined,
+              imageUrl: item.imageUrl || undefined,
+              meta: item.meta,
               url: item.url,
               buttonLabel: item.buttonLabel,
             };
