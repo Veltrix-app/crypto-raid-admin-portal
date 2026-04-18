@@ -6,6 +6,7 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const communityBotUrl = process.env.COMMUNITY_BOT_URL;
 const communityBotWebhookSecret = process.env.COMMUNITY_BOT_WEBHOOK_SECRET;
 const webAppUrl = process.env.NEXT_PUBLIC_APP_URL || "https://veltrix-web.vercel.app";
+const normalizedWebAppUrl = webAppUrl.replace(/\/+$/, "");
 
 type Provider = "discord" | "telegram";
 type ContentType = "campaign" | "quest" | "raid" | "reward";
@@ -107,6 +108,22 @@ function getCommunityBotPushUrl(provider: Provider) {
   }
 
   return `${communityBotUrl.replace(/\/+$/, "")}/webhooks/${provider}/push`;
+}
+
+function getDefaultPushArtwork(contentType: ContentType) {
+  if (contentType === "campaign") {
+    return `${normalizedWebAppUrl}/community-push/defaults/campaign.png`;
+  }
+
+  if (contentType === "quest") {
+    return `${normalizedWebAppUrl}/community-push/defaults/quest.png`;
+  }
+
+  if (contentType === "raid") {
+    return `${normalizedWebAppUrl}/community-push/defaults/raid.png`;
+  }
+
+  return null;
 }
 
 function sanitizeScopeIds(value: unknown) {
@@ -459,7 +476,7 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
       campaign.thumbnail_url ||
       context.project?.banner_url ||
       context.project?.logo ||
-      null;
+      getDefaultPushArtwork("campaign");
     const meta = [
       { label: "Track", value: context.project?.name || "Veltrix" },
       { label: "XP Pool", value: `+${campaign.xp_budget ?? 0} XP` },
@@ -510,7 +527,7 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
       context.campaign?.thumbnail_url ||
       context.project?.banner_url ||
       context.project?.logo ||
-      null;
+      getDefaultPushArtwork("quest");
     const meta = [
       { label: "Project", value: context.project?.name || "Veltrix" },
       ...(context.campaign?.title ? [{ label: "Campaign", value: context.campaign.title }] : []),
@@ -568,7 +585,7 @@ async function loadDispatchItem(supabase: any, contentType: ContentType, content
       context.campaign?.thumbnail_url ||
       context.project?.banner_url ||
       context.project?.logo ||
-      null;
+      getDefaultPushArtwork("raid");
     const meta = [
       { label: "Project", value: context.project?.name || "Veltrix" },
       ...(context.campaign?.title ? [{ label: "Campaign", value: context.campaign.title }] : []),
