@@ -47,6 +47,10 @@ function getCommunityBotPushUrl(provider: Provider) {
   return `${communityBotUrl.replace(/\/+$/, "")}/webhooks/${provider}/push`;
 }
 
+function toOptionalTrimmedString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+}
+
 async function sendCommunityPush(provider: Provider, payload: Record<string, unknown>) {
   const response = await fetch(getCommunityBotPushUrl(provider), {
     method: "POST",
@@ -133,8 +137,7 @@ export async function POST(
       projectName: project.name,
       campaignTitle: "Operator test",
       imageUrl,
-      accentColor:
-        typeof project.brand_accent === "string" ? project.brand_accent : undefined,
+      accentColor: toOptionalTrimmedString(project.brand_accent),
       meta: [
         { label: "Project", value: project.name },
         { label: "Provider", value: provider === "discord" ? "Discord" : "Telegram" },
