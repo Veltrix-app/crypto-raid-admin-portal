@@ -13,16 +13,27 @@ import {
 } from "@/components/layout/ops/OpsPrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
-import type { DbAuditLog } from "@/types/database";
+import type { DbAuditLog, DbTrustSnapshot } from "@/types/database";
+
+type TrustAlert = {
+  id: string;
+  authUserId: string;
+  username: string;
+  score: number;
+  createdAt: string;
+  reasons: Record<string, unknown>;
+};
 
 export default function ModerationPage() {
   const submissions = useAdminPortalStore((s) => s.submissions);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
+  const users = useAdminPortalStore((s) => s.users);
   const approveSubmission = useAdminPortalStore((s) => s.approveSubmission);
   const rejectSubmission = useAdminPortalStore((s) => s.rejectSubmission);
   const updateReviewFlagStatus = useAdminPortalStore((s) => s.updateReviewFlagStatus);
   const [callbackFailures, setCallbackFailures] = useState<DbAuditLog[]>([]);
   const [onchainFailures, setOnchainFailures] = useState<DbAuditLog[]>([]);
+  const [trustAlerts, setTrustAlerts] = useState<TrustAlert[]>([]);
   const [search, setSearch] = useState("");
   const [flagSeverity, setFlagSeverity] = useState<"all" | "high" | "medium" | "low">("all");
   const [submissionStatus, setSubmissionStatus] = useState<"all" | "pending" | "approved" | "rejected">("pending");
@@ -32,7 +43,11 @@ export default function ModerationPage() {
     const supabase = createClient();
 
     async function loadOpsFailures() {
-      const [{ data: callbackRows, error: callbackError }, { data: onchainRows, error: onchainError }] =
+      const [
+        { data: callbackRows, error: callbackError },
+        { data: onchainRows, error: onchainError },
+        { data: trustRows, error: trustError },
+      ] =
         await Promise.all([
           supabase
             .from("admin_audit_logs")
@@ -46,6 +61,11 @@ export default function ModerationPage() {
             .in("action", ["onchain_ingress_rejected", "onchain_ingress_failed"])
             .order("created_at", { ascending: false })
             .limit(12),
+          supabase
+            .from("trust_snapshots")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(24),
         ]);
 
       if (!active) {
@@ -63,6 +83,35 @@ export default function ModerationPage() {
       } else {
         setOnchainFailures((onchainRows ?? []) as DbAuditLog[]);
       }
+
+      if (trustError) {
+        console.error("[moderation] trust snapshots load failed", trustError.message);
+      } else {
+        const usernamesByAuthUserId = new Map(
+          users
+            .filter((user) => user.authUserId)
+            .map((user) => [user.authUserId as string, user.username])
+        );
+        const alerts = ((trustRows ?? []) as DbTrustSnapshot[])
+          .filter((snapshot) => {
+            const reasons =
+              snapshot.reasons && typeof snapshot.reasons === "object" ? snapshot.reasons : {};
+            const suspiciousFlags = Array.isArray((reasons as { suspiciousFlags?: unknown[] }).suspiciousFlags)
+              ? ((reasons as { suspiciousFlags?: unknown[] }).suspiciousFlags ?? [])
+              : [];
+            return snapshot.score <= 45 || suspiciousFlags.length > 0;
+          })
+          .slice(0, 12)
+          .map((snapshot) => ({
+            id: snapshot.id,
+            authUserId: snapshot.auth_user_id,
+            username: usernamesByAuthUserId.get(snapshot.auth_user_id) ?? "Unknown user",
+            score: snapshot.score,
+            createdAt: snapshot.created_at,
+            reasons: snapshot.reasons ?? {},
+          }));
+        setTrustAlerts(alerts);
+      }
     }
 
     void loadOpsFailures();
@@ -70,7 +119,7 @@ export default function ModerationPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [users]);
 
   const openFlags = reviewFlags.filter((flag) => flag.status === "open");
   const filteredFlags = useMemo(() => {
@@ -128,6 +177,16 @@ export default function ModerationPage() {
     });
   }, [onchainFailures, search]);
 
+  const filteredTrustAlerts = useMemo(() => {
+    const term = search.toLowerCase();
+    return trustAlerts.filter((alert) => {
+      const haystack = [alert.username, String(alert.score), JSON.stringify(alert.reasons)]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [trustAlerts, search]);
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -167,6 +226,11 @@ export default function ModerationPage() {
             value={onchainFailures.length}
             emphasis={onchainFailures.length > 0 ? "warning" : "default"}
           />
+          <OpsMetricCard
+            label="Trust drift"
+            value={trustAlerts.length}
+            emphasis={trustAlerts.length > 0 ? "warning" : "default"}
+          />
         </div>
 
         <OpsFilterBar>
@@ -200,6 +264,55 @@ export default function ModerationPage() {
             <option value="rejected">rejected</option>
           </OpsSelect>
         </OpsFilterBar>
+
+        <OpsPanel
+          eyebrow="Trust drift"
+          title="Low-trust posture and suspicious velocity"
+          description="Latest trust snapshots that slipped into the watch band or carried suspicious on-chain reasons."
+          action={
+            <div className="rounded-full border border-line bg-card2 px-4 py-2 text-sm font-bold text-text">
+              {trustAlerts.length}
+            </div>
+          }
+          tone="accent"
+        >
+          <div className="grid gap-4">
+            {filteredTrustAlerts.map((alert) => (
+              <div key={alert.id} className="rounded-[24px] border border-line bg-card2 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-lg font-extrabold text-text">{alert.username}</p>
+                      <OpsStatusPill tone={alert.score <= 35 ? "danger" : "warning"}>
+                        trust {alert.score}
+                      </OpsStatusPill>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-sub">
+                      This snapshot crossed the trust watch threshold or landed with suspicious on-chain reasons that deserve operator review.
+                    </p>
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      <DetailRow label="Auth user" value={alert.authUserId} />
+                      <DetailRow label="Captured" value={formatDate(alert.createdAt)} />
+                      <DetailRow label="Flags" value={Array.isArray((alert.reasons as { suspiciousFlags?: unknown[] }).suspiciousFlags) ? (((alert.reasons as { suspiciousFlags?: unknown[] }).suspiciousFlags ?? []).length) : 0} />
+                    </div>
+                    <div className="mt-4 rounded-2xl border border-line bg-card p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Reasons</p>
+                      <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">
+                        {JSON.stringify(alert.reasons, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {filteredTrustAlerts.length === 0 ? (
+              <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
+                No trust drift signals match the current moderation filters.
+              </div>
+            ) : null}
+          </div>
+        </OpsPanel>
 
         <OpsPanel
           eyebrow="Review Flags"

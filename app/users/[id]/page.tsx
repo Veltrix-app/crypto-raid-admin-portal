@@ -21,6 +21,7 @@ export default function UserDetailPage() {
   const users = useAdminPortalStore((s) => s.users);
   const submissions = useAdminPortalStore((s) => s.submissions);
   const claims = useAdminPortalStore((s) => s.claims);
+  const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
   const [trustSnapshots, setTrustSnapshots] = useState<DbTrustSnapshot[]>([]);
   const [rewardDistributions, setRewardDistributions] = useState<DbRewardDistribution[]>([]);
   const [onchainEvents, setOnchainEvents] = useState<DbOnchainEvent[]>([]);
@@ -55,6 +56,10 @@ export default function UserDetailPage() {
         ? "Healthy contributor posture"
         : "Monitor contribution quality";
   const latestTrustSnapshot = trustSnapshots[0] ?? null;
+  const userReviewFlags = reviewFlags
+    .filter((flag) => flag.authUserId === currentUser.authUserId)
+    .slice(0, 8);
+  const openUserReviewFlags = userReviewFlags.filter((flag) => flag.status === "open");
   const claimableDistributions = rewardDistributions.filter(
     (distribution) => distribution.status === "claimable"
   );
@@ -150,6 +155,7 @@ export default function UserDetailPage() {
               <DetailMetricCard label="Reputation Rank" value={currentUser.reputationRank} hint="Current relative standing in the reputation model." />
               <DetailMetricCard label="Claimable Pools" value={claimableDistributions.length} hint="Campaign distributions this contributor can already claim." />
               <DetailMetricCard label="On-chain Events" value={onchainEvents.length} hint="Recent on-chain events normalized into the AESP intake layer." />
+              <DetailMetricCard label="Open flags" value={openUserReviewFlags.length} hint="Trust or fraud flags that still need an operator decision." />
             </div>
           </DetailSurface>
 
@@ -175,7 +181,8 @@ export default function UserDetailPage() {
                   {Number(totalClaimableAmount.toFixed(4))}
                 </span>
                 . Recent on-chain events tracked:{" "}
-                <span className="font-semibold text-text">{onchainEvents.length}</span>.
+                <span className="font-semibold text-text">{onchainEvents.length}</span>. Open flags:{" "}
+                <span className="font-semibold text-text">{openUserReviewFlags.length}</span>.
               </p>
             </div>
           </DetailSurface>
@@ -195,6 +202,7 @@ export default function UserDetailPage() {
               <DetailMetaRow label="Pending submissions" value={pendingSubmissions} />
               <DetailMetaRow label="Claimable distributions" value={claimableDistributions.length} />
               <DetailMetaRow label="On-chain events" value={onchainEvents.length} />
+              <DetailMetaRow label="Open trust flags" value={openUserReviewFlags.length} />
             </div>
           </DetailSurface>
 
@@ -239,6 +247,36 @@ export default function UserDetailPage() {
                 />
                 <DetailMetaRow label="Latest asset" value={claimableDistributions[0]?.reward_asset ?? "-"} />
               </div>
+            </DetailSidebarSurface>
+
+            <DetailSidebarSurface title="Trust & Fraud Flags">
+              {userReviewFlags.length > 0 ? (
+                <div className="space-y-4">
+                  {userReviewFlags.map((flag) => (
+                    <div key={flag.id} className="rounded-2xl border border-line bg-card px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-line px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+                          {flag.flagType.replace(/_/g, " ")}
+                        </span>
+                        <span className="rounded-full border border-line px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                          {flag.status}
+                        </span>
+                        <span className="rounded-full border border-line px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                          {flag.severity}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-sub">{flag.reason}</p>
+                      {flag.metadata ? (
+                        <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">{flag.metadata}</pre>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm leading-7 text-sub">
+                  No trust or fraud flags have been raised for this contributor yet.
+                </p>
+              )}
             </DetailSidebarSurface>
           </div>
         </div>
