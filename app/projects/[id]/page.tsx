@@ -73,12 +73,21 @@ type OnchainWalletForm = {
 };
 
 type OnchainAssetForm = {
+  editingAssetId: string | null;
   chain: string;
   contractAddress: string;
   assetType: string;
   symbol: string;
   decimals: string;
   isActive: boolean;
+  startBlock: string;
+  marketMakerAddressesText: string;
+  stakingContractAddressesText: string;
+  lpContractAddressesText: string;
+  allowedFunctionsText: string;
+  trackContractCalls: boolean;
+  enableHoldTracking: boolean;
+  holdThresholdHours: string;
   metadataJson: string;
 };
 
@@ -178,6 +187,105 @@ function stringifyOnchainMetadata(metadata: Record<string, unknown> | null | und
   return JSON.stringify(metadata, null, 2);
 }
 
+function splitMultilineInput(value: string) {
+  return value
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function joinMultilineInput(values: unknown) {
+  return Array.isArray(values)
+    ? values
+        .map((item) => (typeof item === "string" ? item.trim() : ""))
+        .filter(Boolean)
+        .join("\n")
+    : "";
+}
+
+function parseAdditionalMetadata(value: string) {
+  if (value.trim().length === 0) {
+    return {} as Record<string, unknown>;
+  }
+
+  const parsed = JSON.parse(value) as unknown;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Advanced metadata must be a JSON object.");
+  }
+
+  return parsed as Record<string, unknown>;
+}
+
+function createDefaultAssetForm(): OnchainAssetForm {
+  return {
+    editingAssetId: null,
+    chain: "evm",
+    contractAddress: "",
+    assetType: "token",
+    symbol: "",
+    decimals: "18",
+    isActive: true,
+    startBlock: "",
+    marketMakerAddressesText: "",
+    stakingContractAddressesText: "",
+    lpContractAddressesText: "",
+    allowedFunctionsText: "",
+    trackContractCalls: false,
+    enableHoldTracking: true,
+    holdThresholdHours: "24",
+    metadataJson: "",
+  };
+}
+
+function createAssetFormFromAsset(asset: OnchainProjectAsset): OnchainAssetForm {
+  const metadata =
+    asset.metadata && typeof asset.metadata === "object"
+      ? (asset.metadata as Record<string, unknown>)
+      : {};
+  const {
+    syncState: _syncState,
+    startBlock: _startBlock,
+    marketMakerAddresses: _marketMakerAddresses,
+    stakingContractAddresses: _stakingContractAddresses,
+    lpContractAddresses: _lpContractAddresses,
+    allowedFunctions: _allowedFunctions,
+    trackContractCalls: _trackContractCalls,
+    enableHoldTracking: _enableHoldTracking,
+    holdThresholdHours: _holdThresholdHours,
+    ...advancedMetadata
+  } = metadata;
+
+  return {
+    editingAssetId: asset.id,
+    chain: asset.chain,
+    contractAddress: asset.contract_address,
+    assetType: asset.asset_type,
+    symbol: asset.symbol,
+    decimals: String(asset.decimals),
+    isActive: asset.is_active,
+    startBlock:
+      typeof metadata.startBlock === "number"
+        ? String(metadata.startBlock)
+        : typeof metadata.startBlock === "string"
+          ? metadata.startBlock
+          : "",
+    marketMakerAddressesText: joinMultilineInput(metadata.marketMakerAddresses),
+    stakingContractAddressesText: joinMultilineInput(metadata.stakingContractAddresses),
+    lpContractAddressesText: joinMultilineInput(metadata.lpContractAddresses),
+    allowedFunctionsText: joinMultilineInput(metadata.allowedFunctions),
+    trackContractCalls: metadata.trackContractCalls === true,
+    enableHoldTracking: metadata.enableHoldTracking !== false,
+    holdThresholdHours:
+      typeof metadata.holdThresholdHours === "number"
+        ? String(metadata.holdThresholdHours)
+        : typeof metadata.holdThresholdHours === "string"
+          ? metadata.holdThresholdHours
+          : "24",
+    metadataJson:
+      Object.keys(advancedMetadata).length > 0 ? stringifyOnchainMetadata(advancedMetadata) : "",
+  };
+}
+
 function readAssetSyncState(asset: OnchainProjectAsset) {
   const metadata =
     asset.metadata && typeof asset.metadata === "object"
@@ -253,15 +361,7 @@ export default function ProjectDetailPage() {
     walletType: "treasury",
     isActive: true,
   });
-  const [assetForm, setAssetForm] = useState<OnchainAssetForm>({
-    chain: "evm",
-    contractAddress: "",
-    assetType: "token",
-    symbol: "",
-    decimals: "18",
-    isActive: true,
-    metadataJson: "",
-  });
+  const [assetForm, setAssetForm] = useState<OnchainAssetForm>(createDefaultAssetForm());
   const [loadingOnchainConfig, setLoadingOnchainConfig] = useState(false);
   const [savingOnchainConfig, setSavingOnchainConfig] = useState<"wallet" | "asset" | null>(null);
   const [syncingProviderFeed, setSyncingProviderFeed] = useState(false);
@@ -736,23 +836,71 @@ export default function ProjectDetailPage() {
     setSavingOnchainConfig("asset");
     setOnchainNotice("");
 
-    let parsedMetadata: Record<string, unknown> = {};
-    if (assetForm.metadataJson.trim().length > 0) {
-      try {
-        const candidate = JSON.parse(assetForm.metadataJson) as unknown;
-        if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
-          throw new Error("Asset metadata must be a JSON object.");
-        }
-
-        parsedMetadata = candidate as Record<string, unknown>;
-      } catch (error) {
-        setSavingOnchainConfig(null);
-        setOnchainNotice(
-          error instanceof Error ? error.message : "Asset metadata JSON is invalid."
-        );
-        return;
-      }
+    let additionalMetadata: Record<string, unknown> = {};
+    try {
+      additionalMetadata = parseAdditionalMetadata(assetForm.metadataJson);
+    } catch (error) {
+      setSavingOnchainConfig(null);
+      setOnchainNotice(error instanceof Error ? error.message : "Asset metadata JSON is invalid.");
+      return;
     }
+
+    const normalizedStartBlock = assetForm.startBlock.trim();
+    if (normalizedStartBlock.length > 0 && !/^\d+$/.test(normalizedStartBlock)) {
+      setSavingOnchainConfig(null);
+      setOnchainNotice("Start block must be a whole number.");
+      return;
+    }
+
+    const normalizedHoldThreshold = assetForm.holdThresholdHours.trim();
+    if (normalizedHoldThreshold.length > 0 && !/^\d+$/.test(normalizedHoldThreshold)) {
+      setSavingOnchainConfig(null);
+      setOnchainNotice("Hold threshold hours must be a whole number.");
+      return;
+    }
+
+    const currentAsset =
+      projectAssets.find(
+        (asset) =>
+          asset.id === assetForm.editingAssetId ||
+          (asset.contract_address.toLowerCase() === assetForm.contractAddress.trim().toLowerCase() &&
+            asset.chain === (assetForm.chain.trim().toLowerCase() || "evm"))
+      ) ?? null;
+    const currentMetadata =
+      currentAsset?.metadata && typeof currentAsset.metadata === "object"
+        ? (currentAsset.metadata as Record<string, unknown>)
+        : {};
+    const preservedSyncState =
+      currentMetadata.syncState && typeof currentMetadata.syncState === "object"
+        ? { syncState: currentMetadata.syncState }
+        : {};
+    const structuredMetadata: Record<string, unknown> = {
+      ...(assetForm.startBlock.trim().length > 0
+        ? { startBlock: Number.parseInt(normalizedStartBlock, 10) }
+        : {}),
+      ...(splitMultilineInput(assetForm.marketMakerAddressesText).length > 0
+        ? { marketMakerAddresses: splitMultilineInput(assetForm.marketMakerAddressesText) }
+        : {}),
+      ...(splitMultilineInput(assetForm.stakingContractAddressesText).length > 0
+        ? { stakingContractAddresses: splitMultilineInput(assetForm.stakingContractAddressesText) }
+        : {}),
+      ...(splitMultilineInput(assetForm.lpContractAddressesText).length > 0
+        ? { lpContractAddresses: splitMultilineInput(assetForm.lpContractAddressesText) }
+        : {}),
+      ...(splitMultilineInput(assetForm.allowedFunctionsText).length > 0
+        ? { allowedFunctions: splitMultilineInput(assetForm.allowedFunctionsText) }
+        : {}),
+      ...(assetForm.trackContractCalls ? { trackContractCalls: true } : {}),
+      ...(assetForm.enableHoldTracking ? {} : { enableHoldTracking: false }),
+      ...(assetForm.holdThresholdHours.trim().length > 0
+        ? { holdThresholdHours: Number.parseInt(normalizedHoldThreshold, 10) }
+        : {}),
+    };
+    const parsedMetadata = {
+      ...structuredMetadata,
+      ...additionalMetadata,
+      ...preservedSyncState,
+    };
 
     const response = await fetch(`/api/projects/${project.id}/assets`, {
       method: "POST",
@@ -782,15 +930,7 @@ export default function ProjectDetailPage() {
       const next = current.filter((item) => item.id !== payload.asset.id);
       return [payload.asset, ...next];
     });
-    setAssetForm({
-      chain: assetForm.chain.trim().toLowerCase() || "evm",
-      contractAddress: "",
-      assetType: assetForm.assetType,
-      symbol: "",
-      decimals: assetForm.decimals || "18",
-      isActive: true,
-      metadataJson: stringifyOnchainMetadata(payload.asset.metadata ?? null),
-    });
+    setAssetForm(createDefaultAssetForm());
     setOnchainNotice(`Saved ${payload.asset.symbol} asset for ${project.name}.`);
   }
 
@@ -816,6 +956,11 @@ export default function ProjectDetailPage() {
 
     setProjectAssets((current) => current.filter((item) => item.id !== assetId));
     setOnchainNotice(`Removed asset from ${project.name}.`);
+  }
+
+  function loadAssetIntoEditor(asset: OnchainProjectAsset) {
+    setAssetForm(createAssetFormFromAsset(asset));
+    setOnchainNotice(`Loaded ${asset.symbol} into the Base sync editor.`);
   }
 
   async function runProjectOnchainSync() {
@@ -1256,8 +1401,8 @@ export default function ProjectDetailPage() {
                   <p className="text-sm font-bold text-text">Tracked assets</p>
                   <p className="mt-2 text-sm text-sub">
                     Register the token, NFT or LP contracts that on-chain scoring should accept.
-                    Add advanced provider rules in the metadata JSON when you want buy, stake,
-                    LP and contract-call classification to be deterministic.
+                    Use the Base sync fields below to make buy, stake, LP and contract-call
+                    classification deterministic without hand-editing raw JSON.
                   </p>
                   <div className="mt-4 grid gap-3">
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -1330,6 +1475,102 @@ export default function ProjectDetailPage() {
                         />
                       </label>
                     </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <input
+                        value={assetForm.startBlock}
+                        onChange={(event) =>
+                          setAssetForm((current) => ({
+                            ...current,
+                            startBlock: event.target.value,
+                          }))
+                        }
+                        placeholder="Start block on Base"
+                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      />
+                      <input
+                        value={assetForm.holdThresholdHours}
+                        onChange={(event) =>
+                          setAssetForm((current) => ({
+                            ...current,
+                            holdThresholdHours: event.target.value,
+                          }))
+                        }
+                        placeholder="Hold threshold hours"
+                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      />
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                        <span>Track contract calls</span>
+                        <input
+                          type="checkbox"
+                          checked={assetForm.trackContractCalls}
+                          onChange={(event) =>
+                            setAssetForm((current) => ({
+                              ...current,
+                              trackContractCalls: event.target.checked,
+                            }))
+                          }
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                        <span>Enable hold tracking</span>
+                        <input
+                          type="checkbox"
+                          checked={assetForm.enableHoldTracking}
+                          onChange={(event) =>
+                            setAssetForm((current) => ({
+                              ...current,
+                              enableHoldTracking: event.target.checked,
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
+                    <textarea
+                      value={assetForm.marketMakerAddressesText}
+                      onChange={(event) =>
+                        setAssetForm((current) => ({
+                          ...current,
+                          marketMakerAddressesText: event.target.value,
+                        }))
+                      }
+                      placeholder={"Market maker addresses (one per line)\n0x..."}
+                      className="min-h-[110px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
+                    />
+                    <textarea
+                      value={assetForm.stakingContractAddressesText}
+                      onChange={(event) =>
+                        setAssetForm((current) => ({
+                          ...current,
+                          stakingContractAddressesText: event.target.value,
+                        }))
+                      }
+                      placeholder={"Staking contract addresses (one per line)\n0x..."}
+                      className="min-h-[110px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
+                    />
+                    <textarea
+                      value={assetForm.lpContractAddressesText}
+                      onChange={(event) =>
+                        setAssetForm((current) => ({
+                          ...current,
+                          lpContractAddressesText: event.target.value,
+                        }))
+                      }
+                      placeholder={"LP contract addresses (one per line)\n0x..."}
+                      className="min-h-[110px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
+                    />
+                    <textarea
+                      value={assetForm.allowedFunctionsText}
+                      onChange={(event) =>
+                        setAssetForm((current) => ({
+                          ...current,
+                          allowedFunctionsText: event.target.value,
+                        }))
+                      }
+                      placeholder={"Allowed function selectors (one per line)\n0xa694fc3a"}
+                      className="min-h-[110px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
+                    />
                     <textarea
                       value={assetForm.metadataJson}
                       onChange={(event) =>
@@ -1338,16 +1579,35 @@ export default function ProjectDetailPage() {
                           metadataJson: event.target.value,
                         }))
                       }
-                      placeholder={`{\n  "startBlock": 12345678,\n  "marketMakerAddresses": ["0x..."],\n  "stakingContractAddresses": ["0x..."],\n  "lpContractAddresses": ["0x..."],\n  "allowedFunctions": ["0xa694fc3a"],\n  "holdThresholdHours": 24\n}`}
+                      placeholder={`{\n  "netUsdDeltaHint": 1200,\n  "notes": "Optional advanced overrides only"\n}`}
                       className="min-h-[180px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
                     />
+                    <p className="text-xs text-sub">
+                      Advanced metadata merges on top of the Base sync fields above. Existing
+                      `syncState` stays preserved when you update an asset.
+                    </p>
                     <button
                       onClick={() => void saveProjectAsset()}
                       disabled={savingOnchainConfig === "asset"}
                       className="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {savingOnchainConfig === "asset" ? "Saving asset..." : "Save tracked asset"}
+                      {savingOnchainConfig === "asset"
+                        ? "Saving asset..."
+                        : assetForm.editingAssetId
+                          ? "Update tracked asset"
+                          : "Save tracked asset"}
                     </button>
+                    {assetForm.editingAssetId ? (
+                      <button
+                        onClick={() => {
+                          setAssetForm(createDefaultAssetForm());
+                          setOnchainNotice("Cleared the Base sync editor.");
+                        }}
+                        className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-sub transition hover:border-primary/40 hover:text-text"
+                      >
+                        Clear editor
+                      </button>
+                    ) : null}
                     <div className="grid gap-3">
                       {projectAssets.length > 0 ? (
                         projectAssets.map((asset) => (
@@ -1396,12 +1656,20 @@ export default function ProjectDetailPage() {
                                   </pre>
                                 ) : null}
                               </div>
-                              <button
-                                onClick={() => void deleteProjectAsset(asset.id)}
-                                className="rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-rose-300 transition hover:bg-rose-500/15"
-                              >
-                                Remove
-                              </button>
+                              <div className="flex flex-col gap-2">
+                                <button
+                                  onClick={() => loadAssetIntoEditor(asset)}
+                                  className="rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-sub transition hover:border-primary/40 hover:text-text"
+                                >
+                                  Edit sync rules
+                                </button>
+                                <button
+                                  onClick={() => void deleteProjectAsset(asset.id)}
+                                  className="rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-rose-300 transition hover:bg-rose-500/15"
+                                >
+                                  Remove
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))
