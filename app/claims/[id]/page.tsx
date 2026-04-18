@@ -255,6 +255,19 @@ export default function ClaimDetailPage() {
               )}
             </DetailSidebarSurface>
 
+            <DetailSidebarSurface title="Delivery Payload">
+              {currentClaim.deliveryPayload ? (
+                <pre className="mt-2 whitespace-pre-wrap break-all text-xs text-sub">
+                  {currentClaim.deliveryPayload}
+                </pre>
+              ) : (
+                <InlineEmptyNotice
+                  title="No delivery payload stored yet"
+                  description="This claim does not currently expose additional payout payload data."
+                />
+              )}
+            </DetailSidebarSurface>
+
             <DetailSidebarSurface title="Audit Trail">
               <div className="mt-4 space-y-3">
                 {auditLogs.map((log) => (

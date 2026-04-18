@@ -417,11 +417,20 @@ function mapClaim(params: {
 }): AdminClaim {
   const { row, rewardsById, campaignsById, projectsById, usernamesByAuthUserId } = params;
   const reward = row.reward_id ? rewardsById.get(row.reward_id) : undefined;
+  const deliveryPayload =
+    row.delivery_payload && typeof row.delivery_payload === "object"
+      ? (row.delivery_payload as Record<string, any>)
+      : null;
   const campaignId = row.campaign_id ?? reward?.campaign_id ?? "";
   const projectId =
     row.project_id ?? reward?.project_id ?? (campaignId ? campaignsById.get(campaignId)?.project_id ?? "" : "");
   const campaign = campaignId ? campaignsById.get(campaignId) : undefined;
   const project = projectId ? projectsById.get(projectId) : undefined;
+  const distributionRewardAmount = Number(deliveryPayload?.rewardAmount ?? Number.NaN);
+  const distributionRewardAsset =
+    typeof deliveryPayload?.rewardAsset === "string" && deliveryPayload.rewardAsset.trim()
+      ? deliveryPayload.rewardAsset
+      : undefined;
 
   return {
     id: row.id,
@@ -433,9 +442,18 @@ function mapClaim(params: {
         "Unknown User",
 
       rewardId: row.reward_id ?? "",
-      rewardTitle: row.reward_title ?? reward?.title ?? "Unknown Reward",
-      rewardType: row.reward_id ? reward?.reward_type ?? reward?.type ?? undefined : undefined,
-      rewardCost: row.reward_id ? reward?.cost ?? undefined : undefined,
+      rewardTitle:
+        row.reward_title ??
+        reward?.title ??
+        (distributionRewardAsset ? `${campaign?.title ?? "Campaign"} payout` : "Unknown Reward"),
+      rewardType: row.reward_id
+        ? reward?.reward_type ?? reward?.type ?? undefined
+        : distributionRewardAsset,
+      rewardCost: row.reward_id
+        ? reward?.cost ?? undefined
+        : Number.isFinite(distributionRewardAmount)
+          ? distributionRewardAmount
+          : undefined,
 
       projectId: projectId || "",
       projectName: row.project_name ?? project?.name ?? "",
@@ -446,8 +464,8 @@ function mapClaim(params: {
       claimMethod: row.claim_method ?? "manual_fulfillment",
       status: (row.status ?? "pending") as AdminClaim["status"],
       fulfillmentNotes: row.fulfillment_notes ?? "",
-      deliveryPayload: row.delivery_payload
-        ? JSON.stringify(row.delivery_payload, null, 2)
+      deliveryPayload: deliveryPayload
+        ? JSON.stringify(deliveryPayload, null, 2)
         : "",
       reviewedByAuthUserId: row.reviewed_by_auth_user_id ?? "",
       reviewedAt: row.reviewed_at ?? "",
@@ -1629,14 +1647,26 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     await get().reviewSubmission(id, "rejected");
   },
 
-  reviewClaim: async (id, status, reviewNotes = "") => {
-    const supabase = createClient();
-    const authUserId = useAdminAuthStore.getState().authUserId;
-    const timestamp = new Date().toISOString();
-    const claim = get().claims.find((item) => item.id === id);
+    reviewClaim: async (id, status, reviewNotes = "") => {
+      const supabase = createClient();
+      const authUserId = useAdminAuthStore.getState().authUserId;
+      const timestamp = new Date().toISOString();
+      const claim = get().claims.find((item) => item.id === id);
+      let distributionId: string | null = null;
 
-    const fullUpdate = {
-      status,
+      if (claim?.deliveryPayload) {
+        try {
+          const payload = JSON.parse(claim.deliveryPayload) as Record<string, unknown>;
+          if (typeof payload.distributionId === "string" && payload.distributionId.trim()) {
+            distributionId = payload.distributionId;
+          }
+        } catch (error) {
+          console.warn("distribution delivery payload parse skipped", error);
+        }
+      }
+
+      const fullUpdate = {
+        status,
       fulfillment_notes: reviewNotes,
       reviewed_by_auth_user_id: authUserId,
       reviewed_at: timestamp,
@@ -1656,10 +1686,31 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       error = fallback.error;
     }
 
-    if (error) throw error;
+      if (error) throw error;
 
-    set((state) => ({
-      claims: state.claims.map((item) =>
+      if (claim?.claimMethod === "campaign_distribution" && distributionId) {
+        const distributionStatus =
+          status === "processing"
+            ? "processing"
+            : status === "fulfilled"
+              ? "paid"
+              : status === "rejected"
+                ? "rejected"
+                : "queued";
+
+        const { error: distributionError } = await supabase
+          .from("reward_distributions")
+          .update({
+            status: distributionStatus,
+            updated_at: timestamp,
+          })
+          .eq("id", distributionId);
+
+        if (distributionError) throw distributionError;
+      }
+
+      set((state) => ({
+        claims: state.claims.map((item) =>
         item.id === id
           ? {
               ...item,
@@ -1681,12 +1732,13 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
         action: `claim_${status}`,
         summary: `${status === "fulfilled" ? "Fulfilled" : status === "processing" ? "Moved" : "Rejected"} claim for ${claim.rewardTitle}.`,
         metadata: {
-          claimId: id,
-          rewardId: claim.rewardId,
-          campaignId: claim.campaignId,
-          authUserId,
-          reviewNotes,
-        },
+            claimId: id,
+            rewardId: claim.rewardId,
+            campaignId: claim.campaignId,
+            distributionId,
+            authUserId,
+            reviewNotes,
+          },
       });
     }
   },
