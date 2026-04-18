@@ -44,6 +44,42 @@ type CommunityPushSettings = {
   minXp: string;
 };
 
+type OnchainProjectWallet = {
+  id: string;
+  chain: string;
+  wallet_address: string;
+  label: string;
+  wallet_type: string;
+  is_active: boolean;
+};
+
+type OnchainProjectAsset = {
+  id: string;
+  chain: string;
+  contract_address: string;
+  asset_type: string;
+  symbol: string;
+  decimals: number;
+  is_active: boolean;
+};
+
+type OnchainWalletForm = {
+  chain: string;
+  walletAddress: string;
+  label: string;
+  walletType: string;
+  isActive: boolean;
+};
+
+type OnchainAssetForm = {
+  chain: string;
+  contractAddress: string;
+  assetType: string;
+  symbol: string;
+  decimals: string;
+  isActive: boolean;
+};
+
 function createDefaultPushSettings(provider: "discord" | "telegram"): CommunityPushSettings {
   return {
     enabled: true,
@@ -166,6 +202,26 @@ export default function ProjectDetailPage() {
   );
   const [savingIntegration, setSavingIntegration] = useState<"discord" | "telegram" | null>(null);
   const [integrationNotice, setIntegrationNotice] = useState<string>("");
+  const [projectWallets, setProjectWallets] = useState<OnchainProjectWallet[]>([]);
+  const [projectAssets, setProjectAssets] = useState<OnchainProjectAsset[]>([]);
+  const [walletForm, setWalletForm] = useState<OnchainWalletForm>({
+    chain: "evm",
+    walletAddress: "",
+    label: "",
+    walletType: "treasury",
+    isActive: true,
+  });
+  const [assetForm, setAssetForm] = useState<OnchainAssetForm>({
+    chain: "evm",
+    contractAddress: "",
+    assetType: "token",
+    symbol: "",
+    decimals: "18",
+    isActive: true,
+  });
+  const [loadingOnchainConfig, setLoadingOnchainConfig] = useState(false);
+  const [savingOnchainConfig, setSavingOnchainConfig] = useState<"wallet" | "asset" | null>(null);
+  const [onchainNotice, setOnchainNotice] = useState("");
 
   const project = useMemo(
     () => getProjectById(params.id),
@@ -251,6 +307,60 @@ export default function ProjectDetailPage() {
     }
 
     loadProjectIntegrations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [project?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadOnchainConfig() {
+      if (!project?.id) return;
+
+      setLoadingOnchainConfig(true);
+
+      try {
+        const [walletResponse, assetResponse] = await Promise.all([
+          fetch(`/api/projects/${project.id}/wallets`, {
+            cache: "no-store",
+          }),
+          fetch(`/api/projects/${project.id}/assets`, {
+            cache: "no-store",
+          }),
+        ]);
+
+        const [walletPayload, assetPayload] = await Promise.all([
+          walletResponse.json().catch(() => null),
+          assetResponse.json().catch(() => null),
+        ]);
+
+        if (cancelled) return;
+
+        if (!walletResponse.ok || !walletPayload?.ok) {
+          throw new Error(walletPayload?.error || "Could not load project wallets.");
+        }
+
+        if (!assetResponse.ok || !assetPayload?.ok) {
+          throw new Error(assetPayload?.error || "Could not load project assets.");
+        }
+
+        setProjectWallets(Array.isArray(walletPayload.wallets) ? walletPayload.wallets : []);
+        setProjectAssets(Array.isArray(assetPayload.assets) ? assetPayload.assets : []);
+      } catch (error) {
+        if (cancelled) return;
+        setOnchainNotice(
+          error instanceof Error ? error.message : "Could not load on-chain configuration."
+        );
+      } finally {
+        if (!cancelled) {
+          setLoadingOnchainConfig(false);
+        }
+      }
+    }
+
+    void loadOnchainConfig();
 
     return () => {
       cancelled = true;
@@ -446,6 +556,140 @@ export default function ProjectDetailPage() {
           ? `Discord integration and push settings saved for ${project.name}.`
           : `Telegram integration and push settings saved for ${project.name}.`)
     );
+  }
+
+  async function saveProjectWallet() {
+    if (!project?.id) return;
+
+    setSavingOnchainConfig("wallet");
+    setOnchainNotice("");
+
+    const response = await fetch(`/api/projects/${project.id}/wallets`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chain: walletForm.chain.trim().toLowerCase() || "evm",
+        walletAddress: walletForm.walletAddress,
+        label: walletForm.label,
+        walletType: walletForm.walletType,
+        isActive: walletForm.isActive,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setSavingOnchainConfig(null);
+
+    if (!response.ok || !payload?.ok || !payload.wallet) {
+      setOnchainNotice(payload?.error || "Could not save project wallet.");
+      return;
+    }
+
+    setProjectWallets((current) => {
+      const next = current.filter((item) => item.id !== payload.wallet.id);
+      return [payload.wallet, ...next];
+    });
+    setWalletForm({
+      chain: walletForm.chain.trim().toLowerCase() || "evm",
+      walletAddress: "",
+      label: "",
+      walletType: walletForm.walletType,
+      isActive: true,
+    });
+    setOnchainNotice(`Saved ${payload.wallet.label} wallet for ${project.name}.`);
+  }
+
+  async function deleteProjectWallet(walletId: string) {
+    if (!project?.id) return;
+
+    setSavingOnchainConfig("wallet");
+    setOnchainNotice("");
+
+    const response = await fetch(
+      `/api/projects/${project.id}/wallets?walletId=${encodeURIComponent(walletId)}`,
+      {
+        method: "DELETE",
+      }
+    );
+    const payload = await response.json().catch(() => null);
+    setSavingOnchainConfig(null);
+
+    if (!response.ok || !payload?.ok) {
+      setOnchainNotice(payload?.error || "Could not delete project wallet.");
+      return;
+    }
+
+    setProjectWallets((current) => current.filter((item) => item.id !== walletId));
+    setOnchainNotice(`Removed wallet from ${project.name}.`);
+  }
+
+  async function saveProjectAsset() {
+    if (!project?.id) return;
+
+    setSavingOnchainConfig("asset");
+    setOnchainNotice("");
+
+    const response = await fetch(`/api/projects/${project.id}/assets`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chain: assetForm.chain.trim().toLowerCase() || "evm",
+        contractAddress: assetForm.contractAddress,
+        assetType: assetForm.assetType,
+        symbol: assetForm.symbol,
+        decimals: Number.parseInt(assetForm.decimals, 10),
+        isActive: assetForm.isActive,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setSavingOnchainConfig(null);
+
+    if (!response.ok || !payload?.ok || !payload.asset) {
+      setOnchainNotice(payload?.error || "Could not save project asset.");
+      return;
+    }
+
+    setProjectAssets((current) => {
+      const next = current.filter((item) => item.id !== payload.asset.id);
+      return [payload.asset, ...next];
+    });
+    setAssetForm({
+      chain: assetForm.chain.trim().toLowerCase() || "evm",
+      contractAddress: "",
+      assetType: assetForm.assetType,
+      symbol: "",
+      decimals: assetForm.decimals || "18",
+      isActive: true,
+    });
+    setOnchainNotice(`Saved ${payload.asset.symbol} asset for ${project.name}.`);
+  }
+
+  async function deleteProjectAsset(assetId: string) {
+    if (!project?.id) return;
+
+    setSavingOnchainConfig("asset");
+    setOnchainNotice("");
+
+    const response = await fetch(
+      `/api/projects/${project.id}/assets?assetId=${encodeURIComponent(assetId)}`,
+      {
+        method: "DELETE",
+      }
+    );
+    const payload = await response.json().catch(() => null);
+    setSavingOnchainConfig(null);
+
+    if (!response.ok || !payload?.ok) {
+      setOnchainNotice(payload?.error || "Could not delete project asset.");
+      return;
+    }
+
+    setProjectAssets((current) => current.filter((item) => item.id !== assetId));
+    setOnchainNotice(`Removed asset from ${project.name}.`);
   }
 
   return (
@@ -702,6 +946,256 @@ export default function ProjectDetailPage() {
                   label="Brand Mood"
                   value={project.brandMood || "-"}
                 />
+              </div>
+            </DetailSidebarSurface>
+
+            <DetailSidebarSurface title="On-chain Configuration">
+              <div className="mt-4 space-y-4">
+                <p className="text-sm text-sub">
+                  Register treasury wallets and live contracts here so AESP ingestion only scores
+                  real activity for <span className="font-semibold text-text">{project.name}</span>.
+                </p>
+                <DetailMetaRow
+                  label="Registered wallets"
+                  value={loadingOnchainConfig ? "Loading..." : String(projectWallets.length)}
+                />
+                <DetailMetaRow
+                  label="Registered assets"
+                  value={loadingOnchainConfig ? "Loading..." : String(projectAssets.length)}
+                />
+
+                <div className="rounded-[24px] border border-line bg-card2 p-4">
+                  <p className="text-sm font-bold text-text">Project wallets</p>
+                  <p className="mt-2 text-sm text-sub">
+                    Add treasury, operations, rewards or LP wallets that belong to this project.
+                  </p>
+                  <div className="mt-4 grid gap-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <input
+                        value={walletForm.label}
+                        onChange={(event) =>
+                          setWalletForm((current) => ({ ...current, label: event.target.value }))
+                        }
+                        placeholder="Wallet label"
+                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      />
+                      <select
+                        value={walletForm.walletType}
+                        onChange={(event) =>
+                          setWalletForm((current) => ({
+                            ...current,
+                            walletType: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      >
+                        <option value="treasury">Treasury</option>
+                        <option value="operations">Operations</option>
+                        <option value="rewards">Rewards</option>
+                        <option value="lp">Liquidity / LP</option>
+                      </select>
+                    </div>
+                    <input
+                      value={walletForm.walletAddress}
+                      onChange={(event) =>
+                        setWalletForm((current) => ({
+                          ...current,
+                          walletAddress: event.target.value,
+                        }))
+                      }
+                      placeholder="0x... wallet address"
+                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                    />
+                    <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+                      <input
+                        value={walletForm.chain}
+                        onChange={(event) =>
+                          setWalletForm((current) => ({ ...current, chain: event.target.value }))
+                        }
+                        placeholder="Chain (evm)"
+                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      />
+                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                        <span>Active</span>
+                        <input
+                          type="checkbox"
+                          checked={walletForm.isActive}
+                          onChange={(event) =>
+                            setWalletForm((current) => ({
+                              ...current,
+                              isActive: event.target.checked,
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
+                    <button
+                      onClick={() => void saveProjectWallet()}
+                      disabled={savingOnchainConfig === "wallet"}
+                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {savingOnchainConfig === "wallet" ? "Saving wallet..." : "Save project wallet"}
+                    </button>
+                    <div className="grid gap-3">
+                      {projectWallets.length > 0 ? (
+                        projectWallets.map((wallet) => (
+                          <div
+                            key={wallet.id}
+                            className="rounded-2xl border border-line bg-card px-4 py-3"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <p className="font-bold text-text">{wallet.label}</p>
+                                <p className="mt-1 break-all text-sm text-sub">
+                                  {wallet.wallet_address}
+                                </p>
+                                <p className="mt-2 text-xs uppercase tracking-[0.12em] text-primary">
+                                  {wallet.wallet_type} • {wallet.chain} •{" "}
+                                  {wallet.is_active ? "active" : "inactive"}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => void deleteProjectWallet(wallet.id)}
+                                className="rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-rose-300 transition hover:bg-rose-500/15"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-line bg-card px-4 py-4 text-sm text-sub">
+                          No project wallets registered yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] border border-line bg-card2 p-4">
+                  <p className="text-sm font-bold text-text">Tracked assets</p>
+                  <p className="mt-2 text-sm text-sub">
+                    Register the token, NFT or LP contracts that on-chain scoring should accept.
+                  </p>
+                  <div className="mt-4 grid gap-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <input
+                        value={assetForm.symbol}
+                        onChange={(event) =>
+                          setAssetForm((current) => ({ ...current, symbol: event.target.value }))
+                        }
+                        placeholder="Asset symbol"
+                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      />
+                      <select
+                        value={assetForm.assetType}
+                        onChange={(event) =>
+                          setAssetForm((current) => ({
+                            ...current,
+                            assetType: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      >
+                        <option value="token">Token</option>
+                        <option value="nft">NFT</option>
+                        <option value="lp">LP token</option>
+                        <option value="staking_pool">Staking pool</option>
+                      </select>
+                    </div>
+                    <input
+                      value={assetForm.contractAddress}
+                      onChange={(event) =>
+                        setAssetForm((current) => ({
+                          ...current,
+                          contractAddress: event.target.value,
+                        }))
+                      }
+                      placeholder="0x... contract address"
+                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                    />
+                    <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                      <input
+                        value={assetForm.chain}
+                        onChange={(event) =>
+                          setAssetForm((current) => ({ ...current, chain: event.target.value }))
+                        }
+                        placeholder="Chain (evm)"
+                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      />
+                      <input
+                        value={assetForm.decimals}
+                        onChange={(event) =>
+                          setAssetForm((current) => ({
+                            ...current,
+                            decimals: event.target.value,
+                          }))
+                        }
+                        placeholder="Decimals"
+                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      />
+                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                        <span>Active</span>
+                        <input
+                          type="checkbox"
+                          checked={assetForm.isActive}
+                          onChange={(event) =>
+                            setAssetForm((current) => ({
+                              ...current,
+                              isActive: event.target.checked,
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
+                    <button
+                      onClick={() => void saveProjectAsset()}
+                      disabled={savingOnchainConfig === "asset"}
+                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {savingOnchainConfig === "asset" ? "Saving asset..." : "Save tracked asset"}
+                    </button>
+                    <div className="grid gap-3">
+                      {projectAssets.length > 0 ? (
+                        projectAssets.map((asset) => (
+                          <div
+                            key={asset.id}
+                            className="rounded-2xl border border-line bg-card px-4 py-3"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <p className="font-bold text-text">{asset.symbol}</p>
+                                <p className="mt-1 break-all text-sm text-sub">
+                                  {asset.contract_address}
+                                </p>
+                                <p className="mt-2 text-xs uppercase tracking-[0.12em] text-primary">
+                                  {asset.asset_type} • {asset.chain} • {asset.decimals} decimals •{" "}
+                                  {asset.is_active ? "active" : "inactive"}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => void deleteProjectAsset(asset.id)}
+                                className="rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-rose-300 transition hover:bg-rose-500/15"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-line bg-card px-4 py-4 text-sm text-sub">
+                          No on-chain assets registered yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {onchainNotice ? (
+                  <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">
+                    {onchainNotice}
+                  </div>
+                ) : null}
               </div>
             </DetailSidebarSurface>
 

@@ -80,6 +80,33 @@ export type DbProject = {
   updated_at?: string;
 };
 
+export type DbProjectWallet = {
+  id: string;
+  project_id: string;
+  chain: string;
+  wallet_address: string;
+  label: string;
+  wallet_type: string;
+  is_active: boolean;
+  metadata: Record<string, any> | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type DbProjectAsset = {
+  id: string;
+  project_id: string;
+  chain: string;
+  contract_address: string;
+  asset_type: string;
+  symbol: string;
+  decimals: number;
+  is_active: boolean;
+  metadata: Record<string, any> | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type DbCampaign = {
   id: string;
   project_id: string;
