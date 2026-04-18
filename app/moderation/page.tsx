@@ -37,7 +37,7 @@ export default function ModerationPage() {
   const [onchainJobRuns, setOnchainJobRuns] = useState<DbAuditLog[]>([]);
   const [trustAlerts, setTrustAlerts] = useState<TrustAlert[]>([]);
   const [activeTrustActionKey, setActiveTrustActionKey] = useState<string | null>(null);
-  const [activePipelineAction, setActivePipelineAction] = useState<"enrichment" | "retry" | null>(null);
+  const [activePipelineAction, setActivePipelineAction] = useState<"sync" | "enrichment" | "retry" | null>(null);
   const [pipelineNotice, setPipelineNotice] = useState<string>("");
   const [opsReloadToken, setOpsReloadToken] = useState(0);
   const [search, setSearch] = useState("");
@@ -78,6 +78,9 @@ export default function ModerationPage() {
             .select("*")
             .in("action", [
               "onchain_enrichment_job_completed",
+              "onchain_provider_sync_job_completed",
+              "onchain_provider_sync_completed",
+              "onchain_provider_sync_failed",
               "onchain_retry_job_completed",
               "onchain_ingress_retry_completed",
               "onchain_ingress_retry_rejected",
@@ -224,6 +227,9 @@ export default function ModerationPage() {
     });
   }, [trustAlerts, search]);
 
+  const providerSyncRunCount = onchainJobRuns.filter((row) =>
+    ["onchain_provider_sync_job_completed", "onchain_provider_sync_completed"].includes(row.action)
+  ).length;
   const enrichmentRunCount = onchainJobRuns.filter((row) => row.action === "onchain_enrichment_job_completed").length;
   const retryRecoveryCount = onchainJobRuns.filter((row) => row.action === "onchain_ingress_retry_completed").length;
   const retryFailureCount = onchainJobRuns.filter((row) => ["onchain_ingress_retry_rejected", "onchain_ingress_retry_failed"].includes(row.action)).length;
@@ -254,19 +260,29 @@ export default function ModerationPage() {
     }
   }
 
-  async function handlePipelineAction(action: "enrichment" | "retry") {
+  async function handlePipelineAction(action: "sync" | "enrichment" | "retry") {
     try {
       setActivePipelineAction(action);
       setPipelineNotice("");
 
       const response = await fetch(
-        action === "enrichment" ? "/api/ops/onchain-enrichment" : "/api/ops/onchain-retry",
+        action === "enrichment"
+          ? "/api/ops/onchain-enrichment"
+          : action === "retry"
+            ? "/api/ops/onchain-retry"
+            : "/api/ops/onchain-provider-sync",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(action === "enrichment" ? { limit: 200 } : { limit: 50 }),
+          body: JSON.stringify(
+            action === "enrichment"
+              ? { limit: 200 }
+              : action === "retry"
+                ? { limit: 50 }
+                : { limit: 50, maxBlocks: 1500 }
+          ),
         }
       );
 
@@ -278,7 +294,9 @@ export default function ModerationPage() {
       setPipelineNotice(
         action === "enrichment"
           ? `Enrichment processed ${payload.processed ?? 0} rows and enriched ${payload.enriched ?? 0}.`
-          : `Retry scanned ${payload.scanned ?? 0} rows and recovered ${payload.completed ?? 0}.`
+          : action === "retry"
+            ? `Retry scanned ${payload.scanned ?? 0} rows and recovered ${payload.completed ?? 0}.`
+            : `Provider sync scanned ${payload.syncedAssets ?? 0} assets and generated ${payload.generatedEvents ?? 0} normalized events.`
       );
       setOpsReloadToken((value) => value + 1);
     } catch (error) {
@@ -383,6 +401,13 @@ export default function ModerationPage() {
           action={
             <div className="flex flex-wrap gap-3">
               <button
+                onClick={() => handlePipelineAction("sync")}
+                disabled={activePipelineAction === "sync"}
+                className="rounded-2xl border border-line bg-card px-4 py-3 font-bold text-sub disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Run provider sync
+              </button>
+              <button
                 onClick={() => handlePipelineAction("enrichment")}
                 disabled={activePipelineAction === "enrichment"}
                 className="rounded-2xl bg-primary px-4 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
@@ -402,6 +427,7 @@ export default function ModerationPage() {
         >
           <div className="grid gap-4 md:grid-cols-4">
             <OpsMetricCard label="Failed intake" value={onchainFailures.length} emphasis={onchainFailures.length > 0 ? "warning" : "default"} />
+            <OpsMetricCard label="Provider syncs" value={providerSyncRunCount} emphasis={providerSyncRunCount > 0 ? "primary" : "default"} />
             <OpsMetricCard label="Retry recoveries" value={retryRecoveryCount} emphasis={retryRecoveryCount > 0 ? "primary" : "default"} />
             <OpsMetricCard label="Retry misses" value={retryFailureCount} emphasis={retryFailureCount > 0 ? "warning" : "default"} />
             <OpsMetricCard label="Enrichment runs" value={enrichmentRunCount} emphasis={enrichmentRunCount > 0 ? "primary" : "default"} />
@@ -424,9 +450,12 @@ export default function ModerationPage() {
                   <p className="text-lg font-extrabold text-text">On-chain ops event</p>
                   <OpsStatusPill
                     tone={
-                      row.action === "onchain_ingress_retry_completed" || row.action === "onchain_enrichment_job_completed"
+                      row.action === "onchain_ingress_retry_completed" ||
+                      row.action === "onchain_enrichment_job_completed" ||
+                      row.action === "onchain_provider_sync_completed" ||
+                      row.action === "onchain_provider_sync_job_completed"
                         ? "success"
-                        : row.action === "onchain_retry_job_completed"
+                      : row.action === "onchain_retry_job_completed"
                           ? "default"
                           : "warning"
                     }

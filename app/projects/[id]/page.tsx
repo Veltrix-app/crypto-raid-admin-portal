@@ -61,6 +61,7 @@ type OnchainProjectAsset = {
   symbol: string;
   decimals: number;
   is_active: boolean;
+  metadata?: Record<string, unknown> | null;
 };
 
 type OnchainWalletForm = {
@@ -78,6 +79,7 @@ type OnchainAssetForm = {
   symbol: string;
   decimals: string;
   isActive: boolean;
+  metadataJson: string;
 };
 
 function createDefaultPushSettings(provider: "discord" | "telegram"): CommunityPushSettings {
@@ -168,6 +170,46 @@ function toggleScopeSelection(current: string[], nextId: string, checked: boolea
   return current.filter((item) => item !== nextId);
 }
 
+function stringifyOnchainMetadata(metadata: Record<string, unknown> | null | undefined) {
+  if (!metadata || Object.keys(metadata).length === 0) {
+    return "";
+  }
+
+  return JSON.stringify(metadata, null, 2);
+}
+
+function readAssetSyncState(asset: OnchainProjectAsset) {
+  const metadata =
+    asset.metadata && typeof asset.metadata === "object"
+      ? (asset.metadata as Record<string, unknown>)
+      : {};
+  const syncState =
+    metadata.syncState && typeof metadata.syncState === "object"
+      ? (metadata.syncState as Record<string, unknown>)
+      : {};
+
+  return {
+    lastSyncedBlock:
+      typeof syncState.lastSyncedBlock === "number"
+        ? String(syncState.lastSyncedBlock)
+        : typeof syncState.lastSyncedBlock === "string"
+          ? syncState.lastSyncedBlock
+          : "-",
+    lastSyncedAt:
+      typeof syncState.lastSyncedAt === "string" ? syncState.lastSyncedAt : "",
+    lastSyncStatus:
+      typeof syncState.lastSyncStatus === "string" ? syncState.lastSyncStatus : "idle",
+    lastSyncGenerated:
+      typeof syncState.lastSyncGenerated === "number"
+        ? String(syncState.lastSyncGenerated)
+        : typeof syncState.lastSyncGenerated === "string"
+          ? syncState.lastSyncGenerated
+          : "0",
+    lastSyncError:
+      typeof syncState.lastSyncError === "string" ? syncState.lastSyncError : "",
+  };
+}
+
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -218,9 +260,11 @@ export default function ProjectDetailPage() {
     symbol: "",
     decimals: "18",
     isActive: true,
+    metadataJson: "",
   });
   const [loadingOnchainConfig, setLoadingOnchainConfig] = useState(false);
   const [savingOnchainConfig, setSavingOnchainConfig] = useState<"wallet" | "asset" | null>(null);
+  const [syncingProviderFeed, setSyncingProviderFeed] = useState(false);
   const [onchainNotice, setOnchainNotice] = useState("");
   const [operatorSignals, setOperatorSignals] = useState<{
     callbackFailures: number;
@@ -692,6 +736,24 @@ export default function ProjectDetailPage() {
     setSavingOnchainConfig("asset");
     setOnchainNotice("");
 
+    let parsedMetadata: Record<string, unknown> = {};
+    if (assetForm.metadataJson.trim().length > 0) {
+      try {
+        const candidate = JSON.parse(assetForm.metadataJson) as unknown;
+        if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+          throw new Error("Asset metadata must be a JSON object.");
+        }
+
+        parsedMetadata = candidate as Record<string, unknown>;
+      } catch (error) {
+        setSavingOnchainConfig(null);
+        setOnchainNotice(
+          error instanceof Error ? error.message : "Asset metadata JSON is invalid."
+        );
+        return;
+      }
+    }
+
     const response = await fetch(`/api/projects/${project.id}/assets`, {
       method: "POST",
       headers: {
@@ -704,6 +766,7 @@ export default function ProjectDetailPage() {
         symbol: assetForm.symbol,
         decimals: Number.parseInt(assetForm.decimals, 10),
         isActive: assetForm.isActive,
+        metadata: parsedMetadata,
       }),
     });
 
@@ -726,6 +789,7 @@ export default function ProjectDetailPage() {
       symbol: "",
       decimals: assetForm.decimals || "18",
       isActive: true,
+      metadataJson: stringifyOnchainMetadata(payload.asset.metadata ?? null),
     });
     setOnchainNotice(`Saved ${payload.asset.symbol} asset for ${project.name}.`);
   }
@@ -752,6 +816,53 @@ export default function ProjectDetailPage() {
 
     setProjectAssets((current) => current.filter((item) => item.id !== assetId));
     setOnchainNotice(`Removed asset from ${project.name}.`);
+  }
+
+  async function runProjectOnchainSync() {
+    if (!project?.id) return;
+
+    setSyncingProviderFeed(true);
+    setOnchainNotice("");
+
+    const response = await fetch(`/api/projects/${project.id}/onchain-sync`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        limit: 50,
+        maxBlocks: 1500,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setSyncingProviderFeed(false);
+
+    if (!response.ok || !payload?.ok) {
+      setOnchainNotice(payload?.error || "Could not run provider sync.");
+      return;
+    }
+
+    setOnchainNotice(
+      `Provider sync scanned ${payload.syncedAssets ?? 0} assets and generated ${payload.generatedEvents ?? 0} normalized events for ${project.name}.`
+    );
+
+    const [walletResponse, assetResponse] = await Promise.all([
+      fetch(`/api/projects/${project.id}/wallets`, { cache: "no-store" }),
+      fetch(`/api/projects/${project.id}/assets`, { cache: "no-store" }),
+    ]);
+    const [walletPayload, assetPayload] = await Promise.all([
+      walletResponse.json().catch(() => null),
+      assetResponse.json().catch(() => null),
+    ]);
+
+    if (walletResponse.ok && walletPayload?.ok && Array.isArray(walletPayload.wallets)) {
+      setProjectWallets(walletPayload.wallets);
+    }
+
+    if (assetResponse.ok && assetPayload?.ok && Array.isArray(assetPayload.assets)) {
+      setProjectAssets(assetPayload.assets);
+    }
   }
 
   return (
@@ -1025,6 +1136,13 @@ export default function ProjectDetailPage() {
                   label="Registered assets"
                   value={loadingOnchainConfig ? "Loading..." : String(projectAssets.length)}
                 />
+                <button
+                  onClick={() => void runProjectOnchainSync()}
+                  disabled={syncingProviderFeed}
+                  className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-sub transition hover:border-primary/40 hover:text-text disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {syncingProviderFeed ? "Running provider sync..." : "Run provider sync for this project"}
+                </button>
 
                 <div className="rounded-[24px] border border-line bg-card2 p-4">
                   <p className="text-sm font-bold text-text">Project wallets</p>
@@ -1138,6 +1256,8 @@ export default function ProjectDetailPage() {
                   <p className="text-sm font-bold text-text">Tracked assets</p>
                   <p className="mt-2 text-sm text-sub">
                     Register the token, NFT or LP contracts that on-chain scoring should accept.
+                    Add advanced provider rules in the metadata JSON when you want buy, stake,
+                    LP and contract-call classification to be deterministic.
                   </p>
                   <div className="mt-4 grid gap-3">
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -1210,6 +1330,17 @@ export default function ProjectDetailPage() {
                         />
                       </label>
                     </div>
+                    <textarea
+                      value={assetForm.metadataJson}
+                      onChange={(event) =>
+                        setAssetForm((current) => ({
+                          ...current,
+                          metadataJson: event.target.value,
+                        }))
+                      }
+                      placeholder={`{\n  "startBlock": 12345678,\n  "marketMakerAddresses": ["0x..."],\n  "stakingContractAddresses": ["0x..."],\n  "lpContractAddresses": ["0x..."],\n  "allowedFunctions": ["0xa694fc3a"],\n  "holdThresholdHours": 24\n}`}
+                      className="min-h-[180px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
+                    />
                     <button
                       onClick={() => void saveProjectAsset()}
                       disabled={savingOnchainConfig === "asset"}
@@ -1220,10 +1351,7 @@ export default function ProjectDetailPage() {
                     <div className="grid gap-3">
                       {projectAssets.length > 0 ? (
                         projectAssets.map((asset) => (
-                          <div
-                            key={asset.id}
-                            className="rounded-2xl border border-line bg-card px-4 py-3"
-                          >
+                          <div key={asset.id} className="rounded-2xl border border-line bg-card px-4 py-3">
                             <div className="flex items-start justify-between gap-4">
                               <div className="min-w-0">
                                 <p className="font-bold text-text">{asset.symbol}</p>
@@ -1234,6 +1362,39 @@ export default function ProjectDetailPage() {
                                   {asset.asset_type} • {asset.chain} • {asset.decimals} decimals •{" "}
                                   {asset.is_active ? "active" : "inactive"}
                                 </p>
+                                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                  <div className="rounded-2xl border border-line bg-card2 px-3 py-2">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
+                                      Sync status
+                                    </p>
+                                    <p className="mt-1 text-xs font-semibold text-text">
+                                      {readAssetSyncState(asset).lastSyncStatus}
+                                    </p>
+                                  </div>
+                                  <div className="rounded-2xl border border-line bg-card2 px-3 py-2">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
+                                      Last synced block
+                                    </p>
+                                    <p className="mt-1 text-xs font-semibold text-text">
+                                      {readAssetSyncState(asset).lastSyncedBlock}
+                                    </p>
+                                  </div>
+                                </div>
+                                {readAssetSyncState(asset).lastSyncedAt ? (
+                                  <p className="mt-3 text-xs text-sub">
+                                    Last sync: {new Date(readAssetSyncState(asset).lastSyncedAt).toLocaleString()}
+                                  </p>
+                                ) : null}
+                                {readAssetSyncState(asset).lastSyncError ? (
+                                  <p className="mt-2 text-xs text-rose-300">
+                                    {readAssetSyncState(asset).lastSyncError}
+                                  </p>
+                                ) : null}
+                                {asset.metadata && Object.keys(asset.metadata).length > 0 ? (
+                                  <pre className="mt-3 whitespace-pre-wrap break-all rounded-2xl border border-line bg-card2 p-3 text-[11px] text-sub">
+                                    {JSON.stringify(asset.metadata, null, 2)}
+                                  </pre>
+                                ) : null}
                               </div>
                               <button
                                 onClick={() => void deleteProjectAsset(asset.id)}
