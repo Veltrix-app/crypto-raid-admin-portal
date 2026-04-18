@@ -223,7 +223,9 @@ async function loadIntegrationDispatchSettings(supabase: any): Promise<LoadedInt
     .from("project_integrations")
     .select("id, project_id, provider, status, config")
     .in("provider", ["discord", "telegram"])
-    .eq("status", "connected");
+    // Push delivery can still be valid while verification-specific config
+    // remains incomplete on the integration row.
+    .in("status", ["connected", "needs_attention"]);
 
   if (integrationError) {
     throw integrationError;
