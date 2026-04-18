@@ -19,6 +19,12 @@ export type AdminCampaign = {
     | "referral"
     | "content"
     | "hybrid";
+  campaignMode?: "offchain" | "onchain" | "hybrid";
+  rewardType?: "campaign_pool" | "usdc" | "project_token" | "nft" | "perk" | "mixed";
+  rewardPoolAmount?: number;
+  minXpRequired?: number;
+  activityThreshold?: number;
+  lockDays?: number;
 
   xpBudget: number;
   participants: number;

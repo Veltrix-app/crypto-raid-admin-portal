@@ -121,6 +121,12 @@ export type DbCampaign = {
   thumbnail_url: string | null;
 
   campaign_type: string;
+  campaign_mode?: string | null;
+  reward_type?: string | null;
+  reward_pool_amount?: number | null;
+  min_xp_required?: number | null;
+  activity_threshold?: number | null;
+  lock_days?: number | null;
   xp_budget: number;
   participants: number;
   completion_rate: number;

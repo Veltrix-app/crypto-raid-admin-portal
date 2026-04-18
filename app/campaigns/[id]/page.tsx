@@ -42,6 +42,17 @@ export default function CampaignDetailPage() {
     openFlags: number;
     averageConfidence: number;
   } | null>(null);
+  const [distributionSummary, setDistributionSummary] = useState<{
+    recipients: number;
+    claimableRecipients: number;
+    totalDistributed: number;
+    rewardAsset: string;
+  } | null>(null);
+  const [finalizingRewards, setFinalizingRewards] = useState(false);
+  const [finalizeMessage, setFinalizeMessage] = useState<{
+    tone: "default" | "error" | "success";
+    text: string;
+  } | null>(null);
 
   const campaign = useMemo(
     () => getCampaignById(params.id),
@@ -163,6 +174,48 @@ export default function CampaignDetailPage() {
     };
   }, [currentCampaign.id, relatedQuests, relatedSubmissions, relatedFlags]);
 
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+
+    async function loadDistributionSummary() {
+      const { data, error } = await supabase
+        .from("reward_distributions")
+        .select("reward_amount, reward_asset, status")
+        .eq("campaign_id", currentCampaign.id);
+
+      if (!active || error) {
+        if (error && active) {
+          console.error("[campaign-distributions] failed", error.message);
+        }
+        return;
+      }
+
+      const rows = data ?? [];
+      const totalDistributed = rows.reduce(
+        (sum, row) => sum + Number(row.reward_amount ?? 0),
+        0
+      );
+
+      setDistributionSummary({
+        recipients: rows.length,
+        claimableRecipients: rows.filter((row) => row.status === "claimable").length,
+        totalDistributed,
+        rewardAsset:
+          (rows.find((row) => typeof row.reward_asset === "string" && row.reward_asset.trim())
+            ?.reward_asset as string | undefined) ??
+          currentCampaign.rewardType ??
+          "campaign_pool",
+      });
+    }
+
+    void loadDistributionSummary();
+
+    return () => {
+      active = false;
+    };
+  }, [currentCampaign.id, currentCampaign.rewardType]);
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -204,6 +257,11 @@ export default function CampaignDetailPage() {
             <>
               <DetailMetricCard label="Project" value={project?.name || "-"} hint="Workspace owning this campaign." />
               <DetailMetricCard label="XP Budget" value={campaign.xpBudget} hint="Total reward pressure planned in this loop." />
+              <DetailMetricCard
+                label="Reward Pool"
+                value={`${currentCampaign.rewardPoolAmount ?? 0}`}
+                hint={`${currentCampaign.rewardType ?? "campaign_pool"} routed through AESP finalization.`}
+              />
               <DetailMetricCard label="Participants" value={campaign.participants} hint="Current contributor volume attached here." />
               <DetailMetricCard label="Completion" value={`${campaign.completionRate}%`} hint="Current finish rate across the campaign path." />
               <DetailMetricCard label="Submissions" value={snapshot?.submissions ?? relatedSubmissions.length} hint="Total quest submissions routed into this campaign." />
@@ -333,6 +391,12 @@ export default function CampaignDetailPage() {
                   thumbnailUrl: campaign.thumbnailUrl || "",
 
                   campaignType: campaign.campaignType,
+                  campaignMode: campaign.campaignMode ?? "offchain",
+                  rewardType: campaign.rewardType ?? "campaign_pool",
+                  rewardPoolAmount: campaign.rewardPoolAmount ?? 0,
+                  minXpRequired: campaign.minXpRequired ?? 0,
+                  activityThreshold: campaign.activityThreshold ?? 0,
+                  lockDays: campaign.lockDays ?? 0,
 
                   xpBudget: campaign.xpBudget,
                   participants: campaign.participants,
@@ -359,10 +423,16 @@ export default function CampaignDetailPage() {
               <div className="mt-4 space-y-4">
                 <DetailMetaRow label="Slug" value={campaign.slug || "-"} />
                 <DetailMetaRow label="Type" value={campaign.campaignType} />
+                <DetailMetaRow label="Mode" value={campaign.campaignMode ?? "offchain"} />
                 <DetailMetaRow label="Visibility" value={campaign.visibility} />
                 <DetailMetaRow label="Featured" value={campaign.featured ? "Yes" : "No"} />
                 <DetailMetaRow label="Starts At" value={campaign.startsAt || "-"} />
                 <DetailMetaRow label="Ends At" value={campaign.endsAt || "-"} />
+                <DetailMetaRow label="Reward Type" value={campaign.rewardType ?? "campaign_pool"} />
+                <DetailMetaRow label="Reward Pool" value={String(campaign.rewardPoolAmount ?? 0)} />
+                <DetailMetaRow label="Min Active XP" value={String(campaign.minXpRequired ?? 0)} />
+                <DetailMetaRow label="Activity Threshold" value={String(campaign.activityThreshold ?? 0)} />
+                <DetailMetaRow label="Lock Days" value={String(campaign.lockDays ?? 0)} />
               </div>
             </DetailSidebarSurface>
 
@@ -371,6 +441,102 @@ export default function CampaignDetailPage() {
                 <DetailMetaRow label="Raids" value={relatedRaids.length} />
                 <DetailMetaRow label="Quests" value={relatedQuests.length} />
                 <DetailMetaRow label="Rewards" value={relatedRewards.length} />
+              </div>
+            </DetailSidebarSurface>
+
+            <DetailSidebarSurface title="Distribution Engine">
+              <div className="mt-4 space-y-4">
+                <DetailMetaRow
+                  label="Recipients"
+                  value={distributionSummary ? distributionSummary.recipients : 0}
+                />
+                <DetailMetaRow
+                  label="Claimable"
+                  value={distributionSummary ? distributionSummary.claimableRecipients : 0}
+                />
+                <DetailMetaRow
+                  label="Distributed"
+                  value={
+                    distributionSummary
+                      ? `${distributionSummary.totalDistributed.toFixed(4)} ${distributionSummary.rewardAsset}`
+                      : `0 ${currentCampaign.rewardType ?? "campaign_pool"}`
+                  }
+                />
+                <button
+                  onClick={async () => {
+                    setFinalizingRewards(true);
+                    setFinalizeMessage(null);
+
+                    try {
+                      const response = await fetch(`/api/campaigns/${campaign.id}/finalize`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({}),
+                      });
+
+                      const payload = await response.json().catch(() => null);
+                      if (!response.ok || !payload?.ok) {
+                        throw new Error(payload?.error ?? "Reward finalization failed.");
+                      }
+
+                      const supabase = createClient();
+                      const { data } = await supabase
+                        .from("reward_distributions")
+                        .select("reward_amount, reward_asset, status")
+                        .eq("campaign_id", currentCampaign.id);
+
+                      const rows = data ?? [];
+                      setDistributionSummary({
+                        recipients: rows.length,
+                        claimableRecipients: rows.filter((row) => row.status === "claimable").length,
+                        totalDistributed: rows.reduce(
+                          (sum, row) => sum + Number(row.reward_amount ?? 0),
+                          0
+                        ),
+                        rewardAsset:
+                          (rows.find(
+                            (row) =>
+                              typeof row.reward_asset === "string" && row.reward_asset.trim()
+                          )?.reward_asset as string | undefined) ??
+                          currentCampaign.rewardType ??
+                          "campaign_pool",
+                      });
+                      setFinalizeMessage({
+                        tone: "success",
+                        text: "Reward distributions were finalized and the campaign pool is now claimable.",
+                      });
+                    } catch (error) {
+                      setFinalizeMessage({
+                        tone: "error",
+                        text:
+                          error instanceof Error
+                            ? error.message
+                            : "Reward finalization failed.",
+                      });
+                    } finally {
+                      setFinalizingRewards(false);
+                    }
+                  }}
+                  className="w-full rounded-[18px] border border-primary/25 bg-primary/10 px-4 py-3 font-bold text-primary transition hover:bg-primary/15"
+                  disabled={finalizingRewards}
+                >
+                  {finalizingRewards ? "Finalizing..." : "Finalize distributions"}
+                </button>
+                {finalizeMessage ? (
+                  <div
+                    className={`rounded-[18px] px-4 py-3 text-sm ${
+                      finalizeMessage.tone === "error"
+                        ? "border border-rose-500/30 bg-rose-500/10 text-rose-200"
+                        : finalizeMessage.tone === "success"
+                          ? "border border-primary/30 bg-primary/10 text-primary"
+                          : "border border-line bg-card2 text-sub"
+                    }`}
+                  >
+                    {finalizeMessage.text}
+                  </div>
+                ) : null}
               </div>
             </DetailSidebarSurface>
           </div>

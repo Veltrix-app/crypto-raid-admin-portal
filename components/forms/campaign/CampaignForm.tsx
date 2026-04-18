@@ -32,6 +32,12 @@ function getDefaultCampaignValues(
     thumbnailUrl: "",
 
     campaignType: "hybrid",
+    campaignMode: "hybrid",
+    rewardType: "campaign_pool",
+    rewardPoolAmount: 0,
+    minXpRequired: 0,
+    activityThreshold: 0,
+    lockDays: 0,
 
     xpBudget: 0,
     participants: 0,
@@ -53,6 +59,12 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     label: string;
     summary: string;
     visibility: AdminCampaign["visibility"];
+    campaignMode: NonNullable<AdminCampaign["campaignMode"]>;
+    rewardType: NonNullable<AdminCampaign["rewardType"]>;
+    rewardPoolAmount: number;
+    minXpRequired: number;
+    activityThreshold: number;
+    lockDays: number;
     xpBudget: number;
     featured: boolean;
     shortDescription: string;
@@ -62,6 +74,12 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     label: "Social Growth Push",
     summary: "Use this when the campaign’s main job is reach: follows, reposts, comments and traffic into key moments.",
     visibility: "public",
+    campaignMode: "offchain",
+    rewardType: "campaign_pool",
+    rewardPoolAmount: 500,
+    minXpRequired: 50,
+    activityThreshold: 0,
+    lockDays: 7,
     xpBudget: 2500,
     featured: true,
     shortDescription: "A high-energy campaign designed to turn attention into measurable social reach.",
@@ -70,6 +88,12 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     label: "Community Expansion",
     summary: "Best for campaigns focused on Discord, Telegram and deeper contributor activation.",
     visibility: "public",
+    campaignMode: "offchain",
+    rewardType: "campaign_pool",
+    rewardPoolAmount: 750,
+    minXpRequired: 75,
+    activityThreshold: 0,
+    lockDays: 10,
     xpBudget: 2000,
     featured: false,
     shortDescription: "Bring new members into the community and guide them toward their first meaningful actions.",
@@ -78,6 +102,12 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     label: "Onchain Activation",
     summary: "Built for swaps, mints, wallet connection and asset-based participation loops.",
     visibility: "gated",
+    campaignMode: "onchain",
+    rewardType: "project_token",
+    rewardPoolAmount: 2500,
+    minXpRequired: 150,
+    activityThreshold: 100,
+    lockDays: 14,
     xpBudget: 4000,
     featured: true,
     shortDescription: "Drive meaningful onchain participation with wallet-aware tasks and claimable incentives.",
@@ -86,6 +116,12 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     label: "Referral Loop",
     summary: "Use this to turn contributors into acquisition channels with referral quests and invite mechanics.",
     visibility: "public",
+    campaignMode: "offchain",
+    rewardType: "perk",
+    rewardPoolAmount: 600,
+    minXpRequired: 60,
+    activityThreshold: 0,
+    lockDays: 7,
     xpBudget: 3000,
     featured: false,
     shortDescription: "Reward contributors for bringing high-intent users into the project ecosystem.",
@@ -94,6 +130,12 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     label: "Content Campaign",
     summary: "Great for UGC, writing, design submissions and manual proof-based content loops.",
     visibility: "public",
+    campaignMode: "offchain",
+    rewardType: "campaign_pool",
+    rewardPoolAmount: 450,
+    minXpRequired: 40,
+    activityThreshold: 0,
+    lockDays: 7,
     xpBudget: 1800,
     featured: false,
     shortDescription: "Collect quality content and proof-driven contributions around a clear campaign narrative.",
@@ -102,6 +144,12 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     label: "Hybrid Launch",
     summary: "Mix social, community and onchain mechanics when you want one central campaign hub.",
     visibility: "public",
+    campaignMode: "hybrid",
+    rewardType: "mixed",
+    rewardPoolAmount: 1500,
+    minXpRequired: 100,
+    activityThreshold: 50,
+    lockDays: 14,
     xpBudget: 3500,
     featured: true,
     shortDescription: "A blended campaign structure that combines multiple mechanics into one launch-ready flow.",
@@ -166,6 +214,26 @@ export default function CampaignForm({
     setValues((current) => ({
       ...current,
       campaignType,
+      campaignMode: preset.campaignMode,
+      rewardType: preset.rewardType,
+      rewardPoolAmount:
+        typeof current.rewardPoolAmount === "number" &&
+        current.rewardPoolAmount > 0 &&
+        current.campaignType === campaignType
+          ? current.rewardPoolAmount
+          : preset.rewardPoolAmount,
+      minXpRequired:
+        typeof current.minXpRequired === "number" && current.campaignType === campaignType
+          ? current.minXpRequired
+          : preset.minXpRequired,
+      activityThreshold:
+        typeof current.activityThreshold === "number" && current.campaignType === campaignType
+          ? current.activityThreshold
+          : preset.activityThreshold,
+      lockDays:
+        typeof current.lockDays === "number" && current.campaignType === campaignType
+          ? current.lockDays
+          : preset.lockDays,
       visibility: preset.visibility,
       xpBudget: current.xpBudget > 0 && current.campaignType === campaignType ? current.xpBudget : preset.xpBudget,
       featured: preset.featured,
@@ -388,6 +456,89 @@ export default function CampaignForm({
               : " and will be visible as a standard discoverable campaign unless you change visibility."}
           </p>
         ) : null}
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+          AESP Mechanics
+        </p>
+
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <Field label="Campaign Mode">
+            <select
+              value={values.campaignMode ?? "offchain"}
+              onChange={(e) =>
+                updateField("campaignMode", e.target.value as NonNullable<AdminCampaign["campaignMode"]>)
+              }
+              className={getInputClassName(false)}
+            >
+              <option value="offchain">offchain</option>
+              <option value="onchain">onchain</option>
+              <option value="hybrid">hybrid</option>
+            </select>
+          </Field>
+
+          <Field label="Reward Type">
+            <select
+              value={values.rewardType ?? "campaign_pool"}
+              onChange={(e) =>
+                updateField("rewardType", e.target.value as NonNullable<AdminCampaign["rewardType"]>)
+              }
+              className={getInputClassName(false)}
+            >
+              <option value="campaign_pool">campaign_pool</option>
+              <option value="usdc">usdc</option>
+              <option value="project_token">project_token</option>
+              <option value="nft">nft</option>
+              <option value="perk">perk</option>
+              <option value="mixed">mixed</option>
+            </select>
+          </Field>
+
+          <Field label="Reward Pool Amount">
+            <input
+              type="number"
+              min={0}
+              value={values.rewardPoolAmount ?? 0}
+              onChange={(e) => updateField("rewardPoolAmount", Number(e.target.value))}
+              className={getInputClassName(false)}
+            />
+          </Field>
+
+          <Field label="Minimum Active XP">
+            <input
+              type="number"
+              min={0}
+              value={values.minXpRequired ?? 0}
+              onChange={(e) => updateField("minXpRequired", Number(e.target.value))}
+              className={getInputClassName(false)}
+            />
+          </Field>
+
+          <Field label="Activity Threshold">
+            <input
+              type="number"
+              min={0}
+              value={values.activityThreshold ?? 0}
+              onChange={(e) => updateField("activityThreshold", Number(e.target.value))}
+              className={getInputClassName(false)}
+            />
+          </Field>
+
+          <Field label="Lock Days">
+            <input
+              type="number"
+              min={0}
+              value={values.lockDays ?? 0}
+              onChange={(e) => updateField("lockDays", Number(e.target.value))}
+              className={getInputClassName(false)}
+            />
+          </Field>
+        </div>
+
+        <div className="rounded-2xl border border-line bg-card2 p-4 text-sm text-sub">
+          <span className="font-semibold text-text">AESP hint:</span> reward pool, minimum active XP and lock window now drive the first staking and distribution tranche. Keep the values conservative until you see real campaign flow.
+        </div>
       </div>
 
       <div className="space-y-3">

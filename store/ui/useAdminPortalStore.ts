@@ -228,6 +228,12 @@ function mapCampaign(row: DbCampaign): AdminCampaign {
     thumbnailUrl: row.thumbnail_url ?? "",
 
     campaignType: row.campaign_type as AdminCampaign["campaignType"],
+    campaignMode: (row.campaign_mode as AdminCampaign["campaignMode"]) ?? "offchain",
+    rewardType: (row.reward_type as AdminCampaign["rewardType"]) ?? "campaign_pool",
+    rewardPoolAmount: row.reward_pool_amount ?? 0,
+    minXpRequired: row.min_xp_required ?? 0,
+    activityThreshold: row.activity_threshold ?? 0,
+    lockDays: row.lock_days ?? 0,
 
     xpBudget: row.xp_budget,
     participants: row.participants,
@@ -1004,6 +1010,12 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
         thumbnail_url: input.thumbnailUrl,
 
         campaign_type: input.campaignType,
+        campaign_mode: input.campaignMode ?? "offchain",
+        reward_type: input.rewardType ?? "campaign_pool",
+        reward_pool_amount: input.rewardPoolAmount ?? 0,
+        min_xp_required: input.minXpRequired ?? 0,
+        activity_threshold: input.activityThreshold ?? 0,
+        lock_days: input.lockDays ?? 0,
 
         xp_budget: input.xpBudget,
         participants: input.participants,
@@ -1049,6 +1061,12 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
         thumbnail_url: input.thumbnailUrl,
 
         campaign_type: input.campaignType,
+        campaign_mode: input.campaignMode ?? "offchain",
+        reward_type: input.rewardType ?? "campaign_pool",
+        reward_pool_amount: input.rewardPoolAmount ?? 0,
+        min_xp_required: input.minXpRequired ?? 0,
+        activity_threshold: input.activityThreshold ?? 0,
+        lock_days: input.lockDays ?? 0,
 
         xp_budget: input.xpBudget,
         participants: input.participants,
