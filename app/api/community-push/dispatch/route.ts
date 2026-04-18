@@ -9,13 +9,19 @@ const webAppUrl = process.env.NEXT_PUBLIC_APP_URL || "https://veltrix-web.vercel
 
 type Provider = "discord" | "telegram";
 type ContentType = "campaign" | "quest" | "raid" | "reward";
-type ScopeMode = "project_only" | "all_public";
+type ScopeMode =
+  | "project_only"
+  | "selected_projects"
+  | "selected_campaigns"
+  | "all_public";
 type DeliveryMode = "broadcast" | "priority_only";
 
 type PushSettings = {
   enabled: boolean;
   scopeMode: ScopeMode;
   deliveryMode: DeliveryMode;
+  selectedProjectIds: string[];
+  selectedCampaignIds: string[];
   targetChannelId: string;
   targetThreadId: string;
   targetChatId: string;
@@ -27,6 +33,40 @@ type PushSettings = {
   featuredOnly: boolean;
   liveOnly: boolean;
   minXp: number;
+};
+
+type SubscriptionScope = {
+  scopeType: "project" | "campaign";
+  scopeRefId: string;
+};
+
+type LoadedIntegration = {
+  integrationProjectId: string;
+  provider: Provider;
+  settings: PushSettings;
+};
+
+type CommunitySubscriptionRow = {
+  id: string;
+  integration_id: string;
+  enabled: boolean;
+  scope_mode: ScopeMode;
+  delivery_mode: DeliveryMode;
+  target_channel_id: string | null;
+  target_thread_id: string | null;
+  target_chat_id: string | null;
+};
+
+type CommunitySubscriptionFilterRow = {
+  subscription_id: string;
+  featured_only: boolean;
+  live_only: boolean;
+  min_xp: number;
+  allow_campaigns: boolean;
+  allow_quests: boolean;
+  allow_raids: boolean;
+  allow_rewards: boolean;
+  allow_announcements: boolean;
 };
 
 type DispatchItem = {
@@ -69,7 +109,20 @@ function getCommunityBotPushUrl(provider: Provider) {
   return `${communityBotUrl.replace(/\/+$/, "")}/webhooks/${provider}/push`;
 }
 
-function readPushSettings(config: Record<string, unknown> | null | undefined, provider: Provider): PushSettings {
+function sanitizeScopeIds(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter((item) => item.length > 0);
+}
+
+function readLegacyPushSettings(
+  config: Record<string, unknown> | null | undefined,
+  provider: Provider
+): PushSettings {
   const raw =
     config?.pushSettings && typeof config.pushSettings === "object"
       ? (config.pushSettings as Record<string, unknown>)
@@ -77,8 +130,17 @@ function readPushSettings(config: Record<string, unknown> | null | undefined, pr
 
   return {
     enabled: raw.enabled !== false,
-    scopeMode: raw.scopeMode === "all_public" ? "all_public" : "project_only",
+    scopeMode:
+      raw.scopeMode === "selected_projects"
+        ? "selected_projects"
+        : raw.scopeMode === "selected_campaigns"
+          ? "selected_campaigns"
+          : raw.scopeMode === "all_public"
+            ? "all_public"
+            : "project_only",
     deliveryMode: raw.deliveryMode === "priority_only" ? "priority_only" : "broadcast",
+    selectedProjectIds: sanitizeScopeIds(raw.selectedProjectIds),
+    selectedCampaignIds: sanitizeScopeIds(raw.selectedCampaignIds),
     targetChannelId:
       provider === "discord" && typeof raw.targetChannelId === "string" ? raw.targetChannelId.trim() : "",
     targetThreadId:
@@ -130,10 +192,153 @@ function shouldDispatchToIntegration(params: {
     return false;
   }
   if (settings.scopeMode === "project_only" && integrationProjectId !== item.projectId) return false;
+  if (
+    settings.scopeMode === "selected_projects" &&
+    !settings.selectedProjectIds.includes(item.projectId)
+  ) {
+    return false;
+  }
+  if (
+    settings.scopeMode === "selected_campaigns" &&
+    (!item.campaignId || !settings.selectedCampaignIds.includes(item.campaignId))
+  ) {
+    return false;
+  }
   if (settings.featuredOnly && !item.isFeatured) return false;
   if (settings.liveOnly && !item.isLive) return false;
   if (settings.minXp > 0 && item.xpValue < settings.minXp) return false;
+  if (
+    settings.deliveryMode === "priority_only" &&
+    !item.isFeatured &&
+    item.xpValue < 100 &&
+    contentType !== "raid"
+  ) {
+    return false;
+  }
   return true;
+}
+
+async function loadIntegrationDispatchSettings(supabase: any): Promise<LoadedIntegration[]> {
+  const { data: integrations, error: integrationError } = await supabase
+    .from("project_integrations")
+    .select("id, project_id, provider, status, config")
+    .in("provider", ["discord", "telegram"])
+    .eq("status", "connected");
+
+  if (integrationError) {
+    throw integrationError;
+  }
+
+  const normalizedIntegrations = (integrations ?? []).filter(
+    (integration: { provider: string }) =>
+      integration.provider === "discord" || integration.provider === "telegram"
+  ) as Array<{
+    id: string;
+    project_id: string;
+    provider: Provider;
+    config: Record<string, unknown> | null;
+  }>;
+
+  if (normalizedIntegrations.length === 0) {
+    return [];
+  }
+
+  const integrationIds = normalizedIntegrations.map((integration) => integration.id);
+  const { data: subscriptions, error: subscriptionsError } = await supabase
+    .from("community_subscriptions")
+    .select("id, integration_id, enabled, scope_mode, delivery_mode, target_channel_id, target_thread_id, target_chat_id")
+    .in("integration_id", integrationIds);
+
+  if (subscriptionsError) {
+    throw subscriptionsError;
+  }
+
+  const subscriptionIds = (subscriptions ?? []).map((subscription: { id: string }) => subscription.id);
+  const [{ data: filters, error: filtersError }, { data: scopes, error: scopesError }] =
+    subscriptionIds.length > 0
+      ? await Promise.all([
+          supabase
+            .from("community_subscription_filters")
+            .select("subscription_id, featured_only, live_only, min_xp, allow_campaigns, allow_quests, allow_raids, allow_rewards, allow_announcements")
+            .in("subscription_id", subscriptionIds),
+          supabase
+            .from("community_subscription_scopes")
+            .select("subscription_id, scope_type, scope_ref_id")
+            .in("subscription_id", subscriptionIds),
+        ])
+      : [{ data: [], error: null }, { data: [], error: null }];
+
+  if (filtersError) {
+    throw filtersError;
+  }
+
+  if (scopesError) {
+    throw scopesError;
+  }
+
+  const subscriptionByIntegrationId = new Map<string, CommunitySubscriptionRow>(
+    ((subscriptions ?? []) as CommunitySubscriptionRow[]).map((subscription) => [
+      subscription.integration_id,
+      subscription,
+    ])
+  );
+  const filtersBySubscriptionId = new Map<string, CommunitySubscriptionFilterRow>(
+    ((filters ?? []) as CommunitySubscriptionFilterRow[]).map((filter) => [
+      filter.subscription_id,
+      filter,
+    ])
+  );
+  const scopesBySubscriptionId = new Map<string, SubscriptionScope[]>();
+
+  for (const scope of scopes ?? []) {
+    const existing = scopesBySubscriptionId.get(scope.subscription_id) ?? [];
+    existing.push({
+      scopeType: scope.scope_type,
+      scopeRefId: scope.scope_ref_id,
+    });
+    scopesBySubscriptionId.set(scope.subscription_id, existing);
+  }
+
+  return normalizedIntegrations.map((integration) => {
+    const subscription = subscriptionByIntegrationId.get(integration.id);
+    if (!subscription) {
+      return {
+        integrationProjectId: integration.project_id,
+        provider: integration.provider,
+        settings: readLegacyPushSettings(integration.config, integration.provider),
+      };
+    }
+
+    const filter = filtersBySubscriptionId.get(subscription.id);
+    const subscriptionScopes = scopesBySubscriptionId.get(subscription.id) ?? [];
+
+    return {
+      integrationProjectId: integration.project_id,
+      provider: integration.provider,
+      settings: {
+        enabled: subscription.enabled !== false,
+        scopeMode: subscription.scope_mode ?? "project_only",
+        deliveryMode: subscription.delivery_mode ?? "broadcast",
+        selectedProjectIds: subscriptionScopes
+          .filter((scope) => scope.scopeType === "project")
+          .map((scope) => scope.scopeRefId),
+        selectedCampaignIds: subscriptionScopes
+          .filter((scope) => scope.scopeType === "campaign")
+          .map((scope) => scope.scopeRefId),
+        targetChannelId: subscription.target_channel_id ?? "",
+        targetThreadId: subscription.target_thread_id ?? "",
+        targetChatId: subscription.target_chat_id ?? "",
+        allowCampaigns: filter?.allow_campaigns !== false,
+        allowQuests: filter?.allow_quests !== false,
+        allowRaids: filter?.allow_raids !== false,
+        allowRewards: filter?.allow_rewards === true,
+        allowAnnouncements: filter?.allow_announcements !== false,
+        featuredOnly: filter?.featured_only === true,
+        liveOnly: filter?.live_only === true,
+        minXp: Number(filter?.min_xp ?? 0),
+      },
+    };
+  });
 }
 
 async function sendCommunityPush(provider: Provider, payload: Record<string, unknown>) {
@@ -456,40 +661,25 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { data: integrations, error } = await supabase
-      .from("project_integrations")
-      .select("project_id, provider, status, config")
-      .in("provider", ["discord", "telegram"])
-      .eq("status", "connected");
-
-    if (error) {
-      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-    }
+    const integrations = await loadIntegrationDispatchSettings(supabase);
 
     const deliveries: Array<Record<string, unknown>> = [];
     const skipped: Array<Record<string, unknown>> = [];
 
-    for (const integration of integrations ?? []) {
-      const provider = integration.provider as Provider;
-      const settings = readPushSettings(
-        integration.config && typeof integration.config === "object"
-          ? (integration.config as Record<string, unknown>)
-          : null,
-        provider
-      );
-
+    for (const integration of integrations) {
+      const { provider, settings } = integration;
       if (
         !shouldDispatchToIntegration({
           provider,
           contentType,
-          integrationProjectId: integration.project_id,
+          integrationProjectId: integration.integrationProjectId,
           settings,
           item,
         })
       ) {
         skipped.push({
           provider,
-          integrationProjectId: integration.project_id,
+          integrationProjectId: integration.integrationProjectId,
         });
         continue;
       }
@@ -526,7 +716,7 @@ export async function POST(request: NextRequest) {
       const result = await sendCommunityPush(provider, payload);
       deliveries.push({
         provider,
-        integrationProjectId: integration.project_id,
+        integrationProjectId: integration.integrationProjectId,
         result,
       });
     }

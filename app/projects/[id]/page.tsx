@@ -18,13 +18,19 @@ import { createClient } from "@/lib/supabase/client";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
-type PushScopeMode = "project_only" | "all_public";
+type PushScopeMode =
+  | "project_only"
+  | "selected_projects"
+  | "selected_campaigns"
+  | "all_public";
 type PushDeliveryMode = "broadcast" | "priority_only";
 
 type CommunityPushSettings = {
   enabled: boolean;
   scopeMode: PushScopeMode;
   deliveryMode: PushDeliveryMode;
+  selectedProjectIds: string[];
+  selectedCampaignIds: string[];
   targetChannelId: string;
   targetThreadId: string;
   targetChatId: string;
@@ -43,6 +49,8 @@ function createDefaultPushSettings(provider: "discord" | "telegram"): CommunityP
     enabled: true,
     scopeMode: "project_only",
     deliveryMode: "broadcast",
+    selectedProjectIds: [],
+    selectedCampaignIds: [],
     targetChannelId: "",
     targetThreadId: "",
     targetChatId: "",
@@ -69,8 +77,25 @@ function readPushSettings(
 
   return {
     enabled: rawPushSettings.enabled !== false,
-    scopeMode: rawPushSettings.scopeMode === "all_public" ? "all_public" : "project_only",
+    scopeMode:
+      rawPushSettings.scopeMode === "selected_projects"
+        ? "selected_projects"
+        : rawPushSettings.scopeMode === "selected_campaigns"
+          ? "selected_campaigns"
+          : rawPushSettings.scopeMode === "all_public"
+            ? "all_public"
+            : "project_only",
     deliveryMode: rawPushSettings.deliveryMode === "priority_only" ? "priority_only" : "broadcast",
+    selectedProjectIds: Array.isArray(rawPushSettings.selectedProjectIds)
+      ? rawPushSettings.selectedProjectIds
+          .map((item) => (typeof item === "string" ? item.trim() : ""))
+          .filter(Boolean)
+      : [],
+    selectedCampaignIds: Array.isArray(rawPushSettings.selectedCampaignIds)
+      ? rawPushSettings.selectedCampaignIds
+          .map((item) => (typeof item === "string" ? item.trim() : ""))
+          .filter(Boolean)
+      : [],
     targetChannelId:
       provider === "discord" && typeof rawPushSettings.targetChannelId === "string"
         ? rawPushSettings.targetChannelId
@@ -99,6 +124,14 @@ function readPushSettings(
   };
 }
 
+function toggleScopeSelection(current: string[], nextId: string, checked: boolean) {
+  if (checked) {
+    return current.includes(nextId) ? current : [...current, nextId];
+  }
+
+  return current.filter((item) => item !== nextId);
+}
+
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -109,6 +142,7 @@ export default function ProjectDetailPage() {
   const getProjectById = useAdminPortalStore((s) => s.getProjectById);
   const updateProject = useAdminPortalStore((s) => s.updateProject);
   const deleteProject = useAdminPortalStore((s) => s.deleteProject);
+  const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const quests = useAdminPortalStore((s) => s.quests);
   const rewards = useAdminPortalStore((s) => s.rewards);
@@ -235,6 +269,14 @@ export default function ProjectDetailPage() {
   }
 
   const relatedCampaigns = campaigns.filter((c) => c.projectId === project.id);
+  const projectNameById = useMemo(
+    () => new Map(projects.map((item) => [item.id, item.name])),
+    [projects]
+  );
+  const selectableProjects = useMemo(
+    () => projects.filter((item) => item.id !== project.id),
+    [project.id, projects]
+  );
   const relatedQuests = quests.filter((quest) => quest.projectId === project.id);
   const relatedRewards = rewards.filter((reward) => reward.projectId === project.id);
   const relatedTeamMembers = teamMembers.filter((member) => member.projectId === project.id);
@@ -761,9 +803,86 @@ export default function ProjectDetailPage() {
                             className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                           >
                             <option value="project_only">Only this project</option>
+                            <option value="selected_projects">Selected projects</option>
+                            <option value="selected_campaigns">Selected campaigns</option>
                             <option value="all_public">Everything public</option>
                           </select>
                         </label>
+                        {discordPushSettings.scopeMode === "selected_projects" ? (
+                          <div className="space-y-2 rounded-2xl border border-line bg-card p-4">
+                            <p className="text-sm font-semibold text-text">Allowed projects</p>
+                            <div className="grid gap-2">
+                              {selectableProjects.length > 0 ? (
+                                selectableProjects.map((candidate) => (
+                                  <label
+                                    key={candidate.id}
+                                    className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text"
+                                  >
+                                    <span>{candidate.name}</span>
+                                    <input
+                                      type="checkbox"
+                                      checked={discordPushSettings.selectedProjectIds.includes(candidate.id)}
+                                      onChange={(event) =>
+                                        setDiscordPushSettings((current) => ({
+                                          ...current,
+                                          selectedProjectIds: toggleScopeSelection(
+                                            current.selectedProjectIds,
+                                            candidate.id,
+                                            event.target.checked
+                                          ),
+                                        }))
+                                      }
+                                    />
+                                  </label>
+                                ))
+                              ) : (
+                                <p className="text-sm text-sub">
+                                  No other projects are available in this workspace yet.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
+                        {discordPushSettings.scopeMode === "selected_campaigns" ? (
+                          <div className="space-y-2 rounded-2xl border border-line bg-card p-4">
+                            <p className="text-sm font-semibold text-text">Allowed campaigns</p>
+                            <div className="grid gap-2">
+                              {campaigns.length > 0 ? (
+                                campaigns.map((candidate) => (
+                                  <label
+                                    key={candidate.id}
+                                    className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text"
+                                  >
+                                    <span>
+                                      {candidate.title}
+                                      <span className="ml-2 text-sub">
+                                        {projectNameById.get(candidate.projectId) || "Unknown project"}
+                                      </span>
+                                    </span>
+                                    <input
+                                      type="checkbox"
+                                      checked={discordPushSettings.selectedCampaignIds.includes(candidate.id)}
+                                      onChange={(event) =>
+                                        setDiscordPushSettings((current) => ({
+                                          ...current,
+                                          selectedCampaignIds: toggleScopeSelection(
+                                            current.selectedCampaignIds,
+                                            candidate.id,
+                                            event.target.checked
+                                          ),
+                                        }))
+                                      }
+                                    />
+                                  </label>
+                                ))
+                              ) : (
+                                <p className="text-sm text-sub">
+                                  No campaigns are available yet.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
                         <label className="space-y-2 text-sm text-sub">
                           <span className="font-semibold text-text">Delivery mode</span>
                           <select
@@ -935,9 +1054,86 @@ export default function ProjectDetailPage() {
                             className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                           >
                             <option value="project_only">Only this project</option>
+                            <option value="selected_projects">Selected projects</option>
+                            <option value="selected_campaigns">Selected campaigns</option>
                             <option value="all_public">Everything public</option>
                           </select>
                         </label>
+                        {telegramPushSettings.scopeMode === "selected_projects" ? (
+                          <div className="space-y-2 rounded-2xl border border-line bg-card p-4">
+                            <p className="text-sm font-semibold text-text">Allowed projects</p>
+                            <div className="grid gap-2">
+                              {selectableProjects.length > 0 ? (
+                                selectableProjects.map((candidate) => (
+                                  <label
+                                    key={candidate.id}
+                                    className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text"
+                                  >
+                                    <span>{candidate.name}</span>
+                                    <input
+                                      type="checkbox"
+                                      checked={telegramPushSettings.selectedProjectIds.includes(candidate.id)}
+                                      onChange={(event) =>
+                                        setTelegramPushSettings((current) => ({
+                                          ...current,
+                                          selectedProjectIds: toggleScopeSelection(
+                                            current.selectedProjectIds,
+                                            candidate.id,
+                                            event.target.checked
+                                          ),
+                                        }))
+                                      }
+                                    />
+                                  </label>
+                                ))
+                              ) : (
+                                <p className="text-sm text-sub">
+                                  No other projects are available in this workspace yet.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
+                        {telegramPushSettings.scopeMode === "selected_campaigns" ? (
+                          <div className="space-y-2 rounded-2xl border border-line bg-card p-4">
+                            <p className="text-sm font-semibold text-text">Allowed campaigns</p>
+                            <div className="grid gap-2">
+                              {campaigns.length > 0 ? (
+                                campaigns.map((candidate) => (
+                                  <label
+                                    key={candidate.id}
+                                    className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text"
+                                  >
+                                    <span>
+                                      {candidate.title}
+                                      <span className="ml-2 text-sub">
+                                        {projectNameById.get(candidate.projectId) || "Unknown project"}
+                                      </span>
+                                    </span>
+                                    <input
+                                      type="checkbox"
+                                      checked={telegramPushSettings.selectedCampaignIds.includes(candidate.id)}
+                                      onChange={(event) =>
+                                        setTelegramPushSettings((current) => ({
+                                          ...current,
+                                          selectedCampaignIds: toggleScopeSelection(
+                                            current.selectedCampaignIds,
+                                            candidate.id,
+                                            event.target.checked
+                                          ),
+                                        }))
+                                      }
+                                    />
+                                  </label>
+                                ))
+                              ) : (
+                                <p className="text-sm text-sub">
+                                  No campaigns are available yet.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
                         <label className="space-y-2 text-sm text-sub">
                           <span className="font-semibold text-text">Delivery mode</span>
                           <select
