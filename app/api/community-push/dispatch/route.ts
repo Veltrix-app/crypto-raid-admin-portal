@@ -123,6 +123,14 @@ function readLegacyPushSettings(
   config: Record<string, unknown> | null | undefined,
   provider: Provider
 ): PushSettings {
+  const telegramFallbackTargetChatId =
+    provider === "telegram"
+      ? typeof config?.chatId === "string" && config.chatId.trim()
+        ? config.chatId.trim()
+        : typeof config?.groupId === "string"
+          ? config.groupId.trim()
+          : ""
+      : "";
   const raw =
     config?.pushSettings && typeof config.pushSettings === "object"
       ? (config.pushSettings as Record<string, unknown>)
@@ -146,7 +154,9 @@ function readLegacyPushSettings(
     targetThreadId:
       provider === "discord" && typeof raw.targetThreadId === "string" ? raw.targetThreadId.trim() : "",
     targetChatId:
-      provider === "telegram" && typeof raw.targetChatId === "string" ? raw.targetChatId.trim() : "",
+      provider === "telegram" && typeof raw.targetChatId === "string"
+        ? raw.targetChatId.trim() || telegramFallbackTargetChatId
+        : telegramFallbackTargetChatId,
     allowCampaigns: raw.allowCampaigns !== false,
     allowQuests: raw.allowQuests !== false,
     allowRaids: raw.allowRaids !== false,
@@ -317,10 +327,10 @@ async function loadIntegrationDispatchSettings(supabase: any): Promise<LoadedInt
     return {
       integrationProjectId: integration.project_id,
       provider: integration.provider,
-      settings: {
-        enabled: subscription.enabled !== false,
-        scopeMode: subscription.scope_mode ?? "project_only",
-        deliveryMode: subscription.delivery_mode ?? "broadcast",
+        settings: {
+          enabled: subscription.enabled !== false,
+          scopeMode: subscription.scope_mode ?? "project_only",
+          deliveryMode: subscription.delivery_mode ?? "broadcast",
         selectedProjectIds: subscriptionScopes
           .filter((scope) => scope.scopeType === "project")
           .map((scope) => scope.scopeRefId),
@@ -329,8 +339,18 @@ async function loadIntegrationDispatchSettings(supabase: any): Promise<LoadedInt
           .map((scope) => scope.scopeRefId),
         targetChannelId: subscription.target_channel_id ?? "",
         targetThreadId: subscription.target_thread_id ?? "",
-        targetChatId: subscription.target_chat_id ?? "",
-        allowCampaigns: filter?.allow_campaigns !== false,
+          targetChatId: subscription.target_chat_id ?? "",
+          ...(integration.provider === "telegram" &&
+          !(subscription.target_chat_id ?? "").trim() &&
+          (typeof integration.config?.chatId === "string" || typeof integration.config?.groupId === "string")
+            ? {
+                targetChatId:
+                  (typeof integration.config?.chatId === "string" && integration.config.chatId.trim()) ||
+                  (typeof integration.config?.groupId === "string" && integration.config.groupId.trim()) ||
+                  "",
+              }
+            : {}),
+          allowCampaigns: filter?.allow_campaigns !== false,
         allowQuests: filter?.allow_quests !== false,
         allowRaids: filter?.allow_raids !== false,
         allowRewards: filter?.allow_rewards === true,

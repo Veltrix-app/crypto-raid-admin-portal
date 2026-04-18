@@ -82,6 +82,12 @@ function sanitizePushSettings(rawConfig: Record<string, unknown>, provider: Prov
   };
 }
 
+function getTelegramFallbackTargetChatId(config: Record<string, unknown> | null | undefined) {
+  const chatId = typeof config?.chatId === "string" ? config.chatId.trim() : "";
+  const groupId = typeof config?.groupId === "string" ? config.groupId.trim() : "";
+  return chatId || groupId || "";
+}
+
 type CommunitySubscriptionRow = {
   id: string;
   integration_id: string;
@@ -279,10 +285,18 @@ export async function GET(request: NextRequest) {
                 ...(integration.config ?? {}),
                 pushSettings:
                   pushSettingsByIntegrationId.get(integration.id) ??
-                  sanitizePushSettings(
-                    integration.config ?? {},
-                    integration.provider
-                  ),
+                  (() => {
+                    const settings = sanitizePushSettings(
+                      integration.config ?? {},
+                      integration.provider
+                    );
+                    return integration.provider === "telegram" && !settings.targetChatId
+                      ? {
+                          ...settings,
+                          targetChatId: getTelegramFallbackTargetChatId(integration.config),
+                        }
+                      : settings;
+                  })(),
               }
             : integration.config ?? null,
       })),
@@ -342,6 +356,13 @@ export async function POST(request: NextRequest) {
               typeof rawConfig.groupId === "string" ? rawConfig.groupId.trim() : "",
             pushSettings,
           };
+    const normalizedPushSettings =
+      provider === "telegram" && !pushSettings.targetChatId
+        ? {
+            ...pushSettings,
+            targetChatId: getTelegramFallbackTargetChatId(config),
+          }
+        : pushSettings;
 
     const hasPrimaryIdentifier =
       provider === "discord"
@@ -378,15 +399,15 @@ export async function POST(request: NextRequest) {
           integration_id: data.id,
           provider,
           project_id: projectId,
-          enabled: pushSettings.enabled,
-          scope_mode: pushSettings.scopeMode,
-          delivery_mode: pushSettings.deliveryMode,
+          enabled: normalizedPushSettings.enabled,
+          scope_mode: normalizedPushSettings.scopeMode,
+          delivery_mode: normalizedPushSettings.deliveryMode,
           target_channel_id:
-            provider === "discord" ? pushSettings.targetChannelId || null : null,
+            provider === "discord" ? normalizedPushSettings.targetChannelId || null : null,
           target_thread_id:
-            provider === "discord" ? pushSettings.targetThreadId || null : null,
+            provider === "discord" ? normalizedPushSettings.targetThreadId || null : null,
           target_chat_id:
-            provider === "telegram" ? pushSettings.targetChatId || null : null,
+            provider === "telegram" ? normalizedPushSettings.targetChatId || null : null,
           updated_at: now,
         },
         {
@@ -406,14 +427,14 @@ export async function POST(request: NextRequest) {
     const { error: filtersError } = await supabase.from("community_subscription_filters").upsert(
       {
         subscription_id: subscription.id,
-        featured_only: pushSettings.featuredOnly,
-        live_only: pushSettings.liveOnly,
-        min_xp: Number.isFinite(pushSettings.minXp) ? pushSettings.minXp : 0,
-        allow_campaigns: pushSettings.allowCampaigns,
-        allow_quests: pushSettings.allowQuests,
-        allow_raids: pushSettings.allowRaids,
-        allow_rewards: pushSettings.allowRewards,
-        allow_announcements: pushSettings.allowAnnouncements,
+        featured_only: normalizedPushSettings.featuredOnly,
+        live_only: normalizedPushSettings.liveOnly,
+        min_xp: Number.isFinite(normalizedPushSettings.minXp) ? normalizedPushSettings.minXp : 0,
+        allow_campaigns: normalizedPushSettings.allowCampaigns,
+        allow_quests: normalizedPushSettings.allowQuests,
+        allow_raids: normalizedPushSettings.allowRaids,
+        allow_rewards: normalizedPushSettings.allowRewards,
+        allow_announcements: normalizedPushSettings.allowAnnouncements,
         updated_at: now,
       },
       {
@@ -426,15 +447,15 @@ export async function POST(request: NextRequest) {
     }
 
     const scopeRows =
-      pushSettings.scopeMode === "selected_projects"
-        ? pushSettings.selectedProjectIds.map((scopeRefId) => ({
+      normalizedPushSettings.scopeMode === "selected_projects"
+        ? normalizedPushSettings.selectedProjectIds.map((scopeRefId) => ({
             subscription_id: subscription.id,
             scope_type: "project",
             scope_ref_id: scopeRefId,
             updated_at: now,
           }))
-        : pushSettings.scopeMode === "selected_campaigns"
-          ? pushSettings.selectedCampaignIds.map((scopeRefId) => ({
+        : normalizedPushSettings.scopeMode === "selected_campaigns"
+          ? normalizedPushSettings.selectedCampaignIds.map((scopeRefId) => ({
               subscription_id: subscription.id,
               scope_type: "campaign",
               scope_ref_id: scopeRefId,
