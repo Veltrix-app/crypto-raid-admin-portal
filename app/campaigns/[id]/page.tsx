@@ -17,7 +17,7 @@ import {
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
-import { DbVerificationResult } from "@/types/database";
+import { DbAuditLog, DbVerificationResult } from "@/types/database";
 
 export default function CampaignDetailPage() {
   const params = useParams<{ id: string }>();
@@ -48,6 +48,7 @@ export default function CampaignDetailPage() {
     totalDistributed: number;
     rewardAsset: string;
   } | null>(null);
+  const [callbackFailures, setCallbackFailures] = useState<DbAuditLog[]>([]);
   const [finalizingRewards, setFinalizingRewards] = useState(false);
   const [finalizeMessage, setFinalizeMessage] = useState<{
     tone: "default" | "error" | "success";
@@ -75,7 +76,11 @@ export default function CampaignDetailPage() {
   const relatedRaids = raids.filter((r) => r.campaignId === campaign.id);
   const relatedQuests = quests.filter((q) => q.campaignId === campaign.id);
   const relatedRewards = rewards.filter((reward) => reward.campaignId === campaign.id);
-  const relatedQuestIds = new Set(relatedQuests.map((quest) => quest.id));
+  const relatedQuestIdList = useMemo(
+    () => relatedQuests.map((quest) => quest.id),
+    [relatedQuests]
+  );
+  const relatedQuestIds = useMemo(() => new Set(relatedQuestIdList), [relatedQuestIdList]);
   const relatedSubmissions = submissions.filter((submission) =>
     relatedQuestIds.has(submission.questId)
   );
@@ -215,6 +220,43 @@ export default function CampaignDetailPage() {
       active = false;
     };
   }, [currentCampaign.id, currentCampaign.rewardType]);
+
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+
+    async function loadCallbackFailures() {
+      if (relatedQuestIdList.length === 0) {
+        setCallbackFailures([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("admin_audit_logs")
+        .select("*")
+        .eq("action", "verification_callback_failed")
+        .in("source_id", relatedQuestIdList)
+        .order("created_at", { ascending: false })
+        .limit(8);
+
+      if (!active) {
+        return;
+      }
+
+      if (error) {
+        console.error("[campaign-callback-failures] failed", error.message);
+        return;
+      }
+
+      setCallbackFailures((data ?? []) as DbAuditLog[]);
+    }
+
+    void loadCallbackFailures();
+
+    return () => {
+      active = false;
+    };
+  }, [relatedQuestIdList]);
 
   return (
     <AdminShell>
@@ -537,6 +579,20 @@ export default function CampaignDetailPage() {
                     {finalizeMessage.text}
                   </div>
                 ) : null}
+              </div>
+            </DetailSidebarSurface>
+
+            <DetailSidebarSurface title="Operator Signals">
+              <div className="mt-4 space-y-4">
+                <DetailMetaRow label="Callback failures" value={callbackFailures.length} />
+                <DetailMetaRow
+                  label="Open trust flags"
+                  value={relatedFlags.filter((flag) => flag.status === "open").length}
+                />
+                <DetailMetaRow
+                  label="Latest callback issue"
+                  value={callbackFailures[0]?.summary ?? "No callback failures logged"}
+                />
               </div>
             </DetailSidebarSurface>
           </div>

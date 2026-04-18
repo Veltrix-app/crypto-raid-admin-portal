@@ -475,6 +475,44 @@ export type DbAuditLog = {
   created_at: string;
 };
 
+export type DbOnchainEvent = {
+  id: string;
+  auth_user_id: string;
+  project_id: string;
+  wallet_link_id: string | null;
+  chain: string;
+  tx_hash: string;
+  block_time: string;
+  event_type: string;
+  contract_address: string;
+  token_address: string | null;
+  usd_value: number | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbRewardDistribution = {
+  id: string;
+  campaign_id: string;
+  auth_user_id: string;
+  reward_asset: string;
+  reward_amount: number;
+  calculation_snapshot: Record<string, any> | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbTrustSnapshot = {
+  id: string;
+  auth_user_id: string;
+  score: number;
+  reasons: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type DbVerificationResult = {
   id: string;
   auth_user_id: string | null;

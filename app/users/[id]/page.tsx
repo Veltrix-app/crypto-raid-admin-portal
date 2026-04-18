@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import {
@@ -12,13 +12,18 @@ import {
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
+import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
+import type { DbOnchainEvent, DbRewardDistribution, DbTrustSnapshot } from "@/types/database";
 
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>();
   const users = useAdminPortalStore((s) => s.users);
   const submissions = useAdminPortalStore((s) => s.submissions);
   const claims = useAdminPortalStore((s) => s.claims);
+  const [trustSnapshots, setTrustSnapshots] = useState<DbTrustSnapshot[]>([]);
+  const [rewardDistributions, setRewardDistributions] = useState<DbRewardDistribution[]>([]);
+  const [onchainEvents, setOnchainEvents] = useState<DbOnchainEvent[]>([]);
 
   const user = useMemo(
     () => users.find((item) => item.authUserId === params.id || item.id === params.id),
@@ -36,38 +41,95 @@ export default function UserDetailPage() {
     );
   }
 
-  const userSubmissions = submissions.filter((submission) => submission.userId === user.authUserId);
-  const userClaims = claims.filter((claim) => claim.authUserId === user.authUserId);
+  const currentUser = user;
+
+  const userSubmissions = submissions.filter((submission) => submission.userId === currentUser.authUserId);
+  const userClaims = claims.filter((claim) => claim.authUserId === currentUser.authUserId);
   const approvedSubmissions = userSubmissions.filter((submission) => submission.status === "approved").length;
   const pendingSubmissions = userSubmissions.filter((submission) => submission.status === "pending").length;
   const pendingClaims = userClaims.filter((claim) => claim.status === "pending").length;
   const trustPosture =
-    user.status === "flagged"
+    currentUser.status === "flagged"
       ? "Heightened review posture"
-      : user.trustScore >= 70
+      : currentUser.trustScore >= 70
         ? "Healthy contributor posture"
         : "Monitor contribution quality";
+  const latestTrustSnapshot = trustSnapshots[0] ?? null;
+  const claimableDistributions = rewardDistributions.filter(
+    (distribution) => distribution.status === "claimable"
+  );
+  const totalClaimableAmount = claimableDistributions.reduce(
+    (sum, distribution) => sum + Number(distribution.reward_amount ?? 0),
+    0
+  );
+
+  useEffect(() => {
+    if (!currentUser.authUserId) {
+      return;
+    }
+
+    let active = true;
+    const supabase = createClient();
+
+    async function loadIdentitySignals() {
+      const [{ data: trustRows }, { data: distributionRows }, { data: onchainRows }] =
+        await Promise.all([
+          supabase
+            .from("trust_snapshots")
+            .select("*")
+            .eq("auth_user_id", currentUser.authUserId)
+            .order("created_at", { ascending: false })
+            .limit(6),
+          supabase
+            .from("reward_distributions")
+            .select("*")
+            .eq("auth_user_id", currentUser.authUserId)
+            .order("updated_at", { ascending: false })
+            .limit(12),
+          supabase
+            .from("onchain_events")
+            .select("*")
+            .eq("auth_user_id", currentUser.authUserId)
+            .order("created_at", { ascending: false })
+            .limit(12),
+        ]);
+
+      if (!active) {
+        return;
+      }
+
+      setTrustSnapshots((trustRows ?? []) as DbTrustSnapshot[]);
+      setRewardDistributions((distributionRows ?? []) as DbRewardDistribution[]);
+      setOnchainEvents((onchainRows ?? []) as DbOnchainEvent[]);
+    }
+
+    void loadIdentitySignals();
+
+    return () => {
+      active = false;
+    };
+  }, [currentUser.authUserId]);
 
   return (
     <AdminShell>
       <div className="space-y-6">
         <DetailHero
           eyebrow="Contributor Detail"
-          title={user.username}
+          title={currentUser.username}
           description="Trust, contribution and fulfillment signals for this contributor across the current workspace surfaces."
           badges={
             <>
-              <DetailBadge tone={user.status === "flagged" ? "danger" : user.status === "active" ? "primary" : "warning"}>
-                {user.status}
+              <DetailBadge tone={currentUser.status === "flagged" ? "danger" : currentUser.status === "active" ? "primary" : "warning"}>
+                {currentUser.status}
               </DetailBadge>
-              <DetailBadge>{user.contributionTier}</DetailBadge>
-              <DetailBadge tone={user.sybilScore >= 70 ? "danger" : "default"}>Sybil {user.sybilScore}</DetailBadge>
-              <DetailBadge tone={user.trustScore >= 70 ? "primary" : "warning"}>Trust {user.trustScore}</DetailBadge>
+              <DetailBadge>{currentUser.contributionTier}</DetailBadge>
+              <DetailBadge tone={currentUser.sybilScore >= 70 ? "danger" : "default"}>Sybil {currentUser.sybilScore}</DetailBadge>
+              <DetailBadge tone={currentUser.trustScore >= 70 ? "primary" : "warning"}>Trust {currentUser.trustScore}</DetailBadge>
             </>
           }
           metrics={
             <>
-              <DetailMetricCard label="XP" value={user.xp} hint="Current experience footprint across tracked activity." />
+              <DetailMetricCard label="XP" value={currentUser.xp} hint="Current experience footprint across tracked activity." />
               <DetailMetricCard label="Approved" value={approvedSubmissions} hint="Submissions that successfully cleared review." />
               <DetailMetricCard label="Pending" value={pendingSubmissions} hint="Submissions still sitting in moderation." />
               <DetailMetricCard label="Claims" value={userClaims.length} hint="Rewards this contributor has attempted to claim." />
@@ -82,10 +144,12 @@ export default function UserDetailPage() {
             description="Use this surface to understand whether the contributor is compounding quality or creating moderation drag."
           >
             <div className="grid gap-3 md:grid-cols-2">
-              <DetailMetricCard label="Global Trust" value={user.trustScore} hint="Current trust score driving moderation confidence." />
-              <DetailMetricCard label="Sybil Risk" value={user.sybilScore} hint="Higher values mean stronger identity overlap or abuse pressure." />
+              <DetailMetricCard label="Global Trust" value={currentUser.trustScore} hint="Current trust score driving moderation confidence." />
+              <DetailMetricCard label="Sybil Risk" value={currentUser.sybilScore} hint="Higher values mean stronger identity overlap or abuse pressure." />
               <DetailMetricCard label="Pending Claims" value={pendingClaims} hint="Reward requests still waiting on operator action." />
-              <DetailMetricCard label="Reputation Rank" value={user.reputationRank} hint="Current relative standing in the reputation model." />
+              <DetailMetricCard label="Reputation Rank" value={currentUser.reputationRank} hint="Current relative standing in the reputation model." />
+              <DetailMetricCard label="Claimable Pools" value={claimableDistributions.length} hint="Campaign distributions this contributor can already claim." />
+              <DetailMetricCard label="On-chain Events" value={onchainEvents.length} hint="Recent on-chain events normalized into the AESP intake layer." />
             </div>
           </DetailSurface>
 
@@ -102,7 +166,16 @@ export default function UserDetailPage() {
           >
             <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
               <p className="text-sm leading-7 text-sub">
-                Contribution tier, completion history and trust posture already tell a clear story here. The next layer to add later would be a richer per-project timeline and review history.
+                Latest trust snapshot score:{" "}
+                <span className="font-semibold text-text">
+                  {latestTrustSnapshot ? latestTrustSnapshot.score : currentUser.trustScore}
+                </span>
+                . Claimable campaign balance:{" "}
+                <span className="font-semibold text-text">
+                  {Number(totalClaimableAmount.toFixed(4))}
+                </span>
+                . Recent on-chain events tracked:{" "}
+                <span className="font-semibold text-text">{onchainEvents.length}</span>.
               </p>
             </div>
           </DetailSurface>
@@ -114,29 +187,58 @@ export default function UserDetailPage() {
             description="Recent contribution and reward behavior tied to this contributor."
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <DetailMetaRow label="Auth User ID" value={user.authUserId || "-"} />
-              <DetailMetaRow label="Title" value={user.title || "-"} />
+              <DetailMetaRow label="Auth User ID" value={currentUser.authUserId || "-"} />
+              <DetailMetaRow label="Title" value={currentUser.title || "-"} />
               <DetailMetaRow label="Submissions" value={userSubmissions.length} />
               <DetailMetaRow label="Claims" value={userClaims.length} />
               <DetailMetaRow label="Approved submissions" value={approvedSubmissions} />
               <DetailMetaRow label="Pending submissions" value={pendingSubmissions} />
+              <DetailMetaRow label="Claimable distributions" value={claimableDistributions.length} />
+              <DetailMetaRow label="On-chain events" value={onchainEvents.length} />
             </div>
           </DetailSurface>
 
           <div className="space-y-6">
             <DetailSidebarSurface title="Reputation Markers">
               <div className="space-y-4">
-                <DetailMetaRow label="Contribution Tier" value={user.contributionTier} />
-                <DetailMetaRow label="Status" value={user.status} />
-                <DetailMetaRow label="Trust score" value={user.trustScore} />
-                <DetailMetaRow label="Sybil score" value={user.sybilScore} />
+                <DetailMetaRow label="Contribution Tier" value={currentUser.contributionTier} />
+                <DetailMetaRow label="Status" value={currentUser.status} />
+                <DetailMetaRow label="Trust score" value={currentUser.trustScore} />
+                <DetailMetaRow label="Sybil score" value={currentUser.sybilScore} />
               </div>
             </DetailSidebarSurface>
 
-            <DetailSidebarSurface title="Current Gap">
-              <p className="text-sm leading-7 text-sub">
-                This detail page now shows the trust and activity posture clearly, but a richer contributor timeline and project-by-project reputation breakdown would be the next upgrade if we want this screen to become a full operator dossier.
-              </p>
+            <DetailSidebarSurface title="Live Trust Snapshot">
+              {latestTrustSnapshot ? (
+                <div className="space-y-4">
+                  <DetailMetaRow label="Score" value={latestTrustSnapshot.score} />
+                  <DetailMetaRow
+                    label="Captured"
+                    value={new Date(latestTrustSnapshot.created_at).toLocaleString()}
+                  />
+                  <div className="rounded-2xl border border-line bg-card px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Reasons</p>
+                    <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">
+                      {JSON.stringify(latestTrustSnapshot.reasons ?? {}, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm leading-7 text-sub">
+                  No trust snapshot has landed for this contributor yet.
+                </p>
+              )}
+            </DetailSidebarSurface>
+
+            <DetailSidebarSurface title="Claimable Distribution Read">
+              <div className="space-y-4">
+                <DetailMetaRow label="Claimable lanes" value={claimableDistributions.length} />
+                <DetailMetaRow
+                  label="Claimable total"
+                  value={Number(totalClaimableAmount.toFixed(4))}
+                />
+                <DetailMetaRow label="Latest asset" value={claimableDistributions[0]?.reward_asset ?? "-"} />
+              </div>
             </DetailSidebarSurface>
           </div>
         </div>

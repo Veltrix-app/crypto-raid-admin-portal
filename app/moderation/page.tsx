@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   OpsFilterBar,
@@ -11,7 +11,9 @@ import {
   OpsSelect,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
+import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
+import type { DbAuditLog } from "@/types/database";
 
 export default function ModerationPage() {
   const submissions = useAdminPortalStore((s) => s.submissions);
@@ -19,9 +21,56 @@ export default function ModerationPage() {
   const approveSubmission = useAdminPortalStore((s) => s.approveSubmission);
   const rejectSubmission = useAdminPortalStore((s) => s.rejectSubmission);
   const updateReviewFlagStatus = useAdminPortalStore((s) => s.updateReviewFlagStatus);
+  const [callbackFailures, setCallbackFailures] = useState<DbAuditLog[]>([]);
+  const [onchainFailures, setOnchainFailures] = useState<DbAuditLog[]>([]);
   const [search, setSearch] = useState("");
   const [flagSeverity, setFlagSeverity] = useState<"all" | "high" | "medium" | "low">("all");
   const [submissionStatus, setSubmissionStatus] = useState<"all" | "pending" | "approved" | "rejected">("pending");
+
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+
+    async function loadOpsFailures() {
+      const [{ data: callbackRows, error: callbackError }, { data: onchainRows, error: onchainError }] =
+        await Promise.all([
+          supabase
+            .from("admin_audit_logs")
+            .select("*")
+            .eq("action", "verification_callback_failed")
+            .order("created_at", { ascending: false })
+            .limit(12),
+          supabase
+            .from("admin_audit_logs")
+            .select("*")
+            .in("action", ["onchain_ingress_rejected", "onchain_ingress_failed"])
+            .order("created_at", { ascending: false })
+            .limit(12),
+        ]);
+
+      if (!active) {
+        return;
+      }
+
+      if (callbackError) {
+        console.error("[moderation] callback failures load failed", callbackError.message);
+      } else {
+        setCallbackFailures((callbackRows ?? []) as DbAuditLog[]);
+      }
+
+      if (onchainError) {
+        console.error("[moderation] onchain failures load failed", onchainError.message);
+      } else {
+        setOnchainFailures((onchainRows ?? []) as DbAuditLog[]);
+      }
+    }
+
+    void loadOpsFailures();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const openFlags = reviewFlags.filter((flag) => flag.status === "open");
   const filteredFlags = useMemo(() => {
@@ -49,6 +98,36 @@ export default function ModerationPage() {
     });
   }, [submissions, search, submissionStatus]);
 
+  const filteredCallbackFailures = useMemo(() => {
+    const term = search.toLowerCase();
+    return callbackFailures.filter((failure) => {
+      const haystack = [
+        failure.summary,
+        failure.source_id,
+        failure.action,
+        JSON.stringify(failure.metadata ?? {}),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [callbackFailures, search]);
+
+  const filteredOnchainFailures = useMemo(() => {
+    const term = search.toLowerCase();
+    return onchainFailures.filter((failure) => {
+      const haystack = [
+        failure.summary,
+        failure.source_id,
+        failure.action,
+        JSON.stringify(failure.metadata ?? {}),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [onchainFailures, search]);
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -58,7 +137,7 @@ export default function ModerationPage() {
           description="Review quest proofs, investigate suspicious behavior and resolve flagged cases from one queue."
         />
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           <OpsMetricCard
             label="Pending submissions"
             value={submissions.filter((submission) => submission.status === "pending").length}
@@ -77,6 +156,16 @@ export default function ModerationPage() {
           <OpsMetricCard
             label="Duplicate signals"
             value={openFlags.filter((flag) => ["duplicate_proof", "duplicate_wallet"].includes(flag.flagType)).length}
+          />
+          <OpsMetricCard
+            label="Callback failures"
+            value={callbackFailures.length}
+            emphasis={callbackFailures.length > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Onchain failures"
+            value={onchainFailures.length}
+            emphasis={onchainFailures.length > 0 ? "warning" : "default"}
           />
         </div>
 
@@ -194,6 +283,108 @@ export default function ModerationPage() {
             {filteredFlags.length === 0 ? (
               <div className="rounded-[24px] border border-line bg-card2 p-6 text-sm text-sub">
                 No review flags match the current filters.
+              </div>
+            ) : null}
+          </div>
+        </OpsPanel>
+
+        <OpsPanel
+          eyebrow="Callback failures"
+          title="Verification callback incidents"
+          description="These are provider verifications that cleared at the bot/runtime layer but failed to confirm back into the portal."
+          action={
+            <div className="rounded-full border border-line bg-card2 px-4 py-2 text-sm font-bold text-text">
+              {callbackFailures.length}
+            </div>
+          }
+          tone="accent"
+        >
+          <div className="grid gap-4">
+            {filteredCallbackFailures.map((failure) => (
+              <div key={failure.id} className="rounded-[24px] border border-line bg-card2 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-lg font-extrabold text-text">Quest verification callback</p>
+                      <OpsStatusPill tone="danger">{failure.action.replace(/_/g, " ")}</OpsStatusPill>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-sub">{failure.summary}</p>
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      <DetailRow label="Quest / source" value={failure.source_id} />
+                      <DetailRow label="Created" value={formatDate(failure.created_at)} />
+                      <DetailRow
+                        label="Provider"
+                        value={String((failure.metadata?.provider as string | undefined) ?? "-")}
+                      />
+                    </div>
+                    {failure.metadata ? (
+                      <div className="mt-4 rounded-2xl border border-line bg-card p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Metadata</p>
+                        <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">
+                          {JSON.stringify(failure.metadata, null, 2)}
+                        </pre>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {filteredCallbackFailures.length === 0 ? (
+              <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
+                No callback failures match the current moderation filters.
+              </div>
+            ) : null}
+          </div>
+        </OpsPanel>
+
+        <OpsPanel
+          eyebrow="On-chain intake"
+          title="Rejected or failed on-chain ingestion"
+          description="These rows show why chain activity was rejected before it could become XP or why normalization/storage failed."
+          action={
+            <div className="rounded-full border border-line bg-card2 px-4 py-2 text-sm font-bold text-text">
+              {onchainFailures.length}
+            </div>
+          }
+          tone="accent"
+        >
+          <div className="grid gap-4">
+            {filteredOnchainFailures.map((failure) => (
+              <div key={failure.id} className="rounded-[24px] border border-line bg-card2 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-lg font-extrabold text-text">On-chain intake</p>
+                      <OpsStatusPill tone={failure.action === "onchain_ingress_failed" ? "danger" : "warning"}>
+                        {failure.action.replace(/_/g, " ")}
+                      </OpsStatusPill>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-sub">{failure.summary}</p>
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      <DetailRow label="Chain ref" value={failure.source_id} />
+                      <DetailRow label="Created" value={formatDate(failure.created_at)} />
+                      <DetailRow
+                        label="Project"
+                        value={failure.project_id ?? "-"}
+                      />
+                    </div>
+                    {failure.metadata ? (
+                      <div className="mt-4 rounded-2xl border border-line bg-card p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Metadata</p>
+                        <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">
+                          {JSON.stringify(failure.metadata, null, 2)}
+                        </pre>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {filteredOnchainFailures.length === 0 ? (
+              <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
+                No on-chain intake failures match the current moderation filters.
               </div>
             ) : null}
           </div>

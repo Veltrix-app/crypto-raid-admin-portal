@@ -222,6 +222,15 @@ export default function ProjectDetailPage() {
   const [loadingOnchainConfig, setLoadingOnchainConfig] = useState(false);
   const [savingOnchainConfig, setSavingOnchainConfig] = useState<"wallet" | "asset" | null>(null);
   const [onchainNotice, setOnchainNotice] = useState("");
+  const [operatorSignals, setOperatorSignals] = useState<{
+    callbackFailures: number;
+    onchainFailures: number;
+    latestIssue: string;
+  }>({
+    callbackFailures: 0,
+    onchainFailures: 0,
+    latestIssue: "No active operator incidents logged.",
+  });
 
   const project = useMemo(
     () => getProjectById(params.id),
@@ -312,6 +321,59 @@ export default function ProjectDetailPage() {
       cancelled = true;
     };
   }, [project?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadOperatorSignals() {
+      if (!project?.id) return;
+
+      const supabase = createClient();
+      const relatedProjectQuestIds = quests
+        .filter((quest) => quest.projectId === project.id)
+        .map((quest) => quest.id);
+
+      const callbackQuery =
+        relatedProjectQuestIds.length > 0
+          ? supabase
+              .from("admin_audit_logs")
+              .select("summary", { count: "exact" })
+              .eq("action", "verification_callback_failed")
+              .in("source_id", relatedProjectQuestIds)
+              .order("created_at", { ascending: false })
+              .limit(1)
+          : Promise.resolve({ data: [], count: 0, error: null });
+
+      const onchainQuery = supabase
+        .from("admin_audit_logs")
+        .select("summary", { count: "exact" })
+        .in("action", ["onchain_ingress_rejected", "onchain_ingress_failed"])
+        .eq("project_id", project.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      const [callbackResult, onchainResult] = await Promise.all([callbackQuery, onchainQuery]);
+
+      if (cancelled) return;
+
+      const latestIssue =
+        (callbackResult.data?.[0] as { summary?: string } | undefined)?.summary ??
+        (onchainResult.data?.[0] as { summary?: string } | undefined)?.summary ??
+        "No active operator incidents logged.";
+
+      setOperatorSignals({
+        callbackFailures: callbackResult.count ?? 0,
+        onchainFailures: onchainResult.count ?? 0,
+        latestIssue,
+      });
+    }
+
+    void loadOperatorSignals();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [project?.id, quests]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1772,6 +1834,14 @@ export default function ProjectDetailPage() {
                     <p className="mt-3 text-sm text-sub">{item.value}</p>
                   </div>
                 ))}
+              </div>
+            </DetailSidebarSurface>
+
+            <DetailSidebarSurface title="Operator Signals">
+              <div className="mt-4 space-y-4">
+                <DetailMetaRow label="Callback failures" value={operatorSignals.callbackFailures} />
+                <DetailMetaRow label="On-chain failures" value={operatorSignals.onchainFailures} />
+                <DetailMetaRow label="Latest incident" value={operatorSignals.latestIssue} />
               </div>
             </DetailSidebarSurface>
 
