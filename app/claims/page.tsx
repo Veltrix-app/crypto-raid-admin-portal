@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   OpsFilterBar,
@@ -12,21 +12,33 @@ import {
   OpsSelect,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
+import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
+import { DbAuditLog } from "@/types/database";
 
 export default function ClaimsPage() {
   const claims = useAdminPortalStore((s) => s.claims);
   const users = useAdminPortalStore((s) => s.users);
+  const campaigns = useAdminPortalStore((s) => s.campaigns);
+  const projects = useAdminPortalStore((s) => s.projects);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
   const reviewClaim = useAdminPortalStore((s) => s.reviewClaim);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [workingId, setWorkingId] = useState<string | null>(null);
+  const [rewardFinalizationLogs, setRewardFinalizationLogs] = useState<DbAuditLog[]>([]);
+  const [retryingCampaignId, setRetryingCampaignId] = useState<string | null>(null);
+  const [retryMessage, setRetryMessage] = useState<{
+    tone: "default" | "error" | "success";
+    text: string;
+  } | null>(null);
 
   const usersByAuthId = new Map(
     users.filter((user) => !!user.authUserId).map((user) => [user.authUserId as string, user])
   );
+  const campaignsById = new Map(campaigns.map((campaign) => [campaign.id, campaign]));
+  const projectsById = new Map(projects.map((project) => [project.id, project]));
   const flagsByClaimId = reviewFlags.reduce((acc, flag) => {
     if (flag.sourceTable !== "reward_claims") return acc;
     const existing = acc.get(flag.sourceId) ?? [];
@@ -65,6 +77,60 @@ export default function ClaimsPage() {
     const linkedFlags = flagsByClaimId.get(claim.id) ?? [];
     return user?.status === "flagged" || linkedFlags.length > 0 || (claim.rewardCost ?? 0) >= 500;
   });
+  const latestFinalizationSignals = useMemo(() => {
+    const latestByCampaign = new Map<string, DbAuditLog>();
+
+    for (const log of rewardFinalizationLogs) {
+      if (!latestByCampaign.has(log.source_id)) {
+        latestByCampaign.set(log.source_id, log);
+      }
+    }
+
+    return Array.from(latestByCampaign.values());
+  }, [rewardFinalizationLogs]);
+  const openFinalizationIncidents = useMemo(() => {
+    const term = search.trim().toLowerCase();
+
+    return latestFinalizationSignals
+      .filter((log) => log.action === "reward_finalization_failed")
+      .map((log) => {
+        const campaign = campaignsById.get(log.source_id);
+        const project = campaign?.projectId ? projectsById.get(campaign.projectId) : undefined;
+
+        return {
+          log,
+          campaignId: log.source_id,
+          campaignTitle: campaign?.title ?? "Campaign pool",
+          projectName: project?.name ?? "Unknown project",
+        };
+      })
+      .filter((incident) => {
+        if (!term) {
+          return true;
+        }
+
+        return [incident.campaignTitle, incident.projectName, incident.log.summary]
+          .some((value) => value.toLowerCase().includes(term));
+      });
+  }, [campaignsById, latestFinalizationSignals, projectsById, search]);
+  const completedFinalizationSignals = latestFinalizationSignals.filter(
+    (log) => log.action === "reward_finalization_completed"
+  ).length;
+  const failedFinalizationAttempts = rewardFinalizationLogs.filter(
+    (log) => log.action === "reward_finalization_failed"
+  ).length;
+
+  async function loadRewardFinalizationLogs() {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("admin_audit_logs")
+      .select("*")
+      .in("action", ["reward_finalization_failed", "reward_finalization_completed"])
+      .order("created_at", { ascending: false })
+      .limit(120);
+
+    setRewardFinalizationLogs((data ?? []) as DbAuditLog[]);
+  }
 
   async function handleQuickStatus(claimId: string, nextStatus: "processing" | "fulfilled") {
     try {
@@ -74,6 +140,46 @@ export default function ClaimsPage() {
       setWorkingId(null);
     }
   }
+
+  async function handleRetryFinalization(campaignId: string) {
+    try {
+      setRetryingCampaignId(campaignId);
+      setRetryMessage({
+        tone: "default",
+        text: "Retrying reward finalization against the live campaign pool.",
+      });
+
+      const response = await fetch(`/api/campaigns/${campaignId}/finalize`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? "Reward finalization failed.");
+      }
+
+      await loadRewardFinalizationLogs();
+      setRetryMessage({
+        tone: "success",
+        text: "Reward finalization retried successfully. Open incidents should clear if the latest run completed.",
+      });
+    } catch (error) {
+      setRetryMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Reward finalization retry failed.",
+      });
+    } finally {
+      setRetryingCampaignId(null);
+    }
+  }
+
+  useEffect(() => {
+    void loadRewardFinalizationLogs();
+  }, []);
 
   return (
     <AdminShell>
@@ -126,6 +232,93 @@ export default function ClaimsPage() {
               <OpsMetricCard label="High priority" value={highPriorityCount} emphasis={highPriorityCount > 0 ? "warning" : "default"} />
               <OpsMetricCard label="Manual fulfillment" value={manualClaims.length} />
               <OpsMetricCard label="High value" value={highValueClaims.length} emphasis={highValueClaims.length > 0 ? "warning" : "default"} />
+            </div>
+          </OpsPanel>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <OpsPanel
+            eyebrow="Campaign Pool Ops"
+            title="Reward finalization incidents"
+            description="These are campaigns where the latest reward distribution run failed and still need an operator retry."
+            tone="accent"
+          >
+            {retryMessage ? (
+              <div
+                className={`mb-4 rounded-[18px] px-4 py-3 text-sm ${
+                  retryMessage.tone === "error"
+                    ? "border border-rose-500/30 bg-rose-500/10 text-rose-200"
+                    : retryMessage.tone === "success"
+                      ? "border border-primary/30 bg-primary/10 text-primary"
+                      : "border border-line bg-card2 text-sub"
+                }`}
+              >
+                {retryMessage.text}
+              </div>
+            ) : null}
+
+            <div className="space-y-3">
+              {openFinalizationIncidents.length > 0 ? (
+                openFinalizationIncidents.map((incident) => (
+                  <div
+                    key={incident.log.id}
+                    className="rounded-[24px] border border-line bg-card2 p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold text-text">{incident.campaignTitle}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.16em] text-sub">
+                          {incident.projectName}
+                        </p>
+                      </div>
+                      <OpsStatusPill tone="danger">Needs retry</OpsStatusPill>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-sub">{incident.log.summary}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.16em] text-sub">
+                      Last failed {formatDate(incident.log.created_at)}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button
+                        onClick={() => void handleRetryFinalization(incident.campaignId)}
+                        disabled={retryingCampaignId === incident.campaignId}
+                        className="rounded-xl bg-amber-300 px-3 py-2 text-xs font-bold text-black disabled:opacity-50"
+                      >
+                        {retryingCampaignId === incident.campaignId ? "Retrying..." : "Retry finalization"}
+                      </button>
+                      <Link
+                        href={`/campaigns/${incident.campaignId}`}
+                        className="rounded-xl border border-line bg-card px-3 py-2 text-xs font-semibold"
+                      >
+                        Open campaign
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-[24px] border border-line bg-card2 px-4 py-5 text-sm text-sub">
+                  No open reward finalization incidents are waiting on an operator retry.
+                </div>
+              )}
+            </div>
+          </OpsPanel>
+
+          <OpsPanel
+            eyebrow="Finalization Read"
+            title="Campaign payout signal"
+            description="Track whether campaign pools are resolving cleanly or stacking up failed payout attempts."
+          >
+            <div className="grid gap-4">
+              <OpsMetricCard
+                label="Open incidents"
+                value={openFinalizationIncidents.length}
+                emphasis={openFinalizationIncidents.length > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard label="Recovered campaigns" value={completedFinalizationSignals} />
+              <OpsMetricCard
+                label="Failed attempts"
+                value={failedFinalizationAttempts}
+                emphasis={failedFinalizationAttempts > 0 ? "warning" : "default"}
+              />
             </div>
           </OpsPanel>
         </div>
