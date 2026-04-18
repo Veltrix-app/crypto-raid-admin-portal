@@ -34,8 +34,12 @@ export default function ModerationPage() {
   const applyTrustAction = useAdminPortalStore((s) => s.applyTrustAction);
   const [callbackFailures, setCallbackFailures] = useState<DbAuditLog[]>([]);
   const [onchainFailures, setOnchainFailures] = useState<DbAuditLog[]>([]);
+  const [onchainJobRuns, setOnchainJobRuns] = useState<DbAuditLog[]>([]);
   const [trustAlerts, setTrustAlerts] = useState<TrustAlert[]>([]);
   const [activeTrustActionKey, setActiveTrustActionKey] = useState<string | null>(null);
+  const [activePipelineAction, setActivePipelineAction] = useState<"enrichment" | "retry" | null>(null);
+  const [pipelineNotice, setPipelineNotice] = useState<string>("");
+  const [opsReloadToken, setOpsReloadToken] = useState(0);
   const [search, setSearch] = useState("");
   const [flagSeverity, setFlagSeverity] = useState<"all" | "high" | "medium" | "low">("all");
   const [submissionStatus, setSubmissionStatus] = useState<"all" | "pending" | "approved" | "rejected">("pending");
@@ -49,6 +53,7 @@ export default function ModerationPage() {
         { data: callbackRows, error: callbackError },
         { data: onchainRows, error: onchainError },
         { data: trustRows, error: trustError },
+        { data: jobRows, error: jobError },
       ] =
         await Promise.all([
           supabase
@@ -68,6 +73,18 @@ export default function ModerationPage() {
             .select("*")
             .order("created_at", { ascending: false })
             .limit(24),
+          supabase
+            .from("admin_audit_logs")
+            .select("*")
+            .in("action", [
+              "onchain_enrichment_job_completed",
+              "onchain_retry_job_completed",
+              "onchain_ingress_retry_completed",
+              "onchain_ingress_retry_rejected",
+              "onchain_ingress_retry_failed",
+            ])
+            .order("created_at", { ascending: false })
+            .limit(20),
         ]);
 
       if (!active) {
@@ -84,6 +101,12 @@ export default function ModerationPage() {
         console.error("[moderation] onchain failures load failed", onchainError.message);
       } else {
         setOnchainFailures((onchainRows ?? []) as DbAuditLog[]);
+      }
+
+      if (jobError) {
+        console.error("[moderation] onchain job runs load failed", jobError.message);
+      } else {
+        setOnchainJobRuns((jobRows ?? []) as DbAuditLog[]);
       }
 
       if (trustError) {
@@ -121,7 +144,7 @@ export default function ModerationPage() {
     return () => {
       active = false;
     };
-  }, [users]);
+  }, [users, opsReloadToken]);
 
   const openFlags = reviewFlags.filter((flag) => flag.status === "open");
   const trustReviewFlags = openFlags.filter((flag) =>
@@ -181,6 +204,15 @@ export default function ModerationPage() {
       return haystack.includes(term);
     });
   }, [onchainFailures, search]);
+  const filteredOnchainJobRuns = useMemo(() => {
+    const term = search.toLowerCase();
+    return onchainJobRuns.filter((row) => {
+      const haystack = [row.action, row.summary, row.source_id, JSON.stringify(row.metadata ?? {})]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [onchainJobRuns, search]);
 
   const filteredTrustAlerts = useMemo(() => {
     const term = search.toLowerCase();
@@ -191,6 +223,10 @@ export default function ModerationPage() {
       return haystack.includes(term);
     });
   }, [trustAlerts, search]);
+
+  const enrichmentRunCount = onchainJobRuns.filter((row) => row.action === "onchain_enrichment_job_completed").length;
+  const retryRecoveryCount = onchainJobRuns.filter((row) => row.action === "onchain_ingress_retry_completed").length;
+  const retryFailureCount = onchainJobRuns.filter((row) => ["onchain_ingress_retry_rejected", "onchain_ingress_retry_failed"].includes(row.action)).length;
 
   async function handleTrustAction(input: {
     key: string;
@@ -211,6 +247,40 @@ export default function ModerationPage() {
       });
     } finally {
       setActiveTrustActionKey(null);
+    }
+  }
+
+  async function handlePipelineAction(action: "enrichment" | "retry") {
+    try {
+      setActivePipelineAction(action);
+      setPipelineNotice("");
+
+      const response = await fetch(
+        action === "enrichment" ? "/api/ops/onchain-enrichment" : "/api/ops/onchain-retry",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(action === "enrichment" ? { limit: 200 } : { limit: 50 }),
+        }
+      );
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error || "Pipeline action failed.");
+      }
+
+      setPipelineNotice(
+        action === "enrichment"
+          ? `Enrichment processed ${payload.processed ?? 0} rows and enriched ${payload.enriched ?? 0}.`
+          : `Retry scanned ${payload.scanned ?? 0} rows and recovered ${payload.completed ?? 0}.`
+      );
+      setOpsReloadToken((value) => value + 1);
+    } catch (error) {
+      setPipelineNotice(error instanceof Error ? error.message : "Pipeline action failed.");
+    } finally {
+      setActivePipelineAction(null);
     }
   }
 
@@ -258,6 +328,16 @@ export default function ModerationPage() {
             value={trustAlerts.length}
             emphasis={trustAlerts.length > 0 ? "warning" : "default"}
           />
+          <OpsMetricCard
+            label="Enrichment runs"
+            value={enrichmentRunCount}
+            emphasis={enrichmentRunCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Retry recoveries"
+            value={retryRecoveryCount}
+            emphasis={retryRecoveryCount > 0 ? "primary" : "default"}
+          />
         </div>
 
         <OpsFilterBar>
@@ -291,6 +371,82 @@ export default function ModerationPage() {
             <option value="rejected">rejected</option>
           </OpsSelect>
         </OpsFilterBar>
+
+        <OpsPanel
+          eyebrow="On-chain pipeline"
+          title="Indexer enrichment and retry ops"
+          description="Keep the AESP ingress layer healthy by enriching normalized events and replaying retryable rejects once project assets or wallet links are fixed."
+          action={
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => handlePipelineAction("enrichment")}
+                disabled={activePipelineAction === "enrichment"}
+                className="rounded-2xl bg-primary px-4 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Run enrichment
+              </button>
+              <button
+                onClick={() => handlePipelineAction("retry")}
+                disabled={activePipelineAction === "retry"}
+                className="rounded-2xl border border-line bg-card px-4 py-3 font-bold text-sub disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Retry intake backlog
+              </button>
+            </div>
+          }
+          tone="accent"
+        >
+          <div className="grid gap-4 md:grid-cols-4">
+            <OpsMetricCard label="Failed intake" value={onchainFailures.length} emphasis={onchainFailures.length > 0 ? "warning" : "default"} />
+            <OpsMetricCard label="Retry recoveries" value={retryRecoveryCount} emphasis={retryRecoveryCount > 0 ? "primary" : "default"} />
+            <OpsMetricCard label="Retry misses" value={retryFailureCount} emphasis={retryFailureCount > 0 ? "warning" : "default"} />
+            <OpsMetricCard label="Enrichment runs" value={enrichmentRunCount} emphasis={enrichmentRunCount > 0 ? "primary" : "default"} />
+          </div>
+          {pipelineNotice ? (
+            <div className="mt-5 rounded-[24px] border border-line bg-card2 p-4 text-sm text-sub">
+              {pipelineNotice}
+            </div>
+          ) : null}
+          <div className="mt-5 grid gap-4">
+            {filteredOnchainJobRuns.map((row) => (
+              <div key={row.id} className="rounded-[24px] border border-line bg-card2 p-5">
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-lg font-extrabold text-text">On-chain ops event</p>
+                  <OpsStatusPill
+                    tone={
+                      row.action === "onchain_ingress_retry_completed" || row.action === "onchain_enrichment_job_completed"
+                        ? "success"
+                        : row.action === "onchain_retry_job_completed"
+                          ? "default"
+                          : "warning"
+                    }
+                  >
+                    {row.action.replace(/_/g, " ")}
+                  </OpsStatusPill>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-sub">{row.summary}</p>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  <DetailRow label="Source" value={row.source_id} />
+                  <DetailRow label="Created" value={formatDate(row.created_at)} />
+                  <DetailRow label="Project" value={row.project_id ?? "-"} />
+                </div>
+                {row.metadata ? (
+                  <div className="mt-4 rounded-2xl border border-line bg-card p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Metadata</p>
+                    <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">
+                      {JSON.stringify(row.metadata, null, 2)}
+                    </pre>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+            {filteredOnchainJobRuns.length === 0 ? (
+              <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
+                No on-chain pipeline job logs match the current moderation filters.
+              </div>
+            ) : null}
+          </div>
+        </OpsPanel>
 
         <OpsPanel
           eyebrow="Trust drift"
