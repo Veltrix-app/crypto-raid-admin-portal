@@ -31,9 +31,11 @@ export default function ModerationPage() {
   const approveSubmission = useAdminPortalStore((s) => s.approveSubmission);
   const rejectSubmission = useAdminPortalStore((s) => s.rejectSubmission);
   const updateReviewFlagStatus = useAdminPortalStore((s) => s.updateReviewFlagStatus);
+  const applyTrustAction = useAdminPortalStore((s) => s.applyTrustAction);
   const [callbackFailures, setCallbackFailures] = useState<DbAuditLog[]>([]);
   const [onchainFailures, setOnchainFailures] = useState<DbAuditLog[]>([]);
   const [trustAlerts, setTrustAlerts] = useState<TrustAlert[]>([]);
+  const [activeTrustActionKey, setActiveTrustActionKey] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [flagSeverity, setFlagSeverity] = useState<"all" | "high" | "medium" | "low">("all");
   const [submissionStatus, setSubmissionStatus] = useState<"all" | "pending" | "approved" | "rejected">("pending");
@@ -122,6 +124,9 @@ export default function ModerationPage() {
   }, [users]);
 
   const openFlags = reviewFlags.filter((flag) => flag.status === "open");
+  const trustReviewFlags = openFlags.filter((flag) =>
+    ["low_trust_posture", "watch_trust_posture", "wallet_watch_label", "low_value_transfer_spam", "low_value_transfer_pattern", "onchain_daily_cap_reached", "onchain_event_type_cap_reached", "exit_pattern", "no_social_proof", "fresh_wallet_activity"].includes(flag.flagType)
+  );
   const filteredFlags = useMemo(() => {
     return openFlags.filter((flag) => {
       const term = search.toLowerCase();
@@ -186,6 +191,28 @@ export default function ModerationPage() {
       return haystack.includes(term);
     });
   }, [trustAlerts, search]);
+
+  async function handleTrustAction(input: {
+    key: string;
+    authUserId: string;
+    action: "watch_wallet" | "clear_watch" | "flag_user" | "restore_user";
+    projectId?: string;
+    reviewFlagId?: string;
+    reason: string;
+  }) {
+    try {
+      setActiveTrustActionKey(input.key);
+      await applyTrustAction({
+        authUserId: input.authUserId,
+        action: input.action,
+        projectId: input.projectId,
+        reviewFlagId: input.reviewFlagId,
+        reason: input.reason,
+      });
+    } finally {
+      setActiveTrustActionKey(null);
+    }
+  }
 
   return (
     <AdminShell>
@@ -301,6 +328,36 @@ export default function ModerationPage() {
                         {JSON.stringify(alert.reasons, null, 2)}
                       </pre>
                     </div>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button
+                        onClick={() =>
+                          handleTrustAction({
+                            key: `${alert.id}:watch`,
+                            authUserId: alert.authUserId,
+                            action: "watch_wallet",
+                            reason: "Applied from trust drift moderation panel.",
+                          })
+                        }
+                        disabled={activeTrustActionKey === `${alert.id}:watch`}
+                        className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-bold text-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Place wallet on watch
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleTrustAction({
+                            key: `${alert.id}:flag`,
+                            authUserId: alert.authUserId,
+                            action: "flag_user",
+                            reason: "Contributor flagged from trust drift moderation panel.",
+                          })
+                        }
+                        disabled={activeTrustActionKey === `${alert.id}:flag`}
+                        className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Flag contributor
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -320,7 +377,7 @@ export default function ModerationPage() {
           description="Duplicate identities, suspicious proof and elevated-risk users land here first."
           action={
             <div className="rounded-full border border-line bg-card2 px-4 py-2 text-sm font-bold text-text">
-              {openFlags.length}
+              {trustReviewFlags.length} / {openFlags.length}
             </div>
           }
           tone="accent"
@@ -371,6 +428,58 @@ export default function ModerationPage() {
                       <div className="mt-4 rounded-2xl border border-line bg-card p-4">
                         <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Metadata</p>
                         <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">{flag.metadata}</pre>
+                      </div>
+                    ) : null}
+                    {flag.authUserId && isTrustFlag(flag.flagType) ? (
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                          onClick={() =>
+                            handleTrustAction({
+                              key: `${flag.id}:watch`,
+                              authUserId: flag.authUserId!,
+                              projectId: flag.projectId,
+                              reviewFlagId: flag.id,
+                              action: "watch_wallet",
+                              reason: `Applied from review flag ${flag.flagType}.`,
+                            })
+                          }
+                          disabled={activeTrustActionKey === `${flag.id}:watch`}
+                          className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-bold text-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Watch wallet
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleTrustAction({
+                              key: `${flag.id}:flag`,
+                              authUserId: flag.authUserId!,
+                              projectId: flag.projectId,
+                              reviewFlagId: flag.id,
+                              action: "flag_user",
+                              reason: `Contributor flagged from review flag ${flag.flagType}.`,
+                            })
+                          }
+                          disabled={activeTrustActionKey === `${flag.id}:flag`}
+                          className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Flag contributor
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleTrustAction({
+                              key: `${flag.id}:clear`,
+                              authUserId: flag.authUserId!,
+                              projectId: flag.projectId,
+                              reviewFlagId: flag.id,
+                              action: "clear_watch",
+                              reason: `Wallet watch cleared from review flag ${flag.flagType}.`,
+                            })
+                          }
+                          disabled={activeTrustActionKey === `${flag.id}:clear`}
+                          className="rounded-2xl border border-line bg-card px-4 py-3 font-bold text-sub disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Clear watch
+                        </button>
                       </div>
                     ) : null}
                   </div>
@@ -579,4 +688,19 @@ function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
+}
+
+function isTrustFlag(flagType: string) {
+  return [
+    "low_trust_posture",
+    "watch_trust_posture",
+    "wallet_watch_label",
+    "low_value_transfer_spam",
+    "low_value_transfer_pattern",
+    "onchain_daily_cap_reached",
+    "onchain_event_type_cap_reached",
+    "exit_pattern",
+    "no_social_proof",
+    "fresh_wallet_activity",
+  ].includes(flagType);
 }

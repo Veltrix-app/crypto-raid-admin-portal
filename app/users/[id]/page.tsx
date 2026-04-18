@@ -22,9 +22,11 @@ export default function UserDetailPage() {
   const submissions = useAdminPortalStore((s) => s.submissions);
   const claims = useAdminPortalStore((s) => s.claims);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
+  const applyTrustAction = useAdminPortalStore((s) => s.applyTrustAction);
   const [trustSnapshots, setTrustSnapshots] = useState<DbTrustSnapshot[]>([]);
   const [rewardDistributions, setRewardDistributions] = useState<DbRewardDistribution[]>([]);
   const [onchainEvents, setOnchainEvents] = useState<DbOnchainEvent[]>([]);
+  const [activeTrustAction, setActiveTrustAction] = useState<"watch" | "flag" | "clear" | "restore" | null>(null);
 
   const user = useMemo(
     () => users.find((item) => item.authUserId === params.id || item.id === params.id),
@@ -115,6 +117,35 @@ export default function UserDetailPage() {
     };
   }, [currentUser.authUserId]);
 
+  async function handleTrustAction(
+    action: "watch_wallet" | "flag_user" | "clear_watch" | "restore_user",
+    reason: string
+  ) {
+    if (!currentUser.authUserId) {
+      return;
+    }
+
+    const nextState =
+      action === "watch_wallet"
+        ? "watch"
+        : action === "flag_user"
+          ? "flag"
+          : action === "clear_watch"
+            ? "clear"
+            : "restore";
+
+    try {
+      setActiveTrustAction(nextState);
+      await applyTrustAction({
+        authUserId: currentUser.authUserId,
+        action,
+        reason,
+      });
+    } finally {
+      setActiveTrustAction(null);
+    }
+  }
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -184,6 +215,36 @@ export default function UserDetailPage() {
                 <span className="font-semibold text-text">{onchainEvents.length}</span>. Open flags:{" "}
                 <span className="font-semibold text-text">{openUserReviewFlags.length}</span>.
               </p>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={() => handleTrustAction("watch_wallet", "Applied from contributor detail operator read.")}
+                disabled={activeTrustAction === "watch"}
+                className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-bold text-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Put wallet on watch
+              </button>
+              <button
+                onClick={() => handleTrustAction("flag_user", "Contributor flagged from contributor detail operator read.")}
+                disabled={activeTrustAction === "flag"}
+                className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Flag contributor
+              </button>
+              <button
+                onClick={() => handleTrustAction("clear_watch", "Wallet watch cleared from contributor detail operator read.")}
+                disabled={activeTrustAction === "clear"}
+                className="rounded-2xl border border-line bg-card px-4 py-3 font-bold text-sub disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Clear watch
+              </button>
+              <button
+                onClick={() => handleTrustAction("restore_user", "Contributor restored from contributor detail operator read.")}
+                disabled={activeTrustAction === "restore"}
+                className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 font-bold text-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Restore contributor
+              </button>
             </div>
           </DetailSurface>
         </div>

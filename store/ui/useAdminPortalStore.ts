@@ -104,6 +104,13 @@ type AdminPortalState = {
     id: string,
     status: AdminReviewFlag["status"]
   ) => Promise<void>;
+  applyTrustAction: (input: {
+    authUserId: string;
+    action: "watch_wallet" | "clear_watch" | "flag_user" | "restore_user";
+    projectId?: string;
+    reviewFlagId?: string;
+    reason?: string;
+  }) => Promise<void>;
   getClaimById: (id: string) => AdminClaim | undefined;
   fetchAuditTrail: (sourceTable: string, sourceId: string) => Promise<AdminAuditLog[]>;
 
@@ -1766,6 +1773,124 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
           ? { ...item, status, updatedAt: new Date().toISOString() }
           : item
       ),
+    }));
+  },
+
+  applyTrustAction: async ({ authUserId, action, projectId, reviewFlagId, reason }) => {
+    const supabase = createClient();
+    const timestamp = new Date().toISOString();
+    const isWatchAction = action === "watch_wallet" || action === "flag_user";
+    const nextRiskLabel = isWatchAction ? "watch" : "unknown";
+    const nextUserStatus =
+      action === "flag_user" ? "flagged" : action === "restore_user" ? "active" : null;
+
+    const { data: walletLinks, error: walletLinksError } = await supabase
+      .from("wallet_links")
+      .select("id, metadata")
+      .eq("auth_user_id", authUserId);
+
+    if (walletLinksError) throw walletLinksError;
+
+    for (const link of walletLinks ?? []) {
+      const metadata =
+        link.metadata && typeof link.metadata === "object" ? link.metadata : {};
+      const { error: walletUpdateError } = await supabase
+        .from("wallet_links")
+        .update({
+          risk_label: nextRiskLabel,
+          metadata: {
+            ...metadata,
+            lastTrustAction: action,
+            lastTrustActionAt: timestamp,
+            lastTrustActionReason: reason ?? "",
+          },
+          updated_at: timestamp,
+        })
+        .eq("id", link.id);
+
+      if (walletUpdateError) throw walletUpdateError;
+    }
+
+    if (nextUserStatus) {
+      const { error: globalReputationError } = await supabase
+        .from("user_global_reputation")
+        .update({
+          status: nextUserStatus,
+          updated_at: timestamp,
+        })
+        .eq("auth_user_id", authUserId);
+
+      if (globalReputationError) throw globalReputationError;
+
+      const { error: profileError } = await supabase
+        .from("user_profiles")
+        .update({
+          status: nextUserStatus,
+        })
+        .eq("auth_user_id", authUserId);
+
+      if (profileError) throw profileError;
+    }
+
+    if (reviewFlagId) {
+      const { error: reviewFlagError } = await supabase
+        .from("review_flags")
+        .update({
+          status: "resolved",
+          updated_at: timestamp,
+          metadata: {
+            appliedTrustAction: action,
+            appliedTrustActionAt: timestamp,
+            appliedTrustActionReason: reason ?? "",
+          },
+        })
+        .eq("id", reviewFlagId);
+
+      if (reviewFlagError) throw reviewFlagError;
+    }
+
+    await writeAuditLog({
+      sourceTable: "wallet_links",
+      sourceId: authUserId,
+      projectId,
+      action: `trust_action_${action}`,
+      summary: `Applied ${action.replace(/_/g, " ")} to contributor trust posture.`,
+      metadata: {
+        authUserId,
+        action,
+        reviewFlagId: reviewFlagId ?? null,
+        walletRiskLabel: nextRiskLabel,
+        userStatus: nextUserStatus,
+        reason: reason ?? "",
+      },
+    });
+
+    set((state) => ({
+      users: state.users.map((user) =>
+        user.authUserId === authUserId && nextUserStatus
+          ? { ...user, status: nextUserStatus as AdminUser["status"] }
+          : user
+      ),
+      reviewFlags: reviewFlagId
+        ? state.reviewFlags.map((flag) =>
+            flag.id === reviewFlagId
+              ? {
+                  ...flag,
+                  status: "resolved",
+                  updatedAt: timestamp,
+                  metadata: JSON.stringify(
+                    {
+                      appliedTrustAction: action,
+                      appliedTrustActionAt: timestamp,
+                      appliedTrustActionReason: reason ?? "",
+                    },
+                    null,
+                    2
+                  ),
+                }
+              : flag
+          )
+        : state.reviewFlags,
     }));
   },
 
