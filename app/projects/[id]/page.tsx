@@ -44,6 +44,34 @@ type CommunityPushSettings = {
   minXp: string;
 };
 
+type DiscordRankSource = "project_xp" | "global_xp" | "trust" | "wallet_verified";
+type DiscordLeaderboardScope = "project" | "global";
+type DiscordLeaderboardPeriod = "weekly" | "monthly" | "all_time";
+type DiscordLeaderboardCadence = "manual" | "daily" | "weekly";
+
+type DiscordCommunityBotSettings = {
+  commandsEnabled: boolean;
+  rankSyncEnabled: boolean;
+  rankSource: DiscordRankSource;
+  leaderboardEnabled: boolean;
+  leaderboardScope: DiscordLeaderboardScope;
+  leaderboardPeriod: DiscordLeaderboardPeriod;
+  leaderboardTargetChannelId: string;
+  leaderboardTopN: string;
+  leaderboardCadence: DiscordLeaderboardCadence;
+  raidOpsEnabled: boolean;
+  lastRankSyncAt: string;
+  lastLeaderboardPostedAt: string;
+};
+
+type DiscordRankRule = {
+  id?: string;
+  sourceType: DiscordRankSource;
+  threshold: string;
+  discordRoleId: string;
+  label: string;
+};
+
 type OnchainProjectWallet = {
   id: string;
   chain: string;
@@ -109,6 +137,32 @@ function createDefaultPushSettings(provider: "discord" | "telegram"): CommunityP
     featuredOnly: false,
     liveOnly: false,
     minXp: "",
+  };
+}
+
+function createDefaultDiscordBotSettings(): DiscordCommunityBotSettings {
+  return {
+    commandsEnabled: true,
+    rankSyncEnabled: false,
+    rankSource: "project_xp",
+    leaderboardEnabled: true,
+    leaderboardScope: "project",
+    leaderboardPeriod: "weekly",
+    leaderboardTargetChannelId: "",
+    leaderboardTopN: "10",
+    leaderboardCadence: "manual",
+    raidOpsEnabled: false,
+    lastRankSyncAt: "",
+    lastLeaderboardPostedAt: "",
+  };
+}
+
+function createEmptyDiscordRankRule(): DiscordRankRule {
+  return {
+    sourceType: "project_xp",
+    threshold: "0",
+    discordRoleId: "",
+    label: "",
   };
 }
 
@@ -352,6 +406,17 @@ export default function ProjectDetailPage() {
   );
   const [savingIntegration, setSavingIntegration] = useState<"discord" | "telegram" | null>(null);
   const [integrationNotice, setIntegrationNotice] = useState<string>("");
+  const [discordBotSettings, setDiscordBotSettings] =
+    useState<DiscordCommunityBotSettings>(createDefaultDiscordBotSettings());
+  const [discordRankRules, setDiscordRankRules] = useState<DiscordRankRule[]>([]);
+  const [savingDiscordBotSettings, setSavingDiscordBotSettings] = useState(false);
+  const [runningDiscordBotAction, setRunningDiscordBotAction] = useState<
+    "rank_sync" | "leaderboard_post" | null
+  >(null);
+  const [discordBotNotice, setDiscordBotNotice] = useState("");
+  const [discordBotNoticeTone, setDiscordBotNoticeTone] = useState<"success" | "error">(
+    "success"
+  );
   const [testingIntegration, setTestingIntegration] = useState<"discord" | "telegram" | null>(
     null
   );
@@ -468,6 +533,97 @@ export default function ProjectDetailPage() {
     }
 
     loadProjectIntegrations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [project?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDiscordBotSettings() {
+      if (!project?.id) return;
+
+      const response = await fetch(`/api/projects/${project.id}/community-bot-settings`, {
+        cache: "no-store",
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (cancelled) return;
+
+      if (!response.ok || !payload?.ok) {
+        setDiscordBotNoticeTone("error");
+        setDiscordBotNotice(
+          payload?.error || "Could not load Discord bot settings."
+        );
+        return;
+      }
+
+      setDiscordBotSettings({
+        commandsEnabled: payload.settings?.commandsEnabled !== false,
+        rankSyncEnabled: payload.settings?.rankSyncEnabled === true,
+        rankSource:
+          payload.settings?.rankSource === "global_xp" ||
+          payload.settings?.rankSource === "trust" ||
+          payload.settings?.rankSource === "wallet_verified"
+            ? payload.settings.rankSource
+            : "project_xp",
+        leaderboardEnabled: payload.settings?.leaderboardEnabled !== false,
+        leaderboardScope: payload.settings?.leaderboardScope === "global" ? "global" : "project",
+        leaderboardPeriod:
+          payload.settings?.leaderboardPeriod === "monthly" ||
+          payload.settings?.leaderboardPeriod === "all_time"
+            ? payload.settings.leaderboardPeriod
+            : "weekly",
+        leaderboardTargetChannelId:
+          typeof payload.settings?.leaderboardTargetChannelId === "string"
+            ? payload.settings.leaderboardTargetChannelId
+            : "",
+        leaderboardTopN:
+          payload.settings && Number.isFinite(Number(payload.settings.leaderboardTopN))
+            ? String(payload.settings.leaderboardTopN)
+            : "10",
+        leaderboardCadence:
+          payload.settings?.leaderboardCadence === "daily" ||
+          payload.settings?.leaderboardCadence === "weekly"
+            ? payload.settings.leaderboardCadence
+            : "manual",
+        raidOpsEnabled: payload.settings?.raidOpsEnabled === true,
+        lastRankSyncAt:
+          typeof payload.settings?.lastRankSyncAt === "string"
+            ? payload.settings.lastRankSyncAt
+            : "",
+        lastLeaderboardPostedAt:
+          typeof payload.settings?.lastLeaderboardPostedAt === "string"
+            ? payload.settings.lastLeaderboardPostedAt
+            : "",
+      });
+      setDiscordRankRules(
+        Array.isArray(payload.rankRules)
+          ? payload.rankRules.map((rule: Record<string, unknown>) => ({
+              id: typeof rule.id === "string" ? rule.id : undefined,
+              sourceType:
+                rule.sourceType === "global_xp" ||
+                rule.sourceType === "trust" ||
+                rule.sourceType === "wallet_verified"
+                  ? (rule.sourceType as DiscordRankSource)
+                  : "project_xp",
+              threshold:
+                typeof rule.threshold === "number"
+                  ? String(rule.threshold)
+                  : typeof rule.threshold === "string"
+                    ? rule.threshold
+                    : "0",
+              discordRoleId:
+                typeof rule.discordRoleId === "string" ? rule.discordRoleId : "",
+              label: typeof rule.label === "string" ? rule.label : "",
+            }))
+          : []
+      );
+    }
+
+    void loadDiscordBotSettings();
 
     return () => {
       cancelled = true;
@@ -770,6 +926,97 @@ export default function ProjectDetailPage() {
           ? `Discord integration and push settings saved for ${project.name}.`
           : `Telegram integration and push settings saved for ${project.name}.`)
     );
+  }
+
+  async function saveDiscordBotConfig() {
+    if (!project?.id) return;
+
+    setSavingDiscordBotSettings(true);
+    setDiscordBotNotice("");
+    setDiscordBotNoticeTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-bot-settings`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        settings: {
+          ...discordBotSettings,
+          leaderboardTopN: discordBotSettings.leaderboardTopN.trim(),
+          leaderboardTargetChannelId: discordBotSettings.leaderboardTargetChannelId.trim(),
+        },
+        rankRules: discordRankRules.map((rule) => ({
+          ...rule,
+          threshold: rule.threshold.trim(),
+          discordRoleId: rule.discordRoleId.trim(),
+          label: rule.label.trim(),
+        })),
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setSavingDiscordBotSettings(false);
+
+    if (!response.ok || !payload?.ok) {
+      setDiscordBotNoticeTone("error");
+      setDiscordBotNotice(payload?.error || "Could not save Discord bot settings.");
+      return;
+    }
+
+    setDiscordBotNoticeTone("success");
+    setDiscordBotNotice(payload?.message || `Discord bot settings saved for ${project.name}.`);
+  }
+
+  async function runDiscordBotAction(action: "rank_sync" | "leaderboard_post") {
+    if (!project?.id) return;
+
+    setRunningDiscordBotAction(action);
+    setDiscordBotNotice("");
+    setDiscordBotNoticeTone("success");
+
+    const response = await fetch(
+      action === "rank_sync"
+        ? `/api/projects/${project.id}/discord-rank-sync`
+        : `/api/projects/${project.id}/discord-leaderboard-post`,
+      {
+        method: "POST",
+      }
+    );
+
+    const payload = await response.json().catch(() => null);
+    setRunningDiscordBotAction(null);
+
+    if (!response.ok || !payload?.ok) {
+      setDiscordBotNoticeTone("error");
+      setDiscordBotNotice(
+        payload?.error ||
+          (action === "rank_sync"
+            ? "Discord rank sync failed."
+            : "Discord leaderboard post failed.")
+      );
+      return;
+    }
+
+    setDiscordBotNoticeTone("success");
+    setDiscordBotNotice(
+      action === "rank_sync"
+        ? `Discord rank sync checked ${payload.membersEvaluated ?? 0} members, added ${payload.rolesAdded ?? 0} roles and removed ${payload.rolesRemoved ?? 0}.`
+        : `Discord leaderboard posted to ${payload.postsDelivered ?? 0} community rail${payload.postsDelivered === 1 ? "" : "s"}.`
+    );
+
+    if (action === "rank_sync") {
+      setDiscordBotSettings((current) => ({
+        ...current,
+        lastRankSyncAt: new Date().toISOString(),
+      }));
+      return;
+    }
+
+    setDiscordBotSettings((current) => ({
+      ...current,
+      lastLeaderboardPostedAt: new Date().toISOString(),
+    }));
   }
 
   async function sendIntegrationTestPush(provider: "discord" | "telegram") {
@@ -2056,6 +2303,321 @@ export default function ProjectDetailPage() {
                           : "Send Discord test push"}
                       </button>
                     </div>
+                    <div className="rounded-2xl border border-line bg-card p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                        Community Bot Controls
+                      </p>
+                      <div className="mt-4 grid gap-3">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text">
+                            <span>Commands enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={discordBotSettings.commandsEnabled}
+                              onChange={(event) =>
+                                setDiscordBotSettings((current) => ({
+                                  ...current,
+                                  commandsEnabled: event.target.checked,
+                                }))
+                              }
+                            />
+                          </label>
+                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text">
+                            <span>Rank sync enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={discordBotSettings.rankSyncEnabled}
+                              onChange={(event) =>
+                                setDiscordBotSettings((current) => ({
+                                  ...current,
+                                  rankSyncEnabled: event.target.checked,
+                                }))
+                              }
+                            />
+                          </label>
+                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text">
+                            <span>Leaderboards enabled</span>
+                            <input
+                              type="checkbox"
+                              checked={discordBotSettings.leaderboardEnabled}
+                              onChange={(event) =>
+                                setDiscordBotSettings((current) => ({
+                                  ...current,
+                                  leaderboardEnabled: event.target.checked,
+                                }))
+                              }
+                            />
+                          </label>
+                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text">
+                            <span>Raid ops rail</span>
+                            <input
+                              type="checkbox"
+                              checked={discordBotSettings.raidOpsEnabled}
+                              onChange={(event) =>
+                                setDiscordBotSettings((current) => ({
+                                  ...current,
+                                  raidOpsEnabled: event.target.checked,
+                                }))
+                              }
+                            />
+                          </label>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="space-y-2 text-sm text-sub">
+                            <span className="font-semibold text-text">Default rank source</span>
+                            <select
+                              value={discordBotSettings.rankSource}
+                              onChange={(event) =>
+                                setDiscordBotSettings((current) => ({
+                                  ...current,
+                                  rankSource: event.target.value as DiscordRankSource,
+                                }))
+                              }
+                              className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                            >
+                              <option value="project_xp">Project XP</option>
+                              <option value="global_xp">Global XP</option>
+                              <option value="trust">Trust score</option>
+                              <option value="wallet_verified">Verified wallet</option>
+                            </select>
+                          </label>
+                          <label className="space-y-2 text-sm text-sub">
+                            <span className="font-semibold text-text">Leaderboard scope</span>
+                            <select
+                              value={discordBotSettings.leaderboardScope}
+                              onChange={(event) =>
+                                setDiscordBotSettings((current) => ({
+                                  ...current,
+                                  leaderboardScope: event.target.value as DiscordLeaderboardScope,
+                                }))
+                              }
+                              className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                            >
+                              <option value="project">This project community</option>
+                              <option value="global">Global Veltrix board</option>
+                            </select>
+                          </label>
+                          <label className="space-y-2 text-sm text-sub">
+                            <span className="font-semibold text-text">Leaderboard window</span>
+                            <select
+                              value={discordBotSettings.leaderboardPeriod}
+                              onChange={(event) =>
+                                setDiscordBotSettings((current) => ({
+                                  ...current,
+                                  leaderboardPeriod:
+                                    event.target.value as DiscordLeaderboardPeriod,
+                                }))
+                              }
+                              className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                            >
+                              <option value="weekly">Weekly</option>
+                              <option value="monthly">Monthly</option>
+                              <option value="all_time">All-time</option>
+                            </select>
+                          </label>
+                          <label className="space-y-2 text-sm text-sub">
+                            <span className="font-semibold text-text">Leaderboard cadence</span>
+                            <select
+                              value={discordBotSettings.leaderboardCadence}
+                              onChange={(event) =>
+                                setDiscordBotSettings((current) => ({
+                                  ...current,
+                                  leaderboardCadence:
+                                    event.target.value as DiscordLeaderboardCadence,
+                                }))
+                              }
+                              className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                            >
+                              <option value="manual">Manual only</option>
+                              <option value="daily">Daily</option>
+                              <option value="weekly">Weekly</option>
+                            </select>
+                          </label>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <input
+                            value={discordBotSettings.leaderboardTargetChannelId}
+                            onChange={(event) =>
+                              setDiscordBotSettings((current) => ({
+                                ...current,
+                                leaderboardTargetChannelId: event.target.value,
+                              }))
+                            }
+                            placeholder="Leaderboard channel ID (optional override)"
+                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          />
+                          <input
+                            value={discordBotSettings.leaderboardTopN}
+                            onChange={(event) =>
+                              setDiscordBotSettings((current) => ({
+                                ...current,
+                                leaderboardTopN: event.target.value,
+                              }))
+                            }
+                            placeholder="Leaderboard top N"
+                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          />
+                        </div>
+                        <div className="rounded-2xl border border-line bg-card2 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-text">Rank rules</p>
+                              <p className="mt-1 text-sm text-sub">
+                                Map Veltrix signals to Discord roles for this community.
+                              </p>
+                            </div>
+                            <button
+                              onClick={() =>
+                                setDiscordRankRules((current) => [
+                                  ...current,
+                                  {
+                                    ...createEmptyDiscordRankRule(),
+                                    sourceType: discordBotSettings.rankSource,
+                                  },
+                                ])
+                              }
+                              className="rounded-2xl border border-line bg-card px-3 py-2 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
+                            >
+                              Add rank rule
+                            </button>
+                          </div>
+                          <div className="mt-4 grid gap-3">
+                            {discordRankRules.length > 0 ? (
+                              discordRankRules.map((rule, index) => (
+                                <div
+                                  key={rule.id ?? `discord-rank-rule-${index}`}
+                                  className="grid gap-3 rounded-2xl border border-line bg-card p-4"
+                                >
+                                  <div className="grid gap-3 sm:grid-cols-2">
+                                    <select
+                                      value={rule.sourceType}
+                                      onChange={(event) =>
+                                        setDiscordRankRules((current) =>
+                                          current.map((candidate, candidateIndex) =>
+                                            candidateIndex === index
+                                              ? {
+                                                  ...candidate,
+                                                  sourceType:
+                                                    event.target.value as DiscordRankSource,
+                                                }
+                                              : candidate
+                                          )
+                                        )
+                                      }
+                                      className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                                    >
+                                      <option value="project_xp">Project XP</option>
+                                      <option value="global_xp">Global XP</option>
+                                      <option value="trust">Trust score</option>
+                                      <option value="wallet_verified">Verified wallet</option>
+                                    </select>
+                                    <input
+                                      value={rule.threshold}
+                                      onChange={(event) =>
+                                        setDiscordRankRules((current) =>
+                                          current.map((candidate, candidateIndex) =>
+                                            candidateIndex === index
+                                              ? { ...candidate, threshold: event.target.value }
+                                              : candidate
+                                          )
+                                        )
+                                      }
+                                      placeholder="Threshold"
+                                      className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                                    />
+                                    <input
+                                      value={rule.discordRoleId}
+                                      onChange={(event) =>
+                                        setDiscordRankRules((current) =>
+                                          current.map((candidate, candidateIndex) =>
+                                            candidateIndex === index
+                                              ? { ...candidate, discordRoleId: event.target.value }
+                                              : candidate
+                                          )
+                                        )
+                                      }
+                                      placeholder="Discord role ID"
+                                      className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                                    />
+                                    <input
+                                      value={rule.label}
+                                      onChange={(event) =>
+                                        setDiscordRankRules((current) =>
+                                          current.map((candidate, candidateIndex) =>
+                                            candidateIndex === index
+                                              ? { ...candidate, label: event.target.value }
+                                              : candidate
+                                          )
+                                        )
+                                      }
+                                      placeholder="Role label"
+                                      className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={() =>
+                                      setDiscordRankRules((current) =>
+                                        current.filter((_, candidateIndex) => candidateIndex !== index)
+                                      )
+                                    }
+                                    className="justify-self-start rounded-2xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-sm font-bold text-rose-200 transition hover:bg-rose-500/15"
+                                  >
+                                    Remove rule
+                                  </button>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-sm text-sub">
+                                No Discord rank rules yet. Add at least one rule before running rank sync.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          <button
+                            onClick={() => void saveDiscordBotConfig()}
+                            disabled={savingDiscordBotSettings}
+                            className="rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {savingDiscordBotSettings
+                              ? "Saving bot settings..."
+                              : "Save bot settings"}
+                          </button>
+                          <button
+                            onClick={() => void runDiscordBotAction("rank_sync")}
+                            disabled={runningDiscordBotAction === "rank_sync"}
+                            className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {runningDiscordBotAction === "rank_sync"
+                              ? "Syncing ranks..."
+                              : "Sync Discord ranks now"}
+                          </button>
+                          <button
+                            onClick={() => void runDiscordBotAction("leaderboard_post")}
+                            disabled={runningDiscordBotAction === "leaderboard_post"}
+                            className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {runningDiscordBotAction === "leaderboard_post"
+                              ? "Posting leaderboard..."
+                              : "Post leaderboard now"}
+                          </button>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-sub">
+                            <span className="font-semibold text-text">Last rank sync:</span>{" "}
+                            {discordBotSettings.lastRankSyncAt
+                              ? new Date(discordBotSettings.lastRankSyncAt).toLocaleString()
+                              : "Never"}
+                          </div>
+                          <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-sub">
+                            <span className="font-semibold text-text">Last leaderboard post:</span>{" "}
+                            {discordBotSettings.lastLeaderboardPostedAt
+                              ? new Date(discordBotSettings.lastLeaderboardPostedAt).toLocaleString()
+                              : "Never"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -2314,6 +2876,17 @@ export default function ProjectDetailPage() {
                 {integrationNotice ? (
                   <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">
                     {integrationNotice}
+                  </div>
+                ) : null}
+                {discordBotNotice ? (
+                  <div
+                    className={`rounded-2xl px-4 py-3 text-sm ${
+                      discordBotNoticeTone === "error"
+                        ? "border border-rose-500/25 bg-rose-500/10 text-rose-200"
+                        : "border border-primary/20 bg-primary/10 text-primary"
+                    }`}
+                  >
+                    {discordBotNotice}
                   </div>
                 ) : null}
                 {integrationTestNotice ? (
