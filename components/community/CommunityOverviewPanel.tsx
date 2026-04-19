@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { Activity, ShieldCheck, Signal, UsersRound } from "lucide-react";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
-import { describeIntegrationStatus, getIntegrationTone } from "@/components/community/community-config";
+import {
+  describeIntegrationStatus,
+  getIntegrationTone,
+} from "@/components/community/community-config";
 
 type Props = {
   projectId: string;
@@ -28,6 +31,11 @@ type Props = {
   callbackFailures: number;
   onchainFailures: number;
   latestIssue: string;
+  automationRailCount: number;
+  activeAutomationCount: number;
+  dueAutomationCount: number;
+  enabledPlaybookCount: number;
+  recentAutomationFailureCount: number;
   lastRankSyncAt: string;
   lastLeaderboardPostedAt: string;
   lastMissionDigestAt: string;
@@ -40,6 +48,35 @@ type Props = {
 
 function formatTimestamp(value: string) {
   return value ? new Date(value).toLocaleString() : "Not run yet";
+}
+
+function StatusCard(props: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  tone?: "default" | "warning";
+}) {
+  return (
+    <div className="rounded-[24px] border border-line bg-card2 p-5">
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-[16px] border ${
+            props.tone === "warning"
+              ? "border-amber-400/20 bg-amber-500/10 text-amber-300"
+              : "border-white/10 bg-card text-sub"
+          }`}
+        >
+          {props.icon}
+        </div>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">
+            {props.label}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-text">{props.value}</p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function CommunityOverviewPanel({
@@ -65,6 +102,11 @@ export function CommunityOverviewPanel({
   callbackFailures,
   onchainFailures,
   latestIssue,
+  automationRailCount,
+  activeAutomationCount,
+  dueAutomationCount,
+  enabledPlaybookCount,
+  recentAutomationFailureCount,
   lastRankSyncAt,
   lastLeaderboardPostedAt,
   lastMissionDigestAt,
@@ -99,17 +141,98 @@ export function CommunityOverviewPanel({
     >
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="grid gap-3 sm:grid-cols-2">
-          <OpsMetricCard label="Campaigns" value={campaignCount} sub="Community can post, rank and activate against these lanes." emphasis={campaignCount > 0 ? "primary" : "default"} />
-          <OpsMetricCard label="Missions" value={questCount} sub="Live quest surfaces that can feed leaderboards and push rails." emphasis={questCount > 0 ? "primary" : "default"} />
-          <OpsMetricCard label="Raids" value={raidCount} sub="Live raid rails that can be pushed or automated from here." emphasis={raidCount > 0 ? "primary" : "default"} />
-          <OpsMetricCard label="Rewards" value={rewardCount} sub="Reward drops available for claim and promotion." />
-          <OpsMetricCard label="Team members" value={teamMemberCount} sub="People currently attached to this workspace." />
-          <OpsMetricCard label="Linked contributors" value={linkedContributorCount} sub="Contributors already reachable through community command rails." emphasis={linkedContributorCount > 0 ? "primary" : "default"} />
-          <OpsMetricCard label="Wallet verified" value={walletVerifiedCount} sub="Community contributors with a verified wallet ready for deeper trust rails." />
-          <OpsMetricCard label="Captains" value={captainCount} sub="Assigned community leads attached to this project." emphasis={captainCount > 0 ? "primary" : "default"} />
-          <OpsMetricCard label="Newcomers" value={newcomerCount} sub="Fresh contributors waiting for a starter lane." />
-          <OpsMetricCard label="Reactivation" value={reactivationCount} sub="Dormant contributors worth pulling back in." emphasis={reactivationCount > 0 ? "warning" : "default"} />
-          <OpsMetricCard label="Watchlist" value={watchlistCount} sub="Contributors currently carrying trust or quality issues." emphasis={watchlistCount > 0 ? "warning" : "default"} />
+          <OpsMetricCard
+            label="Campaigns"
+            value={campaignCount}
+            sub="Community can post, rank and activate against these lanes."
+            emphasis={campaignCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Missions"
+            value={questCount}
+            sub="Live quest surfaces that can feed leaderboards and push rails."
+            emphasis={questCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Raids"
+            value={raidCount}
+            sub="Live raid rails that can be pushed or automated from here."
+            emphasis={raidCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Rewards"
+            value={rewardCount}
+            sub="Reward drops available for claim and promotion."
+          />
+          <OpsMetricCard
+            label="Team members"
+            value={teamMemberCount}
+            sub="People currently attached to this workspace."
+          />
+          <OpsMetricCard
+            label="Linked contributors"
+            value={linkedContributorCount}
+            sub="Contributors already reachable through community command rails."
+            emphasis={linkedContributorCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Wallet verified"
+            value={walletVerifiedCount}
+            sub="Community contributors with a verified wallet ready for deeper trust rails."
+          />
+          <OpsMetricCard
+            label="Captains"
+            value={captainCount}
+            sub="Assigned community leads attached to this project."
+            emphasis={captainCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Automation rails"
+            value={automationRailCount}
+            sub="Durable execution rails stored in Community OS."
+            emphasis={automationRailCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Automations armed"
+            value={activeAutomationCount}
+            sub="Rails that are currently active and eligible to run."
+            emphasis={activeAutomationCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Due now"
+            value={dueAutomationCount}
+            sub="Automations already due based on their next run."
+            emphasis={dueAutomationCount > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Playbooks enabled"
+            value={enabledPlaybookCount}
+            sub="Reusable community modes ready to run."
+            emphasis={enabledPlaybookCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Newcomers"
+            value={newcomerCount}
+            sub="Fresh contributors waiting for a starter lane."
+          />
+          <OpsMetricCard
+            label="Reactivation"
+            value={reactivationCount}
+            sub="Dormant contributors worth pulling back in."
+            emphasis={reactivationCount > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Watchlist"
+            value={watchlistCount}
+            sub="Contributors currently carrying trust or quality issues."
+            emphasis={watchlistCount > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Recent automation failures"
+            value={recentAutomationFailureCount}
+            sub="Failed automation or playbook runs visible in recent history."
+            emphasis={recentAutomationFailureCount > 0 ? "warning" : "default"}
+          />
         </div>
 
         <div className="grid gap-3">
@@ -119,7 +242,9 @@ export function CommunityOverviewPanel({
                 <UsersRound size={18} />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Provider rail</p>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">
+                  Provider rail
+                </p>
                 <p className="mt-1 text-sm font-semibold text-text">
                   Discord, Telegram and X are managed from one project-private page.
                 </p>
@@ -148,130 +273,59 @@ export function CommunityOverviewPanel({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
-                  <Signal size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last rank sync</p>
-                  <p className="mt-1 text-sm font-semibold text-text">{formatTimestamp(lastRankSyncAt)}</p>
-                </div>
-              </div>
-            </div>
+            <StatusCard
+              icon={<Signal size={18} />}
+              label="Last rank sync"
+              value={formatTimestamp(lastRankSyncAt)}
+            />
+            <StatusCard
+              icon={<Activity size={18} />}
+              label="Last leaderboard post"
+              value={formatTimestamp(lastLeaderboardPostedAt)}
+            />
+            <StatusCard
+              icon={<Activity size={18} />}
+              label="Last mission digest"
+              value={formatTimestamp(lastMissionDigestAt)}
+            />
+            <StatusCard
+              icon={<Activity size={18} />}
+              label="Last raid alert"
+              value={formatTimestamp(lastRaidAlertAt)}
+            />
+            <StatusCard
+              icon={<Activity size={18} />}
+              label="Last newcomer push"
+              value={formatTimestamp(lastNewcomerPushAt)}
+            />
+            <StatusCard
+              icon={<Activity size={18} />}
+              label="Last comeback push"
+              value={formatTimestamp(lastReactivationPushAt)}
+            />
+            <StatusCard
+              icon={<Activity size={18} />}
+              label="Last activation board"
+              value={formatTimestamp(lastActivationBoardAt)}
+            />
+            <StatusCard
+              icon={<Activity size={18} />}
+              label="Last automation run"
+              value={formatTimestamp(lastAutomationRunAt)}
+            />
+            <StatusCard
+              icon={<ShieldCheck size={18} />}
+              label="Incident posture"
+              value={`${callbackFailures} callback | ${onchainFailures} on-chain`}
+              tone={callbackFailures > 0 || onchainFailures > 0 ? "warning" : "default"}
+            />
+          </div>
 
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
-                  <Activity size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last leaderboard post</p>
-                  <p className="mt-1 text-sm font-semibold text-text">
-                    {formatTimestamp(lastLeaderboardPostedAt)}
-                  </p>
-                </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
-                  <Activity size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last mission digest</p>
-                  <p className="mt-1 text-sm font-semibold text-text">
-                    {formatTimestamp(lastMissionDigestAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
-                  <Activity size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last raid alert</p>
-                  <p className="mt-1 text-sm font-semibold text-text">
-                    {formatTimestamp(lastRaidAlertAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
-                  <Activity size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last newcomer push</p>
-                  <p className="mt-1 text-sm font-semibold text-text">
-                    {formatTimestamp(lastNewcomerPushAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
-                  <Activity size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last comeback push</p>
-                  <p className="mt-1 text-sm font-semibold text-text">
-                    {formatTimestamp(lastReactivationPushAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
-                  <Activity size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last activation board</p>
-                  <p className="mt-1 text-sm font-semibold text-text">
-                    {formatTimestamp(lastActivationBoardAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
-                  <Activity size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last automation run</p>
-                  <p className="mt-1 text-sm font-semibold text-text">
-                    {formatTimestamp(lastAutomationRunAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-amber-400/20 bg-amber-500/10 text-amber-300">
-                <ShieldCheck size={18} />
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Current incident posture</p>
-                <p className="mt-1 text-sm font-semibold text-text">
-                  {callbackFailures} callback failures, {onchainFailures} on-chain incidents
-                </p>
-              </div>
-            </div>
-            <p className="mt-4 rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm leading-6 text-sub">
+          <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">
+              Current issue rail
+            </p>
+            <p className="mt-3 rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm leading-6 text-sub">
               {latestIssue}
             </p>
           </div>

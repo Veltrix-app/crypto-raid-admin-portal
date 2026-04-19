@@ -1,5 +1,3 @@
-"use client";
-
 export type PushScopeMode =
   | "project_only"
   | "selected_projects"
@@ -32,6 +30,28 @@ export type DiscordLeaderboardPeriod = "weekly" | "monthly" | "all_time";
 export type DiscordLeaderboardCadence = "manual" | "daily" | "weekly";
 export type CommunityAutomationCadence = "manual" | "daily" | "weekly";
 export type CommunityDeliveryTarget = "discord" | "telegram" | "both";
+export type CommunityAutomationStatus = "active" | "paused";
+export type CommunityAutomationType =
+  | "rank_sync"
+  | "leaderboard_pulse"
+  | "mission_digest"
+  | "raid_reminder"
+  | "newcomer_pulse"
+  | "reactivation_pulse"
+  | "activation_board";
+export type CommunityPlaybookKey =
+  | "launch_week"
+  | "raid_week"
+  | "comeback_week"
+  | "campaign_push";
+export type CommunityCaptainPermission =
+  | "rank_sync"
+  | "leaderboard_post"
+  | "raid_alert"
+  | "mission_digest"
+  | "newcomer_wave"
+  | "reactivation_wave"
+  | "activation_board";
 export type CommunityBotAction =
   | "command_sync"
   | "rank_sync"
@@ -39,6 +59,127 @@ export type CommunityBotAction =
   | "mission_post"
   | "raid_post"
   | "automation_run";
+
+export type CommunityAutomationRecord = {
+  id: string;
+  projectId: string;
+  automationType: CommunityAutomationType;
+  status: CommunityAutomationStatus;
+  cadence: CommunityAutomationCadence;
+  providerScope: CommunityDeliveryTarget;
+  targetProvider: CommunityDeliveryTarget;
+  title: string;
+  description: string;
+  config: Record<string, unknown>;
+  lastRunAt: string;
+  nextRunAt: string;
+  lastResult: string;
+  lastResultSummary: string;
+};
+
+export type CommunityAutomationRunRecord = {
+  id: string;
+  automationId: string | null;
+  automationType: CommunityAutomationType;
+  status: "pending" | "running" | "success" | "failed" | "skipped";
+  triggerSource: "manual" | "schedule" | "playbook" | "captain";
+  triggeredByAuthUserId: string;
+  summary: string;
+  createdAt: string;
+  completedAt: string;
+};
+
+export type CommunityPlaybookConfig = {
+  key: CommunityPlaybookKey;
+  title: string;
+  description: string;
+  enabled: boolean;
+  providerScope: CommunityDeliveryTarget;
+  steps: CommunityAutomationType[];
+  lastRunAt: string;
+};
+
+export type CommunityPlaybookRunRecord = {
+  id: string;
+  playbookKey: CommunityPlaybookKey;
+  status: "pending" | "running" | "success" | "failed" | "skipped";
+  triggerSource: "manual" | "schedule" | "captain";
+  triggeredByAuthUserId: string;
+  summary: string;
+  createdAt: string;
+  completedAt: string;
+};
+
+export type CommunityCaptainActionRecord = {
+  id: string;
+  authUserId: string;
+  captainRole: string;
+  actionType: string;
+  targetType: string;
+  targetId: string;
+  status: "success" | "failed" | "skipped";
+  summary: string;
+  createdAt: string;
+};
+
+export const COMMUNITY_AUTOMATION_LABELS: Record<CommunityAutomationType, string> = {
+  rank_sync: "Rank sync",
+  leaderboard_pulse: "Leaderboard pulse",
+  mission_digest: "Mission digest",
+  raid_reminder: "Raid reminder",
+  newcomer_pulse: "Newcomer pulse",
+  reactivation_pulse: "Reactivation pulse",
+  activation_board: "Activation board",
+};
+
+export const COMMUNITY_CAPTAIN_PERMISSION_LABELS: Record<CommunityCaptainPermission, string> = {
+  rank_sync: "Run rank sync",
+  leaderboard_post: "Post leaderboard",
+  raid_alert: "Send raid alert",
+  mission_digest: "Send mission digest",
+  newcomer_wave: "Send newcomer wave",
+  reactivation_wave: "Send comeback wave",
+  activation_board: "Push activation board",
+};
+
+export const COMMUNITY_PLAYBOOK_DEFAULTS: CommunityPlaybookConfig[] = [
+  {
+    key: "launch_week",
+    title: "Launch Week",
+    description: "Open with campaign pressure, mission visibility and a leaderboard pulse.",
+    enabled: false,
+    providerScope: "both",
+    steps: ["activation_board", "mission_digest", "leaderboard_pulse"],
+    lastRunAt: "",
+  },
+  {
+    key: "raid_week",
+    title: "Raid Week",
+    description: "Keep the community focused on active raid pressure and visible results.",
+    enabled: false,
+    providerScope: "both",
+    steps: ["raid_reminder", "leaderboard_pulse"],
+    lastRunAt: "",
+  },
+  {
+    key: "comeback_week",
+    title: "Comeback Week",
+    description: "Bring dormant contributors back with a comeback wave and a fresh leaderboard nudge.",
+    enabled: false,
+    providerScope: "both",
+    steps: ["reactivation_pulse", "mission_digest", "leaderboard_pulse"],
+    lastRunAt: "",
+  },
+  {
+    key: "campaign_push",
+    title: "Campaign Push",
+    description: "Focus one campaign with an activation board and mission visibility burst.",
+    enabled: false,
+    providerScope: "both",
+    steps: ["activation_board", "mission_digest"],
+    lastRunAt: "",
+  },
+];
 
 export type DiscordCommunityBotSettings = {
   commandsEnabled: boolean;

@@ -11,6 +11,10 @@ type Props = {
   latestIssue: string;
   recentActivity: DbAuditLog[];
   loadingActivity: boolean;
+  automationRunCount: number;
+  playbookRunCount: number;
+  captainActionCount: number;
+  recentAutomationFailureCount: number;
 };
 
 function formatActionLabel(action: string) {
@@ -28,15 +32,19 @@ export function CommunityActivityPanel({
   latestIssue,
   recentActivity,
   loadingActivity,
+  automationRunCount,
+  playbookRunCount,
+  captainActionCount,
+  recentAutomationFailureCount,
 }: Props) {
   return (
     <OpsPanel
       eyebrow="Activity"
-      title="Recent incidents and operator signal"
+      title="Recent incidents and execution signal"
       description="This keeps the project team close to what the community rail is doing without exposing any other workspace."
     >
       <div className="space-y-5">
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-8">
           <OpsMetricCard
             label="Callback failures"
             value={callbackFailures}
@@ -58,8 +66,32 @@ export function CommunityActivityPanel({
           <OpsMetricCard
             label="Quality pressure"
             value={watchlistCount + openFlagCount}
-            sub="Open trust/watch pressure currently visible inside this project's rail."
+            sub="Open trust or watch pressure inside this project rail."
             emphasis={watchlistCount + openFlagCount > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Automation runs"
+            value={automationRunCount}
+            sub="Recent automation execution history."
+            emphasis={automationRunCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Playbook runs"
+            value={playbookRunCount}
+            sub="Recent multi-step community operating runs."
+            emphasis={playbookRunCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Captain actions"
+            value={captainActionCount}
+            sub="Captain-triggered actions recorded for this project."
+            emphasis={captainActionCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Execution failures"
+            value={recentAutomationFailureCount}
+            sub="Failed automation or playbook runs visible in v4 history."
+            emphasis={recentAutomationFailureCount > 0 ? "warning" : "default"}
           />
         </div>
 
@@ -73,7 +105,7 @@ export function CommunityActivityPanel({
             <div>
               <p className="text-sm font-bold text-text">Recent log stream</p>
               <p className="mt-2 text-sm text-sub">
-                The newest project-scoped audit events for community, verification and on-chain rails.
+                The newest project-scoped audit events for community, verification, automation and on-chain rails.
               </p>
             </div>
           </div>

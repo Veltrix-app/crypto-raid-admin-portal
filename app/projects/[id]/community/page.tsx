@@ -5,12 +5,21 @@ import { useParams } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import { CommunityActivityPanel } from "@/components/community/CommunityActivityPanel";
 import { CommunityActivationBoardsPanel } from "@/components/community/CommunityActivationBoardsPanel";
+import { CommunityAutomationCenterPanel } from "@/components/community/CommunityAutomationCenterPanel";
 import { CommunityAutomationsPanel } from "@/components/community/CommunityAutomationsPanel";
+import { CommunityCaptainOpsPanel } from "@/components/community/CommunityCaptainOpsPanel";
 import { CommunityCaptainsPanel } from "@/components/community/CommunityCaptainsPanel";
 import {
   buildDiscordRankRulesFromPreset,
   CommunityBotAction,
+  type CommunityAutomationRecord,
+  type CommunityAutomationRunRecord,
+  type CommunityCaptainActionRecord,
+  type CommunityCaptainPermission,
   CommunityPushSettings,
+  type CommunityPlaybookConfig,
+  type CommunityPlaybookKey,
+  type CommunityPlaybookRunRecord,
   createDefaultDiscordBotSettings,
   createDefaultPushSettings,
   DiscordCommunityBotSettings,
@@ -22,11 +31,13 @@ import {
 import { CommunityCohortsPanel } from "@/components/community/CommunityCohortsPanel";
 import { CommunityCommandsPanel } from "@/components/community/CommunityCommandsPanel";
 import { CommunityAnalyticsPanel } from "@/components/community/CommunityAnalyticsPanel";
+import { CommunityFunnelsPanel } from "@/components/community/CommunityFunnelsPanel";
 import { CommunityIntegrationsPanel } from "@/components/community/CommunityIntegrationsPanel";
 import { CommunityLeaderboardsPanel } from "@/components/community/CommunityLeaderboardsPanel";
 import { CommunityMembersPanel } from "@/components/community/CommunityMembersPanel";
 import { CommunityMissionsPanel } from "@/components/community/CommunityMissionsPanel";
 import { CommunityOverviewPanel } from "@/components/community/CommunityOverviewPanel";
+import { CommunityPlaybooksPanel } from "@/components/community/CommunityPlaybooksPanel";
 import { CommunityRaidOpsPanel } from "@/components/community/CommunityRaidOpsPanel";
 import { CommunityRanksPanel } from "@/components/community/CommunityRanksPanel";
 import { OpsHero, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
@@ -363,6 +374,38 @@ export default function ProjectCommunityManagementPage() {
     useState<string | null>(null);
   const [activationNotice, setActivationNotice] = useState("");
   const [activationNoticeTone, setActivationNoticeTone] = useState<"success" | "error">(
+    "success"
+  );
+  const [communityAutomations, setCommunityAutomations] = useState<CommunityAutomationRecord[]>([]);
+  const [communityAutomationRuns, setCommunityAutomationRuns] = useState<
+    CommunityAutomationRunRecord[]
+  >([]);
+  const [communityPlaybooks, setCommunityPlaybooks] = useState<CommunityPlaybookConfig[]>([]);
+  const [communityPlaybookRuns, setCommunityPlaybookRuns] = useState<
+    CommunityPlaybookRunRecord[]
+  >([]);
+  const [captainPermissions, setCaptainPermissions] = useState<
+    Record<string, CommunityCaptainPermission[]>
+  >({});
+  const [captainActions, setCaptainActions] = useState<CommunityCaptainActionRecord[]>([]);
+  const [loadingCommunityExecution, setLoadingCommunityExecution] = useState(false);
+  const [savingCommunityAutomations, setSavingCommunityAutomations] = useState(false);
+  const [runningCommunityAutomationId, setRunningCommunityAutomationId] = useState<string | null>(
+    null
+  );
+  const [communityAutomationNotice, setCommunityAutomationNotice] = useState("");
+  const [communityAutomationNoticeTone, setCommunityAutomationNoticeTone] = useState<
+    "success" | "error"
+  >("success");
+  const [savingCaptainPermissions, setSavingCaptainPermissions] = useState(false);
+  const [captainPermissionsNotice, setCaptainPermissionsNotice] = useState("");
+  const [captainPermissionsNoticeTone, setCaptainPermissionsNoticeTone] = useState<
+    "success" | "error"
+  >("success");
+  const [savingPlaybooks, setSavingPlaybooks] = useState(false);
+  const [runningPlaybookKey, setRunningPlaybookKey] = useState<string | null>(null);
+  const [playbookNotice, setPlaybookNotice] = useState("");
+  const [playbookNoticeTone, setPlaybookNoticeTone] = useState<"success" | "error">(
     "success"
   );
 
@@ -768,6 +811,52 @@ export default function ProjectCommunityManagementPage() {
     };
   }, [hasProjectAccess, project?.id]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCommunityExecution() {
+      if (!project?.id || !hasProjectAccess) return;
+
+      setLoadingCommunityExecution(true);
+      const response = await fetch(`/api/projects/${project.id}/community-automations`, {
+        cache: "no-store",
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (cancelled) return;
+
+      if (!response.ok || !payload?.ok) {
+        setCommunityAutomations([]);
+        setCommunityAutomationRuns([]);
+        setCommunityPlaybooks([]);
+        setCommunityPlaybookRuns([]);
+        setCaptainPermissions({});
+        setCaptainActions([]);
+        setLoadingCommunityExecution(false);
+        return;
+      }
+
+      setCommunityAutomations(Array.isArray(payload.automations) ? payload.automations : []);
+      setCommunityAutomationRuns(
+        Array.isArray(payload.automationRuns) ? payload.automationRuns : []
+      );
+      setCommunityPlaybooks(Array.isArray(payload.playbooks) ? payload.playbooks : []);
+      setCommunityPlaybookRuns(Array.isArray(payload.playbookRuns) ? payload.playbookRuns : []);
+      setCaptainPermissions(
+        payload.captainPermissions && typeof payload.captainPermissions === "object"
+          ? payload.captainPermissions
+          : {}
+      );
+      setCaptainActions(Array.isArray(payload.captainActions) ? payload.captainActions : []);
+      setLoadingCommunityExecution(false);
+    }
+
+    void loadCommunityExecution();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasProjectAccess, project?.id]);
+
   const relatedCampaigns = useMemo(
     () => campaigns.filter((campaign) => campaign.projectId === project?.id),
     [campaigns, project?.id]
@@ -791,6 +880,28 @@ export default function ProjectCommunityManagementPage() {
   const projectNameById = useMemo(
     () => new Map(projects.map((item) => [item.id, item.name])),
     [projects]
+  );
+  const activeAutomationCount = useMemo(
+    () => communityAutomations.filter((automation) => automation.status === "active").length,
+    [communityAutomations]
+  );
+  const dueAutomationCount = useMemo(
+    () =>
+      communityAutomations.filter(
+        (automation) =>
+          automation.status === "active" &&
+          automation.nextRunAt &&
+          new Date(automation.nextRunAt).getTime() <= Date.now()
+      ).length,
+    [communityAutomations]
+  );
+  const recentAutomationFailureCount = useMemo(
+    () => communityAutomationRuns.filter((run) => run.status === "failed").length,
+    [communityAutomationRuns]
+  );
+  const enabledPlaybookCount = useMemo(
+    () => communityPlaybooks.filter((playbook) => playbook.enabled).length,
+    [communityPlaybooks]
   );
 
   async function refreshCommunityGrowth() {
@@ -818,6 +929,32 @@ export default function ProjectCommunityManagementPage() {
         ? payload.settings.captainAssignments
         : []
     );
+  }
+
+  async function refreshCommunityExecution() {
+    if (!project?.id) return;
+
+    const response = await fetch(`/api/projects/${project.id}/community-automations`, {
+      cache: "no-store",
+    });
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload?.ok) {
+      return;
+    }
+
+    setCommunityAutomations(Array.isArray(payload.automations) ? payload.automations : []);
+    setCommunityAutomationRuns(
+      Array.isArray(payload.automationRuns) ? payload.automationRuns : []
+    );
+    setCommunityPlaybooks(Array.isArray(payload.playbooks) ? payload.playbooks : []);
+    setCommunityPlaybookRuns(Array.isArray(payload.playbookRuns) ? payload.playbookRuns : []);
+    setCaptainPermissions(
+      payload.captainPermissions && typeof payload.captainPermissions === "object"
+        ? payload.captainPermissions
+        : {}
+    );
+    setCaptainActions(Array.isArray(payload.captainActions) ? payload.captainActions : []);
   }
 
   async function refreshRecentActivity() {
@@ -1333,9 +1470,230 @@ export default function ProjectCommunityManagementPage() {
     await refreshRecentActivity();
   }
 
+  function updateCommunityAutomation(
+    automationId: string,
+    patch: Partial<
+      Pick<
+        CommunityAutomationRecord,
+        "status" | "cadence" | "providerScope" | "targetProvider"
+      >
+    >
+  ) {
+    setCommunityAutomations((current) =>
+      current.map((automation) =>
+        automation.id === automationId ? { ...automation, ...patch } : automation
+      )
+    );
+  }
+
+  async function saveCommunityAutomations() {
+    if (!project?.id) return;
+
+    setSavingCommunityAutomations(true);
+    setCommunityAutomationNotice("");
+    setCommunityAutomationNoticeTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-automations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        automations: communityAutomations.map((automation) => ({
+          ...automation,
+          title: automation.title.trim(),
+          description: automation.description.trim(),
+        })),
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setSavingCommunityAutomations(false);
+
+    if (!response.ok || !payload?.ok) {
+      setCommunityAutomationNoticeTone("error");
+      setCommunityAutomationNotice(payload?.error || "Could not save community automations.");
+      return;
+    }
+
+    setCommunityAutomationNoticeTone("success");
+    setCommunityAutomationNotice(
+      payload?.message || "Community automation center updated."
+    );
+    setCommunityAutomations(Array.isArray(payload.automations) ? payload.automations : []);
+    setCommunityAutomationRuns(
+      Array.isArray(payload.automationRuns) ? payload.automationRuns : []
+    );
+    await refreshRecentActivity();
+  }
+
+  async function runCommunityAutomation(automationId: string) {
+    if (!project?.id) return;
+
+    setRunningCommunityAutomationId(automationId);
+    setCommunityAutomationNotice("");
+    setCommunityAutomationNoticeTone("success");
+
+    const response = await fetch(
+      `/api/projects/${project.id}/community-automations/${automationId}/run`,
+      {
+        method: "POST",
+      }
+    );
+
+    const payload = await response.json().catch(() => null);
+    setRunningCommunityAutomationId(null);
+
+    if (!response.ok || !payload?.ok) {
+      setCommunityAutomationNoticeTone("error");
+      setCommunityAutomationNotice(payload?.error || "Community automation run failed.");
+      return;
+    }
+
+    setCommunityAutomationNoticeTone("success");
+    setCommunityAutomationNotice(
+      payload?.summary || "Community automation run completed."
+    );
+    await refreshCommunityExecution();
+    await refreshRecentActivity();
+  }
+
+  function toggleCaptainPermission(
+    authUserId: string,
+    permission: CommunityCaptainPermission,
+    enabled: boolean
+  ) {
+    setCaptainPermissions((current) => {
+      const currentPermissions = current[authUserId] ?? [];
+      const nextPermissions = enabled
+        ? Array.from(new Set([...currentPermissions, permission]))
+        : currentPermissions.filter((value) => value !== permission);
+
+      return {
+        ...current,
+        [authUserId]: nextPermissions,
+      };
+    });
+  }
+
+  async function saveCaptainPermissions() {
+    if (!project?.id) return;
+
+    setSavingCaptainPermissions(true);
+    setCaptainPermissionsNotice("");
+    setCaptainPermissionsNoticeTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-captain-permissions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        captainPermissions,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setSavingCaptainPermissions(false);
+
+    if (!response.ok || !payload?.ok) {
+      setCaptainPermissionsNoticeTone("error");
+      setCaptainPermissionsNotice(payload?.error || "Could not save captain permissions.");
+      return;
+    }
+
+    setCaptainPermissionsNoticeTone("success");
+    setCaptainPermissionsNotice(payload?.message || "Captain permissions saved.");
+    setCaptainPermissions(
+      payload.captainPermissions && typeof payload.captainPermissions === "object"
+        ? payload.captainPermissions
+        : {}
+    );
+    setCaptainActions(Array.isArray(payload.captainActions) ? payload.captainActions : []);
+    await refreshRecentActivity();
+  }
+
+  function updateCommunityPlaybook(
+    playbookKey: CommunityPlaybookKey,
+    patch: Partial<Pick<CommunityPlaybookConfig, "enabled" | "providerScope">>
+  ) {
+    setCommunityPlaybooks((current) =>
+      current.map((playbook) =>
+        playbook.key === playbookKey ? { ...playbook, ...patch } : playbook
+      )
+    );
+  }
+
+  async function saveCommunityPlaybooks() {
+    if (!project?.id) return;
+
+    setSavingPlaybooks(true);
+    setPlaybookNotice("");
+    setPlaybookNoticeTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-playbooks`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        playbooks: communityPlaybooks.map((playbook) => ({
+          key: playbook.key,
+          enabled: playbook.enabled,
+          providerScope: playbook.providerScope,
+        })),
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setSavingPlaybooks(false);
+
+    if (!response.ok || !payload?.ok) {
+      setPlaybookNoticeTone("error");
+      setPlaybookNotice(payload?.error || "Could not save community playbooks.");
+      return;
+    }
+
+    setPlaybookNoticeTone("success");
+    setPlaybookNotice(payload?.message || "Community playbooks saved.");
+    setCommunityPlaybooks(Array.isArray(payload.playbooks) ? payload.playbooks : []);
+    setCommunityPlaybookRuns(Array.isArray(payload.playbookRuns) ? payload.playbookRuns : []);
+    await refreshRecentActivity();
+  }
+
+  async function runCommunityPlaybook(playbookKey: CommunityPlaybookKey) {
+    if (!project?.id) return;
+
+    setRunningPlaybookKey(playbookKey);
+    setPlaybookNotice("");
+    setPlaybookNoticeTone("success");
+
+    const response = await fetch(
+      `/api/projects/${project.id}/community-playbooks/${playbookKey}/run`,
+      {
+        method: "POST",
+      }
+    );
+
+    const payload = await response.json().catch(() => null);
+    setRunningPlaybookKey(null);
+
+    if (!response.ok || !payload?.ok) {
+      setPlaybookNoticeTone("error");
+      setPlaybookNotice(payload?.error || "Community playbook run failed.");
+      return;
+    }
+
+    setPlaybookNoticeTone("success");
+    setPlaybookNotice(payload?.summary || "Community playbook completed.");
+    await refreshCommunityExecution();
+    await refreshRecentActivity();
+  }
+
   if (
     authLoading ||
     loadingCommunityGrowth ||
+    loadingCommunityExecution ||
     (!portalHydrated && (portalLoading || !project))
   ) {
     return (
@@ -1423,6 +1781,11 @@ export default function ProjectCommunityManagementPage() {
               ? communityGrowth.trust.latestIssue
               : operatorSignals.latestIssue
           }
+          automationRailCount={communityAutomations.length}
+          activeAutomationCount={activeAutomationCount}
+          dueAutomationCount={dueAutomationCount}
+          enabledPlaybookCount={enabledPlaybookCount}
+          recentAutomationFailureCount={recentAutomationFailureCount}
           lastRankSyncAt={discordBotSettings.lastRankSyncAt}
           lastLeaderboardPostedAt={discordBotSettings.lastLeaderboardPostedAt}
           lastMissionDigestAt={discordBotSettings.lastMissionDigestAt}
@@ -1448,12 +1811,17 @@ export default function ProjectCommunityManagementPage() {
             watchlistCount={communityGrowth.cohorts.summary.watchlist}
             openFlagCount={communityGrowth.trust.openFlagCount}
             latestIssue={
-              communityGrowth.trust.openFlagCount > 0 || communityGrowth.trust.watchlistCount > 0
+              communityGrowth.trust.openFlagCount > 0 ||
+              communityGrowth.trust.watchlistCount > 0
                 ? communityGrowth.trust.latestIssue
                 : operatorSignals.latestIssue
             }
             recentActivity={recentActivity}
             loadingActivity={loadingActivity}
+            automationRunCount={communityAutomationRuns.length}
+            playbookRunCount={communityPlaybookRuns.length}
+            captainActionCount={captainActions.length}
+            recentAutomationFailureCount={recentAutomationFailureCount}
           />
         </div>
 
@@ -1564,13 +1932,43 @@ export default function ProjectCommunityManagementPage() {
           />
         </div>
 
-        <CommunityAutomationsPanel
-          settings={discordBotSettings}
-          runningAutomationAction={runningAutomationAction}
-          automationNotice={automationNotice}
-          automationNoticeTone={automationNoticeTone}
-          onRunAutomationAction={(mode) => void runAutomationAction(mode)}
-        />
+        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <CommunityAutomationCenterPanel
+            automations={communityAutomations}
+            automationRuns={communityAutomationRuns}
+            saving={savingCommunityAutomations}
+            runningAutomationId={runningCommunityAutomationId}
+            notice={communityAutomationNotice}
+            noticeTone={communityAutomationNoticeTone}
+            onUpdateAutomation={updateCommunityAutomation}
+            onSave={() => void saveCommunityAutomations()}
+            onRunAutomation={(automationId) => void runCommunityAutomation(automationId)}
+          />
+
+          <CommunityPlaybooksPanel
+            playbooks={communityPlaybooks}
+            playbookRuns={communityPlaybookRuns}
+            saving={savingPlaybooks}
+            runningPlaybookKey={runningPlaybookKey}
+            notice={playbookNotice}
+            noticeTone={playbookNoticeTone}
+            onUpdatePlaybook={updateCommunityPlaybook}
+            onSave={() => void saveCommunityPlaybooks()}
+            onRunPlaybook={(playbookKey) => void runCommunityPlaybook(playbookKey)}
+          />
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+          <CommunityAutomationsPanel
+            settings={discordBotSettings}
+            runningAutomationAction={runningAutomationAction}
+            automationNotice={automationNotice}
+            automationNoticeTone={automationNoticeTone}
+            onRunAutomationAction={(mode) => void runAutomationAction(mode)}
+          />
+
+          <CommunityAnalyticsPanel analytics={communityGrowth.analytics} />
+        </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
           <CommunityCaptainsPanel
@@ -1588,24 +1986,44 @@ export default function ProjectCommunityManagementPage() {
             onSaveCaptains={() => void saveCaptains()}
           />
 
-          <CommunityAnalyticsPanel analytics={communityGrowth.analytics} />
+          <CommunityCaptainOpsPanel
+            roster={communityGrowth.captains.assignments}
+            captainPermissions={captainPermissions}
+            captainActions={captainActions}
+            saving={savingCaptainPermissions}
+            notice={captainPermissionsNotice}
+            noticeTone={captainPermissionsNoticeTone}
+            onTogglePermission={toggleCaptainPermission}
+            onSave={() => void saveCaptainPermissions()}
+          />
         </div>
 
-        <CommunityCohortsPanel
-          settings={discordBotSettings}
-          setSettings={setDiscordBotSettings}
-          summary={communityGrowth.cohorts.summary}
-          newcomers={communityGrowth.cohorts.newcomers}
-          reactivation={communityGrowth.cohorts.reactivation}
-          watchlist={communityGrowth.cohorts.watchlist}
-          trust={communityGrowth.trust}
-          savingSettings={savingDiscordBotSettings}
-          runningFunnelAction={runningFunnelAction}
-          funnelNotice={funnelNotice}
-          funnelNoticeTone={funnelNoticeTone}
-          onSaveSettings={() => void saveDiscordBotConfig()}
-          onRunFunnelAction={(mode) => void runFunnelAction(mode)}
-        />
+        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <CommunityCohortsPanel
+            settings={discordBotSettings}
+            setSettings={setDiscordBotSettings}
+            summary={communityGrowth.cohorts.summary}
+            newcomers={communityGrowth.cohorts.newcomers}
+            reactivation={communityGrowth.cohorts.reactivation}
+            watchlist={communityGrowth.cohorts.watchlist}
+            trust={communityGrowth.trust}
+            savingSettings={savingDiscordBotSettings}
+            runningFunnelAction={runningFunnelAction}
+            funnelNotice={funnelNotice}
+            funnelNoticeTone={funnelNoticeTone}
+            onSaveSettings={() => void saveDiscordBotConfig()}
+            onRunFunnelAction={(mode) => void runFunnelAction(mode)}
+          />
+
+          <CommunityFunnelsPanel
+            newcomerCount={communityGrowth.cohorts.summary.newcomers}
+            reactivationCount={communityGrowth.cohorts.summary.reactivation}
+            watchlistCount={communityGrowth.cohorts.summary.watchlist}
+            automations={communityAutomations}
+            runningAutomationId={runningCommunityAutomationId}
+            onRunAutomation={(automationId) => void runCommunityAutomation(automationId)}
+          />
+        </div>
 
         <CommunityActivationBoardsPanel
           settings={discordBotSettings}
