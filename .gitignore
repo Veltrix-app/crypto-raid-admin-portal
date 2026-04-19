@@ -2,6 +2,7 @@ node_modules
 .next
 .env.local
 .vercel
+.worktrees
 dist
 build
 *.log
