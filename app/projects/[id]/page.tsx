@@ -1449,15 +1449,23 @@ export default function ProjectDetailPage() {
             </>
           }
           actions={
-            <button
-              onClick={async () => {
-                await deleteProject(project.id);
-                router.push("/projects");
-              }}
-              className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
-            >
-              Delete Project
-            </button>
+            <>
+              <Link
+                href={`/projects/${project.id}/community`}
+                className="rounded-[18px] border border-primary/30 bg-primary/10 px-4 py-3 font-bold text-primary transition hover:bg-primary/15"
+              >
+                Open Community OS
+              </Link>
+              <button
+                onClick={async () => {
+                  await deleteProject(project.id);
+                  router.push("/projects");
+                }}
+                className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
+              >
+                Delete Project
+              </button>
+            </>
           }
           metrics={
             <>
