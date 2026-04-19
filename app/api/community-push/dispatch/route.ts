@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  assertProjectCommunityAccess,
+  createProjectCommunityAccessErrorResponse,
+} from "@/lib/community/project-community-auth";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -697,6 +701,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Content item not found." }, { status: 404 });
     }
 
+    await assertProjectCommunityAccess(item.projectId);
+
     if (!item.isLive) {
       return NextResponse.json({
         ok: true,
@@ -775,12 +781,9 @@ export async function POST(request: NextRequest) {
       skipped,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Community push dispatch failed.",
-      },
-      { status: 500 }
+    return createProjectCommunityAccessErrorResponse(
+      error,
+      "Community push dispatch failed."
     );
   }
 }

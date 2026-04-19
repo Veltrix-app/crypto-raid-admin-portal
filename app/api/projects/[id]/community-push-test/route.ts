@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  assertProjectCommunityAccess,
+  createProjectCommunityAccessErrorResponse,
+} from "@/lib/community/project-community-auth";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -103,6 +107,7 @@ export async function POST(
       return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
     }
 
+    await assertProjectCommunityAccess(projectId);
     const supabase = getServiceSupabaseClient();
     const { data: project, error: projectError } = await supabase
       .from("projects")
@@ -209,13 +214,9 @@ export async function POST(
       result,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error:
-          error instanceof Error ? error.message : "Community push test delivery failed.",
-      },
-      { status: 500 }
+    return createProjectCommunityAccessErrorResponse(
+      error,
+      "Community push test delivery failed."
     );
   }
 }

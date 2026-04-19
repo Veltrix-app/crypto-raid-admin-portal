@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  assertProjectCommunityAccess,
+  createProjectCommunityAccessErrorResponse,
+} from "@/lib/community/project-community-auth";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -33,6 +37,7 @@ export async function GET(
       return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
     }
 
+    await assertProjectCommunityAccess(projectId);
     const supabase = getServiceSupabaseClient();
     const { data, error } = await supabase
       .from("project_assets")
@@ -46,12 +51,9 @@ export async function GET(
 
     return NextResponse.json({ ok: true, assets: data ?? [] });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Could not load project assets.",
-      },
-      { status: 500 }
+    return createProjectCommunityAccessErrorResponse(
+      error,
+      "Could not load project assets."
     );
   }
 }
@@ -91,6 +93,7 @@ export async function POST(
       );
     }
 
+    await assertProjectCommunityAccess(projectId);
     const supabase = getServiceSupabaseClient();
     const { data, error } = await supabase
       .from("project_assets")
@@ -122,12 +125,9 @@ export async function POST(
 
     return NextResponse.json({ ok: true, asset: data });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Could not save project asset.",
-      },
-      { status: 500 }
+    return createProjectCommunityAccessErrorResponse(
+      error,
+      "Could not save project asset."
     );
   }
 }
@@ -148,6 +148,7 @@ export async function DELETE(
       );
     }
 
+    await assertProjectCommunityAccess(projectId);
     const supabase = getServiceSupabaseClient();
     const { error } = await supabase
       .from("project_assets")
@@ -161,12 +162,9 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Could not delete project asset.",
-      },
-      { status: 500 }
+    return createProjectCommunityAccessErrorResponse(
+      error,
+      "Could not delete project asset."
     );
   }
 }

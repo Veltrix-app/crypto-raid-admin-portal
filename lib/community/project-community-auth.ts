@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getServiceSupabaseClient } from "@/lib/community/project-community-ops";
 
@@ -75,4 +76,21 @@ export async function assertProjectCommunityAccess(projectId: string) {
     membershipRole: teamMembership?.role ?? (ownsProject ? "owner" : null),
     projectId: normalizedProjectId,
   };
+}
+
+export function createProjectCommunityAccessErrorResponse(
+  error: unknown,
+  fallbackMessage: string
+) {
+  if (error instanceof ProjectCommunityAccessError) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
+  }
+
+  return NextResponse.json(
+    {
+      ok: false,
+      error: error instanceof Error ? error.message : fallbackMessage,
+    },
+    { status: 500 }
+  );
 }

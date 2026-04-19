@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabaseClient } from "@/lib/community/project-community-ops";
+import {
+  assertProjectCommunityAccess,
+  createProjectCommunityAccessErrorResponse,
+} from "@/lib/community/project-community-auth";
 
 type ConnectedProvider = "discord" | "telegram" | "x";
 
@@ -15,6 +19,7 @@ export async function GET(
       return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
     }
 
+    await assertProjectCommunityAccess(projectId);
     const supabase = getServiceSupabaseClient();
     const { data: reputationRows, error: reputationError } = await supabase
       .from("user_project_reputation")
@@ -166,12 +171,9 @@ export async function GET(
       readinessWatch,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Failed to load community members.",
-      },
-      { status: 500 }
+    return createProjectCommunityAccessErrorResponse(
+      error,
+      "Failed to load community members."
     );
   }
 }

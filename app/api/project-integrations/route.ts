@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  assertProjectCommunityAccess,
+  createProjectCommunityAccessErrorResponse,
+} from "@/lib/community/project-community-auth";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -236,6 +240,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Missing projectId." }, { status: 400 });
     }
 
+    await assertProjectCommunityAccess(projectId);
     const supabase = getServiceSupabaseClient();
     const { data, error } = await supabase
       .from("project_integrations")
@@ -302,15 +307,9 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load project integrations.",
-      },
-      { status: 500 }
+    return createProjectCommunityAccessErrorResponse(
+      error,
+      "Failed to load project integrations."
     );
   }
 }
@@ -338,6 +337,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Invalid provider." }, { status: 400 });
     }
 
+    await assertProjectCommunityAccess(projectId);
     const now = new Date().toISOString();
     const pushSettings = sanitizePushSettings(rawConfig, provider);
     const config =
@@ -491,15 +491,9 @@ export async function POST(request: NextRequest) {
           : "Telegram integration saved. Verification and community push settings are now attached to this project.",
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to save project integration.",
-      },
-      { status: 500 }
+    return createProjectCommunityAccessErrorResponse(
+      error,
+      "Failed to save project integration."
     );
   }
 }
