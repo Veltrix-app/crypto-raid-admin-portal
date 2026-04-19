@@ -569,7 +569,8 @@ async function postRuntimeCommunityCommand(path: string, body: Record<string, un
 
 export async function runProjectCommunityAutomation(params: {
   projectId: string;
-  automationId: string;
+  automationId?: string;
+  automationType?: CommunityAutomationType;
   authUserId: string;
 }) {
   return postRuntimeCommunityCommand("/community/automations/run", params);

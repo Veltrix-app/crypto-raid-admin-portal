@@ -8,6 +8,10 @@ type Props = {
   reactivationCount: number;
   watchlistCount: number;
   automations: CommunityAutomationRecord[];
+  onboardingCompletionRate: number;
+  comebackCompletionRate: number;
+  onboardingRecentCompleted: number;
+  comebackRecentCompleted: number;
   runningAutomationId: string | null;
   onRunAutomation: (automationId: string) => void;
 };
@@ -21,6 +25,10 @@ export function CommunityFunnelsPanel({
   reactivationCount,
   watchlistCount,
   automations,
+  onboardingCompletionRate,
+  comebackCompletionRate,
+  onboardingRecentCompleted,
+  comebackRecentCompleted,
   runningAutomationId,
   onRunAutomation,
 }: Props) {
@@ -37,7 +45,7 @@ export function CommunityFunnelsPanel({
       description="Funnels turn the contributor cohorts into repeatable execution rails instead of one-off manual pushes."
     >
       <div className="space-y-5">
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-6">
           <OpsMetricCard
             label="Starter queue"
             value={newcomerCount}
@@ -60,6 +68,18 @@ export function CommunityFunnelsPanel({
             label="Funnel rails"
             value={funnelAutomations.length}
             sub="Durable newcomer and comeback automation definitions."
+          />
+          <OpsMetricCard
+            label="Onboarding rate"
+            value={`${onboardingCompletionRate}%`}
+            sub={`${onboardingRecentCompleted} recent onboarding completions.`}
+            emphasis={onboardingCompletionRate >= 70 ? "primary" : onboardingCompletionRate >= 50 ? "default" : "warning"}
+          />
+          <OpsMetricCard
+            label="Comeback rate"
+            value={`${comebackCompletionRate}%`}
+            sub={`${comebackRecentCompleted} recent comeback completions.`}
+            emphasis={comebackCompletionRate >= 60 ? "primary" : comebackCompletionRate >= 40 ? "default" : "warning"}
           />
         </div>
 

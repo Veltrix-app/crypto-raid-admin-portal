@@ -11,6 +11,7 @@ import {
 type Props = {
   projectId: string;
   projectName: string;
+  activeMode: "owner" | "captain";
   discordIntegrationStatus: string;
   telegramIntegrationStatus: string;
   xIntegrationStatus: string;
@@ -44,6 +45,11 @@ type Props = {
   lastNewcomerPushAt: string;
   lastReactivationPushAt: string;
   lastActivationBoardAt: string;
+  recommendedPlayTitle: string;
+  recommendedPlaySummary: string;
+  recommendedPlayActionLabel: string;
+  ownerSignalCount: number;
+  captainPriorityCount: number;
 };
 
 function formatTimestamp(value: string) {
@@ -82,6 +88,7 @@ function StatusCard(props: {
 export function CommunityOverviewPanel({
   projectId,
   projectName,
+  activeMode,
   discordIntegrationStatus,
   telegramIntegrationStatus,
   xIntegrationStatus,
@@ -115,6 +122,11 @@ export function CommunityOverviewPanel({
   lastNewcomerPushAt,
   lastReactivationPushAt,
   lastActivationBoardAt,
+  recommendedPlayTitle,
+  recommendedPlaySummary,
+  recommendedPlayActionLabel,
+  ownerSignalCount,
+  captainPriorityCount,
 }: Props) {
   return (
     <OpsPanel
@@ -141,6 +153,12 @@ export function CommunityOverviewPanel({
     >
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="grid gap-3 sm:grid-cols-2">
+          <OpsMetricCard
+            label="Active mode"
+            value={activeMode === "owner" ? "Owner" : "Captain"}
+            sub="The page can bias toward owner guidance or captain execution without leaving this project scope."
+            emphasis="primary"
+          />
           <OpsMetricCard
             label="Campaigns"
             value={campaignCount}
@@ -233,9 +251,43 @@ export function CommunityOverviewPanel({
             sub="Failed automation or playbook runs visible in recent history."
             emphasis={recentAutomationFailureCount > 0 ? "warning" : "default"}
           />
+          <OpsMetricCard
+            label="Owner signals"
+            value={ownerSignalCount}
+            sub="Aggregate guidance signals currently visible in the owner rail."
+            emphasis={ownerSignalCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Captain priorities"
+            value={captainPriorityCount}
+            sub="Highest-priority actions currently visible in the captain workspace."
+            emphasis={captainPriorityCount > 0 ? "primary" : "default"}
+          />
         </div>
 
         <div className="grid gap-3">
+          <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">
+                  Recommended next play
+                </p>
+                <p className="mt-2 text-sm font-semibold text-text">
+                  {recommendedPlayTitle || "Current rails look stable"}
+                </p>
+                <p className="mt-2 text-sm leading-7 text-sub">
+                  {recommendedPlaySummary ||
+                    "No urgent owner intervention is currently required on this project rail."}
+                </p>
+              </div>
+              {recommendedPlayActionLabel ? (
+                <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+                  {recommendedPlayActionLabel}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
           <div className="rounded-[24px] border border-line bg-card2 p-5">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-primary/20 bg-primary/10 text-primary">

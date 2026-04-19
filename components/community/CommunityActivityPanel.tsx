@@ -15,6 +15,10 @@ type Props = {
   playbookRunCount: number;
   captainActionCount: number;
   recentAutomationFailureCount: number;
+  onboardingRecentCompleted: number;
+  comebackRecentCompleted: number;
+  captainPriorityCount: number;
+  captainBlockedCount: number;
 };
 
 function formatActionLabel(action: string) {
@@ -36,6 +40,10 @@ export function CommunityActivityPanel({
   playbookRunCount,
   captainActionCount,
   recentAutomationFailureCount,
+  onboardingRecentCompleted,
+  comebackRecentCompleted,
+  captainPriorityCount,
+  captainBlockedCount,
 }: Props) {
   return (
     <OpsPanel
@@ -44,7 +52,7 @@ export function CommunityActivityPanel({
       description="This keeps the project team close to what the community rail is doing without exposing any other workspace."
     >
       <div className="space-y-5">
-        <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-8">
+        <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-10">
           <OpsMetricCard
             label="Callback failures"
             value={callbackFailures}
@@ -92,6 +100,24 @@ export function CommunityActivityPanel({
             value={recentAutomationFailureCount}
             sub="Failed automation or playbook runs visible in v4 history."
             emphasis={recentAutomationFailureCount > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Onboarding wins"
+            value={onboardingRecentCompleted}
+            sub="Recent onboarding completions visible in aggregate journey outcomes."
+            emphasis={onboardingRecentCompleted > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Comebacks"
+            value={comebackRecentCompleted}
+            sub="Recent comeback completions visible in aggregate journey outcomes."
+            emphasis={comebackRecentCompleted > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Captain pressure"
+            value={captainPriorityCount + captainBlockedCount}
+            sub="Current captain priorities plus blocked queue pressure."
+            emphasis={captainPriorityCount + captainBlockedCount > 0 ? "warning" : "default"}
           />
         </div>
 

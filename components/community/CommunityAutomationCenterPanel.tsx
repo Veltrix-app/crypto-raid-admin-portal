@@ -6,6 +6,8 @@ import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/
 type Props = {
   automations: CommunityAutomationRecord[];
   automationRuns: CommunityAutomationRunRecord[];
+  journeyAutomationCount: number;
+  recommendedPlayTitle: string;
   saving: boolean;
   runningAutomationId: string | null;
   notice: string;
@@ -25,6 +27,8 @@ function formatTimestamp(value: string) {
 export function CommunityAutomationCenterPanel({
   automations,
   automationRuns,
+  journeyAutomationCount,
+  recommendedPlayTitle,
   saving,
   runningAutomationId,
   notice,
@@ -84,7 +88,22 @@ export function CommunityAutomationCenterPanel({
             sub="Failed automation runs visible in the recent history."
             emphasis={failedRuns > 0 ? "warning" : "default"}
           />
+          <OpsMetricCard
+            label="Journey-linked rails"
+            value={journeyAutomationCount}
+            sub="Automations tied directly to newcomer, comeback and activation outcomes."
+            emphasis={journeyAutomationCount > 0 ? "primary" : "default"}
+          />
         </div>
+
+        {recommendedPlayTitle ? (
+          <div className="rounded-[24px] border border-line bg-card2 p-5 text-sm text-sub">
+            <span className="font-bold uppercase tracking-[0.14em] text-primary">Owner cue</span>
+            <p className="mt-3 leading-7">
+              Current recommended play: <span className="font-semibold text-text">{recommendedPlayTitle}</span>
+            </p>
+          </div>
+        ) : null}
 
         <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-3">
