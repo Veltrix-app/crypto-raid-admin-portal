@@ -12,6 +12,8 @@ type Props = {
   telegramIntegrationStatus: string;
   xIntegrationStatus: string;
   telegramCommandsEnabled: boolean;
+  captainsEnabled: boolean;
+  activationBoardsEnabled: boolean;
   campaignCount: number;
   questCount: number;
   raidCount: number;
@@ -19,6 +21,10 @@ type Props = {
   teamMemberCount: number;
   linkedContributorCount: number;
   walletVerifiedCount: number;
+  captainCount: number;
+  newcomerCount: number;
+  reactivationCount: number;
+  watchlistCount: number;
   callbackFailures: number;
   onchainFailures: number;
   latestIssue: string;
@@ -27,6 +33,9 @@ type Props = {
   lastMissionDigestAt: string;
   lastRaidAlertAt: string;
   lastAutomationRunAt: string;
+  lastNewcomerPushAt: string;
+  lastReactivationPushAt: string;
+  lastActivationBoardAt: string;
 };
 
 function formatTimestamp(value: string) {
@@ -40,6 +49,8 @@ export function CommunityOverviewPanel({
   telegramIntegrationStatus,
   xIntegrationStatus,
   telegramCommandsEnabled,
+  captainsEnabled,
+  activationBoardsEnabled,
   campaignCount,
   questCount,
   raidCount,
@@ -47,6 +58,10 @@ export function CommunityOverviewPanel({
   teamMemberCount,
   linkedContributorCount,
   walletVerifiedCount,
+  captainCount,
+  newcomerCount,
+  reactivationCount,
+  watchlistCount,
   callbackFailures,
   onchainFailures,
   latestIssue,
@@ -55,6 +70,9 @@ export function CommunityOverviewPanel({
   lastMissionDigestAt,
   lastRaidAlertAt,
   lastAutomationRunAt,
+  lastNewcomerPushAt,
+  lastReactivationPushAt,
+  lastActivationBoardAt,
 }: Props) {
   return (
     <OpsPanel
@@ -88,6 +106,10 @@ export function CommunityOverviewPanel({
           <OpsMetricCard label="Team members" value={teamMemberCount} sub="People currently attached to this workspace." />
           <OpsMetricCard label="Linked contributors" value={linkedContributorCount} sub="Contributors already reachable through community command rails." emphasis={linkedContributorCount > 0 ? "primary" : "default"} />
           <OpsMetricCard label="Wallet verified" value={walletVerifiedCount} sub="Community contributors with a verified wallet ready for deeper trust rails." />
+          <OpsMetricCard label="Captains" value={captainCount} sub="Assigned community leads attached to this project." emphasis={captainCount > 0 ? "primary" : "default"} />
+          <OpsMetricCard label="Newcomers" value={newcomerCount} sub="Fresh contributors waiting for a starter lane." />
+          <OpsMetricCard label="Reactivation" value={reactivationCount} sub="Dormant contributors worth pulling back in." emphasis={reactivationCount > 0 ? "warning" : "default"} />
+          <OpsMetricCard label="Watchlist" value={watchlistCount} sub="Contributors currently carrying trust or quality issues." emphasis={watchlistCount > 0 ? "warning" : "default"} />
         </div>
 
         <div className="grid gap-3">
@@ -115,6 +137,12 @@ export function CommunityOverviewPanel({
               </OpsStatusPill>
               <OpsStatusPill tone={telegramCommandsEnabled ? "success" : "default"}>
                 Telegram commands {telegramCommandsEnabled ? "enabled" : "parked"}
+              </OpsStatusPill>
+              <OpsStatusPill tone={captainsEnabled ? "success" : "default"}>
+                Captains {captainsEnabled ? "enabled" : "parked"}
+              </OpsStatusPill>
+              <OpsStatusPill tone={activationBoardsEnabled ? "success" : "default"}>
+                Activation boards {activationBoardsEnabled ? "enabled" : "parked"}
               </OpsStatusPill>
             </div>
           </div>
@@ -170,6 +198,48 @@ export function CommunityOverviewPanel({
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last raid alert</p>
                   <p className="mt-1 text-sm font-semibold text-text">
                     {formatTimestamp(lastRaidAlertAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-line bg-card2 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
+                  <Activity size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last newcomer push</p>
+                  <p className="mt-1 text-sm font-semibold text-text">
+                    {formatTimestamp(lastNewcomerPushAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-line bg-card2 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
+                  <Activity size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last comeback push</p>
+                  <p className="mt-1 text-sm font-semibold text-text">
+                    {formatTimestamp(lastReactivationPushAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-line bg-card2 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
+                  <Activity size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last activation board</p>
+                  <p className="mt-1 text-sm font-semibold text-text">
+                    {formatTimestamp(lastActivationBoardAt)}
                   </p>
                 </div>
               </div>

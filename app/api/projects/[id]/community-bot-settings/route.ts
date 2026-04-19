@@ -26,9 +26,22 @@ type CommunitySettingsMetadata = {
   raidRemindersEnabled?: boolean;
   raidResultsEnabled?: boolean;
   raidCadence?: CommunityAutomationCadence;
+  captainsEnabled?: boolean;
+  captainAssignments?: Array<{
+    authUserId?: string;
+    role?: string;
+    label?: string;
+  }>;
+  newcomerFunnelEnabled?: boolean;
+  reactivationFunnelEnabled?: boolean;
+  activationBoardsEnabled?: boolean;
+  activationBoardCadence?: CommunityAutomationCadence;
   lastMissionDigestAt?: string;
   lastRaidAlertAt?: string;
   lastAutomationRunAt?: string;
+  lastNewcomerPushAt?: string;
+  lastReactivationPushAt?: string;
+  lastActivationBoardAt?: string;
 };
 
 function getServiceSupabaseClient() {
@@ -64,11 +77,19 @@ function getDefaultSettings() {
     raidRemindersEnabled: false,
     raidResultsEnabled: false,
     raidCadence: "manual" as CommunityAutomationCadence,
+    captainsEnabled: false,
+    newcomerFunnelEnabled: false,
+    reactivationFunnelEnabled: false,
+    activationBoardsEnabled: false,
+    activationBoardCadence: "manual" as CommunityAutomationCadence,
     lastRankSyncAt: "",
     lastLeaderboardPostedAt: "",
     lastMissionDigestAt: "",
     lastRaidAlertAt: "",
     lastAutomationRunAt: "",
+    lastNewcomerPushAt: "",
+    lastReactivationPushAt: "",
+    lastActivationBoardAt: "",
   };
 }
 
@@ -150,11 +171,22 @@ function readMetadata(
     raidRemindersEnabled: metadata.raidRemindersEnabled === true,
     raidResultsEnabled: metadata.raidResultsEnabled === true,
     raidCadence: sanitizeAutomationCadence(metadata.raidCadence),
+    captainsEnabled: metadata.captainsEnabled === true,
+    newcomerFunnelEnabled: metadata.newcomerFunnelEnabled === true,
+    reactivationFunnelEnabled: metadata.reactivationFunnelEnabled === true,
+    activationBoardsEnabled: metadata.activationBoardsEnabled === true,
+    activationBoardCadence: sanitizeAutomationCadence(metadata.activationBoardCadence),
     lastMissionDigestAt:
       typeof metadata.lastMissionDigestAt === "string" ? metadata.lastMissionDigestAt : "",
     lastRaidAlertAt: typeof metadata.lastRaidAlertAt === "string" ? metadata.lastRaidAlertAt : "",
     lastAutomationRunAt:
       typeof metadata.lastAutomationRunAt === "string" ? metadata.lastAutomationRunAt : "",
+    lastNewcomerPushAt:
+      typeof metadata.lastNewcomerPushAt === "string" ? metadata.lastNewcomerPushAt : "",
+    lastReactivationPushAt:
+      typeof metadata.lastReactivationPushAt === "string" ? metadata.lastReactivationPushAt : "",
+    lastActivationBoardAt:
+      typeof metadata.lastActivationBoardAt === "string" ? metadata.lastActivationBoardAt : "",
   };
 }
 
@@ -435,6 +467,16 @@ export async function POST(
             raidRemindersEnabled: rawSettings.raidRemindersEnabled === true,
             raidResultsEnabled: rawSettings.raidResultsEnabled === true,
             raidCadence: sanitizeAutomationCadence(rawSettings.raidCadence),
+            captainsEnabled: rawSettings.captainsEnabled === true,
+            newcomerFunnelEnabled: rawSettings.newcomerFunnelEnabled === true,
+            reactivationFunnelEnabled: rawSettings.reactivationFunnelEnabled === true,
+            activationBoardsEnabled: rawSettings.activationBoardsEnabled === true,
+            activationBoardCadence: sanitizeAutomationCadence(
+              rawSettings.activationBoardCadence
+            ),
+            captainAssignments: Array.isArray(currentMetadata.captainAssignments)
+              ? currentMetadata.captainAssignments
+              : [],
             lastMissionDigestAt:
               typeof currentMetadata.lastMissionDigestAt === "string"
                 ? currentMetadata.lastMissionDigestAt
@@ -446,6 +488,18 @@ export async function POST(
             lastAutomationRunAt:
               typeof currentMetadata.lastAutomationRunAt === "string"
                 ? currentMetadata.lastAutomationRunAt
+                : "",
+            lastNewcomerPushAt:
+              typeof currentMetadata.lastNewcomerPushAt === "string"
+                ? currentMetadata.lastNewcomerPushAt
+                : "",
+            lastReactivationPushAt:
+              typeof currentMetadata.lastReactivationPushAt === "string"
+                ? currentMetadata.lastReactivationPushAt
+                : "",
+            lastActivationBoardAt:
+              typeof currentMetadata.lastActivationBoardAt === "string"
+                ? currentMetadata.lastActivationBoardAt
                 : "",
           },
           updated_at: new Date().toISOString(),

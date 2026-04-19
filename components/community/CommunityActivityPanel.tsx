@@ -6,6 +6,8 @@ import { OpsMetricCard, OpsPanel } from "@/components/layout/ops/OpsPrimitives";
 type Props = {
   callbackFailures: number;
   onchainFailures: number;
+  watchlistCount: number;
+  openFlagCount: number;
   latestIssue: string;
   recentActivity: DbAuditLog[];
   loadingActivity: boolean;
@@ -21,6 +23,8 @@ function formatActionLabel(action: string) {
 export function CommunityActivityPanel({
   callbackFailures,
   onchainFailures,
+  watchlistCount,
+  openFlagCount,
   latestIssue,
   recentActivity,
   loadingActivity,
@@ -32,7 +36,7 @@ export function CommunityActivityPanel({
       description="This keeps the project team close to what the community rail is doing without exposing any other workspace."
     >
       <div className="space-y-5">
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-4">
           <OpsMetricCard
             label="Callback failures"
             value={callbackFailures}
@@ -50,6 +54,12 @@ export function CommunityActivityPanel({
             value={recentActivity.length}
             sub="Latest project-scoped bot and audit events visible in this page."
             emphasis={recentActivity.length > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Quality pressure"
+            value={watchlistCount + openFlagCount}
+            sub="Open trust/watch pressure currently visible inside this project's rail."
+            emphasis={watchlistCount + openFlagCount > 0 ? "warning" : "default"}
           />
         </div>
 

@@ -59,11 +59,19 @@ export type DiscordCommunityBotSettings = {
   raidRemindersEnabled: boolean;
   raidResultsEnabled: boolean;
   raidCadence: CommunityAutomationCadence;
+  captainsEnabled: boolean;
+  newcomerFunnelEnabled: boolean;
+  reactivationFunnelEnabled: boolean;
+  activationBoardsEnabled: boolean;
+  activationBoardCadence: CommunityAutomationCadence;
   lastRankSyncAt: string;
   lastLeaderboardPostedAt: string;
   lastMissionDigestAt: string;
   lastRaidAlertAt: string;
   lastAutomationRunAt: string;
+  lastNewcomerPushAt: string;
+  lastReactivationPushAt: string;
+  lastActivationBoardAt: string;
 };
 
 export type DiscordRankRule = {
@@ -127,11 +135,19 @@ export function createDefaultDiscordBotSettings(): DiscordCommunityBotSettings {
     raidRemindersEnabled: false,
     raidResultsEnabled: false,
     raidCadence: "manual",
+    captainsEnabled: false,
+    newcomerFunnelEnabled: false,
+    reactivationFunnelEnabled: false,
+    activationBoardsEnabled: false,
+    activationBoardCadence: "manual",
     lastRankSyncAt: "",
     lastLeaderboardPostedAt: "",
     lastMissionDigestAt: "",
     lastRaidAlertAt: "",
     lastAutomationRunAt: "",
+    lastNewcomerPushAt: "",
+    lastReactivationPushAt: "",
+    lastActivationBoardAt: "",
   };
 }
 

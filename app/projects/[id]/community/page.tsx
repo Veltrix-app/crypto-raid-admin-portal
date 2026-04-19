@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import { CommunityActivityPanel } from "@/components/community/CommunityActivityPanel";
+import { CommunityActivationBoardsPanel } from "@/components/community/CommunityActivationBoardsPanel";
 import { CommunityAutomationsPanel } from "@/components/community/CommunityAutomationsPanel";
+import { CommunityCaptainsPanel } from "@/components/community/CommunityCaptainsPanel";
 import {
   buildDiscordRankRulesFromPreset,
   CommunityBotAction,
@@ -17,7 +19,9 @@ import {
   DISCORD_RANK_PRESETS,
   readPushSettings,
 } from "@/components/community/community-config";
+import { CommunityCohortsPanel } from "@/components/community/CommunityCohortsPanel";
 import { CommunityCommandsPanel } from "@/components/community/CommunityCommandsPanel";
+import { CommunityAnalyticsPanel } from "@/components/community/CommunityAnalyticsPanel";
 import { CommunityIntegrationsPanel } from "@/components/community/CommunityIntegrationsPanel";
 import { CommunityLeaderboardsPanel } from "@/components/community/CommunityLeaderboardsPanel";
 import { CommunityMembersPanel } from "@/components/community/CommunityMembersPanel";
@@ -70,6 +74,121 @@ type CommunityMembersPayload = {
   readinessWatch: CommunityContributor[];
 };
 
+type CaptainAssignment = {
+  authUserId: string;
+  role: "community_captain" | "raid_lead" | "growth_lead";
+  label: string;
+};
+
+type CaptainCard = CaptainAssignment & {
+  username: string;
+  xp: number;
+  trust: number;
+  linkedProviders: string[];
+  walletVerified: boolean;
+  openFlagCount: number;
+  readinessSummary: string;
+};
+
+type CaptainCandidate = {
+  authUserId: string;
+  username: string;
+  source: "team" | "contributors";
+  roleHint: string;
+  xp: number;
+  trust: number;
+  linkedProviders: string[];
+  walletVerified: boolean;
+  openFlagCount: number;
+};
+
+type CohortContributor = {
+  authUserId: string;
+  username: string;
+  xp: number;
+  level: number;
+  trust: number;
+  linkedProviders: string[];
+  walletVerified: boolean;
+  readinessGaps: string[];
+  recentFlagReasons: string[];
+  daysSinceActive: number | null;
+};
+
+type ActivationBoard = {
+  campaignId: string;
+  title: string;
+  featured: boolean;
+  activationScore: number;
+  readyContributors: number;
+  newcomerCandidates: number;
+  reactivationCandidates: number;
+  coreCandidates: number;
+  questCount: number;
+  raidCount: number;
+  rewardCount: number;
+  recommendedLane: "newcomer" | "reactivation" | "core";
+  recommendedCopy: string;
+};
+
+type CommunityGrowthPayload = {
+  captains: {
+    enabled: boolean;
+    assignments: CaptainCard[];
+    candidates: CaptainCandidate[];
+  };
+  cohorts: {
+    summary: {
+      totalContributors: number;
+      newcomers: number;
+      warmingUp: number;
+      core: number;
+      watchlist: number;
+      reactivation: number;
+      commandReady: number;
+      fullStackReady: number;
+      openFlags: number;
+    };
+    newcomers: CohortContributor[];
+    warmingUp: CohortContributor[];
+    core: CohortContributor[];
+    watchlist: CohortContributor[];
+    reactivation: CohortContributor[];
+  };
+  analytics: {
+    contributorCount: number;
+    commandReadyRate: number;
+    walletVerifiedRate: number;
+    fullStackReadyRate: number;
+    recentActiveRate: number;
+    averageTrust: number;
+    watchlistCount: number;
+    openFlagCount: number;
+    captainCount: number;
+    activeCampaignCount: number;
+    activationReadyCount: number;
+    recentXp: number;
+  };
+  trust: {
+    averageTrust: number;
+    openFlagCount: number;
+    watchlistCount: number;
+    latestIssue: string;
+  };
+  activationBoards: ActivationBoard[];
+  settings: {
+    captainsEnabled: boolean;
+    newcomerFunnelEnabled: boolean;
+    reactivationFunnelEnabled: boolean;
+    activationBoardsEnabled: boolean;
+    activationBoardCadence: "manual" | "daily" | "weekly";
+    captainAssignments: CaptainAssignment[];
+    lastNewcomerPushAt: string;
+    lastReactivationPushAt: string;
+    lastActivationBoardAt: string;
+  };
+};
+
 const emptyMembersPayload: CommunityMembersPayload = {
   summary: {
     totalContributors: 0,
@@ -82,6 +201,64 @@ const emptyMembersPayload: CommunityMembersPayload = {
   },
   topContributors: [],
   readinessWatch: [],
+};
+
+const emptyGrowthPayload: CommunityGrowthPayload = {
+  captains: {
+    enabled: false,
+    assignments: [],
+    candidates: [],
+  },
+  cohorts: {
+    summary: {
+      totalContributors: 0,
+      newcomers: 0,
+      warmingUp: 0,
+      core: 0,
+      watchlist: 0,
+      reactivation: 0,
+      commandReady: 0,
+      fullStackReady: 0,
+      openFlags: 0,
+    },
+    newcomers: [],
+    warmingUp: [],
+    core: [],
+    watchlist: [],
+    reactivation: [],
+  },
+  analytics: {
+    contributorCount: 0,
+    commandReadyRate: 0,
+    walletVerifiedRate: 0,
+    fullStackReadyRate: 0,
+    recentActiveRate: 0,
+    averageTrust: 0,
+    watchlistCount: 0,
+    openFlagCount: 0,
+    captainCount: 0,
+    activeCampaignCount: 0,
+    activationReadyCount: 0,
+    recentXp: 0,
+  },
+  trust: {
+    averageTrust: 0,
+    openFlagCount: 0,
+    watchlistCount: 0,
+    latestIssue: "No trust incidents are active for this project.",
+  },
+  activationBoards: [],
+  settings: {
+    captainsEnabled: false,
+    newcomerFunnelEnabled: false,
+    reactivationFunnelEnabled: false,
+    activationBoardsEnabled: false,
+    activationBoardCadence: "manual",
+    captainAssignments: [],
+    lastNewcomerPushAt: "",
+    lastReactivationPushAt: "",
+    lastActivationBoardAt: "",
+  },
 };
 
 export default function ProjectCommunityManagementPage() {
@@ -149,6 +326,12 @@ export default function ProjectCommunityManagementPage() {
   const [communityMembers, setCommunityMembers] =
     useState<CommunityMembersPayload>(emptyMembersPayload);
   const [loadingCommunityMembers, setLoadingCommunityMembers] = useState(false);
+  const [communityGrowth, setCommunityGrowth] = useState<CommunityGrowthPayload>(emptyGrowthPayload);
+  const [loadingCommunityGrowth, setLoadingCommunityGrowth] = useState(false);
+  const [captainAssignments, setCaptainAssignments] = useState<CaptainAssignment[]>([]);
+  const [savingCaptains, setSavingCaptains] = useState(false);
+  const [captainNotice, setCaptainNotice] = useState("");
+  const [captainNoticeTone, setCaptainNoticeTone] = useState<"success" | "error">("success");
 
   const [runningMissionAction, setRunningMissionAction] = useState<
     "digest" | "campaign" | "quest" | "reward" | null
@@ -169,6 +352,17 @@ export default function ProjectCommunityManagementPage() {
   >(null);
   const [automationNotice, setAutomationNotice] = useState("");
   const [automationNoticeTone, setAutomationNoticeTone] = useState<"success" | "error">(
+    "success"
+  );
+  const [runningFunnelAction, setRunningFunnelAction] = useState<
+    "newcomer" | "reactivation" | null
+  >(null);
+  const [funnelNotice, setFunnelNotice] = useState("");
+  const [funnelNoticeTone, setFunnelNoticeTone] = useState<"success" | "error">("success");
+  const [runningActivationBoardCampaignId, setRunningActivationBoardCampaignId] =
+    useState<string | null>(null);
+  const [activationNotice, setActivationNotice] = useState("");
+  const [activationNoticeTone, setActivationNoticeTone] = useState<"success" | "error">(
     "success"
   );
 
@@ -332,6 +526,15 @@ export default function ProjectCommunityManagementPage() {
           payload.settings?.raidCadence === "weekly"
             ? payload.settings.raidCadence
             : "manual",
+        captainsEnabled: payload.settings?.captainsEnabled === true,
+        newcomerFunnelEnabled: payload.settings?.newcomerFunnelEnabled === true,
+        reactivationFunnelEnabled: payload.settings?.reactivationFunnelEnabled === true,
+        activationBoardsEnabled: payload.settings?.activationBoardsEnabled === true,
+        activationBoardCadence:
+          payload.settings?.activationBoardCadence === "daily" ||
+          payload.settings?.activationBoardCadence === "weekly"
+            ? payload.settings.activationBoardCadence
+            : "manual",
         lastRankSyncAt:
           typeof payload.settings?.lastRankSyncAt === "string"
             ? payload.settings.lastRankSyncAt
@@ -351,6 +554,18 @@ export default function ProjectCommunityManagementPage() {
         lastAutomationRunAt:
           typeof payload.settings?.lastAutomationRunAt === "string"
             ? payload.settings.lastAutomationRunAt
+            : "",
+        lastNewcomerPushAt:
+          typeof payload.settings?.lastNewcomerPushAt === "string"
+            ? payload.settings.lastNewcomerPushAt
+            : "",
+        lastReactivationPushAt:
+          typeof payload.settings?.lastReactivationPushAt === "string"
+            ? payload.settings.lastReactivationPushAt
+            : "",
+        lastActivationBoardAt:
+          typeof payload.settings?.lastActivationBoardAt === "string"
+            ? payload.settings.lastActivationBoardAt
             : "",
       });
       setDiscordRankRules(
@@ -484,6 +699,75 @@ export default function ProjectCommunityManagementPage() {
     };
   }, [hasProjectAccess, project?.id]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadGrowth() {
+      if (!project?.id || !hasProjectAccess) return;
+
+      setLoadingCommunityGrowth(true);
+      const response = await fetch(`/api/projects/${project.id}/community-growth`, {
+        cache: "no-store",
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (cancelled) return;
+
+      if (!response.ok || !payload?.ok) {
+        setCommunityGrowth(emptyGrowthPayload);
+        setCaptainAssignments([]);
+        setLoadingCommunityGrowth(false);
+        return;
+      }
+
+      setCommunityGrowth({
+        captains: payload.captains ?? emptyGrowthPayload.captains,
+        cohorts: payload.cohorts ?? emptyGrowthPayload.cohorts,
+        analytics: payload.analytics ?? emptyGrowthPayload.analytics,
+        trust: payload.trust ?? emptyGrowthPayload.trust,
+        activationBoards: Array.isArray(payload.activationBoards)
+          ? payload.activationBoards
+          : [],
+        settings: payload.settings ?? emptyGrowthPayload.settings,
+      });
+      setCaptainAssignments(
+        Array.isArray(payload.settings?.captainAssignments)
+          ? payload.settings.captainAssignments
+          : []
+      );
+      setDiscordBotSettings((current) => ({
+        ...current,
+        captainsEnabled: payload.settings?.captainsEnabled === true,
+        newcomerFunnelEnabled: payload.settings?.newcomerFunnelEnabled === true,
+        reactivationFunnelEnabled: payload.settings?.reactivationFunnelEnabled === true,
+        activationBoardsEnabled: payload.settings?.activationBoardsEnabled === true,
+        activationBoardCadence:
+          payload.settings?.activationBoardCadence === "daily" ||
+          payload.settings?.activationBoardCadence === "weekly"
+            ? payload.settings.activationBoardCadence
+            : current.activationBoardCadence,
+        lastNewcomerPushAt:
+          typeof payload.settings?.lastNewcomerPushAt === "string"
+            ? payload.settings.lastNewcomerPushAt
+            : current.lastNewcomerPushAt,
+        lastReactivationPushAt:
+          typeof payload.settings?.lastReactivationPushAt === "string"
+            ? payload.settings.lastReactivationPushAt
+            : current.lastReactivationPushAt,
+        lastActivationBoardAt:
+          typeof payload.settings?.lastActivationBoardAt === "string"
+            ? payload.settings.lastActivationBoardAt
+            : current.lastActivationBoardAt,
+      }));
+      setLoadingCommunityGrowth(false);
+    }
+
+    void loadGrowth();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasProjectAccess, project?.id]);
+
   const relatedCampaigns = useMemo(
     () => campaigns.filter((campaign) => campaign.projectId === project?.id),
     [campaigns, project?.id]
@@ -508,6 +792,47 @@ export default function ProjectCommunityManagementPage() {
     () => new Map(projects.map((item) => [item.id, item.name])),
     [projects]
   );
+
+  async function refreshCommunityGrowth() {
+    if (!project?.id) return;
+
+    const response = await fetch(`/api/projects/${project.id}/community-growth`, {
+      cache: "no-store",
+    });
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload?.ok) {
+      return;
+    }
+
+    setCommunityGrowth({
+      captains: payload.captains ?? emptyGrowthPayload.captains,
+      cohorts: payload.cohorts ?? emptyGrowthPayload.cohorts,
+      analytics: payload.analytics ?? emptyGrowthPayload.analytics,
+      trust: payload.trust ?? emptyGrowthPayload.trust,
+      activationBoards: Array.isArray(payload.activationBoards) ? payload.activationBoards : [],
+      settings: payload.settings ?? emptyGrowthPayload.settings,
+    });
+    setCaptainAssignments(
+      Array.isArray(payload.settings?.captainAssignments)
+        ? payload.settings.captainAssignments
+        : []
+    );
+  }
+
+  async function refreshRecentActivity() {
+    if (!project?.id) return;
+
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("admin_audit_logs")
+      .select("*")
+      .eq("project_id", project.id)
+      .order("created_at", { ascending: false })
+      .limit(16);
+
+    setRecentActivity(((data ?? []) as DbAuditLog[]) ?? []);
+  }
 
   async function saveProjectIntegration(provider: "discord" | "telegram") {
     if (!project?.id) return;
@@ -615,6 +940,7 @@ export default function ProjectCommunityManagementPage() {
 
     setDiscordBotNoticeTone("success");
     setDiscordBotNotice(payload?.message || `Community bot settings saved for ${project.name}.`);
+    await refreshCommunityGrowth();
   }
 
   function loadDiscordRankPreset(presetId: string) {
@@ -807,6 +1133,7 @@ export default function ProjectCommunityManagementPage() {
         lastAutomationRunAt: new Date().toISOString(),
       }));
     }
+    await refreshRecentActivity();
   }
 
   async function runRaidAction(raidId: string, mode: "live" | "reminder" | "result") {
@@ -846,6 +1173,7 @@ export default function ProjectCommunityManagementPage() {
       lastRaidAlertAt: new Date().toISOString(),
       lastAutomationRunAt: new Date().toISOString(),
     }));
+    await refreshRecentActivity();
   }
 
   async function runAutomationAction(mode: "all" | "missions" | "raids") {
@@ -887,14 +1215,134 @@ export default function ProjectCommunityManagementPage() {
         ? { lastRaidAlertAt: new Date().toISOString() }
         : {}),
     }));
+    await refreshRecentActivity();
   }
 
-  if (authLoading || (!portalHydrated && (portalLoading || !project))) {
+  async function saveCaptains() {
+    if (!project?.id) return;
+
+    setSavingCaptains(true);
+    setCaptainNotice("");
+    setCaptainNoticeTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-captains`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        assignments: captainAssignments.map((assignment) => ({
+          ...assignment,
+          authUserId: assignment.authUserId.trim(),
+          label: assignment.label.trim(),
+        })),
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setSavingCaptains(false);
+
+    if (!response.ok || !payload?.ok) {
+      setCaptainNoticeTone("error");
+      setCaptainNotice(payload?.error || "Could not save captain roster.");
+      return;
+    }
+
+    setCaptainNoticeTone("success");
+    setCaptainNotice(payload?.message || "Community captains saved.");
+    await refreshCommunityGrowth();
+    await refreshRecentActivity();
+  }
+
+  async function runFunnelAction(mode: "newcomer" | "reactivation") {
+    if (!project?.id) return;
+
+    setRunningFunnelAction(mode);
+    setFunnelNotice("");
+    setFunnelNoticeTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-funnel-post`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ funnel: mode, providers: getMissionProviders() }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setRunningFunnelAction(null);
+
+    if (!response.ok || !payload?.ok) {
+      setFunnelNoticeTone("error");
+      setFunnelNotice(payload?.error || "Community funnel push failed.");
+      return;
+    }
+
+    const deliveries = Array.isArray(payload?.deliveries) ? payload.deliveries.length : 0;
+    setFunnelNoticeTone("success");
+    setFunnelNotice(
+      mode === "newcomer"
+        ? `Starter lane pushed through ${deliveries} provider target${deliveries === 1 ? "" : "s"}.`
+        : `Comeback lane pushed through ${deliveries} provider target${deliveries === 1 ? "" : "s"}.`
+    );
+    setDiscordBotSettings((current) => ({
+      ...current,
+      ...(mode === "newcomer" ? { lastNewcomerPushAt: new Date().toISOString() } : {}),
+      ...(mode === "reactivation"
+        ? { lastReactivationPushAt: new Date().toISOString() }
+        : {}),
+    }));
+    await refreshCommunityGrowth();
+    await refreshRecentActivity();
+  }
+
+  async function runActivationBoard(campaignId: string) {
+    if (!project?.id) return;
+
+    setRunningActivationBoardCampaignId(campaignId);
+    setActivationNotice("");
+    setActivationNoticeTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-activation-board`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ campaignId, providers: getMissionProviders() }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setRunningActivationBoardCampaignId(null);
+
+    if (!response.ok || !payload?.ok) {
+      setActivationNoticeTone("error");
+      setActivationNotice(payload?.error || "Activation board push failed.");
+      return;
+    }
+
+    const deliveries = Array.isArray(payload?.deliveries) ? payload.deliveries.length : 0;
+    setActivationNoticeTone("success");
+    setActivationNotice(
+      `Activation board pushed through ${deliveries} provider target${deliveries === 1 ? "" : "s"}.`
+    );
+    setDiscordBotSettings((current) => ({
+      ...current,
+      lastActivationBoardAt: new Date().toISOString(),
+    }));
+    await refreshCommunityGrowth();
+    await refreshRecentActivity();
+  }
+
+  if (
+    authLoading ||
+    loadingCommunityGrowth ||
+    (!portalHydrated && (portalLoading || !project))
+  ) {
     return (
       <AdminShell>
         <LoadingState
           title="Loading community control room"
-          description="Veltrix is pulling this project's provider rails, bot settings, contributor readiness and recent operator activity into the Community OS view."
+          description="Veltrix is pulling this project's provider rails, bot settings, contributor readiness, captain lanes, trust posture and recent operator activity into the Community OS view."
         />
       </AdminShell>
     );
@@ -955,6 +1403,8 @@ export default function ProjectCommunityManagementPage() {
           telegramIntegrationStatus={telegramIntegrationStatus}
           xIntegrationStatus={xIntegrationStatus}
           telegramCommandsEnabled={discordBotSettings.telegramCommandsEnabled}
+          captainsEnabled={discordBotSettings.captainsEnabled}
+          activationBoardsEnabled={discordBotSettings.activationBoardsEnabled}
           campaignCount={relatedCampaigns.length}
           questCount={relatedQuests.length}
           raidCount={relatedRaids.length}
@@ -962,14 +1412,25 @@ export default function ProjectCommunityManagementPage() {
           teamMemberCount={relatedTeamMembers.length}
           linkedContributorCount={communityMembers.summary.commandReady}
           walletVerifiedCount={communityMembers.summary.walletVerified}
+          captainCount={communityGrowth.captains.assignments.length}
+          newcomerCount={communityGrowth.cohorts.summary.newcomers}
+          reactivationCount={communityGrowth.cohorts.summary.reactivation}
+          watchlistCount={communityGrowth.cohorts.summary.watchlist}
           callbackFailures={operatorSignals.callbackFailures}
           onchainFailures={operatorSignals.onchainFailures}
-          latestIssue={operatorSignals.latestIssue}
+          latestIssue={
+            communityGrowth.trust.openFlagCount > 0 || communityGrowth.trust.watchlistCount > 0
+              ? communityGrowth.trust.latestIssue
+              : operatorSignals.latestIssue
+          }
           lastRankSyncAt={discordBotSettings.lastRankSyncAt}
           lastLeaderboardPostedAt={discordBotSettings.lastLeaderboardPostedAt}
           lastMissionDigestAt={discordBotSettings.lastMissionDigestAt}
           lastRaidAlertAt={discordBotSettings.lastRaidAlertAt}
           lastAutomationRunAt={discordBotSettings.lastAutomationRunAt}
+          lastNewcomerPushAt={discordBotSettings.lastNewcomerPushAt}
+          lastReactivationPushAt={discordBotSettings.lastReactivationPushAt}
+          lastActivationBoardAt={discordBotSettings.lastActivationBoardAt}
         />
 
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -984,7 +1445,13 @@ export default function ProjectCommunityManagementPage() {
           <CommunityActivityPanel
             callbackFailures={operatorSignals.callbackFailures}
             onchainFailures={operatorSignals.onchainFailures}
-            latestIssue={operatorSignals.latestIssue}
+            watchlistCount={communityGrowth.cohorts.summary.watchlist}
+            openFlagCount={communityGrowth.trust.openFlagCount}
+            latestIssue={
+              communityGrowth.trust.openFlagCount > 0 || communityGrowth.trust.watchlistCount > 0
+                ? communityGrowth.trust.latestIssue
+                : operatorSignals.latestIssue
+            }
             recentActivity={recentActivity}
             loadingActivity={loadingActivity}
           />
@@ -1103,6 +1570,53 @@ export default function ProjectCommunityManagementPage() {
           automationNotice={automationNotice}
           automationNoticeTone={automationNoticeTone}
           onRunAutomationAction={(mode) => void runAutomationAction(mode)}
+        />
+
+        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <CommunityCaptainsPanel
+            settings={discordBotSettings}
+            setSettings={setDiscordBotSettings}
+            assignments={captainAssignments}
+            setAssignments={setCaptainAssignments}
+            roster={communityGrowth.captains.assignments}
+            candidates={communityGrowth.captains.candidates}
+            savingSettings={savingDiscordBotSettings}
+            savingCaptains={savingCaptains}
+            captainNotice={captainNotice}
+            captainNoticeTone={captainNoticeTone}
+            onSaveSettings={() => void saveDiscordBotConfig()}
+            onSaveCaptains={() => void saveCaptains()}
+          />
+
+          <CommunityAnalyticsPanel analytics={communityGrowth.analytics} />
+        </div>
+
+        <CommunityCohortsPanel
+          settings={discordBotSettings}
+          setSettings={setDiscordBotSettings}
+          summary={communityGrowth.cohorts.summary}
+          newcomers={communityGrowth.cohorts.newcomers}
+          reactivation={communityGrowth.cohorts.reactivation}
+          watchlist={communityGrowth.cohorts.watchlist}
+          trust={communityGrowth.trust}
+          savingSettings={savingDiscordBotSettings}
+          runningFunnelAction={runningFunnelAction}
+          funnelNotice={funnelNotice}
+          funnelNoticeTone={funnelNoticeTone}
+          onSaveSettings={() => void saveDiscordBotConfig()}
+          onRunFunnelAction={(mode) => void runFunnelAction(mode)}
+        />
+
+        <CommunityActivationBoardsPanel
+          settings={discordBotSettings}
+          setSettings={setDiscordBotSettings}
+          boards={communityGrowth.activationBoards}
+          savingSettings={savingDiscordBotSettings}
+          runningActivationBoardCampaignId={runningActivationBoardCampaignId}
+          activationNotice={activationNotice}
+          activationNoticeTone={activationNoticeTone}
+          onSaveSettings={() => void saveDiscordBotConfig()}
+          onRunActivationBoard={(campaignId) => void runActivationBoard(campaignId)}
         />
       </div>
     </AdminShell>
