@@ -11,15 +11,22 @@ type Props = {
   discordIntegrationStatus: string;
   telegramIntegrationStatus: string;
   xIntegrationStatus: string;
+  telegramCommandsEnabled: boolean;
   campaignCount: number;
   questCount: number;
+  raidCount: number;
   rewardCount: number;
   teamMemberCount: number;
+  linkedContributorCount: number;
+  walletVerifiedCount: number;
   callbackFailures: number;
   onchainFailures: number;
   latestIssue: string;
   lastRankSyncAt: string;
   lastLeaderboardPostedAt: string;
+  lastMissionDigestAt: string;
+  lastRaidAlertAt: string;
+  lastAutomationRunAt: string;
 };
 
 function formatTimestamp(value: string) {
@@ -32,15 +39,22 @@ export function CommunityOverviewPanel({
   discordIntegrationStatus,
   telegramIntegrationStatus,
   xIntegrationStatus,
+  telegramCommandsEnabled,
   campaignCount,
   questCount,
+  raidCount,
   rewardCount,
   teamMemberCount,
+  linkedContributorCount,
+  walletVerifiedCount,
   callbackFailures,
   onchainFailures,
   latestIssue,
   lastRankSyncAt,
   lastLeaderboardPostedAt,
+  lastMissionDigestAt,
+  lastRaidAlertAt,
+  lastAutomationRunAt,
 }: Props) {
   return (
     <OpsPanel
@@ -69,8 +83,11 @@ export function CommunityOverviewPanel({
         <div className="grid gap-3 sm:grid-cols-2">
           <OpsMetricCard label="Campaigns" value={campaignCount} sub="Community can post, rank and activate against these lanes." emphasis={campaignCount > 0 ? "primary" : "default"} />
           <OpsMetricCard label="Missions" value={questCount} sub="Live quest surfaces that can feed leaderboards and push rails." emphasis={questCount > 0 ? "primary" : "default"} />
+          <OpsMetricCard label="Raids" value={raidCount} sub="Live raid rails that can be pushed or automated from here." emphasis={raidCount > 0 ? "primary" : "default"} />
           <OpsMetricCard label="Rewards" value={rewardCount} sub="Reward drops available for claim and promotion." />
           <OpsMetricCard label="Team members" value={teamMemberCount} sub="People currently attached to this workspace." />
+          <OpsMetricCard label="Linked contributors" value={linkedContributorCount} sub="Contributors already reachable through community command rails." emphasis={linkedContributorCount > 0 ? "primary" : "default"} />
+          <OpsMetricCard label="Wallet verified" value={walletVerifiedCount} sub="Community contributors with a verified wallet ready for deeper trust rails." />
         </div>
 
         <div className="grid gap-3">
@@ -96,10 +113,13 @@ export function CommunityOverviewPanel({
               <OpsStatusPill tone={getIntegrationTone(xIntegrationStatus)}>
                 {describeIntegrationStatus("X", xIntegrationStatus)}
               </OpsStatusPill>
+              <OpsStatusPill tone={telegramCommandsEnabled ? "success" : "default"}>
+                Telegram commands {telegramCommandsEnabled ? "enabled" : "parked"}
+              </OpsStatusPill>
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-[24px] border border-line bg-card2 p-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
@@ -123,13 +143,55 @@ export function CommunityOverviewPanel({
                     {formatTimestamp(lastLeaderboardPostedAt)}
                   </p>
                 </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-amber-400/20 bg-amber-500/10 text-amber-300">
+            <div className="rounded-[24px] border border-line bg-card2 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
+                  <Activity size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last mission digest</p>
+                  <p className="mt-1 text-sm font-semibold text-text">
+                    {formatTimestamp(lastMissionDigestAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-line bg-card2 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
+                  <Activity size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last raid alert</p>
+                  <p className="mt-1 text-sm font-semibold text-text">
+                    {formatTimestamp(lastRaidAlertAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-line bg-card2 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-card text-sub">
+                  <Activity size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Last automation run</p>
+                  <p className="mt-1 text-sm font-semibold text-text">
+                    {formatTimestamp(lastAutomationRunAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-line bg-card2 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-amber-400/20 bg-amber-500/10 text-amber-300">
                 <ShieldCheck size={18} />
               </div>
               <div>

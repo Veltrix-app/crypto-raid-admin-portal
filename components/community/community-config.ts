@@ -30,10 +30,19 @@ export type DiscordRankSource = "project_xp" | "global_xp" | "trust" | "wallet_v
 export type DiscordLeaderboardScope = "project" | "global";
 export type DiscordLeaderboardPeriod = "weekly" | "monthly" | "all_time";
 export type DiscordLeaderboardCadence = "manual" | "daily" | "weekly";
-export type CommunityBotAction = "command_sync" | "rank_sync" | "leaderboard_post";
+export type CommunityAutomationCadence = "manual" | "daily" | "weekly";
+export type CommunityDeliveryTarget = "discord" | "telegram" | "both";
+export type CommunityBotAction =
+  | "command_sync"
+  | "rank_sync"
+  | "leaderboard_post"
+  | "mission_post"
+  | "raid_post"
+  | "automation_run";
 
 export type DiscordCommunityBotSettings = {
   commandsEnabled: boolean;
+  telegramCommandsEnabled: boolean;
   rankSyncEnabled: boolean;
   rankSource: DiscordRankSource;
   leaderboardEnabled: boolean;
@@ -43,8 +52,18 @@ export type DiscordCommunityBotSettings = {
   leaderboardTopN: string;
   leaderboardCadence: DiscordLeaderboardCadence;
   raidOpsEnabled: boolean;
+  missionDigestEnabled: boolean;
+  missionDigestCadence: CommunityAutomationCadence;
+  missionDigestTarget: CommunityDeliveryTarget;
+  raidAlertsEnabled: boolean;
+  raidRemindersEnabled: boolean;
+  raidResultsEnabled: boolean;
+  raidCadence: CommunityAutomationCadence;
   lastRankSyncAt: string;
   lastLeaderboardPostedAt: string;
+  lastMissionDigestAt: string;
+  lastRaidAlertAt: string;
+  lastAutomationRunAt: string;
 };
 
 export type DiscordRankRule = {
@@ -91,6 +110,7 @@ export function createDefaultPushSettings(provider: "discord" | "telegram"): Com
 export function createDefaultDiscordBotSettings(): DiscordCommunityBotSettings {
   return {
     commandsEnabled: true,
+    telegramCommandsEnabled: false,
     rankSyncEnabled: false,
     rankSource: "project_xp",
     leaderboardEnabled: true,
@@ -100,8 +120,18 @@ export function createDefaultDiscordBotSettings(): DiscordCommunityBotSettings {
     leaderboardTopN: "10",
     leaderboardCadence: "manual",
     raidOpsEnabled: false,
+    missionDigestEnabled: false,
+    missionDigestCadence: "manual",
+    missionDigestTarget: "both",
+    raidAlertsEnabled: false,
+    raidRemindersEnabled: false,
+    raidResultsEnabled: false,
+    raidCadence: "manual",
     lastRankSyncAt: "",
     lastLeaderboardPostedAt: "",
+    lastMissionDigestAt: "",
+    lastRaidAlertAt: "",
+    lastAutomationRunAt: "",
   };
 }
 

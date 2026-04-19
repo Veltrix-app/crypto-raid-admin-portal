@@ -20,6 +20,8 @@ const liveCommands = [
   "/leaderboard",
 ];
 
+const telegramCommands = ["/link", "/profile", "/missions", "/leaderboard", "/raid"];
+
 export function CommunityCommandsPanel({
   settings,
   setSettings,
@@ -54,6 +56,12 @@ export function CommunityCommandsPanel({
             emphasis={settings.commandsEnabled ? "primary" : "default"}
           />
           <OpsMetricCard
+            label="Telegram"
+            value={settings.telegramCommandsEnabled ? "Enabled" : "Disabled"}
+            sub="Whether the Telegram command rail is armed."
+            emphasis={settings.telegramCommandsEnabled ? "primary" : "default"}
+          />
+          <OpsMetricCard
             label="Raid ops"
             value={settings.raidOpsEnabled ? "Armed" : "Parked"}
             sub="The v1 raid rail switch for the future command surface."
@@ -83,6 +91,20 @@ export function CommunityCommandsPanel({
             </label>
 
             <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+              <span>Enable Telegram commands</span>
+              <input
+                type="checkbox"
+                checked={settings.telegramCommandsEnabled}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    telegramCommandsEnabled: event.target.checked,
+                  }))
+                }
+              />
+            </label>
+
+            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
               <span>Arm raid ops rail</span>
               <input
                 type="checkbox"
@@ -98,7 +120,7 @@ export function CommunityCommandsPanel({
           </div>
 
           <div className="mt-4 rounded-[22px] border border-line bg-card px-4 py-4">
-            <p className="text-sm font-bold text-text">Current slash surface</p>
+            <p className="text-sm font-bold text-text">Current command surfaces</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {liveCommands.map((command) => (
                 <OpsStatusPill key={command} tone="success">
@@ -106,8 +128,18 @@ export function CommunityCommandsPanel({
                 </OpsStatusPill>
               ))}
             </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {telegramCommands.map((command) => (
+                <OpsStatusPill
+                  key={`telegram-${command}`}
+                  tone={settings.telegramCommandsEnabled ? "success" : "default"}
+                >
+                  TG {command}
+                </OpsStatusPill>
+              ))}
+            </div>
             <p className="mt-4 text-sm leading-6 text-sub">
-              This is the v1 command layer. After commands are enabled and synced, the server can call into profile, rank and leaderboard flows without touching the portal.
+              Discord stays sync-driven, while Telegram now has its own command layer. Together they let the community call into profile, rank, mission and leaderboard flows without touching the portal.
             </p>
           </div>
 

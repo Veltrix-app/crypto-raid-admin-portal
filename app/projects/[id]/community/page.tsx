@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import { CommunityActivityPanel } from "@/components/community/CommunityActivityPanel";
+import { CommunityAutomationsPanel } from "@/components/community/CommunityAutomationsPanel";
 import {
   buildDiscordRankRulesFromPreset,
   CommunityBotAction,
@@ -19,7 +20,10 @@ import {
 import { CommunityCommandsPanel } from "@/components/community/CommunityCommandsPanel";
 import { CommunityIntegrationsPanel } from "@/components/community/CommunityIntegrationsPanel";
 import { CommunityLeaderboardsPanel } from "@/components/community/CommunityLeaderboardsPanel";
+import { CommunityMembersPanel } from "@/components/community/CommunityMembersPanel";
+import { CommunityMissionsPanel } from "@/components/community/CommunityMissionsPanel";
 import { CommunityOverviewPanel } from "@/components/community/CommunityOverviewPanel";
+import { CommunityRaidOpsPanel } from "@/components/community/CommunityRaidOpsPanel";
 import { CommunityRanksPanel } from "@/components/community/CommunityRanksPanel";
 import { OpsHero, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import { LoadingState, NotFoundState } from "@/components/layout/state/StatePrimitives";
@@ -38,6 +42,48 @@ type TelegramIntegrationConfig = {
   groupId: string;
 };
 
+type CommunityContributor = {
+  authUserId: string;
+  username: string;
+  xp: number;
+  level: number;
+  trust: number;
+  questsCompleted: number;
+  raidsCompleted: number;
+  linkedProviders: string[];
+  walletVerified: boolean;
+  commandReady: boolean;
+  fullStackReady: boolean;
+};
+
+type CommunityMembersPayload = {
+  summary: {
+    totalContributors: number;
+    discordLinked: number;
+    telegramLinked: number;
+    xLinked: number;
+    walletVerified: number;
+    commandReady: number;
+    fullStackReady: number;
+  };
+  topContributors: CommunityContributor[];
+  readinessWatch: CommunityContributor[];
+};
+
+const emptyMembersPayload: CommunityMembersPayload = {
+  summary: {
+    totalContributors: 0,
+    discordLinked: 0,
+    telegramLinked: 0,
+    xLinked: 0,
+    walletVerified: 0,
+    commandReady: 0,
+    fullStackReady: 0,
+  },
+  topContributors: [],
+  readinessWatch: [],
+};
+
 export default function ProjectCommunityManagementPage() {
   const params = useParams<{ id: string }>();
   const memberships = useAdminAuthStore((s) => s.memberships);
@@ -52,6 +98,7 @@ export default function ProjectCommunityManagementPage() {
   const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const quests = useAdminPortalStore((s) => s.quests);
+  const raids = useAdminPortalStore((s) => s.raids);
   const rewards = useAdminPortalStore((s) => s.rewards);
   const teamMembers = useAdminPortalStore((s) => s.teamMembers);
 
@@ -73,9 +120,9 @@ export default function ProjectCommunityManagementPage() {
     createDefaultPushSettings("telegram")
   );
   const [savingIntegration, setSavingIntegration] = useState<"discord" | "telegram" | null>(null);
-  const [integrationNotice, setIntegrationNotice] = useState<string>("");
+  const [integrationNotice, setIntegrationNotice] = useState("");
   const [testingIntegration, setTestingIntegration] = useState<"discord" | "telegram" | null>(null);
-  const [integrationTestNotice, setIntegrationTestNotice] = useState<string>("");
+  const [integrationTestNotice, setIntegrationTestNotice] = useState("");
   const [integrationTestTone, setIntegrationTestTone] = useState<"success" | "error">(
     "success"
   );
@@ -85,23 +132,45 @@ export default function ProjectCommunityManagementPage() {
   const [discordRankRules, setDiscordRankRules] = useState<DiscordRankRule[]>([]);
   const [savingDiscordBotSettings, setSavingDiscordBotSettings] = useState(false);
   const [runningDiscordBotAction, setRunningDiscordBotAction] =
-    useState<CommunityBotAction | null>(null);
+    useState<Extract<CommunityBotAction, "command_sync" | "rank_sync" | "leaderboard_post"> | null>(null);
   const [discordBotNotice, setDiscordBotNotice] = useState("");
   const [discordBotNoticeTone, setDiscordBotNoticeTone] = useState<"success" | "error">(
     "success"
   );
 
-  const [operatorSignals, setOperatorSignals] = useState<{
-    callbackFailures: number;
-    onchainFailures: number;
-    latestIssue: string;
-  }>({
+  const [operatorSignals, setOperatorSignals] = useState({
     callbackFailures: 0,
     onchainFailures: 0,
     latestIssue: "No active operator incidents logged.",
   });
   const [recentActivity, setRecentActivity] = useState<DbAuditLog[]>([]);
   const [loadingActivity, setLoadingActivity] = useState(false);
+
+  const [communityMembers, setCommunityMembers] =
+    useState<CommunityMembersPayload>(emptyMembersPayload);
+  const [loadingCommunityMembers, setLoadingCommunityMembers] = useState(false);
+
+  const [runningMissionAction, setRunningMissionAction] = useState<
+    "digest" | "campaign" | "quest" | "reward" | null
+  >(null);
+  const [missionNotice, setMissionNotice] = useState("");
+  const [missionNoticeTone, setMissionNoticeTone] = useState<"success" | "error">(
+    "success"
+  );
+
+  const [runningRaidAction, setRunningRaidAction] = useState<
+    "live" | "reminder" | "result" | null
+  >(null);
+  const [raidNotice, setRaidNotice] = useState("");
+  const [raidNoticeTone, setRaidNoticeTone] = useState<"success" | "error">("success");
+
+  const [runningAutomationAction, setRunningAutomationAction] = useState<
+    "all" | "missions" | "raids" | null
+  >(null);
+  const [automationNotice, setAutomationNotice] = useState("");
+  const [automationNoticeTone, setAutomationNoticeTone] = useState<"success" | "error">(
+    "success"
+  );
 
   const project = useMemo(() => getProjectById(params.id), [getProjectById, params.id]);
   const hasProjectMembership = memberships.some((item) => item.projectId === project?.id);
@@ -208,13 +277,14 @@ export default function ProjectCommunityManagementPage() {
 
       if (!response.ok || !payload?.ok) {
         setDiscordBotNoticeTone("error");
-        setDiscordBotNotice(payload?.error || "Could not load Discord bot settings.");
+        setDiscordBotNotice(payload?.error || "Could not load community bot settings.");
         return;
       }
 
       setDiscordBotNotice("");
       setDiscordBotSettings({
         commandsEnabled: payload.settings?.commandsEnabled !== false,
+        telegramCommandsEnabled: payload.settings?.telegramCommandsEnabled === true,
         rankSyncEnabled: payload.settings?.rankSyncEnabled === true,
         rankSource:
           payload.settings?.rankSource === "global_xp" ||
@@ -243,6 +313,25 @@ export default function ProjectCommunityManagementPage() {
             ? payload.settings.leaderboardCadence
             : "manual",
         raidOpsEnabled: payload.settings?.raidOpsEnabled === true,
+        missionDigestEnabled: payload.settings?.missionDigestEnabled === true,
+        missionDigestCadence:
+          payload.settings?.missionDigestCadence === "daily" ||
+          payload.settings?.missionDigestCadence === "weekly"
+            ? payload.settings.missionDigestCadence
+            : "manual",
+        missionDigestTarget:
+          payload.settings?.missionDigestTarget === "discord" ||
+          payload.settings?.missionDigestTarget === "telegram"
+            ? payload.settings.missionDigestTarget
+            : "both",
+        raidAlertsEnabled: payload.settings?.raidAlertsEnabled === true,
+        raidRemindersEnabled: payload.settings?.raidRemindersEnabled === true,
+        raidResultsEnabled: payload.settings?.raidResultsEnabled === true,
+        raidCadence:
+          payload.settings?.raidCadence === "daily" ||
+          payload.settings?.raidCadence === "weekly"
+            ? payload.settings.raidCadence
+            : "manual",
         lastRankSyncAt:
           typeof payload.settings?.lastRankSyncAt === "string"
             ? payload.settings.lastRankSyncAt
@@ -250,6 +339,18 @@ export default function ProjectCommunityManagementPage() {
         lastLeaderboardPostedAt:
           typeof payload.settings?.lastLeaderboardPostedAt === "string"
             ? payload.settings.lastLeaderboardPostedAt
+            : "",
+        lastMissionDigestAt:
+          typeof payload.settings?.lastMissionDigestAt === "string"
+            ? payload.settings.lastMissionDigestAt
+            : "",
+        lastRaidAlertAt:
+          typeof payload.settings?.lastRaidAlertAt === "string"
+            ? payload.settings.lastRaidAlertAt
+            : "",
+        lastAutomationRunAt:
+          typeof payload.settings?.lastAutomationRunAt === "string"
+            ? payload.settings.lastAutomationRunAt
             : "",
       });
       setDiscordRankRules(
@@ -319,7 +420,7 @@ export default function ProjectCommunityManagementPage() {
         .select("*")
         .eq("project_id", project.id)
         .order("created_at", { ascending: false })
-        .limit(12);
+        .limit(16);
 
       const [callbackResult, onchainResult, activityResult] = await Promise.all([
         callbackQuery,
@@ -349,6 +450,40 @@ export default function ProjectCommunityManagementPage() {
     };
   }, [hasProjectAccess, project?.id, quests]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMembers() {
+      if (!project?.id || !hasProjectAccess) return;
+
+      setLoadingCommunityMembers(true);
+      const response = await fetch(`/api/projects/${project.id}/community-members`, {
+        cache: "no-store",
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (cancelled) return;
+
+      if (!response.ok || !payload?.ok) {
+        setCommunityMembers(emptyMembersPayload);
+        setLoadingCommunityMembers(false);
+        return;
+      }
+
+      setCommunityMembers({
+        summary: payload.summary ?? emptyMembersPayload.summary,
+        topContributors: Array.isArray(payload.topContributors) ? payload.topContributors : [],
+        readinessWatch: Array.isArray(payload.readinessWatch) ? payload.readinessWatch : [],
+      });
+      setLoadingCommunityMembers(false);
+    }
+
+    void loadMembers();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasProjectAccess, project?.id]);
+
   const relatedCampaigns = useMemo(
     () => campaigns.filter((campaign) => campaign.projectId === project?.id),
     [campaigns, project?.id]
@@ -357,6 +492,10 @@ export default function ProjectCommunityManagementPage() {
     () => quests.filter((quest) => quest.projectId === project?.id),
     [project?.id, quests]
   );
+  const relatedRaids = useMemo(
+    () => raids.filter((raid) => raid.projectId === project?.id),
+    [project?.id, raids]
+  );
   const relatedRewards = useMemo(
     () => rewards.filter((reward) => reward.projectId === project?.id),
     [project?.id, rewards]
@@ -364,10 +503,6 @@ export default function ProjectCommunityManagementPage() {
   const relatedTeamMembers = useMemo(
     () => teamMembers.filter((member) => member.projectId === project?.id),
     [project?.id, teamMembers]
-  );
-  const selectableProjects = useMemo(
-    () => projects.filter((item) => item.id !== project?.id),
-    [project?.id, projects]
   );
   const projectNameById = useMemo(
     () => new Map(projects.map((item) => [item.id, item.name])),
@@ -474,12 +609,12 @@ export default function ProjectCommunityManagementPage() {
 
     if (!response.ok || !payload?.ok) {
       setDiscordBotNoticeTone("error");
-      setDiscordBotNotice(payload?.error || "Could not save Discord bot settings.");
+      setDiscordBotNotice(payload?.error || "Could not save community bot settings.");
       return;
     }
 
     setDiscordBotNoticeTone("success");
-    setDiscordBotNotice(payload?.message || `Discord bot settings saved for ${project.name}.`);
+    setDiscordBotNotice(payload?.message || `Community bot settings saved for ${project.name}.`);
   }
 
   function loadDiscordRankPreset(presetId: string) {
@@ -493,11 +628,11 @@ export default function ProjectCommunityManagementPage() {
     }));
     setDiscordBotNoticeTone("success");
     setDiscordBotNotice(
-      `Loaded ${preset.title}. Paste the Discord role IDs, then save bot settings.`
+      `Loaded ${preset.title}. Paste the Discord role IDs, then save community bot settings.`
     );
   }
 
-  async function runDiscordBotAction(action: CommunityBotAction) {
+  async function runDiscordBotAction(action: Extract<CommunityBotAction, "command_sync" | "rank_sync" | "leaderboard_post">) {
     if (!project?.id) return;
 
     setRunningDiscordBotAction(action);
@@ -616,12 +751,150 @@ export default function ProjectCommunityManagementPage() {
     );
   }
 
+  function getMissionProviders() {
+    if (discordBotSettings.missionDigestTarget === "discord") {
+      return ["discord"] as Array<"discord" | "telegram">;
+    }
+    if (discordBotSettings.missionDigestTarget === "telegram") {
+      return ["telegram"] as Array<"discord" | "telegram">;
+    }
+    return undefined;
+  }
+
+  async function runMissionAction(
+    mode: "digest" | "campaign" | "quest" | "reward",
+    contentId?: string
+  ) {
+    if (!project?.id) return;
+
+    setRunningMissionAction(mode);
+    setMissionNotice("");
+    setMissionNoticeTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-mission-post`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode,
+        contentId,
+        providers: getMissionProviders(),
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setRunningMissionAction(null);
+
+    if (!response.ok || !payload?.ok) {
+      setMissionNoticeTone("error");
+      setMissionNotice(payload?.error || "Mission community action failed.");
+      return;
+    }
+
+    const deliveries = Array.isArray(payload?.deliveries) ? payload.deliveries.length : 0;
+    setMissionNoticeTone("success");
+    setMissionNotice(
+      mode === "digest"
+        ? `Mission digest delivered to ${deliveries} provider rail${deliveries === 1 ? "" : "s"}.`
+        : `Mission rail posted through ${deliveries} provider target${deliveries === 1 ? "" : "s"}.`
+    );
+
+    if (mode === "digest") {
+      setDiscordBotSettings((current) => ({
+        ...current,
+        lastMissionDigestAt: new Date().toISOString(),
+        lastAutomationRunAt: new Date().toISOString(),
+      }));
+    }
+  }
+
+  async function runRaidAction(raidId: string, mode: "live" | "reminder" | "result") {
+    if (!project?.id) return;
+
+    setRunningRaidAction(mode);
+    setRaidNotice("");
+    setRaidNoticeTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-raid-post`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        raidId,
+        mode,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setRunningRaidAction(null);
+
+    if (!response.ok || !payload?.ok) {
+      setRaidNoticeTone("error");
+      setRaidNotice(payload?.error || "Raid community action failed.");
+      return;
+    }
+
+    const deliveries = Array.isArray(payload?.deliveries) ? payload.deliveries.length : 0;
+    setRaidNoticeTone("success");
+    setRaidNotice(
+      `Raid ${mode} pushed through ${deliveries} provider target${deliveries === 1 ? "" : "s"}.`
+    );
+    setDiscordBotSettings((current) => ({
+      ...current,
+      lastRaidAlertAt: new Date().toISOString(),
+      lastAutomationRunAt: new Date().toISOString(),
+    }));
+  }
+
+  async function runAutomationAction(mode: "all" | "missions" | "raids") {
+    if (!project?.id) return;
+
+    setRunningAutomationAction(mode);
+    setAutomationNotice("");
+    setAutomationNoticeTone("success");
+
+    const response = await fetch(`/api/projects/${project.id}/community-automation-run`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ mode, providers: getMissionProviders() }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    setRunningAutomationAction(null);
+
+    if (!response.ok || !payload?.ok) {
+      setAutomationNoticeTone("error");
+      setAutomationNotice(payload?.error || "Automation run failed.");
+      return;
+    }
+
+    const results = Array.isArray(payload?.results) ? payload.results.length : 0;
+    setAutomationNoticeTone("success");
+    setAutomationNotice(
+      `Automation run completed with ${results} community action${results === 1 ? "" : "s"}.`
+    );
+    setDiscordBotSettings((current) => ({
+      ...current,
+      lastAutomationRunAt: new Date().toISOString(),
+      ...(mode === "all" || mode === "missions"
+        ? { lastMissionDigestAt: new Date().toISOString() }
+        : {}),
+      ...(mode === "all" || mode === "raids"
+        ? { lastRaidAlertAt: new Date().toISOString() }
+        : {}),
+    }));
+  }
+
   if (authLoading || (!portalHydrated && (portalLoading || !project))) {
     return (
       <AdminShell>
         <LoadingState
           title="Loading community control room"
-          description="Veltrix is pulling this project's provider rails, bot settings and recent operator activity into the Community OS view."
+          description="Veltrix is pulling this project's provider rails, bot settings, contributor readiness and recent operator activity into the Community OS view."
         />
       </AdminShell>
     );
@@ -655,15 +928,20 @@ export default function ProjectCommunityManagementPage() {
         <OpsHero
           eyebrow="Community OS"
           title={`${project.name} community management`}
-          description="Run this project's Discord, Telegram and X community rails from one private surface. Community settings, rank ladders, leaderboards and activity are all scoped to this project only."
+          description="Run this project's Discord, Telegram and X community rails from one private surface. Community health, commands, members, missions, raids and automation pulses are all scoped to this project only."
           aside={
             <div className="space-y-3">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-sub">Project scope</p>
               <div className="flex flex-wrap gap-2">
                 <OpsStatusPill tone="success">{project.chain}</OpsStatusPill>
-                <OpsStatusPill tone="default">{project.isPublic ? "Public surface" : "Private surface"}</OpsStatusPill>
+                <OpsStatusPill tone="default">
+                  {project.isPublic ? "Public surface" : "Private surface"}
+                </OpsStatusPill>
                 <OpsStatusPill tone={discordBotSettings.commandsEnabled ? "success" : "warning"}>
-                  {discordBotSettings.commandsEnabled ? "Commands live" : "Commands parked"}
+                  {discordBotSettings.commandsEnabled ? "Discord commands live" : "Discord commands parked"}
+                </OpsStatusPill>
+                <OpsStatusPill tone={discordBotSettings.telegramCommandsEnabled ? "success" : "default"}>
+                  {discordBotSettings.telegramCommandsEnabled ? "Telegram commands live" : "Telegram commands parked"}
                 </OpsStatusPill>
               </div>
             </div>
@@ -676,15 +954,22 @@ export default function ProjectCommunityManagementPage() {
           discordIntegrationStatus={discordIntegrationStatus}
           telegramIntegrationStatus={telegramIntegrationStatus}
           xIntegrationStatus={xIntegrationStatus}
+          telegramCommandsEnabled={discordBotSettings.telegramCommandsEnabled}
           campaignCount={relatedCampaigns.length}
           questCount={relatedQuests.length}
+          raidCount={relatedRaids.length}
           rewardCount={relatedRewards.length}
           teamMemberCount={relatedTeamMembers.length}
+          linkedContributorCount={communityMembers.summary.commandReady}
+          walletVerifiedCount={communityMembers.summary.walletVerified}
           callbackFailures={operatorSignals.callbackFailures}
           onchainFailures={operatorSignals.onchainFailures}
           latestIssue={operatorSignals.latestIssue}
           lastRankSyncAt={discordBotSettings.lastRankSyncAt}
           lastLeaderboardPostedAt={discordBotSettings.lastLeaderboardPostedAt}
+          lastMissionDigestAt={discordBotSettings.lastMissionDigestAt}
+          lastRaidAlertAt={discordBotSettings.lastRaidAlertAt}
+          lastAutomationRunAt={discordBotSettings.lastAutomationRunAt}
         />
 
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -704,6 +989,13 @@ export default function ProjectCommunityManagementPage() {
             loadingActivity={loadingActivity}
           />
         </div>
+
+        <CommunityMembersPanel
+          loading={loadingCommunityMembers}
+          summary={communityMembers.summary}
+          topContributors={communityMembers.topContributors}
+          readinessWatch={communityMembers.readinessWatch}
+        />
 
         <CommunityIntegrationsPanel
           projectName={project.name}
@@ -758,6 +1050,60 @@ export default function ProjectCommunityManagementPage() {
             onRunLeaderboardPost={() => void runDiscordBotAction("leaderboard_post")}
           />
         </div>
+
+        <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+          <CommunityMissionsPanel
+            settings={discordBotSettings}
+            setSettings={setDiscordBotSettings}
+            campaigns={relatedCampaigns.map((campaign) => ({
+              id: campaign.id,
+              title: campaign.title,
+              featured: campaign.featured,
+              xpBudget: campaign.xpBudget,
+            }))}
+            quests={relatedQuests.map((quest) => ({
+              id: quest.id,
+              title: quest.title,
+              xp: quest.xp,
+            }))}
+            rewards={relatedRewards.map((reward) => ({
+              id: reward.id,
+              title: reward.title,
+              cost: reward.cost,
+              rarity: reward.rarity,
+            }))}
+            savingDiscordBotSettings={savingDiscordBotSettings}
+            runningMissionAction={runningMissionAction}
+            missionNotice={missionNotice}
+            missionNoticeTone={missionNoticeTone}
+            onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
+            onRunMissionAction={(mode, contentId) => void runMissionAction(mode, contentId)}
+          />
+
+          <CommunityRaidOpsPanel
+            settings={discordBotSettings}
+            setSettings={setDiscordBotSettings}
+            raids={relatedRaids.map((raid) => ({
+              id: raid.id,
+              title: raid.title,
+              rewardXp: raid.rewardXp,
+            }))}
+            savingDiscordBotSettings={savingDiscordBotSettings}
+            runningRaidAction={runningRaidAction}
+            raidNotice={raidNotice}
+            raidNoticeTone={raidNoticeTone}
+            onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
+            onRunRaidAction={(raidId, mode) => void runRaidAction(raidId, mode)}
+          />
+        </div>
+
+        <CommunityAutomationsPanel
+          settings={discordBotSettings}
+          runningAutomationAction={runningAutomationAction}
+          automationNotice={automationNotice}
+          automationNoticeTone={automationNoticeTone}
+          onRunAutomationAction={(mode) => void runAutomationAction(mode)}
+        />
       </div>
     </AdminShell>
   );
