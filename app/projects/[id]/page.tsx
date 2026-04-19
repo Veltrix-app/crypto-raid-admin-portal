@@ -72,6 +72,18 @@ type DiscordRankRule = {
   label: string;
 };
 
+type DiscordRankPreset = {
+  id: string;
+  title: string;
+  description: string;
+  preferredSource: DiscordRankSource;
+  rules: Array<{
+    sourceType: DiscordRankSource;
+    threshold: string;
+    label: string;
+  }>;
+};
+
 type OnchainProjectWallet = {
   id: string;
   chain: string;
@@ -164,6 +176,72 @@ function createEmptyDiscordRankRule(): DiscordRankRule {
     discordRoleId: "",
     label: "",
   };
+}
+
+const DISCORD_RANK_PRESETS: DiscordRankPreset[] = [
+  {
+    id: "project-xp-ladder",
+    title: "Project XP ladder",
+    description: "Simple XP rail for communities that want visible progression fast.",
+    preferredSource: "project_xp",
+    rules: [
+      { sourceType: "project_xp", threshold: "100", label: "Scout" },
+      { sourceType: "project_xp", threshold: "500", label: "Vanguard" },
+      { sourceType: "project_xp", threshold: "1500", label: "Elite Raider" },
+    ],
+  },
+  {
+    id: "trust-ladder",
+    title: "Trust ladder",
+    description: "Good for tighter communities that care about quality over raw volume.",
+    preferredSource: "trust",
+    rules: [
+      { sourceType: "trust", threshold: "60", label: "Trusted" },
+      { sourceType: "trust", threshold: "75", label: "Core Signal" },
+      { sourceType: "trust", threshold: "90", label: "Sentinel" },
+    ],
+  },
+  {
+    id: "wallet-gate",
+    title: "Wallet gate",
+    description: "Adds a clean verified-wallet rank rail for gated communities.",
+    preferredSource: "wallet_verified",
+    rules: [{ sourceType: "wallet_verified", threshold: "1", label: "Verified Wallet" }],
+  },
+  {
+    id: "hybrid-starter",
+    title: "Hybrid starter",
+    description: "A launch-ready mix of verified identity, activity and trust.",
+    preferredSource: "project_xp",
+    rules: [
+      { sourceType: "wallet_verified", threshold: "1", label: "Verified Wallet" },
+      { sourceType: "project_xp", threshold: "250", label: "Active Raider" },
+      { sourceType: "trust", threshold: "70", label: "Trusted Core" },
+    ],
+  },
+];
+
+function formatDiscordRankSourceLabel(sourceType: DiscordRankSource) {
+  if (sourceType === "global_xp") return "Global XP";
+  if (sourceType === "trust") return "Trust";
+  if (sourceType === "wallet_verified") return "Wallet";
+  return "Project XP";
+}
+
+function buildDiscordRankRulesFromPreset(preset: DiscordRankPreset) {
+  return preset.rules.map((rule) => ({
+    ...createEmptyDiscordRankRule(),
+    sourceType: rule.sourceType,
+    threshold: rule.threshold,
+    label: rule.label,
+  }));
+}
+
+function summarizeDiscordRankSources(rules: DiscordRankRule[]) {
+  const uniqueSources = Array.from(new Set(rules.map((rule) => rule.sourceType)));
+  return uniqueSources.length > 0
+    ? uniqueSources.map((source) => formatDiscordRankSourceLabel(source)).join(", ")
+    : "No live rails yet";
 }
 
 function readPushSettings(
@@ -968,6 +1046,18 @@ export default function ProjectDetailPage() {
     setDiscordBotNotice(payload?.message || `Discord bot settings saved for ${project.name}.`);
   }
 
+  function loadDiscordRankPreset(preset: DiscordRankPreset) {
+    setDiscordRankRules(buildDiscordRankRulesFromPreset(preset));
+    setDiscordBotSettings((current) => ({
+      ...current,
+      rankSource: preset.preferredSource,
+    }));
+    setDiscordBotNoticeTone("success");
+    setDiscordBotNotice(
+      `Loaded ${preset.title}. Paste the Discord role IDs, then save bot settings.`
+    );
+  }
+
   async function runDiscordBotAction(
     action: "command_sync" | "rank_sync" | "leaderboard_post"
   ) {
@@ -1005,11 +1095,18 @@ export default function ProjectDetailPage() {
     }
 
     setDiscordBotNoticeTone("success");
+    const skippedSummary =
+      Array.isArray(payload?.skippedIntegrations) && payload.skippedIntegrations.length > 0
+        ? ` Skipped ${payload.skippedIntegrations.length}: ${payload.skippedIntegrations
+            .slice(0, 2)
+            .map((item: { reason?: string }) => item.reason || "Unknown reason")
+            .join(" | ")}`
+        : "";
     setDiscordBotNotice(
       action === "command_sync"
-        ? `Discord command sync processed ${payload.guildsProcessed ?? 0} guilds and enabled commands in ${payload.guildsEnabled ?? 0}.`
+        ? `Discord command sync processed ${payload.guildsProcessed ?? 0} guilds and enabled commands in ${payload.guildsEnabled ?? 0}.${skippedSummary}`
         : action === "rank_sync"
-        ? `Discord rank sync checked ${payload.membersEvaluated ?? 0} members, added ${payload.rolesAdded ?? 0} roles and removed ${payload.rolesRemoved ?? 0}.`
+        ? `Discord rank sync checked ${payload.membersEvaluated ?? 0} members, added ${payload.rolesAdded ?? 0} roles and removed ${payload.rolesRemoved ?? 0}.${skippedSummary}`
         : `Discord leaderboard posted to ${payload.postsDelivered ?? 0} community rail${payload.postsDelivered === 1 ? "" : "s"}.`
     );
 
@@ -2469,6 +2566,58 @@ export default function ProjectDetailPage() {
                             placeholder="Leaderboard top N"
                             className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                           />
+                        </div>
+                        <div className="rounded-2xl border border-line bg-card2 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-text">Quick ladders</p>
+                              <p className="mt-1 text-sm text-sub">
+                                Load a starter rail, then paste the Discord role IDs that belong to each step.
+                              </p>
+                            </div>
+                            <span className="rounded-full border border-line bg-card px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                              Replaces current draft
+                            </span>
+                          </div>
+                          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                            {DISCORD_RANK_PRESETS.map((preset) => (
+                              <button
+                                key={preset.id}
+                                onClick={() => loadDiscordRankPreset(preset)}
+                                className="rounded-2xl border border-line bg-card p-4 text-left transition hover:border-primary/40 hover:text-primary"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="text-sm font-bold text-text">{preset.title}</p>
+                                  <span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
+                                    {formatDiscordRankSourceLabel(preset.preferredSource)}
+                                  </span>
+                                </div>
+                                <p className="mt-2 text-sm text-sub">{preset.description}</p>
+                                <p className="mt-3 text-xs uppercase tracking-[0.12em] text-sub">
+                                  {preset.rules
+                                    .map((rule) => `${rule.label} ${rule.threshold === "1" && rule.sourceType === "wallet_verified" ? "" : `@ ${rule.threshold}`}`.trim())
+                                    .join(" | ")}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                            <div className="rounded-2xl border border-line bg-card px-4 py-3 text-sm text-sub">
+                              <span className="font-semibold text-text">Configured rules:</span>{" "}
+                              {discordRankRules.length}
+                            </div>
+                            <div className="rounded-2xl border border-line bg-card px-4 py-3 text-sm text-sub">
+                              <span className="font-semibold text-text">Sources:</span>{" "}
+                              {summarizeDiscordRankSources(discordRankRules)}
+                            </div>
+                            <div className="rounded-2xl border border-line bg-card px-4 py-3 text-sm text-sub">
+                              <span className="font-semibold text-text">Missing role IDs:</span>{" "}
+                              {
+                                discordRankRules.filter((rule) => rule.discordRoleId.trim().length === 0)
+                                  .length
+                              }
+                            </div>
+                          </div>
                         </div>
                         <div className="rounded-2xl border border-line bg-card2 p-4">
                           <div className="flex items-center justify-between gap-3">
