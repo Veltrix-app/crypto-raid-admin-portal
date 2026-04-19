@@ -122,6 +122,65 @@ export type CommunityCaptainActionRecord = {
   createdAt: string;
 };
 
+export type CommunityCaptainQueueItemStatus =
+  | "queued"
+  | "in_progress"
+  | "blocked"
+  | "escalated"
+  | "completed";
+
+export type CommunityCaptainQueueItemPriority = "low" | "normal" | "high" | "urgent";
+
+export type CommunityCaptainQueueBlockedReason = {
+  code: string;
+  label: string;
+  summary: string;
+};
+
+export type CommunityCaptainQueueItem = {
+  id: string;
+  title: string;
+  summary: string;
+  status: CommunityCaptainQueueItemStatus;
+  priority: CommunityCaptainQueueItemPriority;
+  dueAt: string;
+  blockedReason: CommunityCaptainQueueBlockedReason;
+  source: "automation" | "playbook" | "owner" | "journey";
+  actionLabel: string;
+};
+
+export type CommunityOwnerRecommendation = {
+  key: string;
+  title: string;
+  summary: string;
+  priority: "high" | "medium" | "low";
+  actionLabel: string;
+  route: string;
+};
+
+export type CommunityJourneyOutcomeKey = "onboarding" | "comeback" | "activation" | "retention";
+
+export type CommunityJourneyOutcome = {
+  key: CommunityJourneyOutcomeKey;
+  label: string;
+  startedCount: number;
+  completedCount: number;
+  completionRate: number;
+  blockedCount: number;
+  recentCompletedCount: number;
+  lastUpdatedAt: string;
+};
+
+export type CommunityJourneyOutcomeRecord = Record<CommunityJourneyOutcomeKey, CommunityJourneyOutcome>;
+
+export type CommunityHealthSignal = {
+  key: string;
+  label: string;
+  value: string;
+  tone: "default" | "success" | "warning" | "danger";
+  summary: string;
+};
+
 export const COMMUNITY_AUTOMATION_LABELS: Record<CommunityAutomationType, string> = {
   rank_sync: "Rank sync",
   leaderboard_pulse: "Leaderboard pulse",
@@ -407,8 +466,12 @@ export function readPushSettings(
         ? rawPushSettings.targetThreadId
         : defaults.targetThreadId,
     targetChatId:
-      provider === "telegram" && typeof rawPushSettings.targetChatId === "string"
-        ? rawPushSettings.targetChatId
+      provider === "telegram" && typeof rawPushSettings.targetChatId === "string" && rawPushSettings.targetChatId.trim()
+        ? rawPushSettings.targetChatId.trim()
+        : provider === "telegram" && typeof config?.chatId === "string" && config.chatId.trim()
+          ? config.chatId.trim()
+          : provider === "telegram" && typeof config?.groupId === "string" && config.groupId.trim()
+            ? config.groupId.trim()
         : defaults.targetChatId,
     allowCampaigns: rawPushSettings.allowCampaigns !== false,
     allowQuests: rawPushSettings.allowQuests !== false,
