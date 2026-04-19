@@ -411,7 +411,7 @@ export default function ProjectDetailPage() {
   const [discordRankRules, setDiscordRankRules] = useState<DiscordRankRule[]>([]);
   const [savingDiscordBotSettings, setSavingDiscordBotSettings] = useState(false);
   const [runningDiscordBotAction, setRunningDiscordBotAction] = useState<
-    "rank_sync" | "leaderboard_post" | null
+    "command_sync" | "rank_sync" | "leaderboard_post" | null
   >(null);
   const [discordBotNotice, setDiscordBotNotice] = useState("");
   const [discordBotNoticeTone, setDiscordBotNoticeTone] = useState<"success" | "error">(
@@ -968,7 +968,9 @@ export default function ProjectDetailPage() {
     setDiscordBotNotice(payload?.message || `Discord bot settings saved for ${project.name}.`);
   }
 
-  async function runDiscordBotAction(action: "rank_sync" | "leaderboard_post") {
+  async function runDiscordBotAction(
+    action: "command_sync" | "rank_sync" | "leaderboard_post"
+  ) {
     if (!project?.id) return;
 
     setRunningDiscordBotAction(action);
@@ -976,9 +978,11 @@ export default function ProjectDetailPage() {
     setDiscordBotNoticeTone("success");
 
     const response = await fetch(
-      action === "rank_sync"
-        ? `/api/projects/${project.id}/discord-rank-sync`
-        : `/api/projects/${project.id}/discord-leaderboard-post`,
+      action === "command_sync"
+        ? `/api/projects/${project.id}/discord-command-sync`
+        : action === "rank_sync"
+          ? `/api/projects/${project.id}/discord-rank-sync`
+          : `/api/projects/${project.id}/discord-leaderboard-post`,
       {
         method: "POST",
       }
@@ -991,19 +995,27 @@ export default function ProjectDetailPage() {
       setDiscordBotNoticeTone("error");
       setDiscordBotNotice(
         payload?.error ||
-          (action === "rank_sync"
-            ? "Discord rank sync failed."
-            : "Discord leaderboard post failed.")
+          (action === "command_sync"
+            ? "Discord command sync failed."
+            : action === "rank_sync"
+              ? "Discord rank sync failed."
+              : "Discord leaderboard post failed.")
       );
       return;
     }
 
     setDiscordBotNoticeTone("success");
     setDiscordBotNotice(
-      action === "rank_sync"
+      action === "command_sync"
+        ? `Discord command sync processed ${payload.guildsProcessed ?? 0} guilds and enabled commands in ${payload.guildsEnabled ?? 0}.`
+        : action === "rank_sync"
         ? `Discord rank sync checked ${payload.membersEvaluated ?? 0} members, added ${payload.rolesAdded ?? 0} roles and removed ${payload.rolesRemoved ?? 0}.`
         : `Discord leaderboard posted to ${payload.postsDelivered ?? 0} community rail${payload.postsDelivered === 1 ? "" : "s"}.`
     );
+
+    if (action === "command_sync") {
+      return;
+    }
 
     if (action === "rank_sync") {
       setDiscordBotSettings((current) => ({
@@ -2573,7 +2585,7 @@ export default function ProjectDetailPage() {
                             )}
                           </div>
                         </div>
-                        <div className="grid gap-3 sm:grid-cols-3">
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                           <button
                             onClick={() => void saveDiscordBotConfig()}
                             disabled={savingDiscordBotSettings}
@@ -2582,6 +2594,15 @@ export default function ProjectDetailPage() {
                             {savingDiscordBotSettings
                               ? "Saving bot settings..."
                               : "Save bot settings"}
+                          </button>
+                          <button
+                            onClick={() => void runDiscordBotAction("command_sync")}
+                            disabled={runningDiscordBotAction === "command_sync"}
+                            className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {runningDiscordBotAction === "command_sync"
+                              ? "Syncing commands..."
+                              : "Sync Discord commands now"}
                           </button>
                           <button
                             onClick={() => void runDiscordBotAction("rank_sync")}
