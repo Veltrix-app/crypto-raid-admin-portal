@@ -1,6 +1,11 @@
 "use client";
 
 import type { CommunityAutomationRecord, CommunityAutomationRunRecord } from "@/components/community/community-config";
+import {
+  COMMUNITY_AUTOMATION_LABELS,
+  COMMUNITY_AUTOMATION_POSTURE_LABELS,
+  COMMUNITY_AUTOMATION_SEQUENCE_LABELS,
+} from "@/components/community/community-config";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 
 type Props = {
@@ -20,8 +25,24 @@ type Props = {
   onRunAutomation: (automationId: string) => void;
 };
 
-function formatTimestamp(value: string) {
+function formatTimestamp(value?: string) {
   return value ? new Date(value).toLocaleString() : "Not scheduled";
+}
+
+function formatPercent(value: number) {
+  return `${Math.max(0, Math.round(value))}%`;
+}
+
+function getPostureTone(posture?: CommunityAutomationRecord["executionPosture"]) {
+  if (posture === "blocked" || posture === "degraded") return "warning";
+  if (posture === "ready" || posture === "running") return "success";
+  return "default";
+}
+
+function getOutcomeTone(run: CommunityAutomationRunRecord["status"]) {
+  if (run === "failed") return "warning";
+  if (run === "success") return "success";
+  return "default";
 }
 
 export function CommunityAutomationCenterPanel({
@@ -38,6 +59,11 @@ export function CommunityAutomationCenterPanel({
   onRunAutomation,
 }: Props) {
   const activeCount = automations.filter((automation) => automation.status === "active").length;
+  const readyCount = automations.filter((automation) => automation.executionPosture === "ready").length;
+  const blockedCount = automations.filter((automation) => automation.executionPosture === "blocked").length;
+  const degradedCount = automations.filter(
+    (automation) => automation.executionPosture === "degraded"
+  ).length;
   const dueCount = automations.filter(
     (automation) =>
       automation.status === "active" &&
@@ -45,12 +71,17 @@ export function CommunityAutomationCenterPanel({
       new Date(automation.nextRunAt).getTime() <= Date.now()
   ).length;
   const failedRuns = automationRuns.filter((run) => run.status === "failed").length;
+  const completedRuns = automationRuns.filter(
+    (run) => run.status === "success" || run.status === "failed"
+  ).length;
+  const successRuns = automationRuns.filter((run) => run.status === "success").length;
+  const successRate = completedRuns > 0 ? (successRuns / completedRuns) * 100 : 0;
 
   return (
     <OpsPanel
       eyebrow="Automation Center"
       title="Scheduled community execution"
-      description="These are the durable Community OS rails. Each automation keeps its own cadence, next run, latest result and manual override."
+      description="These are the durable Community OS rails. Owners should be able to see what is armed, what is ready, what is degraded and where execution is currently stalling."
       action={
         <button
           type="button"
@@ -63,7 +94,7 @@ export function CommunityAutomationCenterPanel({
       }
     >
       <div className="space-y-5">
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
           <OpsMetricCard
             label="Automation rails"
             value={automations.length}
@@ -71,10 +102,22 @@ export function CommunityAutomationCenterPanel({
             emphasis={automations.length > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Active"
+            label="Armed"
             value={activeCount}
-            sub="Rails currently armed for scheduled execution."
+            sub="Rails currently active and allowed to run."
             emphasis={activeCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Ready"
+            value={readyCount}
+            sub="Automations already in a ready posture for the next move."
+            emphasis={readyCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Blocked"
+            value={blockedCount + degradedCount}
+            sub="Execution rails that are stalled or drifting."
+            emphasis={blockedCount + degradedCount > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
             label="Due now"
@@ -83,16 +126,10 @@ export function CommunityAutomationCenterPanel({
             emphasis={dueCount > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
-            label="Recent failures"
-            value={failedRuns}
-            sub="Failed automation runs visible in the recent history."
-            emphasis={failedRuns > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Journey-linked rails"
-            value={journeyAutomationCount}
-            sub="Automations tied directly to newcomer, comeback and activation outcomes."
-            emphasis={journeyAutomationCount > 0 ? "primary" : "default"}
+            label="Success rate"
+            value={formatPercent(successRate)}
+            sub="Recent recorded automation outcomes."
+            emphasis={successRate >= 70 ? "primary" : successRate > 0 ? "warning" : "default"}
           />
         </div>
 
@@ -113,18 +150,46 @@ export function CommunityAutomationCenterPanel({
                 className="rounded-[24px] border border-line bg-card2 p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-bold text-text">{automation.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-sub">{automation.description}</p>
+                  <div className="max-w-2xl">
+                    <p className="text-sm font-bold text-text">
+                      {automation.ownerLabel || automation.title}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-sub">
+                      {automation.ownerSummary || automation.description}
+                    </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <OpsStatusPill tone={automation.status === "active" ? "success" : "default"}>
                       {automation.status === "active" ? "Armed" : "Paused"}
                     </OpsStatusPill>
-                    <OpsStatusPill tone={automation.cadence === "manual" ? "default" : "success"}>
-                      {automation.cadence}
+                    <OpsStatusPill tone={getPostureTone(automation.executionPosture)}>
+                      {automation.executionPosture
+                        ? COMMUNITY_AUTOMATION_POSTURE_LABELS[automation.executionPosture]
+                        : "Watching"}
                     </OpsStatusPill>
+                    {automation.sequencingKey ? (
+                      <OpsStatusPill tone="default">
+                        {COMMUNITY_AUTOMATION_SEQUENCE_LABELS[automation.sequencingKey]}
+                      </OpsStatusPill>
+                    ) : null}
                   </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <OpsStatusPill tone="default">
+                    {COMMUNITY_AUTOMATION_LABELS[automation.automationType]}
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={automation.cadence === "manual" ? "default" : "success"}>
+                    {automation.cadence}
+                  </OpsStatusPill>
+                  <OpsStatusPill tone="default">
+                    {automation.providerScope === "both"
+                      ? "Discord + Telegram"
+                      : automation.providerScope}
+                  </OpsStatusPill>
+                  {automation.pausedReason ? (
+                    <OpsStatusPill tone="warning">{automation.pausedReason}</OpsStatusPill>
+                  ) : null}
                 </div>
 
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -180,12 +245,41 @@ export function CommunityAutomationCenterPanel({
                   </label>
                 </div>
 
+                <div className="mt-4 grid gap-3 md:grid-cols-4">
+                  <div className="rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm text-sub">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">Next run</p>
+                    <p className="mt-2 font-semibold text-text">{formatTimestamp(automation.nextRunAt)}</p>
+                  </div>
+                  <div className="rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm text-sub">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">Last run</p>
+                    <p className="mt-2 font-semibold text-text">{formatTimestamp(automation.lastRunAt)}</p>
+                  </div>
+                  <div className="rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm text-sub">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">Last success</p>
+                    <p className="mt-2 font-semibold text-text">{formatTimestamp(automation.lastSuccessAt)}</p>
+                  </div>
+                  <div className="rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm text-sub">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">Last error</p>
+                    <p className="mt-2 font-semibold text-text">
+                      {automation.lastErrorCode || formatTimestamp(automation.lastErrorAt)}
+                    </p>
+                  </div>
+                </div>
+
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <div className="space-y-1 text-sm text-sub">
-                    <p>Next run: {formatTimestamp(automation.nextRunAt)}</p>
-                    <p>Last run: {formatTimestamp(automation.lastRunAt)}</p>
                     <p>
                       Latest result: {automation.lastResultSummary || automation.lastResult || "No runs yet"}
+                    </p>
+                    <p>
+                      Confidence rail:{" "}
+                      <span className="font-semibold text-text">
+                        {automation.executionPosture === "ready" || automation.executionPosture === "running"
+                          ? "Execution looks healthy"
+                          : automation.executionPosture === "blocked" || automation.executionPosture === "degraded"
+                            ? "Needs owner attention"
+                            : "Watching for the next trigger"}
+                      </span>
                     </p>
                   </div>
                   <button
@@ -201,45 +295,76 @@ export function CommunityAutomationCenterPanel({
             ))}
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
-            <p className="text-sm font-bold text-text">Recent automation history</p>
-            <p className="mt-2 text-sm text-sub">
-              The latest scheduled or manual execution records for this project's automation rails.
-            </p>
+          <div className="space-y-4">
+            <div className="rounded-[24px] border border-line bg-card2 p-5">
+              <p className="text-sm font-bold text-text">Execution posture</p>
+              <p className="mt-2 text-sm text-sub">
+                Keep the owner rail focused on confidence, not just on/off settings.
+              </p>
 
-            <div className="mt-4 space-y-3">
-              {automationRuns.length > 0 ? (
-                automationRuns.map((run) => (
-                  <div key={run.id} className="rounded-[20px] border border-line bg-card px-4 py-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-bold text-text">{run.automationType.replaceAll("_", " ")}</p>
-                        <p className="mt-2 text-sm leading-6 text-sub">
-                          {run.summary || "No summary recorded."}
-                        </p>
-                      </div>
-                      <OpsStatusPill
-                        tone={
-                          run.status === "success"
-                            ? "success"
-                            : run.status === "failed"
-                              ? "warning"
-                              : "default"
-                        }
-                      >
-                        {run.status}
-                      </OpsStatusPill>
-                    </div>
-                    <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-sub">
-                      {run.triggerSource} • {new Date(run.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
-                  No automation runs have been recorded yet.
+              <div className="mt-4 grid gap-3">
+                <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                    Journey-linked rails
+                  </p>
+                  <p className="mt-2 text-lg font-bold text-text">{journeyAutomationCount}</p>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    Automations tied directly to newcomer, comeback and activation outcomes.
+                  </p>
                 </div>
-              )}
+                <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                    Failed runs
+                  </p>
+                  <p className="mt-2 text-lg font-bold text-text">{failedRuns}</p>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    Recent automation failures visible in project history.
+                  </p>
+                </div>
+                <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                    Blocked or degraded rails
+                  </p>
+                  <p className="mt-2 text-lg font-bold text-text">{blockedCount + degradedCount}</p>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    These rails need a config fix, operator action or captain follow-through.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-line bg-card2 p-5">
+              <p className="text-sm font-bold text-text">Recent automation history</p>
+              <p className="mt-2 text-sm text-sub">
+                The latest scheduled or manual execution records for this project's automation rails.
+              </p>
+
+              <div className="mt-4 space-y-3">
+                {automationRuns.length > 0 ? (
+                  automationRuns.map((run) => (
+                    <div key={run.id} className="rounded-[20px] border border-line bg-card px-4 py-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-bold text-text">{COMMUNITY_AUTOMATION_LABELS[run.automationType]}</p>
+                          <p className="mt-2 text-sm leading-6 text-sub">
+                            {run.summary || "No summary recorded."}
+                          </p>
+                        </div>
+                        <OpsStatusPill tone={getOutcomeTone(run.status)}>
+                          {run.status}
+                        </OpsStatusPill>
+                      </div>
+                      <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                        {run.triggerSource} · {new Date(run.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+                    No automation runs have been recorded yet.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

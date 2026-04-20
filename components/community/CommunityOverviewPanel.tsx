@@ -21,8 +21,6 @@ type Props = {
   campaignCount: number;
   questCount: number;
   raidCount: number;
-  rewardCount: number;
-  teamMemberCount: number;
   linkedContributorCount: number;
   walletVerifiedCount: number;
   captainCount: number;
@@ -34,9 +32,16 @@ type Props = {
   latestIssue: string;
   automationRailCount: number;
   activeAutomationCount: number;
+  readyAutomationCount: number;
+  blockedAutomationCount: number;
+  degradedAutomationCount: number;
   dueAutomationCount: number;
   enabledPlaybookCount: number;
   recentAutomationFailureCount: number;
+  automationSuccessRate: number;
+  captainCoverageRate: number;
+  unassignedCaptainCount: number;
+  overdueCaptainCount: number;
   lastRankSyncAt: string;
   lastLeaderboardPostedAt: string;
   lastMissionDigestAt: string;
@@ -54,6 +59,10 @@ type Props = {
 
 function formatTimestamp(value: string) {
   return value ? new Date(value).toLocaleString() : "Not run yet";
+}
+
+function formatPercent(value: number) {
+  return `${Math.max(0, Math.round(value))}%`;
 }
 
 function StatusCard(props: {
@@ -98,8 +107,6 @@ export function CommunityOverviewPanel({
   campaignCount,
   questCount,
   raidCount,
-  rewardCount,
-  teamMemberCount,
   linkedContributorCount,
   walletVerifiedCount,
   captainCount,
@@ -111,9 +118,16 @@ export function CommunityOverviewPanel({
   latestIssue,
   automationRailCount,
   activeAutomationCount,
+  readyAutomationCount,
+  blockedAutomationCount,
+  degradedAutomationCount,
   dueAutomationCount,
   enabledPlaybookCount,
   recentAutomationFailureCount,
+  automationSuccessRate,
+  captainCoverageRate,
+  unassignedCaptainCount,
+  overdueCaptainCount,
   lastRankSyncAt,
   lastLeaderboardPostedAt,
   lastMissionDigestAt,
@@ -128,11 +142,15 @@ export function CommunityOverviewPanel({
   ownerSignalCount,
   captainPriorityCount,
 }: Props) {
+  const automationPressureCount =
+    blockedAutomationCount + degradedAutomationCount + dueAutomationCount;
+  const captainPressureCount = unassignedCaptainCount + overdueCaptainCount + captainPriorityCount;
+
   return (
     <OpsPanel
       eyebrow="Overview"
-      title={`${projectName} community rail`}
-      description="This control room is scoped to this project only. Use it to run the bot, keep rails healthy and ship community-facing operations without exposing other projects."
+      title={`${projectName} community control center`}
+      description="This control room is scoped to this project only. It should tell an owner what needs attention, what is healthy, and which rails are ready to push without drifting into member-level management."
       tone="accent"
       action={
         <div className="flex flex-wrap gap-3">
@@ -143,15 +161,15 @@ export function CommunityOverviewPanel({
             Back to project
           </Link>
           <Link
-            href="/quests"
+            href={`/projects/${projectId}/launch`}
             className="rounded-[18px] bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95"
           >
-            Open mission rails
+            Open launch workspace
           </Link>
         </div>
       }
     >
-      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
         <div className="grid gap-3 sm:grid-cols-2">
           <OpsMetricCard
             label="Active mode"
@@ -160,122 +178,125 @@ export function CommunityOverviewPanel({
             emphasis="primary"
           />
           <OpsMetricCard
-            label="Campaigns"
+            label="Campaign lanes"
             value={campaignCount}
-            sub="Community can post, rank and activate against these lanes."
+            sub="Campaigns currently feeding community pressure, rankings and launch sequencing."
             emphasis={campaignCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Missions"
+            label="Quest lanes"
             value={questCount}
-            sub="Live quest surfaces that can feed leaderboards and push rails."
+            sub="Mission surfaces that can feed automations, leaderboards and funnels."
             emphasis={questCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Raids"
+            label="Raid lanes"
             value={raidCount}
-            sub="Live raid rails that can be pushed or automated from here."
+            sub="Raid pressure that can be coordinated through playbooks and alerts."
             emphasis={raidCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Rewards"
-            value={rewardCount}
-            sub="Reward drops available for claim and promotion."
-          />
-          <OpsMetricCard
-            label="Team members"
-            value={teamMemberCount}
-            sub="People currently attached to this workspace."
           />
           <OpsMetricCard
             label="Linked contributors"
             value={linkedContributorCount}
-            sub="Contributors already reachable through community command rails."
+            sub="Community members already reachable through command and push rails."
             emphasis={linkedContributorCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
             label="Wallet verified"
             value={walletVerifiedCount}
-            sub="Community contributors with a verified wallet ready for deeper trust rails."
+            sub="Contributors ready for deeper trust, reward and on-chain rails."
           />
           <OpsMetricCard
-            label="Captains"
+            label="Captains assigned"
             value={captainCount}
-            sub="Assigned community leads attached to this project."
+            sub="Project-owned captain seats that currently have an active person attached."
             emphasis={captainCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Captain coverage"
+            value={formatPercent(captainCoverageRate)}
+            sub="How much of the intended captain surface is actively covered right now."
+            emphasis={captainCoverageRate >= 70 ? "primary" : captainCoverageRate > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Unassigned seats"
+            value={unassignedCaptainCount}
+            sub="Captain seats that still need an owner assignment before the queue is fully covered."
+            emphasis={unassignedCaptainCount > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Overdue captain actions"
+            value={overdueCaptainCount}
+            sub="Queue work that has slipped past its due window and needs intervention."
+            emphasis={overdueCaptainCount > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
             label="Automation rails"
             value={automationRailCount}
-            sub="Durable execution rails stored in Community OS."
+            sub="Durable community execution rails stored in Community OS."
             emphasis={automationRailCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Automations armed"
+            label="Armed now"
             value={activeAutomationCount}
-            sub="Rails that are currently active and eligible to run."
+            sub="Automations currently active and eligible to fire."
             emphasis={activeAutomationCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Due now"
-            value={dueAutomationCount}
-            sub="Automations already due based on their next run."
-            emphasis={dueAutomationCount > 0 ? "warning" : "default"}
+            label="Ready rails"
+            value={readyAutomationCount}
+            sub="Automations already in a ready posture for the next community move."
+            emphasis={readyAutomationCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Degraded or blocked"
+            value={blockedAutomationCount + degradedAutomationCount}
+            sub="Execution rails that are stalled or drifting and need owner attention."
+            emphasis={blockedAutomationCount + degradedAutomationCount > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Success rate"
+            value={formatPercent(automationSuccessRate)}
+            sub="Current automation health based on recent recorded execution outcomes."
+            emphasis={automationSuccessRate >= 70 ? "primary" : automationSuccessRate > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
             label="Playbooks enabled"
             value={enabledPlaybookCount}
-            sub="Reusable community modes ready to run."
+            sub="Reusable operating modes currently armed for launch, raid or comeback pressure."
             emphasis={enabledPlaybookCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Newcomers"
+            label="Newcomer pressure"
             value={newcomerCount}
-            sub="Fresh contributors waiting for a starter lane."
+            sub="Fresh contributors waiting for a first mission lane."
+            emphasis={newcomerCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Reactivation"
+            label="Comeback pressure"
             value={reactivationCount}
-            sub="Dormant contributors worth pulling back in."
+            sub="Dormant contributors that could be pulled back through reactivation waves."
             emphasis={reactivationCount > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
             label="Watchlist"
             value={watchlistCount}
-            sub="Contributors currently carrying trust or quality issues."
+            sub="Community members currently carrying trust, quality or moderation pressure."
             emphasis={watchlistCount > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Recent automation failures"
-            value={recentAutomationFailureCount}
-            sub="Failed automation or playbook runs visible in recent history."
-            emphasis={recentAutomationFailureCount > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Owner signals"
-            value={ownerSignalCount}
-            sub="Aggregate guidance signals currently visible in the owner rail."
-            emphasis={ownerSignalCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Captain priorities"
-            value={captainPriorityCount}
-            sub="Highest-priority actions currently visible in the captain workspace."
-            emphasis={captainPriorityCount > 0 ? "primary" : "default"}
           />
         </div>
 
         <div className="grid gap-3">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
-            <div className="flex items-center justify-between gap-3">
+          <div className="rounded-[24px] border border-primary/20 bg-[linear-gradient(180deg,rgba(186,255,59,0.1),rgba(13,19,29,0.96))] p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                   Recommended next play
                 </p>
-                <p className="mt-2 text-sm font-semibold text-text">
+                <p className="mt-2 text-lg font-extrabold text-text">
                   {recommendedPlayTitle || "Current rails look stable"}
                 </p>
-                <p className="mt-2 text-sm leading-7 text-sub">
+                <p className="mt-3 text-sm leading-7 text-sub">
                   {recommendedPlaySummary ||
                     "No urgent owner intervention is currently required on this project rail."}
                 </p>
@@ -285,6 +306,27 @@ export function CommunityOverviewPanel({
                   {recommendedPlayActionLabel}
                 </span>
               ) : null}
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[18px] border border-white/10 bg-card/70 px-4 py-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                  Owner signals
+                </p>
+                <p className="mt-2 text-lg font-bold text-text">{ownerSignalCount}</p>
+              </div>
+              <div className="rounded-[18px] border border-white/10 bg-card/70 px-4 py-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                  Automation pressure
+                </p>
+                <p className="mt-2 text-lg font-bold text-text">{automationPressureCount}</p>
+              </div>
+              <div className="rounded-[18px] border border-white/10 bg-card/70 px-4 py-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                  Captain pressure
+                </p>
+                <p className="mt-2 text-lg font-bold text-text">{captainPressureCount}</p>
+              </div>
             </div>
           </div>
 
@@ -298,7 +340,7 @@ export function CommunityOverviewPanel({
                   Provider rail
                 </p>
                 <p className="mt-1 text-sm font-semibold text-text">
-                  Discord, Telegram and X are managed from one project-private page.
+                  Discord, Telegram and X are managed from one project-private workspace.
                 </p>
               </div>
             </div>
@@ -368,8 +410,12 @@ export function CommunityOverviewPanel({
             <StatusCard
               icon={<ShieldCheck size={18} />}
               label="Incident posture"
-              value={`${callbackFailures} callback | ${onchainFailures} on-chain`}
-              tone={callbackFailures > 0 || onchainFailures > 0 ? "warning" : "default"}
+              value={`${callbackFailures} callback | ${onchainFailures} on-chain | ${recentAutomationFailureCount} execution`}
+              tone={
+                callbackFailures > 0 || onchainFailures > 0 || recentAutomationFailureCount > 0
+                  ? "warning"
+                  : "default"
+              }
             />
           </div>
 

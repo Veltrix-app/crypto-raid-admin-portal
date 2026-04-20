@@ -55,6 +55,12 @@ function roleLabel(role: CaptainRole) {
   return "Community captain";
 }
 
+function defaultScopeLabel(role: CaptainRole) {
+  if (role === "raid_lead") return "Community only";
+  if (role === "growth_lead") return "Project only";
+  return "Project + community";
+}
+
 function createEmptyAssignment(): CaptainAssignment {
   return {
     authUserId: "",
@@ -78,6 +84,10 @@ export function CommunityCaptainsPanel({
   onSaveCaptains,
 }: Props) {
   const flaggedCaptains = roster.filter((captain) => captain.openFlagCount > 0).length;
+  const stagedOpenSeats = assignments.filter((assignment) => !assignment.authUserId).length;
+  const readyCandidates = candidates.filter(
+    (candidate) => candidate.walletVerified && candidate.openFlagCount === 0
+  ).length;
 
   return (
     <OpsPanel
@@ -94,20 +104,22 @@ export function CommunityCaptainsPanel({
             emphasis={roster.length > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Candidate pool"
-            value={candidates.length}
-            sub="Team members and high-signal contributors ready for captain review."
+            label="Ready candidates"
+            value={readyCandidates}
+            sub="Candidates with wallet readiness and no open flags."
+            emphasis={readyCandidates > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Wallet ready"
-            value={roster.filter((captain) => captain.walletVerified).length}
-            sub="Assigned captains with a verified wallet identity."
+            label="Staged seats"
+            value={assignments.length}
+            sub="Assignments currently being configured before save."
+            emphasis={assignments.length > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
             label="Needs review"
-            value={flaggedCaptains}
-            sub="Captain seats currently carrying open quality flags."
-            emphasis={flaggedCaptains > 0 ? "warning" : "default"}
+            value={flaggedCaptains + stagedOpenSeats}
+            sub="Flagged captains or staged seats still missing an owner."
+            emphasis={flaggedCaptains + stagedOpenSeats > 0 ? "warning" : "default"}
           />
         </div>
 
@@ -116,8 +128,7 @@ export function CommunityCaptainsPanel({
             <div>
               <p className="text-sm font-bold text-text">Captain controls</p>
               <p className="mt-2 text-sm text-sub">
-                Keep this rail opt-in and only assign captains who are ready to operate in this
-                project's community stack.
+                Keep this rail opt-in and only assign captains who are ready to operate in this project's community stack.
               </p>
             </div>
             <OpsStatusPill tone={settings.captainsEnabled ? "success" : "default"}>
@@ -177,8 +188,7 @@ export function CommunityCaptainsPanel({
               <div>
                 <p className="text-sm font-bold text-text">Captain roster</p>
                 <p className="mt-2 text-sm text-sub">
-                  Current seats that will anchor growth pushes, raid direction and community
-                  follow-through.
+                  Current seats that will anchor growth pushes, raid direction and community follow-through.
                 </p>
               </div>
               <OpsStatusPill tone={roster.length > 0 ? "success" : "default"}>
@@ -198,32 +208,42 @@ export function CommunityCaptainsPanel({
                         <p className="font-bold text-text">{captain.username}</p>
                         <p className="mt-2 text-sm text-sub">
                           {roleLabel(captain.role)}
-                          {captain.label ? ` • ${captain.label}` : ""} • {captain.xp} XP • Trust{" "}
+                          {captain.label ? ` · ${captain.label}` : ""} · {captain.xp} XP · Trust{" "}
                           {captain.trust}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {captain.walletVerified ? (
-                          <OpsStatusPill tone="success">Wallet</OpsStatusPill>
-                        ) : (
-                          <OpsStatusPill tone="warning">No wallet</OpsStatusPill>
-                        )}
+                        <OpsStatusPill tone={captain.walletVerified ? "success" : "warning"}>
+                          {captain.walletVerified ? "Wallet" : "No wallet"}
+                        </OpsStatusPill>
                         <OpsStatusPill tone={captain.openFlagCount > 0 ? "warning" : "success"}>
                           {captain.openFlagCount > 0
-                            ? `${captain.openFlagCount} open flag${captain.openFlagCount === 1 ? "" : "s"}`
+                            ? `${captain.openFlagCount} flag${captain.openFlagCount === 1 ? "" : "s"}`
                             : "Quality clean"}
                         </OpsStatusPill>
                       </div>
                     </div>
+                    <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                      Default seat scope: {defaultScopeLabel(captain.role)}
+                    </p>
                     <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-sub">
                       {captain.readinessSummary}
                     </p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-sub">
+                      {captain.linkedProviders.map((provider) => (
+                        <span
+                          key={`${captain.authUserId}-${provider}`}
+                          className="rounded-full border border-white/8 bg-card2 px-3 py-1"
+                        >
+                          {provider}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ))
               ) : (
                 <div className="rounded-[22px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
-                  No captain seats are assigned yet. Start with one community captain and one raid
-                  lead.
+                  No captain seats are assigned yet. Start with one community captain and one raid lead.
                 </div>
               )}
             </div>
@@ -234,8 +254,7 @@ export function CommunityCaptainsPanel({
               <div>
                 <p className="text-sm font-bold text-text">Roster editor</p>
                 <p className="mt-2 text-sm text-sub">
-                  Assign seats from project members or top contributors. Keep this small and
-                  deliberate.
+                  Assign seats from project members or top contributors. Keep this small and deliberate.
                 </p>
               </div>
               <button
@@ -253,94 +272,124 @@ export function CommunityCaptainsPanel({
 
             <div className="mt-4 space-y-3">
               {assignments.length > 0 ? (
-                assignments.map((assignment, index) => (
-                  <div
-                    key={`captain-assignment-${index}`}
-                    className="rounded-[22px] border border-line bg-card px-4 py-4"
-                  >
-                    <div className="grid gap-3 md:grid-cols-[1.2fr_0.8fr]">
-                      <label className="space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
-                        Captain
-                        <select
-                          value={assignment.authUserId}
-                          onChange={(event) =>
-                            setAssignments((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? { ...item, authUserId: event.target.value }
-                                  : item
+                assignments.map((assignment, index) => {
+                  const selectedCandidate =
+                    candidates.find((candidate) => candidate.authUserId === assignment.authUserId) ??
+                    null;
+
+                  return (
+                    <div
+                      key={`captain-assignment-${index}`}
+                      className="rounded-[22px] border border-line bg-card px-4 py-4"
+                    >
+                      <div className="grid gap-3 md:grid-cols-[1.2fr_0.8fr]">
+                        <label className="space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                          Captain
+                          <select
+                            value={assignment.authUserId}
+                            onChange={(event) =>
+                              setAssignments((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? { ...item, authUserId: event.target.value }
+                                    : item
+                                )
                               )
+                            }
+                            className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
+                          >
+                            <option value="">Select a captain</option>
+                            {candidates.map((candidate) => (
+                              <option key={candidate.authUserId} value={candidate.authUserId}>
+                                {candidate.username} · {candidate.source} · Trust {candidate.trust}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                          Role
+                          <select
+                            value={assignment.role}
+                            onChange={(event) =>
+                              setAssignments((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? {
+                                        ...item,
+                                        role: event.target.value as CaptainRole,
+                                      }
+                                    : item
+                                )
+                              )
+                            }
+                            className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
+                          >
+                            <option value="community_captain">Community captain</option>
+                            <option value="raid_lead">Raid lead</option>
+                            <option value="growth_lead">Growth lead</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        <label className="min-w-[220px] flex-1 space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                          Label
+                          <input
+                            value={assignment.label}
+                            onChange={(event) =>
+                              setAssignments((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? { ...item, label: event.target.value }
+                                    : item
+                                )
+                              )
+                            }
+                            placeholder="Optional call-sign"
+                            className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAssignments((current) =>
+                              current.filter((_, itemIndex) => itemIndex !== index)
                             )
                           }
-                          className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
+                          className="self-end rounded-[16px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-200 transition hover:border-rose-400/50 hover:text-rose-100"
                         >
-                          <option value="">Select a captain</option>
-                          {candidates.map((candidate) => (
-                            <option key={candidate.authUserId} value={candidate.authUserId}>
-                              {candidate.username} • {candidate.source} • Trust {candidate.trust}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                          Remove
+                        </button>
+                      </div>
 
-                      <label className="space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
-                        Role
-                        <select
-                          value={assignment.role}
-                          onChange={(event) =>
-                            setAssignments((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      role: event.target.value as CaptainRole,
-                                    }
-                                  : item
-                              )
-                            )
-                          }
-                          className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
-                        >
-                          <option value="community_captain">Community captain</option>
-                          <option value="raid_lead">Raid lead</option>
-                          <option value="growth_lead">Growth lead</option>
-                        </select>
-                      </label>
+                      <div className="mt-3 rounded-[18px] border border-white/8 bg-card2 px-4 py-4 text-sm text-sub">
+                        {selectedCandidate ? (
+                          <>
+                            <p className="font-semibold text-text">{selectedCandidate.username}</p>
+                            <p className="mt-2 leading-6">
+                              {selectedCandidate.roleHint} · {selectedCandidate.xp} XP · Trust{" "}
+                              {selectedCandidate.trust}
+                            </p>
+                            <p className="mt-2 leading-6">
+                              {selectedCandidate.walletVerified ? "Wallet ready" : "Wallet missing"} ·{" "}
+                              {selectedCandidate.openFlagCount > 0
+                                ? `${selectedCandidate.openFlagCount} open flag${selectedCandidate.openFlagCount === 1 ? "" : "s"}`
+                                : "No open flags"}
+                            </p>
+                            <p className="mt-2 leading-6">
+                              This seat will default to {defaultScopeLabel(assignment.role)} until
+                              the owner tightens it in Captain Ops.
+                            </p>
+                          </>
+                        ) : (
+                          <p>Select a candidate to see whether this seat is actually ready to operate.</p>
+                        )}
+                      </div>
                     </div>
-
-                    <div className="mt-3 flex flex-wrap gap-3">
-                      <label className="min-w-[220px] flex-1 space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
-                        Label
-                        <input
-                          value={assignment.label}
-                          onChange={(event) =>
-                            setAssignments((current) =>
-                              current.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? { ...item, label: event.target.value }
-                                  : item
-                              )
-                            )
-                          }
-                          placeholder="Optional call-sign"
-                          className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
-                        />
-                      </label>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setAssignments((current) =>
-                            current.filter((_, itemIndex) => itemIndex !== index)
-                          )
-                        }
-                        className="self-end rounded-[16px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-200 transition hover:border-rose-400/50 hover:text-rose-100"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="rounded-[22px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
                   No seats staged yet. Add a seat and choose a project member or contributor.

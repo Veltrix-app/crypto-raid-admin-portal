@@ -1,6 +1,10 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
+import type {
+  CommunityCohortSnapshot,
+  CommunityHealthRollup,
+} from "@/components/community/community-config";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import type { DiscordCommunityBotSettings } from "@/components/community/community-config";
 
@@ -25,6 +29,7 @@ type Props = {
     newcomers: number;
     warmingUp: number;
     core: number;
+    highTrust: number;
     watchlist: number;
     reactivation: number;
     commandReady: number;
@@ -32,8 +37,11 @@ type Props = {
     openFlags: number;
   };
   newcomers: CohortContributor[];
+  highTrust: CohortContributor[];
   reactivation: CohortContributor[];
   watchlist: CohortContributor[];
+  cohortSnapshots: CommunityCohortSnapshot[];
+  healthRollups: CommunityHealthRollup[];
   trust: {
     averageTrust: number;
     openFlagCount: number;
@@ -48,85 +56,26 @@ type Props = {
   onRunFunnelAction: (mode: "newcomer" | "reactivation") => void;
 };
 
-function CohortList({
-  title,
-  description,
-  tone,
-  contributors,
-}: {
-  title: string;
-  description: string;
-  tone: "success" | "warning" | "default";
-  contributors: CohortContributor[];
-}) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card2 p-5">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-bold text-text">{title}</p>
-          <p className="mt-2 text-sm text-sub">{description}</p>
-        </div>
-        <OpsStatusPill tone={tone}>{contributors.length}</OpsStatusPill>
-      </div>
+function findCohortSnapshot(
+  snapshots: CommunityCohortSnapshot[],
+  key: CommunityCohortSnapshot["key"]
+) {
+  return snapshots.find((snapshot) => snapshot.key === key) ?? null;
+}
 
-      <div className="mt-4 space-y-3">
-        {contributors.length > 0 ? (
-          contributors.map((contributor) => (
-            <div
-              key={`${title}-${contributor.authUserId}`}
-              className="rounded-[22px] border border-line bg-card px-4 py-4"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="font-bold text-text">{contributor.username}</p>
-                  <p className="mt-2 text-sm text-sub">
-                    {contributor.xp} XP • L{contributor.level} • Trust {contributor.trust}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {contributor.walletVerified ? (
-                    <OpsStatusPill tone="success">Wallet</OpsStatusPill>
-                  ) : (
-                    <OpsStatusPill tone="warning">No wallet</OpsStatusPill>
-                  )}
-                  {contributor.daysSinceActive !== null ? (
-                    <OpsStatusPill tone="default">
-                      {contributor.daysSinceActive}d idle
-                    </OpsStatusPill>
-                  ) : (
-                    <OpsStatusPill tone="warning">No recent XP events</OpsStatusPill>
-                  )}
-                </div>
-              </div>
-              <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-sub">
-                {contributor.readinessGaps.length > 0
-                  ? contributor.readinessGaps.join(" • ")
-                  : "Ready for the next lane"}
-              </p>
-              {contributor.recentFlagReasons.length > 0 ? (
-                <p className="mt-2 text-xs text-amber-200">
-                  {contributor.recentFlagReasons.join(" • ")}
-                </p>
-              ) : null}
-            </div>
-          ))
-        ) : (
-          <div className="rounded-[22px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
-            No contributors currently land in this cohort.
-          </div>
-        )}
-      </div>
-    </div>
-  );
+function toneFromSnapshot(snapshot: CommunityCohortSnapshot | null) {
+  if (!snapshot || snapshot.memberCount === 0) return "default" as const;
+  if (snapshot.blockedCount > 0) return "warning" as const;
+  if (snapshot.readyCount > 0) return "success" as const;
+  return "default" as const;
 }
 
 export function CommunityCohortsPanel({
   settings,
   setSettings,
   summary,
-  newcomers,
-  reactivation,
-  watchlist,
+  cohortSnapshots,
+  healthRollups,
   trust,
   savingSettings,
   runningFunnelAction,
@@ -135,36 +84,45 @@ export function CommunityCohortsPanel({
   onSaveSettings,
   onRunFunnelAction,
 }: Props) {
+  const newcomer = findCohortSnapshot(cohortSnapshots, "newcomer");
+  const active = findCohortSnapshot(cohortSnapshots, "active");
+  const reactivation = findCohortSnapshot(cohortSnapshots, "reactivation");
+  const highTrust = findCohortSnapshot(cohortSnapshots, "high_trust");
+  const watchlist = findCohortSnapshot(cohortSnapshots, "watchlist");
+  const trustSignal =
+    healthRollups.find((signal) => signal.key === "trust_posture") ?? healthRollups[0] ?? null;
+
   return (
     <OpsPanel
       eyebrow="Cohorts"
-      title="Newcomer and reactivation funnels"
-      description="Segment this project's contributors into real growth lanes instead of blasting the same message at everyone."
+      title="Operational cohorts and growth lanes"
+      description="These segments exist to help owners and captains steer the community machine. They are pressure lanes, not loose member management views."
     >
       <div className="space-y-5">
         <div className="grid gap-3 md:grid-cols-4">
           <OpsMetricCard
-            label="Newcomers"
+            label="Starter pressure"
             value={summary.newcomers}
-            sub="Fresh contributors who still need a clean first lane."
+            sub={`${newcomer?.readyCount ?? 0} newcomer seats are already ready for a first lane.`}
             emphasis={summary.newcomers > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Reactivation"
+            label="Active rail"
+            value={summary.warmingUp + summary.core}
+            sub={`${active?.readyCount ?? 0} active contributors are already fully ready.`}
+            emphasis={summary.core > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Comeback pressure"
             value={summary.reactivation}
-            sub="Previously active contributors who have gone quiet."
+            sub={`${reactivation?.readyCount ?? 0} returning contributors are reachable right now.`}
             emphasis={summary.reactivation > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
-            label="Watchlist"
-            value={summary.watchlist}
-            sub="Contributors carrying trust or quality issues."
-            emphasis={summary.watchlist > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Average trust"
-            value={trust.averageTrust}
-            sub="Project-wide contributor quality baseline."
+            label="High-trust anchor"
+            value={summary.highTrust}
+            sub="Trusted contributors who can stabilize deeper mission and reward pressure."
+            emphasis={summary.highTrust > 0 ? "primary" : "default"}
           />
         </div>
 
@@ -173,18 +131,16 @@ export function CommunityCohortsPanel({
             <div>
               <p className="text-sm font-bold text-text">Funnel controls</p>
               <p className="mt-2 text-sm text-sub">
-                Turn on the cohort rails you want to actively operate, then push them through the
-                current provider targets.
+                Turn the newcomer and comeback rails on only when the project is ready to carry the
+                resulting pressure into missions, raids and community nudges.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <OpsStatusPill tone={settings.newcomerFunnelEnabled ? "success" : "default"}>
-                {settings.newcomerFunnelEnabled ? "Starter rail on" : "Starter rail parked"}
+                {settings.newcomerFunnelEnabled ? "Starter lane armed" : "Starter lane parked"}
               </OpsStatusPill>
-              <OpsStatusPill
-                tone={settings.reactivationFunnelEnabled ? "success" : "default"}
-              >
-                {settings.reactivationFunnelEnabled ? "Reactivation on" : "Reactivation parked"}
+              <OpsStatusPill tone={settings.reactivationFunnelEnabled ? "success" : "default"}>
+                {settings.reactivationFunnelEnabled ? "Comeback lane armed" : "Comeback lane parked"}
               </OpsStatusPill>
             </div>
           </div>
@@ -234,7 +190,7 @@ export function CommunityCohortsPanel({
               disabled={runningFunnelAction !== null}
               className="rounded-[18px] bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {runningFunnelAction === "newcomer" ? "Pushing newcomer wave..." : "Send newcomer wave"}
+              {runningFunnelAction === "newcomer" ? "Pushing starter wave..." : "Send starter wave"}
             </button>
             <button
               type="button"
@@ -259,31 +215,99 @@ export function CommunityCohortsPanel({
               {funnelNotice}
             </div>
           ) : null}
-
-          <p className="mt-4 rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm leading-6 text-sub">
-            {trust.latestIssue}
-          </p>
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-3">
-          <CohortList
-            title="Newcomer queue"
-            description="Fresh contributors who need a clean starter pack and link completion."
-            tone={newcomers.length > 0 ? "success" : "default"}
-            contributors={newcomers}
-          />
-          <CohortList
-            title="Reactivation queue"
-            description="Dormant contributors who are worth pulling back into the rail."
-            tone={reactivation.length > 0 ? "warning" : "default"}
-            contributors={reactivation}
-          />
-          <CohortList
-            title="Watchlist"
-            description="High-risk or low-trust contributors who should not be pushed blindly."
-            tone={watchlist.length > 0 ? "warning" : "default"}
-            contributors={watchlist}
-          />
+        <div className="grid gap-4 xl:grid-cols-5">
+          {(
+            [
+              ["newcomer", newcomer],
+              ["active", active],
+              ["reactivation", reactivation],
+              ["high_trust", highTrust],
+              ["watchlist", watchlist],
+            ] as const
+          ).map(([key, snapshot]) => (
+            <div
+              key={key}
+              className="rounded-[22px] border border-line bg-card2 p-4"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-bold text-text">{snapshot?.label ?? "Lane"}</p>
+                <OpsStatusPill tone={toneFromSnapshot(snapshot)}>
+                  {snapshot?.memberCount ?? 0}
+                </OpsStatusPill>
+              </div>
+              <div className="mt-4 space-y-2 text-sm text-sub">
+                <p>{snapshot?.readyCount ?? 0} ready seats</p>
+                <p>{snapshot?.blockedCount ?? 0} blocked seats</p>
+                <p>{snapshot?.activeCount ?? 0} active now</p>
+                <p>Trust {snapshot?.averageTrust ?? 0}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
+          <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <p className="text-sm font-bold text-text">Segment pressure</p>
+            <p className="mt-2 text-sm text-sub">
+              Keep these ratios readable: starter and comeback queues should shrink into the active
+              rail, while high-trust seats outgrow the watchlist.
+            </p>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Starter to active</p>
+                <p className="mt-3 text-2xl font-black text-text">
+                  {summary.newcomers} / {summary.warmingUp + summary.core}
+                </p>
+                <p className="mt-2 text-sm text-sub">
+                  Use this ratio to see whether onboarding pressure is graduating into the active rail.
+                </p>
+              </div>
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Trust balance</p>
+                <p className="mt-3 text-2xl font-black text-text">
+                  {summary.highTrust} / {summary.watchlist}
+                </p>
+                <p className="mt-2 text-sm text-sub">
+                  High-trust anchors versus contributors who currently require more careful handling.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-text">Trust posture</p>
+                <p className="mt-2 text-sm text-sub">
+                  This project should not blindly broaden pushes when trust or review pressure starts
+                  leaning the wrong way.
+                </p>
+              </div>
+              <OpsStatusPill tone={toneFromSnapshot(watchlist)}>
+                {watchlist && watchlist.memberCount > 0 ? "Needs review" : "Stable"}
+              </OpsStatusPill>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Average trust</p>
+                <p className="mt-3 text-xl font-black text-text">{trust.averageTrust}</p>
+              </div>
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Open flags</p>
+                <p className="mt-3 text-xl font-black text-text">{trust.openFlagCount}</p>
+              </div>
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Signal readout</p>
+                <p className="mt-3 text-sm leading-6 text-sub">
+                  {trustSignal?.summary || trust.latestIssue}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </OpsPanel>

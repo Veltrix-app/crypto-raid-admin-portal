@@ -17,9 +17,13 @@ import {
   type CommunityAutomationRecord,
   type CommunityAutomationRunRecord,
   type CommunityCaptainActionRecord,
+  type CommunityCaptainCoverageSignal,
   type CommunityCaptainPermission,
   type CommunityCaptainQueueItem,
+  type CommunityCaptainSeatScope,
+  type CommunityCohortSnapshot,
   type CommunityHealthSignal,
+  type CommunityHealthRollup,
   type CommunityJourneyOutcomeRecord,
   type CommunityOwnerRecommendation,
   CommunityPushSettings,
@@ -166,6 +170,7 @@ type CommunityGrowthPayload = {
       newcomers: number;
       warmingUp: number;
       core: number;
+      highTrust: number;
       watchlist: number;
       reactivation: number;
       commandReady: number;
@@ -175,6 +180,7 @@ type CommunityGrowthPayload = {
     newcomers: CohortContributor[];
     warmingUp: CohortContributor[];
     core: CohortContributor[];
+    highTrust: CohortContributor[];
     watchlist: CohortContributor[];
     reactivation: CohortContributor[];
   };
@@ -184,6 +190,14 @@ type CommunityGrowthPayload = {
     walletVerifiedRate: number;
     fullStackReadyRate: number;
     recentActiveRate: number;
+    newcomerReadyCount: number;
+    reactivationReadyCount: number;
+    highTrustCount: number;
+    highTrustRate: number;
+    commandGapCount: number;
+    walletGapCount: number;
+    xGapCount: number;
+    retentionPressureCount: number;
     averageTrust: number;
     watchlistCount: number;
     openFlagCount: number;
@@ -230,6 +244,9 @@ type CommunityCaptainWorkspaceState = {
     blockedCount: number;
     dueSoonCount: number;
     escalatedCount: number;
+    overdueCount: number;
+    highPriorityCount: number;
+    unassignedCount: number;
   };
   queue: CommunityCaptainQueueItem[];
   priorities: CommunityCaptainQueueItem[];
@@ -239,12 +256,19 @@ type CommunityCaptainWorkspaceState = {
 
 type CommunityExecutionSummaryState = {
   automations: number;
+  activeAutomationCount: number;
+  readyAutomationCount: number;
+  blockedAutomationCount: number;
+  degradedAutomationCount: number;
   recentAutomationRuns: number;
   recentPlaybookRuns: number;
   recentCaptainActions: number;
   recentFailureCount: number;
   recentSuccessCount: number;
+  automationSuccessRate: number;
 };
+
+type CommunityCaptainCoverageState = CommunityCaptainCoverageSignal;
 
 type CommunityRecommendationsState = {
   projectId: string;
@@ -252,6 +276,7 @@ type CommunityRecommendationsState = {
   healthSignals: CommunityHealthSignal[];
   execution: CommunityExecutionSummaryState;
   captainWorkspace: CommunityCaptainWorkspaceState["summary"];
+  captainCoverage: CommunityCaptainCoverageState;
 };
 
 type CommunityOutcomesState = {
@@ -261,6 +286,9 @@ type CommunityOutcomesState = {
   execution: CommunityExecutionSummaryState;
   captainWorkspace: CommunityCaptainWorkspaceState["summary"];
   recentResults: CommunityCaptainActionRecord[];
+  cohortSnapshots: CommunityCohortSnapshot[];
+  healthRollups: CommunityHealthRollup[];
+  captainCoverage: CommunityCaptainCoverageState;
 };
 
 const emptyMembersPayload: CommunityMembersPayload = {
@@ -289,6 +317,7 @@ const emptyGrowthPayload: CommunityGrowthPayload = {
       newcomers: 0,
       warmingUp: 0,
       core: 0,
+      highTrust: 0,
       watchlist: 0,
       reactivation: 0,
       commandReady: 0,
@@ -298,6 +327,7 @@ const emptyGrowthPayload: CommunityGrowthPayload = {
     newcomers: [],
     warmingUp: [],
     core: [],
+    highTrust: [],
     watchlist: [],
     reactivation: [],
   },
@@ -307,6 +337,14 @@ const emptyGrowthPayload: CommunityGrowthPayload = {
     walletVerifiedRate: 0,
     fullStackReadyRate: 0,
     recentActiveRate: 0,
+    newcomerReadyCount: 0,
+    reactivationReadyCount: 0,
+    highTrustCount: 0,
+    highTrustRate: 0,
+    commandGapCount: 0,
+    walletGapCount: 0,
+    xGapCount: 0,
+    retentionPressureCount: 0,
     averageTrust: 0,
     watchlistCount: 0,
     openFlagCount: 0,
@@ -337,11 +375,24 @@ const emptyGrowthPayload: CommunityGrowthPayload = {
 
 const emptyCommunityExecutionSummary: CommunityExecutionSummaryState = {
   automations: 0,
+  activeAutomationCount: 0,
+  readyAutomationCount: 0,
+  blockedAutomationCount: 0,
+  degradedAutomationCount: 0,
   recentAutomationRuns: 0,
   recentPlaybookRuns: 0,
   recentCaptainActions: 0,
   recentFailureCount: 0,
   recentSuccessCount: 0,
+  automationSuccessRate: 0,
+};
+
+const emptyCommunityCaptainCoverage: CommunityCaptainCoverageState = {
+  totalSeats: 0,
+  activeCaptains: 0,
+  unassignedSeats: 0,
+  coverageRate: 0,
+  updatedAt: "",
 };
 
 const emptyCommunityCaptainWorkspace: CommunityCaptainWorkspaceState = {
@@ -360,6 +411,9 @@ const emptyCommunityCaptainWorkspace: CommunityCaptainWorkspaceState = {
     blockedCount: 0,
     dueSoonCount: 0,
     escalatedCount: 0,
+    overdueCount: 0,
+    highPriorityCount: 0,
+    unassignedCount: 0,
   },
   queue: [],
   priorities: [],
@@ -373,6 +427,7 @@ const emptyCommunityRecommendations: CommunityRecommendationsState = {
   healthSignals: [],
   execution: emptyCommunityExecutionSummary,
   captainWorkspace: emptyCommunityCaptainWorkspace.summary,
+  captainCoverage: emptyCommunityCaptainCoverage,
 };
 
 const emptyCommunityJourneyOutcomes: CommunityJourneyOutcomeRecord = {
@@ -425,7 +480,76 @@ const emptyCommunityOutcomes: CommunityOutcomesState = {
   execution: emptyCommunityExecutionSummary,
   captainWorkspace: emptyCommunityCaptainWorkspace.summary,
   recentResults: [],
+  cohortSnapshots: [],
+  healthRollups: [],
+  captainCoverage: emptyCommunityCaptainCoverage,
 };
+
+function buildCaptainSeatKey(authUserId: string, role: CaptainAssignment["role"]) {
+  return `${authUserId}:${role}`;
+}
+
+function getDefaultCaptainSeatScope(
+  role: CaptainAssignment["role"]
+): CommunityCaptainSeatScope {
+  if (role === "raid_lead") {
+    return "community_only";
+  }
+
+  if (role === "growth_lead") {
+    return "project_only";
+  }
+
+  return "project_and_community";
+}
+
+function parseCommunityExecutionSummary(value: unknown): CommunityExecutionSummaryState {
+  return value && typeof value === "object"
+    ? {
+        automations: Number((value as Record<string, unknown>).automations ?? 0),
+        activeAutomationCount: Number((value as Record<string, unknown>).activeAutomationCount ?? 0),
+        readyAutomationCount: Number((value as Record<string, unknown>).readyAutomationCount ?? 0),
+        blockedAutomationCount: Number((value as Record<string, unknown>).blockedAutomationCount ?? 0),
+        degradedAutomationCount: Number((value as Record<string, unknown>).degradedAutomationCount ?? 0),
+        recentAutomationRuns: Number((value as Record<string, unknown>).recentAutomationRuns ?? 0),
+        recentPlaybookRuns: Number((value as Record<string, unknown>).recentPlaybookRuns ?? 0),
+        recentCaptainActions: Number((value as Record<string, unknown>).recentCaptainActions ?? 0),
+        recentFailureCount: Number((value as Record<string, unknown>).recentFailureCount ?? 0),
+        recentSuccessCount: Number((value as Record<string, unknown>).recentSuccessCount ?? 0),
+        automationSuccessRate: Number((value as Record<string, unknown>).automationSuccessRate ?? 0),
+      }
+    : emptyCommunityExecutionSummary;
+}
+
+function parseCaptainWorkspaceSummary(value: unknown): CommunityCaptainWorkspaceState["summary"] {
+  return value && typeof value === "object"
+    ? {
+        activeAssignments: Number((value as Record<string, unknown>).activeAssignments ?? 0),
+        queueItemCount: Number((value as Record<string, unknown>).queueItemCount ?? 0),
+        blockedCount: Number((value as Record<string, unknown>).blockedCount ?? 0),
+        dueSoonCount: Number((value as Record<string, unknown>).dueSoonCount ?? 0),
+        escalatedCount: Number((value as Record<string, unknown>).escalatedCount ?? 0),
+        overdueCount: Number((value as Record<string, unknown>).overdueCount ?? 0),
+        highPriorityCount: Number((value as Record<string, unknown>).highPriorityCount ?? 0),
+        unassignedCount: Number((value as Record<string, unknown>).unassignedCount ?? 0),
+      }
+    : emptyCommunityCaptainWorkspace.summary;
+}
+
+function parseCaptainCoverage(value: unknown): CommunityCaptainCoverageState {
+  return value && typeof value === "object"
+    ? {
+        totalSeats: Number((value as Record<string, unknown>).totalSeats ?? 0),
+        activeCaptains: Number((value as Record<string, unknown>).activeCaptains ?? 0),
+        unassignedSeats: Number((value as Record<string, unknown>).unassignedSeats ?? 0),
+        coverageRate: Number((value as Record<string, unknown>).coverageRate ?? 0),
+        updatedAt:
+          typeof (value as Record<string, unknown>).updatedAt === "string"
+            ? ((value as Record<string, unknown>).updatedAt as string)
+            : "",
+      }
+    : emptyCommunityCaptainCoverage;
+}
 
 export default function ProjectCommunityManagementPage() {
   const params = useParams<{ id: string }>();
@@ -443,7 +567,6 @@ export default function ProjectCommunityManagementPage() {
   const quests = useAdminPortalStore((s) => s.quests);
   const raids = useAdminPortalStore((s) => s.raids);
   const rewards = useAdminPortalStore((s) => s.rewards);
-  const teamMembers = useAdminPortalStore((s) => s.teamMembers);
 
   const [discordIntegrationStatus, setDiscordIntegrationStatus] = useState<string>("unknown");
   const [telegramIntegrationStatus, setTelegramIntegrationStatus] = useState<string>("unknown");
@@ -541,6 +664,9 @@ export default function ProjectCommunityManagementPage() {
   >([]);
   const [captainPermissions, setCaptainPermissions] = useState<
     Record<string, CommunityCaptainPermission[]>
+  >({});
+  const [captainSeatScopes, setCaptainSeatScopes] = useState<
+    Record<string, CommunityCaptainSeatScope>
   >({});
   const [captainActions, setCaptainActions] = useState<CommunityCaptainActionRecord[]>([]);
   const [loadingCommunityExecution, setLoadingCommunityExecution] = useState(false);
@@ -1028,6 +1154,7 @@ export default function ProjectCommunityManagementPage() {
         setCommunityPlaybooks([]);
         setCommunityPlaybookRuns([]);
         setCaptainPermissions({});
+        setCaptainSeatScopes({});
         setCaptainActions([]);
         setLoadingCommunityExecution(false);
         return;
@@ -1042,6 +1169,11 @@ export default function ProjectCommunityManagementPage() {
       setCaptainPermissions(
         payload.captainPermissions && typeof payload.captainPermissions === "object"
           ? payload.captainPermissions
+          : {}
+      );
+      setCaptainSeatScopes(
+        payload.captainSeatScopes && typeof payload.captainSeatScopes === "object"
+          ? payload.captainSeatScopes
           : {}
       );
       setCaptainActions(Array.isArray(payload.captainActions) ? payload.captainActions : []);
@@ -1104,15 +1236,7 @@ export default function ProjectCommunityManagementPage() {
                 }
               : emptyCommunityCaptainWorkspace.viewer,
           summary:
-            workspacePayload.summary && typeof workspacePayload.summary === "object"
-              ? {
-                  activeAssignments: Number(workspacePayload.summary.activeAssignments ?? 0),
-                  queueItemCount: Number(workspacePayload.summary.queueItemCount ?? 0),
-                  blockedCount: Number(workspacePayload.summary.blockedCount ?? 0),
-                  dueSoonCount: Number(workspacePayload.summary.dueSoonCount ?? 0),
-                  escalatedCount: Number(workspacePayload.summary.escalatedCount ?? 0),
-                }
-              : emptyCommunityCaptainWorkspace.summary,
+            parseCaptainWorkspaceSummary(workspacePayload.summary),
           queue: Array.isArray(workspacePayload.queue) ? workspacePayload.queue : [],
           priorities: Array.isArray(workspacePayload.priorities)
             ? workspacePayload.priorities
@@ -1140,48 +1264,9 @@ export default function ProjectCommunityManagementPage() {
           healthSignals: Array.isArray(recommendationsPayload.healthSignals)
             ? recommendationsPayload.healthSignals
             : [],
-          execution:
-            recommendationsPayload.execution && typeof recommendationsPayload.execution === "object"
-              ? {
-                  automations: Number(recommendationsPayload.execution.automations ?? 0),
-                  recentAutomationRuns: Number(
-                    recommendationsPayload.execution.recentAutomationRuns ?? 0
-                  ),
-                  recentPlaybookRuns: Number(
-                    recommendationsPayload.execution.recentPlaybookRuns ?? 0
-                  ),
-                  recentCaptainActions: Number(
-                    recommendationsPayload.execution.recentCaptainActions ?? 0
-                  ),
-                  recentFailureCount: Number(
-                    recommendationsPayload.execution.recentFailureCount ?? 0
-                  ),
-                  recentSuccessCount: Number(
-                    recommendationsPayload.execution.recentSuccessCount ?? 0
-                  ),
-                }
-              : emptyCommunityExecutionSummary,
-          captainWorkspace:
-            recommendationsPayload.captainWorkspace &&
-            typeof recommendationsPayload.captainWorkspace === "object"
-              ? {
-                  activeAssignments: Number(
-                    recommendationsPayload.captainWorkspace.activeAssignments ?? 0
-                  ),
-                  queueItemCount: Number(
-                    recommendationsPayload.captainWorkspace.queueItemCount ?? 0
-                  ),
-                  blockedCount: Number(
-                    recommendationsPayload.captainWorkspace.blockedCount ?? 0
-                  ),
-                  dueSoonCount: Number(
-                    recommendationsPayload.captainWorkspace.dueSoonCount ?? 0
-                  ),
-                  escalatedCount: Number(
-                    recommendationsPayload.captainWorkspace.escalatedCount ?? 0
-                  ),
-                }
-              : emptyCommunityRecommendations.captainWorkspace,
+          execution: parseCommunityExecutionSummary(recommendationsPayload.execution),
+          captainWorkspace: parseCaptainWorkspaceSummary(recommendationsPayload.captainWorkspace),
+          captainCoverage: parseCaptainCoverage(recommendationsPayload.captainCoverage),
         });
       }
 
@@ -1200,30 +1285,18 @@ export default function ProjectCommunityManagementPage() {
           healthSignals: Array.isArray(outcomesPayload.healthSignals)
             ? outcomesPayload.healthSignals
             : [],
-          execution:
-            outcomesPayload.execution && typeof outcomesPayload.execution === "object"
-              ? {
-                  automations: Number(outcomesPayload.execution.automations ?? 0),
-                  recentAutomationRuns: Number(outcomesPayload.execution.recentAutomationRuns ?? 0),
-                  recentPlaybookRuns: Number(outcomesPayload.execution.recentPlaybookRuns ?? 0),
-                  recentCaptainActions: Number(outcomesPayload.execution.recentCaptainActions ?? 0),
-                  recentFailureCount: Number(outcomesPayload.execution.recentFailureCount ?? 0),
-                  recentSuccessCount: Number(outcomesPayload.execution.recentSuccessCount ?? 0),
-                }
-              : emptyCommunityExecutionSummary,
-          captainWorkspace:
-            outcomesPayload.captainWorkspace && typeof outcomesPayload.captainWorkspace === "object"
-              ? {
-                  activeAssignments: Number(outcomesPayload.captainWorkspace.activeAssignments ?? 0),
-                  queueItemCount: Number(outcomesPayload.captainWorkspace.queueItemCount ?? 0),
-                  blockedCount: Number(outcomesPayload.captainWorkspace.blockedCount ?? 0),
-                  dueSoonCount: Number(outcomesPayload.captainWorkspace.dueSoonCount ?? 0),
-                  escalatedCount: Number(outcomesPayload.captainWorkspace.escalatedCount ?? 0),
-                }
-              : emptyCommunityOutcomes.captainWorkspace,
+          execution: parseCommunityExecutionSummary(outcomesPayload.execution),
+          captainWorkspace: parseCaptainWorkspaceSummary(outcomesPayload.captainWorkspace),
           recentResults: Array.isArray(outcomesPayload.recentResults)
             ? outcomesPayload.recentResults
             : [],
+          cohortSnapshots: Array.isArray(outcomesPayload.cohortSnapshots)
+            ? outcomesPayload.cohortSnapshots
+            : [],
+          healthRollups: Array.isArray(outcomesPayload.healthRollups)
+            ? outcomesPayload.healthRollups
+            : [],
+          captainCoverage: parseCaptainCoverage(outcomesPayload.captainCoverage),
         });
       }
 
@@ -1252,10 +1325,6 @@ export default function ProjectCommunityManagementPage() {
     () => rewards.filter((reward) => reward.projectId === project?.id),
     [project?.id, rewards]
   );
-  const relatedTeamMembers = useMemo(
-    () => teamMembers.filter((member) => member.projectId === project?.id),
-    [project?.id, teamMembers]
-  );
   const projectNameById = useMemo(
     () => new Map(projects.map((item) => [item.id, item.name])),
     [projects]
@@ -1281,6 +1350,83 @@ export default function ProjectCommunityManagementPage() {
   const enabledPlaybookCount = useMemo(
     () => communityPlaybooks.filter((playbook) => playbook.enabled).length,
     [communityPlaybooks]
+  );
+  const readyAutomationCount = useMemo(
+    () =>
+      communityAutomations.filter((automation) => automation.executionPosture === "ready").length,
+    [communityAutomations]
+  );
+  const blockedAutomationCount = useMemo(
+    () =>
+      communityAutomations.filter((automation) => automation.executionPosture === "blocked").length,
+    [communityAutomations]
+  );
+  const degradedAutomationCount = useMemo(
+    () =>
+      communityAutomations.filter((automation) => automation.executionPosture === "degraded")
+        .length,
+    [communityAutomations]
+  );
+  const automationSuccessRate = useMemo(
+    () =>
+      communityOutcomes.execution.automationSuccessRate > 0
+        ? communityOutcomes.execution.automationSuccessRate
+        : communityRecommendations.execution.automationSuccessRate,
+    [
+      communityOutcomes.execution.automationSuccessRate,
+      communityRecommendations.execution.automationSuccessRate,
+    ]
+  );
+  const captainCoverageRate = useMemo(
+    () =>
+      communityOutcomes.captainCoverage.coverageRate > 0
+        ? communityOutcomes.captainCoverage.coverageRate
+        : communityRecommendations.captainCoverage.coverageRate,
+    [
+      communityOutcomes.captainCoverage.coverageRate,
+      communityRecommendations.captainCoverage.coverageRate,
+    ]
+  );
+  const captainUnassignedCount = useMemo(
+    () =>
+      Math.max(
+        communityCaptainWorkspace.summary.unassignedCount,
+        communityOutcomes.captainCoverage.unassignedSeats,
+        communityRecommendations.captainCoverage.unassignedSeats
+      ),
+    [
+      communityCaptainWorkspace.summary.unassignedCount,
+      communityOutcomes.captainCoverage.unassignedSeats,
+      communityRecommendations.captainCoverage.unassignedSeats,
+    ]
+  );
+  const captainOverdueCount = useMemo(
+    () =>
+      Math.max(
+        communityCaptainWorkspace.summary.overdueCount,
+        communityOutcomes.captainWorkspace.overdueCount,
+        communityRecommendations.captainWorkspace.overdueCount
+      ),
+    [
+      communityCaptainWorkspace.summary.overdueCount,
+      communityOutcomes.captainWorkspace.overdueCount,
+      communityRecommendations.captainWorkspace.overdueCount,
+    ]
+  );
+  const captainHighPriorityCount = useMemo(
+    () =>
+      Math.max(
+        communityCaptainWorkspace.summary.highPriorityCount,
+        communityOutcomes.captainWorkspace.highPriorityCount,
+        communityRecommendations.captainWorkspace.highPriorityCount,
+        communityCaptainWorkspace.priorities.length
+      ),
+    [
+      communityCaptainWorkspace.priorities.length,
+      communityCaptainWorkspace.summary.highPriorityCount,
+      communityOutcomes.captainWorkspace.highPriorityCount,
+      communityRecommendations.captainWorkspace.highPriorityCount,
+    ]
   );
   const communityWorkspaceHealthPills = useMemo(
     () =>
@@ -1369,6 +1515,11 @@ export default function ProjectCommunityManagementPage() {
         ? payload.captainPermissions
         : {}
     );
+    setCaptainSeatScopes(
+      payload.captainSeatScopes && typeof payload.captainSeatScopes === "object"
+        ? payload.captainSeatScopes
+        : {}
+    );
     setCaptainActions(Array.isArray(payload.captainActions) ? payload.captainActions : []);
   }
 
@@ -1413,16 +1564,7 @@ export default function ProjectCommunityManagementPage() {
                   : [],
               }
             : emptyCommunityCaptainWorkspace.viewer,
-        summary:
-          workspacePayload.summary && typeof workspacePayload.summary === "object"
-            ? {
-                activeAssignments: Number(workspacePayload.summary.activeAssignments ?? 0),
-                queueItemCount: Number(workspacePayload.summary.queueItemCount ?? 0),
-                blockedCount: Number(workspacePayload.summary.blockedCount ?? 0),
-                dueSoonCount: Number(workspacePayload.summary.dueSoonCount ?? 0),
-                escalatedCount: Number(workspacePayload.summary.escalatedCount ?? 0),
-              }
-            : emptyCommunityCaptainWorkspace.summary,
+        summary: parseCaptainWorkspaceSummary(workspacePayload.summary),
         queue: Array.isArray(workspacePayload.queue) ? workspacePayload.queue : [],
         priorities: Array.isArray(workspacePayload.priorities)
           ? workspacePayload.priorities
@@ -1448,48 +1590,11 @@ export default function ProjectCommunityManagementPage() {
         healthSignals: Array.isArray(recommendationsPayload.healthSignals)
           ? recommendationsPayload.healthSignals
           : [],
-        execution:
-          recommendationsPayload.execution && typeof recommendationsPayload.execution === "object"
-            ? {
-                automations: Number(recommendationsPayload.execution.automations ?? 0),
-                recentAutomationRuns: Number(
-                  recommendationsPayload.execution.recentAutomationRuns ?? 0
-                ),
-                recentPlaybookRuns: Number(
-                  recommendationsPayload.execution.recentPlaybookRuns ?? 0
-                ),
-                recentCaptainActions: Number(
-                  recommendationsPayload.execution.recentCaptainActions ?? 0
-                ),
-                recentFailureCount: Number(
-                  recommendationsPayload.execution.recentFailureCount ?? 0
-                ),
-                recentSuccessCount: Number(
-                  recommendationsPayload.execution.recentSuccessCount ?? 0
-                ),
-              }
-            : emptyCommunityExecutionSummary,
-        captainWorkspace:
-          recommendationsPayload.captainWorkspace &&
-          typeof recommendationsPayload.captainWorkspace === "object"
-            ? {
-                activeAssignments: Number(
-                  recommendationsPayload.captainWorkspace.activeAssignments ?? 0
-                ),
-                queueItemCount: Number(
-                  recommendationsPayload.captainWorkspace.queueItemCount ?? 0
-                ),
-                blockedCount: Number(
-                  recommendationsPayload.captainWorkspace.blockedCount ?? 0
-                ),
-                dueSoonCount: Number(
-                  recommendationsPayload.captainWorkspace.dueSoonCount ?? 0
-                ),
-                escalatedCount: Number(
-                  recommendationsPayload.captainWorkspace.escalatedCount ?? 0
-                ),
-              }
-            : emptyCommunityRecommendations.captainWorkspace,
+        execution: parseCommunityExecutionSummary(recommendationsPayload.execution),
+        captainWorkspace: parseCaptainWorkspaceSummary(
+          recommendationsPayload.captainWorkspace
+        ),
+        captainCoverage: parseCaptainCoverage(recommendationsPayload.captainCoverage),
       });
     }
 
@@ -1506,30 +1611,18 @@ export default function ProjectCommunityManagementPage() {
         healthSignals: Array.isArray(outcomesPayload.healthSignals)
           ? outcomesPayload.healthSignals
           : [],
-        execution:
-          outcomesPayload.execution && typeof outcomesPayload.execution === "object"
-            ? {
-                automations: Number(outcomesPayload.execution.automations ?? 0),
-                recentAutomationRuns: Number(outcomesPayload.execution.recentAutomationRuns ?? 0),
-                recentPlaybookRuns: Number(outcomesPayload.execution.recentPlaybookRuns ?? 0),
-                recentCaptainActions: Number(outcomesPayload.execution.recentCaptainActions ?? 0),
-                recentFailureCount: Number(outcomesPayload.execution.recentFailureCount ?? 0),
-                recentSuccessCount: Number(outcomesPayload.execution.recentSuccessCount ?? 0),
-              }
-            : emptyCommunityExecutionSummary,
-        captainWorkspace:
-          outcomesPayload.captainWorkspace && typeof outcomesPayload.captainWorkspace === "object"
-            ? {
-                activeAssignments: Number(outcomesPayload.captainWorkspace.activeAssignments ?? 0),
-                queueItemCount: Number(outcomesPayload.captainWorkspace.queueItemCount ?? 0),
-                blockedCount: Number(outcomesPayload.captainWorkspace.blockedCount ?? 0),
-                dueSoonCount: Number(outcomesPayload.captainWorkspace.dueSoonCount ?? 0),
-                escalatedCount: Number(outcomesPayload.captainWorkspace.escalatedCount ?? 0),
-              }
-            : emptyCommunityOutcomes.captainWorkspace,
+        execution: parseCommunityExecutionSummary(outcomesPayload.execution),
+        captainWorkspace: parseCaptainWorkspaceSummary(outcomesPayload.captainWorkspace),
         recentResults: Array.isArray(outcomesPayload.recentResults)
           ? outcomesPayload.recentResults
           : [],
+        cohortSnapshots: Array.isArray(outcomesPayload.cohortSnapshots)
+          ? outcomesPayload.cohortSnapshots
+          : [],
+        healthRollups: Array.isArray(outcomesPayload.healthRollups)
+          ? outcomesPayload.healthRollups
+          : [],
+        captainCoverage: parseCaptainCoverage(outcomesPayload.captainCoverage),
       });
     }
   }
@@ -2142,20 +2235,39 @@ export default function ProjectCommunityManagementPage() {
 
   function toggleCaptainPermission(
     authUserId: string,
+    role: CaptainAssignment["role"],
     permission: CommunityCaptainPermission,
     enabled: boolean
   ) {
+    const seatKey = buildCaptainSeatKey(authUserId, role);
     setCaptainPermissions((current) => {
-      const currentPermissions = current[authUserId] ?? [];
+      const currentPermissions = current[seatKey] ?? [];
       const nextPermissions = enabled
         ? Array.from(new Set([...currentPermissions, permission]))
         : currentPermissions.filter((value) => value !== permission);
 
       return {
         ...current,
-        [authUserId]: nextPermissions,
+        [seatKey]: nextPermissions,
       };
     });
+
+    setCaptainSeatScopes((current) => ({
+      ...current,
+      [seatKey]: current[seatKey] ?? getDefaultCaptainSeatScope(role),
+    }));
+  }
+
+  function updateCaptainSeatScope(
+    authUserId: string,
+    role: CaptainAssignment["role"],
+    scope: CommunityCaptainSeatScope
+  ) {
+    const seatKey = buildCaptainSeatKey(authUserId, role);
+    setCaptainSeatScopes((current) => ({
+      ...current,
+      [seatKey]: scope,
+    }));
   }
 
   async function saveCaptainPermissions() {
@@ -2172,6 +2284,7 @@ export default function ProjectCommunityManagementPage() {
       },
       body: JSON.stringify({
         captainPermissions,
+        captainSeatScopes,
       }),
     });
 
@@ -2189,6 +2302,11 @@ export default function ProjectCommunityManagementPage() {
     setCaptainPermissions(
       payload.captainPermissions && typeof payload.captainPermissions === "object"
         ? payload.captainPermissions
+        : {}
+    );
+    setCaptainSeatScopes(
+      payload.captainSeatScopes && typeof payload.captainSeatScopes === "object"
+        ? payload.captainSeatScopes
         : {}
     );
     setCaptainActions(Array.isArray(payload.captainActions) ? payload.captainActions : []);
@@ -2448,8 +2566,6 @@ export default function ProjectCommunityManagementPage() {
           campaignCount={relatedCampaigns.length}
           questCount={relatedQuests.length}
           raidCount={relatedRaids.length}
-          rewardCount={relatedRewards.length}
-          teamMemberCount={relatedTeamMembers.length}
           linkedContributorCount={communityMembers.summary.commandReady}
           walletVerifiedCount={communityMembers.summary.walletVerified}
           captainCount={communityGrowth.captains.assignments.length}
@@ -2465,9 +2581,16 @@ export default function ProjectCommunityManagementPage() {
           }
           automationRailCount={communityAutomations.length}
           activeAutomationCount={activeAutomationCount}
+          readyAutomationCount={readyAutomationCount}
+          blockedAutomationCount={blockedAutomationCount}
+          degradedAutomationCount={degradedAutomationCount}
           dueAutomationCount={dueAutomationCount}
           enabledPlaybookCount={enabledPlaybookCount}
           recentAutomationFailureCount={recentAutomationFailureCount}
+          automationSuccessRate={automationSuccessRate}
+          captainCoverageRate={captainCoverageRate}
+          unassignedCaptainCount={captainUnassignedCount}
+          overdueCaptainCount={captainOverdueCount}
           lastRankSyncAt={discordBotSettings.lastRankSyncAt}
           lastLeaderboardPostedAt={discordBotSettings.lastLeaderboardPostedAt}
           lastMissionDigestAt={discordBotSettings.lastMissionDigestAt}
@@ -2482,7 +2605,7 @@ export default function ProjectCommunityManagementPage() {
             communityRecommendations.recommendations[0]?.actionLabel ?? ""
           }
           ownerSignalCount={communityRecommendations.healthSignals.length}
-          captainPriorityCount={communityCaptainWorkspace.priorities.length}
+          captainPriorityCount={captainHighPriorityCount}
           activeMode={communityViewMode}
         />
 
@@ -2534,6 +2657,9 @@ export default function ProjectCommunityManagementPage() {
                 journeyOutcomes={communityOutcomes.journeyOutcomes}
                 execution={communityOutcomes.execution}
                 captainWorkspace={communityOutcomes.captainWorkspace}
+                cohortSnapshots={communityOutcomes.cohortSnapshots}
+                healthRollups={communityOutcomes.healthRollups}
+                captainCoverage={communityOutcomes.captainCoverage}
               />
 
               <CommunityCaptainWorkspacePanel
@@ -2583,8 +2709,14 @@ export default function ProjectCommunityManagementPage() {
                 comebackRecentCompleted={
                   communityOutcomes.journeyOutcomes.comeback.recentCompletedCount
                 }
-                captainPriorityCount={communityCaptainWorkspace.priorities.length}
+                captainPriorityCount={captainHighPriorityCount}
                 captainBlockedCount={communityCaptainWorkspace.blockedItems.length}
+                captainOverdueCount={captainOverdueCount}
+                captainUnassignedCount={captainUnassignedCount}
+                captainCoverageRate={captainCoverageRate}
+                automationBlockedCount={blockedAutomationCount}
+                automationDegradedCount={degradedAutomationCount}
+                automationSuccessRate={automationSuccessRate}
               />
             </div>
           </>
@@ -2595,6 +2727,9 @@ export default function ProjectCommunityManagementPage() {
             <CommunityMembersPanel
               loading={loadingCommunityMembers}
               summary={communityMembers.summary}
+              analytics={communityGrowth.analytics}
+              cohortSnapshots={communityOutcomes.cohortSnapshots}
+              healthRollups={communityOutcomes.healthRollups}
               topContributors={communityMembers.topContributors}
               readinessWatch={communityMembers.readinessWatch}
             />
@@ -2654,7 +2789,11 @@ export default function ProjectCommunityManagementPage() {
                 onRunAutomationAction={(mode) => void runAutomationAction(mode)}
               />
 
-              <CommunityAnalyticsPanel analytics={communityGrowth.analytics} />
+              <CommunityAnalyticsPanel
+                analytics={communityGrowth.analytics}
+                cohortSnapshots={communityOutcomes.cohortSnapshots}
+                healthRollups={communityOutcomes.healthRollups}
+              />
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
@@ -2663,8 +2802,11 @@ export default function ProjectCommunityManagementPage() {
                 setSettings={setDiscordBotSettings}
                 summary={communityGrowth.cohorts.summary}
                 newcomers={communityGrowth.cohorts.newcomers}
+                highTrust={communityGrowth.cohorts.highTrust}
                 reactivation={communityGrowth.cohorts.reactivation}
                 watchlist={communityGrowth.cohorts.watchlist}
+                cohortSnapshots={communityOutcomes.cohortSnapshots}
+                healthRollups={communityOutcomes.healthRollups}
                 trust={communityGrowth.trust}
                 savingSettings={savingDiscordBotSettings}
                 runningFunnelAction={runningFunnelAction}
@@ -2679,6 +2821,8 @@ export default function ProjectCommunityManagementPage() {
                 reactivationCount={communityGrowth.cohorts.summary.reactivation}
                 watchlistCount={communityGrowth.cohorts.summary.watchlist}
                 automations={communityAutomations}
+                cohortSnapshots={communityOutcomes.cohortSnapshots}
+                healthRollups={communityOutcomes.healthRollups}
                 onboardingCompletionRate={
                   communityOutcomes.journeyOutcomes.onboarding.completionRate
                 }
@@ -2790,6 +2934,7 @@ export default function ProjectCommunityManagementPage() {
               <CommunityPlaybooksPanel
                 playbooks={communityPlaybooks}
                 playbookRuns={communityPlaybookRuns}
+                automations={communityAutomations}
                 saving={savingPlaybooks}
                 runningPlaybookKey={runningPlaybookKey}
                 notice={playbookNotice}
@@ -2819,11 +2964,13 @@ export default function ProjectCommunityManagementPage() {
               <CommunityCaptainOpsPanel
                 roster={communityGrowth.captains.assignments}
                 captainPermissions={captainPermissions}
+                captainSeatScopes={captainSeatScopes}
                 captainActions={captainActions}
                 saving={savingCaptainPermissions}
                 notice={captainPermissionsNotice}
                 noticeTone={captainPermissionsNoticeTone}
                 onTogglePermission={toggleCaptainPermission}
+                onUpdateScope={updateCaptainSeatScope}
                 onSave={() => void saveCaptainPermissions()}
               />
             </div>

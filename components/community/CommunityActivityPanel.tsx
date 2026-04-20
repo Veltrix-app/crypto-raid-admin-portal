@@ -19,6 +19,12 @@ type Props = {
   comebackRecentCompleted: number;
   captainPriorityCount: number;
   captainBlockedCount: number;
+  captainOverdueCount: number;
+  captainUnassignedCount: number;
+  captainCoverageRate: number;
+  automationBlockedCount: number;
+  automationDegradedCount: number;
+  automationSuccessRate: number;
 };
 
 function formatActionLabel(action: string) {
@@ -26,6 +32,10 @@ function formatActionLabel(action: string) {
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function formatPercent(value: number) {
+  return `${Math.max(0, Math.round(value))}%`;
 }
 
 export function CommunityActivityPanel({
@@ -44,7 +54,17 @@ export function CommunityActivityPanel({
   comebackRecentCompleted,
   captainPriorityCount,
   captainBlockedCount,
+  captainOverdueCount,
+  captainUnassignedCount,
+  captainCoverageRate,
+  automationBlockedCount,
+  automationDegradedCount,
+  automationSuccessRate,
 }: Props) {
+  const qualityPressure = watchlistCount + openFlagCount;
+  const captainPressure =
+    captainPriorityCount + captainBlockedCount + captainOverdueCount + captainUnassignedCount;
+
   return (
     <OpsPanel
       eyebrow="Activity"
@@ -52,7 +72,7 @@ export function CommunityActivityPanel({
       description="This keeps the project team close to what the community rail is doing without exposing any other workspace."
     >
       <div className="space-y-5">
-        <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-10">
+        <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-6">
           <OpsMetricCard
             label="Callback failures"
             value={callbackFailures}
@@ -66,6 +86,30 @@ export function CommunityActivityPanel({
             emphasis={onchainFailures > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
+            label="Automation health"
+            value={formatPercent(automationSuccessRate)}
+            sub="Recent automation success across this project rail."
+            emphasis={automationSuccessRate >= 70 ? "primary" : automationSuccessRate > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Degraded rails"
+            value={automationBlockedCount + automationDegradedCount}
+            sub="Execution rails currently blocked or degraded."
+            emphasis={automationBlockedCount + automationDegradedCount > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Captain coverage"
+            value={formatPercent(captainCoverageRate)}
+            sub="How much of the intended captain surface is actively covered."
+            emphasis={captainCoverageRate >= 70 ? "primary" : captainCoverageRate > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="Captain pressure"
+            value={captainPressure}
+            sub="Priorities, blocked items, overdue work and unassigned seats."
+            emphasis={captainPressure > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
             label="Recent activity"
             value={recentActivity.length}
             sub="Latest project-scoped bot and audit events visible in this page."
@@ -73,9 +117,9 @@ export function CommunityActivityPanel({
           />
           <OpsMetricCard
             label="Quality pressure"
-            value={watchlistCount + openFlagCount}
-            sub="Open trust or watch pressure inside this project rail."
-            emphasis={watchlistCount + openFlagCount > 0 ? "warning" : "default"}
+            value={qualityPressure}
+            sub="Open trust and watch pressure inside this project rail."
+            emphasis={qualityPressure > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
             label="Automation runs"
@@ -98,7 +142,7 @@ export function CommunityActivityPanel({
           <OpsMetricCard
             label="Execution failures"
             value={recentAutomationFailureCount}
-            sub="Failed automation or playbook runs visible in v4 history."
+            sub="Failed automation or playbook runs visible in recent history."
             emphasis={recentAutomationFailureCount > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
@@ -112,12 +156,6 @@ export function CommunityActivityPanel({
             value={comebackRecentCompleted}
             sub="Recent comeback completions visible in aggregate journey outcomes."
             emphasis={comebackRecentCompleted > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Captain pressure"
-            value={captainPriorityCount + captainBlockedCount}
-            sub="Current captain priorities plus blocked queue pressure."
-            emphasis={captainPriorityCount + captainBlockedCount > 0 ? "warning" : "default"}
           />
         </div>
 

@@ -31,6 +31,18 @@ export type DiscordLeaderboardCadence = "manual" | "daily" | "weekly";
 export type CommunityAutomationCadence = "manual" | "daily" | "weekly";
 export type CommunityDeliveryTarget = "discord" | "telegram" | "both";
 export type CommunityAutomationStatus = "active" | "paused";
+export type CommunityAutomationSequence =
+  | "always_on"
+  | "launch"
+  | "raid"
+  | "comeback"
+  | "campaign_push";
+export type CommunityAutomationExecutionPosture =
+  | "watching"
+  | "ready"
+  | "running"
+  | "blocked"
+  | "degraded";
 export type CommunityAutomationType =
   | "rank_sync"
   | "leaderboard_pulse"
@@ -52,6 +64,14 @@ export type CommunityCaptainPermission =
   | "newcomer_wave"
   | "reactivation_wave"
   | "activation_board";
+export type CommunityCaptainSeatScope =
+  | "project_only"
+  | "community_only"
+  | "project_and_community";
+export type CommunityCaptainAssignmentStatus = "active" | "paused" | "inactive";
+export type CommunityCaptainActionActorScope = "owner" | "captain" | "system";
+export type CommunityCaptainDueState = "upcoming" | "due_now" | "overdue" | "resolved";
+export type CommunityCaptainResolutionState = "open" | "waiting" | "resolved" | "canceled";
 export type CommunityBotAction =
   | "command_sync"
   | "rank_sync"
@@ -59,6 +79,12 @@ export type CommunityBotAction =
   | "mission_post"
   | "raid_post"
   | "automation_run";
+export type CommunityCohortKey =
+  | "newcomer"
+  | "active"
+  | "reactivation"
+  | "high_trust"
+  | "watchlist";
 
 export type CommunityAutomationRecord = {
   id: string;
@@ -75,6 +101,14 @@ export type CommunityAutomationRecord = {
   nextRunAt: string;
   lastResult: string;
   lastResultSummary: string;
+  sequencingKey?: CommunityAutomationSequence;
+  executionPosture?: CommunityAutomationExecutionPosture;
+  ownerLabel?: string;
+  ownerSummary?: string;
+  pausedReason?: string;
+  lastSuccessAt?: string;
+  lastErrorCode?: string;
+  lastErrorAt?: string;
 };
 
 export type CommunityAutomationRunRecord = {
@@ -120,6 +154,13 @@ export type CommunityCaptainActionRecord = {
   status: "success" | "failed" | "skipped";
   summary: string;
   createdAt: string;
+  queueItemId?: string | null;
+  actorScope?: CommunityCaptainActionActorScope;
+  dueState?: CommunityCaptainDueState;
+  resolutionState?: CommunityCaptainResolutionState;
+  blockedReasonCode?: string;
+  blockedReasonSummary?: string;
+  resolvedAt?: string;
 };
 
 export type CommunityCaptainQueueItemStatus =
@@ -147,6 +188,14 @@ export type CommunityCaptainQueueItem = {
   blockedReason: CommunityCaptainQueueBlockedReason;
   source: "automation" | "playbook" | "owner" | "journey";
   actionLabel: string;
+  dueState?: CommunityCaptainDueState;
+  resolutionState?: CommunityCaptainResolutionState;
+  seatKey?: string;
+  actionType?: string;
+  targetType?: string;
+  targetId?: string;
+  lastActorAuthUserId?: string;
+  resolvedAt?: string;
 };
 
 export type CommunityOwnerRecommendation = {
@@ -181,6 +230,35 @@ export type CommunityHealthSignal = {
   summary: string;
 };
 
+export type CommunityCohortSnapshot = {
+  key: CommunityCohortKey;
+  label: string;
+  memberCount: number;
+  readyCount: number;
+  blockedCount: number;
+  activeCount: number;
+  averageTrust: number;
+  updatedAt: string;
+};
+
+export type CommunityHealthRollup = {
+  key: string;
+  label: string;
+  value: string;
+  tone: CommunityHealthSignal["tone"];
+  summary: string;
+  windowKey: string;
+  updatedAt: string;
+};
+
+export type CommunityCaptainCoverageSignal = {
+  totalSeats: number;
+  activeCaptains: number;
+  unassignedSeats: number;
+  coverageRate: number;
+  updatedAt: string;
+};
+
 export const COMMUNITY_AUTOMATION_LABELS: Record<CommunityAutomationType, string> = {
   rank_sync: "Rank sync",
   leaderboard_pulse: "Leaderboard pulse",
@@ -191,6 +269,25 @@ export const COMMUNITY_AUTOMATION_LABELS: Record<CommunityAutomationType, string
   activation_board: "Activation board",
 };
 
+export const COMMUNITY_AUTOMATION_SEQUENCE_LABELS: Record<CommunityAutomationSequence, string> = {
+  always_on: "Always on",
+  launch: "Launch lane",
+  raid: "Raid lane",
+  comeback: "Comeback lane",
+  campaign_push: "Campaign push",
+};
+
+export const COMMUNITY_AUTOMATION_POSTURE_LABELS: Record<
+  CommunityAutomationExecutionPosture,
+  string
+> = {
+  watching: "Watching",
+  ready: "Ready",
+  running: "Running",
+  blocked: "Blocked",
+  degraded: "Degraded",
+};
+
 export const COMMUNITY_CAPTAIN_PERMISSION_LABELS: Record<CommunityCaptainPermission, string> = {
   rank_sync: "Run rank sync",
   leaderboard_post: "Post leaderboard",
@@ -199,6 +296,37 @@ export const COMMUNITY_CAPTAIN_PERMISSION_LABELS: Record<CommunityCaptainPermiss
   newcomer_wave: "Send newcomer wave",
   reactivation_wave: "Send comeback wave",
   activation_board: "Push activation board",
+};
+
+export const COMMUNITY_CAPTAIN_SEAT_SCOPE_LABELS: Record<CommunityCaptainSeatScope, string> = {
+  project_only: "Project only",
+  community_only: "Community only",
+  project_and_community: "Project + community",
+};
+
+export const COMMUNITY_CAPTAIN_DUE_STATE_LABELS: Record<CommunityCaptainDueState, string> = {
+  upcoming: "Upcoming",
+  due_now: "Due now",
+  overdue: "Overdue",
+  resolved: "Resolved",
+};
+
+export const COMMUNITY_CAPTAIN_RESOLUTION_LABELS: Record<
+  CommunityCaptainResolutionState,
+  string
+> = {
+  open: "Open",
+  waiting: "Waiting",
+  resolved: "Resolved",
+  canceled: "Canceled",
+};
+
+export const COMMUNITY_COHORT_LABELS: Record<CommunityCohortKey, string> = {
+  newcomer: "Newcomers",
+  active: "Active contributors",
+  reactivation: "Reactivation",
+  high_trust: "High trust",
+  watchlist: "Watchlist",
 };
 
 export const COMMUNITY_PLAYBOOK_DEFAULTS: CommunityPlaybookConfig[] = [

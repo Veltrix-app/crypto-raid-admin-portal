@@ -1,5 +1,9 @@
 "use client";
 
+import type {
+  CommunityCohortSnapshot,
+  CommunityHealthRollup,
+} from "@/components/community/community-config";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 
 type Contributor = {
@@ -27,149 +31,230 @@ type Props = {
     commandReady: number;
     fullStackReady: number;
   };
+  analytics: {
+    contributorCount: number;
+    commandReadyRate: number;
+    walletVerifiedRate: number;
+    fullStackReadyRate: number;
+    recentActiveRate: number;
+    newcomerReadyCount: number;
+    reactivationReadyCount: number;
+    highTrustCount: number;
+    highTrustRate: number;
+    commandGapCount: number;
+    walletGapCount: number;
+    xGapCount: number;
+    retentionPressureCount: number;
+    averageTrust: number;
+    watchlistCount: number;
+    openFlagCount: number;
+    captainCount: number;
+    activeCampaignCount: number;
+    activationReadyCount: number;
+    recentXp: number;
+  };
+  cohortSnapshots: CommunityCohortSnapshot[];
+  healthRollups: CommunityHealthRollup[];
   topContributors: Contributor[];
   readinessWatch: Contributor[];
 };
 
-function formatProviders(providers: string[]) {
-  if (providers.length === 0) return "No linked providers";
-  return providers.join(", ");
+function findCohortSnapshot(
+  snapshots: CommunityCohortSnapshot[],
+  key: CommunityCohortSnapshot["key"]
+) {
+  return snapshots.find((snapshot) => snapshot.key === key) ?? null;
 }
 
 export function CommunityMembersPanel({
   loading,
   summary,
-  topContributors,
-  readinessWatch,
+  analytics,
+  cohortSnapshots,
+  healthRollups,
 }: Props) {
+  const newcomer = findCohortSnapshot(cohortSnapshots, "newcomer");
+  const active = findCohortSnapshot(cohortSnapshots, "active");
+  const reactivation = findCohortSnapshot(cohortSnapshots, "reactivation");
+  const highTrust = findCohortSnapshot(cohortSnapshots, "high_trust");
+  const watchlist = findCohortSnapshot(cohortSnapshots, "watchlist");
+  const primarySignals = healthRollups.slice(0, 3);
+
   return (
     <OpsPanel
       eyebrow="Members"
-      title="Contributor readiness and member quality"
-      description="Track which contributors are actually ready for community commands, raids and deeper mission rails in this project."
+      title="Contributor readiness and segment pressure"
+      description="Read the community machine as operating pressure, not as a loose member CRM. This surface shows who is reachable, who is trusted, and where the next readiness gap sits."
     >
       <div className="space-y-5">
         <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-          <OpsMetricCard label="Contributors" value={summary.totalContributors} sub="Project-scoped active contributors in the current reputation rail." emphasis={summary.totalContributors > 0 ? "primary" : "default"} />
-          <OpsMetricCard label="Discord linked" value={summary.discordLinked} sub="Can be reached by the Discord command and rank rail." />
-          <OpsMetricCard label="Telegram linked" value={summary.telegramLinked} sub="Ready for Telegram command and alert flows." />
-          <OpsMetricCard label="X linked" value={summary.xLinked} sub="Signal-graph contributors with social verification present." />
-          <OpsMetricCard label="Wallet verified" value={summary.walletVerified} sub="Contributors with a verified wallet identity in Veltrix." />
-          <OpsMetricCard label="Full-stack ready" value={summary.fullStackReady} sub="Wallet + command-ready + X linked." emphasis={summary.fullStackReady > 0 ? "primary" : "default"} />
+          <OpsMetricCard
+            label="Contributors"
+            value={summary.totalContributors}
+            sub="Project-scoped contributors currently visible to Community OS."
+            emphasis={summary.totalContributors > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Command gap"
+            value={analytics.commandGapCount}
+            sub={`${analytics.commandReadyRate}% already reachable through Discord or Telegram.`}
+            emphasis={analytics.commandGapCount > 0 ? "warning" : "primary"}
+          />
+          <OpsMetricCard
+            label="Wallet gap"
+            value={analytics.walletGapCount}
+            sub={`${analytics.walletVerifiedRate}% are wallet verified.`}
+            emphasis={analytics.walletGapCount > 0 ? "warning" : "primary"}
+          />
+          <OpsMetricCard
+            label="X gap"
+            value={analytics.xGapCount}
+            sub={`${summary.xLinked} contributors already carry X verification.`}
+            emphasis={analytics.xGapCount > 0 ? "warning" : "default"}
+          />
+          <OpsMetricCard
+            label="High trust"
+            value={analytics.highTrustCount}
+            sub={`${analytics.highTrustRate}% of the visible base can anchor deeper activation pressure.`}
+            emphasis={analytics.highTrustCount > 0 ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Retention pressure"
+            value={analytics.retentionPressureCount}
+            sub="Contributors currently sitting in the comeback lane."
+            emphasis={analytics.retentionPressureCount > 0 ? "warning" : "default"}
+          />
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
           <div className="rounded-[24px] border border-line bg-card2 p-5">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-bold text-text">Top contributors</p>
+                <p className="text-sm font-bold text-text">Readiness posture</p>
                 <p className="mt-2 text-sm text-sub">
-                  The highest-signal contributors currently visible to this project's community rail.
+                  These lanes tell you whether the project can actually move contributors into
+                  missions, raids and rewards without manual chasing.
                 </p>
               </div>
-              <OpsStatusPill tone={summary.commandReady > 0 ? "success" : "default"}>
-                {summary.commandReady} command ready
+              <OpsStatusPill tone={loading ? "default" : analytics.commandGapCount > 0 ? "warning" : "success"}>
+                {loading ? "Refreshing" : analytics.commandGapCount > 0 ? "Needs alignment" : "Stable"}
               </OpsStatusPill>
             </div>
 
-            <div className="mt-4 space-y-3">
-              {loading ? (
-                <div className="rounded-[22px] border border-line bg-card px-4 py-5 text-sm text-sub">
-                  Loading contributor readiness...
-                </div>
-              ) : topContributors.length > 0 ? (
-                topContributors.map((contributor) => (
-                  <div
-                    key={contributor.authUserId}
-                    className="rounded-[22px] border border-line bg-card px-4 py-4"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-bold text-text">{contributor.username}</p>
-                        <p className="mt-2 text-sm text-sub">
-                          {contributor.xp} XP • L{contributor.level} • Trust {contributor.trust}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {contributor.walletVerified ? (
-                          <OpsStatusPill tone="success">Wallet</OpsStatusPill>
-                        ) : null}
-                        {contributor.commandReady ? (
-                          <OpsStatusPill tone="success">Command ready</OpsStatusPill>
-                        ) : (
-                          <OpsStatusPill tone="warning">Needs command link</OpsStatusPill>
-                        )}
-                        <OpsStatusPill tone={contributor.fullStackReady ? "success" : "default"}>
-                          {contributor.fullStackReady ? "Full-stack ready" : "Still warming up"}
-                        </OpsStatusPill>
-                      </div>
-                    </div>
-                    <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-sub">
-                      {formatProviders(contributor.linkedProviders)}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-[22px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
-                  No contributor reputation is available for this project yet.
-                </div>
-              )}
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                  Starter lane
+                </p>
+                <p className="mt-3 text-2xl font-black text-text">{newcomer?.memberCount ?? 0}</p>
+                <p className="mt-2 text-sm text-sub">
+                  {analytics.newcomerReadyCount} newcomer seats are already command-ready.
+                </p>
+              </div>
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                  Active rail
+                </p>
+                <p className="mt-3 text-2xl font-black text-text">{active?.readyCount ?? 0}</p>
+                <p className="mt-2 text-sm text-sub">
+                  Ready active contributors who can absorb immediate mission pressure.
+                </p>
+              </div>
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                  Comeback lane
+                </p>
+                <p className="mt-3 text-2xl font-black text-text">{reactivation?.memberCount ?? 0}</p>
+                <p className="mt-2 text-sm text-sub">
+                  {analytics.reactivationReadyCount} comeback seats are already reachable.
+                </p>
+              </div>
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                  High-trust anchor
+                </p>
+                <p className="mt-3 text-2xl font-black text-text">{highTrust?.memberCount ?? 0}</p>
+                <p className="mt-2 text-sm text-sub">
+                  Trusted contributors who can carry launch, reward and raid pressure.
+                </p>
+              </div>
             </div>
           </div>
 
           <div className="rounded-[24px] border border-line bg-card2 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-bold text-text">Readiness watch</p>
+                <p className="text-sm font-bold text-text">Quality overlay</p>
                 <p className="mt-2 text-sm text-sub">
-                  High-signal contributors who are still missing part of the community stack.
+                  Community OS should surface the pressure around trust, flags and blocked growth
+                  before it turns into a launch surprise.
                 </p>
               </div>
-              <OpsStatusPill tone={readinessWatch.length > 0 ? "warning" : "success"}>
-                {readinessWatch.length > 0 ? "Needs attention" : "Clean"}
+              <OpsStatusPill tone={(watchlist?.memberCount ?? 0) > 0 ? "warning" : "success"}>
+                {(watchlist?.memberCount ?? 0) > 0 ? "Watch pressure" : "Clean"}
               </OpsStatusPill>
             </div>
 
             <div className="mt-4 space-y-3">
-              {loading ? (
-                <div className="rounded-[22px] border border-line bg-card px-4 py-5 text-sm text-sub">
-                  Loading readiness watch...
-                </div>
-              ) : readinessWatch.length > 0 ? (
-                readinessWatch.map((contributor) => (
-                  <div
-                    key={`${contributor.authUserId}-watch`}
-                    className="rounded-[22px] border border-line bg-card px-4 py-4"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-bold text-text">{contributor.username}</p>
-                        <p className="mt-2 text-sm text-sub">
-                          {contributor.raidsCompleted} raids • {contributor.questsCompleted} quests •{" "}
-                          {contributor.xp} XP
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {!contributor.walletVerified ? (
-                          <OpsStatusPill tone="warning">Missing wallet</OpsStatusPill>
-                        ) : null}
-                        {!contributor.commandReady ? (
-                          <OpsStatusPill tone="warning">Missing Discord/Telegram</OpsStatusPill>
-                        ) : null}
-                        {!contributor.linkedProviders.includes("x") ? (
-                          <OpsStatusPill tone="warning">Missing X</OpsStatusPill>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-[22px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
-                  The contributors visible to this project are already in a healthy readiness posture.
-                </div>
-              )}
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                  Watchlist seats
+                </p>
+                <p className="mt-3 text-xl font-black text-text">{watchlist?.memberCount ?? 0}</p>
+                <p className="mt-2 text-sm text-sub">
+                  {analytics.openFlagCount} open review flags are currently shaping trust posture.
+                </p>
+              </div>
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                  Activation-ready
+                </p>
+                <p className="mt-3 text-xl font-black text-text">{analytics.activationReadyCount}</p>
+                <p className="mt-2 text-sm text-sub">
+                  Contributors who are both reachable and wallet-ready right now.
+                </p>
+              </div>
+              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                  Average trust
+                </p>
+                <p className="mt-3 text-xl font-black text-text">{analytics.averageTrust}</p>
+                <p className="mt-2 text-sm text-sub">
+                  Project-wide trust baseline across the currently visible contributor base.
+                </p>
+              </div>
             </div>
           </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          {primarySignals.length > 0 ? (
+            primarySignals.map((signal) => (
+              <div key={signal.key} className="rounded-[20px] border border-line bg-card2 px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold text-text">{signal.label}</p>
+                  <OpsStatusPill
+                    tone={
+                      signal.tone === "danger"
+                        ? "danger"
+                        : signal.tone === "warning"
+                          ? "warning"
+                          : signal.tone === "success"
+                            ? "success"
+                            : "default"
+                    }
+                  >
+                    {signal.value || "Tracking"}
+                  </OpsStatusPill>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-sub">{signal.summary}</p>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub md:col-span-3">
+              Community health signals will appear here as soon as the Phase 3 rollups refresh.
+            </div>
+          )}
         </div>
       </div>
     </OpsPanel>

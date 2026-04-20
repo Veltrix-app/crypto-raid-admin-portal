@@ -1,9 +1,13 @@
 "use client";
 
 import {
+  COMMUNITY_CAPTAIN_DUE_STATE_LABELS,
   COMMUNITY_CAPTAIN_PERMISSION_LABELS,
+  COMMUNITY_CAPTAIN_RESOLUTION_LABELS,
+  COMMUNITY_CAPTAIN_SEAT_SCOPE_LABELS,
   type CommunityCaptainActionRecord,
   type CommunityCaptainPermission,
+  type CommunityCaptainSeatScope,
 } from "@/components/community/community-config";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 
@@ -23,38 +27,68 @@ type CaptainCard = {
 type Props = {
   roster: CaptainCard[];
   captainPermissions: Record<string, CommunityCaptainPermission[]>;
+  captainSeatScopes: Record<string, CommunityCaptainSeatScope>;
   captainActions: CommunityCaptainActionRecord[];
   saving: boolean;
   notice: string;
   noticeTone: "success" | "error";
   onTogglePermission: (
     authUserId: string,
+    role: CaptainCard["role"],
     permission: CommunityCaptainPermission,
     enabled: boolean
+  ) => void;
+  onUpdateScope: (
+    authUserId: string,
+    role: CaptainCard["role"],
+    scope: CommunityCaptainSeatScope
   ) => void;
   onSave: () => void;
 };
 
+function buildCaptainSeatKey(authUserId: string, role: CaptainCard["role"]) {
+  return `${authUserId}:${role}`;
+}
+
+function defaultScopeForRole(role: CaptainCard["role"]): CommunityCaptainSeatScope {
+  if (role === "raid_lead") return "community_only";
+  if (role === "growth_lead") return "project_only";
+  return "project_and_community";
+}
+
+function roleLabel(role: CaptainCard["role"]) {
+  if (role === "raid_lead") return "Raid lead";
+  if (role === "growth_lead") return "Growth lead";
+  return "Community captain";
+}
+
 export function CommunityCaptainOpsPanel({
   roster,
   captainPermissions,
+  captainSeatScopes,
   captainActions,
   saving,
   notice,
   noticeTone,
   onTogglePermission,
+  onUpdateScope,
   onSave,
 }: Props) {
   const permissionLabels = Object.entries(COMMUNITY_CAPTAIN_PERMISSION_LABELS) as Array<
     [CommunityCaptainPermission, string]
   >;
-  const activeCaptains = roster.filter((captain) => (captainPermissions[captain.authUserId] ?? []).length > 0).length;
+  const permissionedCaptains = roster.filter(
+    (captain) =>
+      (captainPermissions[buildCaptainSeatKey(captain.authUserId, captain.role)] ?? []).length > 0
+  ).length;
+  const recentFailures = captainActions.filter((action) => action.status === "failed").length;
+  const overdueResults = captainActions.filter((action) => action.dueState === "overdue").length;
 
   return (
     <OpsPanel
       eyebrow="Captain Ops"
-      title="Captain permissions and action rail"
-      description="This turns captain seats into real operator roles. Permissions stay explicit, project-private and fully traceable."
+      title="Captain permissions and accountability rail"
+      description="This turns captain seats into bounded operator roles. Permissions stay explicit, project-private and fully traceable."
       action={
         <button
           type="button"
@@ -75,21 +109,22 @@ export function CommunityCaptainOpsPanel({
             emphasis={roster.length > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Permissioned captains"
-            value={activeCaptains}
+            label="Permissioned seats"
+            value={permissionedCaptains}
             sub="Seats currently able to trigger at least one action."
-            emphasis={activeCaptains > 0 ? "primary" : "default"}
+            emphasis={permissionedCaptains > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
             label="Recent captain actions"
             value={captainActions.length}
             sub="Latest project-scoped captain-triggered execution logs."
+            emphasis={captainActions.length > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Flags on captains"
-            value={roster.filter((captain) => captain.openFlagCount > 0).length}
-            sub="Captains carrying open trust or review pressure."
-            emphasis={roster.some((captain) => captain.openFlagCount > 0) ? "warning" : "default"}
+            label="At-risk results"
+            value={recentFailures + overdueResults}
+            sub="Recent failed or overdue captain execution outcomes."
+            emphasis={recentFailures + overdueResults > 0 ? "warning" : "default"}
           />
         </div>
 
@@ -97,7 +132,10 @@ export function CommunityCaptainOpsPanel({
           <div className="space-y-3">
             {roster.length > 0 ? (
               roster.map((captain) => {
-                const selectedPermissions = captainPermissions[captain.authUserId] ?? [];
+                const seatKey = buildCaptainSeatKey(captain.authUserId, captain.role);
+                const selectedPermissions = captainPermissions[seatKey] ?? [];
+                const seatScope =
+                  captainSeatScopes[seatKey] ?? defaultScopeForRole(captain.role);
 
                 return (
                   <div
@@ -108,7 +146,9 @@ export function CommunityCaptainOpsPanel({
                       <div>
                         <p className="text-sm font-bold text-text">{captain.username}</p>
                         <p className="mt-2 text-sm text-sub">
-                          {captain.role.replaceAll("_", " ")} • {captain.xp} XP • Trust {captain.trust}
+                          {roleLabel(captain.role)}
+                          {captain.label ? ` · ${captain.label}` : ""} · {captain.xp} XP · Trust{" "}
+                          {captain.trust}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -118,12 +158,40 @@ export function CommunityCaptainOpsPanel({
                         <OpsStatusPill tone={captain.openFlagCount > 0 ? "warning" : "success"}>
                           {captain.openFlagCount > 0 ? `${captain.openFlagCount} flag` : "Clean"}
                         </OpsStatusPill>
+                        <OpsStatusPill tone={selectedPermissions.length > 0 ? "success" : "default"}>
+                          {selectedPermissions.length} permission
+                          {selectedPermissions.length === 1 ? "" : "s"}
+                        </OpsStatusPill>
+                        <OpsStatusPill tone="default">
+                          {COMMUNITY_CAPTAIN_SEAT_SCOPE_LABELS[seatScope]}
+                        </OpsStatusPill>
                       </div>
                     </div>
 
                     <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-sub">
                       {captain.readinessSummary}
                     </p>
+
+                    <div className="mt-4 rounded-[18px] border border-line bg-card px-4 py-4">
+                      <label className="space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                        Seat scope
+                        <select
+                          value={seatScope}
+                          onChange={(event) =>
+                            onUpdateScope(
+                              captain.authUserId,
+                              captain.role,
+                              event.target.value as CommunityCaptainSeatScope
+                            )
+                          }
+                          className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
+                        >
+                          <option value="project_only">Project only</option>
+                          <option value="community_only">Community only</option>
+                          <option value="project_and_community">Project + community</option>
+                        </select>
+                      </label>
+                    </div>
 
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
                       {permissionLabels.map(([permission, label]) => (
@@ -135,7 +203,12 @@ export function CommunityCaptainOpsPanel({
                             type="checkbox"
                             checked={selectedPermissions.includes(permission)}
                             onChange={(event) =>
-                              onTogglePermission(captain.authUserId, permission, event.target.checked)
+                              onTogglePermission(
+                                captain.authUserId,
+                                captain.role,
+                                permission,
+                                event.target.checked
+                              )
                             }
                           />
                           {label}
@@ -155,7 +228,7 @@ export function CommunityCaptainOpsPanel({
           <div className="rounded-[24px] border border-line bg-card2 p-5">
             <p className="text-sm font-bold text-text">Captain action history</p>
             <p className="mt-2 text-sm text-sub">
-              Every captain-triggered action lands here so the project team can audit who ran what.
+              Every captain-triggered action lands here so the project team can audit who ran what, when, and with what outcome.
             </p>
 
             <div className="mt-4 space-y-3">
@@ -181,8 +254,28 @@ export function CommunityCaptainOpsPanel({
                         {action.status}
                       </OpsStatusPill>
                     </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-sub">
+                      <span className="rounded-full border border-white/8 bg-card2 px-3 py-1">
+                        {action.actorScope || "captain"}
+                      </span>
+                      <span className="rounded-full border border-white/8 bg-card2 px-3 py-1">
+                        {action.captainRole || "captain"}
+                      </span>
+                      {action.dueState ? (
+                        <span className="rounded-full border border-white/8 bg-card2 px-3 py-1">
+                          {COMMUNITY_CAPTAIN_DUE_STATE_LABELS[action.dueState]}
+                        </span>
+                      ) : null}
+                      {action.resolutionState ? (
+                        <span className="rounded-full border border-white/8 bg-card2 px-3 py-1">
+                          {COMMUNITY_CAPTAIN_RESOLUTION_LABELS[action.resolutionState]}
+                        </span>
+                      ) : null}
+                    </div>
+
                     <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-sub">
-                      {action.captainRole || "captain"} • {new Date(action.createdAt).toLocaleString()}
+                      {new Date(action.createdAt).toLocaleString()}
                     </p>
                   </div>
                 ))

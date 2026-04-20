@@ -1,14 +1,20 @@
 "use client";
 
 import type {
+  CommunityAutomationRecord,
   CommunityPlaybookConfig,
   CommunityPlaybookRunRecord,
+} from "@/components/community/community-config";
+import {
+  COMMUNITY_AUTOMATION_LABELS,
+  COMMUNITY_AUTOMATION_POSTURE_LABELS,
 } from "@/components/community/community-config";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 
 type Props = {
   playbooks: CommunityPlaybookConfig[];
   playbookRuns: CommunityPlaybookRunRecord[];
+  automations: CommunityAutomationRecord[];
   saving: boolean;
   runningPlaybookKey: string | null;
   notice: string;
@@ -25,9 +31,39 @@ function formatTimestamp(value: string) {
   return value ? new Date(value).toLocaleString() : "Not run yet";
 }
 
+function getPlaybookState(playbook: CommunityPlaybookConfig, automations: CommunityAutomationRecord[]) {
+  const stepAutomations = playbook.steps.map((step) =>
+    automations.find((automation) => automation.automationType === step)
+  );
+  const hasBlocked = stepAutomations.some(
+    (automation) =>
+      automation?.executionPosture === "blocked" || automation?.executionPosture === "degraded"
+  );
+  const hasReady = stepAutomations.some(
+    (automation) =>
+      automation?.executionPosture === "ready" || automation?.executionPosture === "running"
+  );
+  const missingSteps = stepAutomations.filter((automation) => !automation).length;
+
+  return {
+    stepAutomations,
+    tone: hasBlocked ? "warning" : hasReady ? "success" : "default",
+    label: hasBlocked
+      ? "Stalled"
+      : hasReady
+        ? "Ready"
+        : playbook.enabled
+          ? "Watching"
+          : "Parked",
+    missingSteps,
+    hasBlocked,
+  } as const;
+}
+
 export function CommunityPlaybooksPanel({
   playbooks,
   playbookRuns,
+  automations,
   saving,
   runningPlaybookKey,
   notice,
@@ -37,12 +73,19 @@ export function CommunityPlaybooksPanel({
   onRunPlaybook,
 }: Props) {
   const enabledCount = playbooks.filter((playbook) => playbook.enabled).length;
+  const readyCount = playbooks.filter(
+    (playbook) => getPlaybookState(playbook, automations).label === "Ready"
+  ).length;
+  const stalledCount = playbooks.filter(
+    (playbook) => getPlaybookState(playbook, automations).label === "Stalled"
+  ).length;
+  const failedCount = playbookRuns.filter((run) => run.status === "failed").length;
 
   return (
     <OpsPanel
       eyebrow="Playbooks"
       title="Reusable community operating modes"
-      description="Playbooks bundle multiple rails into one repeatable execution move for launches, raid weeks and campaign pushes."
+      description="Playbooks bundle multiple rails into one repeatable execution move. Owners should be able to see which bundle is ready, which one is stalled, and which step is currently the bottleneck."
       action={
         <button
           type="button"
@@ -68,79 +111,131 @@ export function CommunityPlaybooksPanel({
             emphasis={enabledCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Recent runs"
-            value={playbookRuns.length}
-            sub="Latest playbook execution records."
+            label="Ready now"
+            value={readyCount}
+            sub="Playbooks with at least one step already in a ready or running posture."
+            emphasis={readyCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Failures"
-            value={playbookRuns.filter((run) => run.status === "failed").length}
-            sub="Playbooks that most recently ended in failure."
-            emphasis={playbookRuns.some((run) => run.status === "failed") ? "warning" : "default"}
+            label="Stalled"
+            value={stalledCount || failedCount}
+            sub="Playbooks blocked by a degraded automation step or recent failure."
+            emphasis={stalledCount > 0 || failedCount > 0 ? "warning" : "default"}
           />
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-3">
-            {playbooks.map((playbook) => (
-              <div key={playbook.key} className="rounded-[24px] border border-line bg-card2 p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-bold text-text">{playbook.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-sub">{playbook.description}</p>
+            {playbooks.map((playbook) => {
+              const state = getPlaybookState(playbook, automations);
+
+              return (
+                <div key={playbook.key} className="rounded-[24px] border border-line bg-card2 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="max-w-2xl">
+                      <p className="text-sm font-bold text-text">{playbook.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-sub">{playbook.description}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <OpsStatusPill tone={playbook.enabled ? "success" : "default"}>
+                        {playbook.enabled ? "Enabled" : "Disabled"}
+                      </OpsStatusPill>
+                      <OpsStatusPill tone={state.tone}>{state.label}</OpsStatusPill>
+                    </div>
                   </div>
-                  <OpsStatusPill tone={playbook.enabled ? "success" : "default"}>
-                    {playbook.enabled ? "Enabled" : "Disabled"}
-                  </OpsStatusPill>
-                </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <label className="flex items-center gap-3 rounded-[18px] border border-line bg-card px-4 py-3 text-sm text-text">
-                    <input
-                      type="checkbox"
-                      checked={playbook.enabled}
-                      onChange={(event) =>
-                        onUpdatePlaybook(playbook.key, { enabled: event.target.checked })
-                      }
-                    />
-                    Enable {playbook.title}
-                  </label>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <label className="flex items-center gap-3 rounded-[18px] border border-line bg-card px-4 py-3 text-sm text-text">
+                      <input
+                        type="checkbox"
+                        checked={playbook.enabled}
+                        onChange={(event) =>
+                          onUpdatePlaybook(playbook.key, { enabled: event.target.checked })
+                        }
+                      />
+                      Enable {playbook.title}
+                    </label>
 
-                  <label className="space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
-                    Provider scope
-                    <select
-                      value={playbook.providerScope}
-                      onChange={(event) =>
-                        onUpdatePlaybook(playbook.key, {
-                          providerScope: event.target.value as CommunityPlaybookConfig["providerScope"],
-                        })
-                      }
-                      className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
+                    <label className="space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                      Provider scope
+                      <select
+                        value={playbook.providerScope}
+                        onChange={(event) =>
+                          onUpdatePlaybook(playbook.key, {
+                            providerScope: event.target.value as CommunityPlaybookConfig["providerScope"],
+                          })
+                        }
+                        className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
+                      >
+                        <option value="both">Discord + Telegram</option>
+                        <option value="discord">Discord only</option>
+                        <option value="telegram">Telegram only</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    {playbook.steps.map((step, index) => {
+                      const automation = state.stepAutomations[index];
+                      const posture = automation?.executionPosture;
+
+                      return (
+                        <div
+                          key={`${playbook.key}-${step}`}
+                          className="rounded-[18px] border border-white/8 bg-card px-4 py-4"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <p className="text-sm font-semibold text-text">
+                              {COMMUNITY_AUTOMATION_LABELS[step]}
+                            </p>
+                            <OpsStatusPill
+                              tone={
+                                posture === "blocked" || posture === "degraded"
+                                  ? "warning"
+                                  : posture === "ready" || posture === "running"
+                                    ? "success"
+                                    : "default"
+                              }
+                            >
+                              {posture ? COMMUNITY_AUTOMATION_POSTURE_LABELS[posture] : "Unmapped"}
+                            </OpsStatusPill>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-sub">
+                            {automation?.ownerSummary ||
+                              automation?.description ||
+                              "This step has not been mapped into an automation rail yet."}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="space-y-1 text-sm text-sub">
+                      <p>Last run: {formatTimestamp(playbook.lastRunAt)}</p>
+                      <p>
+                        Sequencing note:{" "}
+                        <span className="font-semibold text-text">
+                          {state.hasBlocked
+                            ? "One or more steps are stalled and need intervention."
+                            : state.missingSteps > 0
+                              ? `${state.missingSteps} step${state.missingSteps === 1 ? "" : "s"} still need an automation rail.`
+                              : "This playbook is fully mapped to the current automation rail."}
+                        </span>
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onRunPlaybook(playbook.key)}
+                      disabled={runningPlaybookKey === playbook.key}
+                      className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      <option value="both">Discord + Telegram</option>
-                      <option value="discord">Discord only</option>
-                      <option value="telegram">Telegram only</option>
-                    </select>
-                  </label>
+                      {runningPlaybookKey === playbook.key ? "Running..." : "Run playbook"}
+                    </button>
+                  </div>
                 </div>
-
-                <div className="mt-4 rounded-[18px] border border-white/8 bg-card px-4 py-4 text-sm text-sub">
-                  Steps: {playbook.steps.map((step) => step.replaceAll("_", " ")).join(" • ")}
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm text-sub">Last run: {formatTimestamp(playbook.lastRunAt)}</p>
-                  <button
-                    type="button"
-                    onClick={() => onRunPlaybook(playbook.key)}
-                    disabled={runningPlaybookKey === playbook.key}
-                    className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {runningPlaybookKey === playbook.key ? "Running..." : "Run playbook"}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="rounded-[24px] border border-line bg-card2 p-5">
@@ -173,7 +268,7 @@ export function CommunityPlaybooksPanel({
                       </OpsStatusPill>
                     </div>
                     <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-sub">
-                      {run.triggerSource} • {new Date(run.createdAt).toLocaleString()}
+                      {run.triggerSource} · {new Date(run.createdAt).toLocaleString()}
                     </p>
                   </div>
                 ))

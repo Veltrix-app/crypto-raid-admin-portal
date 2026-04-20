@@ -1,14 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
 import {
   COMMUNITY_AUTOMATION_LABELS,
+  COMMUNITY_AUTOMATION_POSTURE_LABELS,
+  COMMUNITY_AUTOMATION_SEQUENCE_LABELS,
   COMMUNITY_CAPTAIN_PERMISSION_LABELS,
   COMMUNITY_PLAYBOOK_DEFAULTS,
   type CommunityAutomationCadence,
+  type CommunityAutomationExecutionPosture,
   type CommunityAutomationRecord,
+  type CommunityAutomationSequence,
   type CommunityAutomationRunRecord,
   type CommunityAutomationType,
   type CommunityCaptainActionRecord,
+  type CommunityCaptainDueState,
   type CommunityCaptainPermission,
+  type CommunityCaptainResolutionState,
+  type CommunityCaptainSeatScope,
   type CommunityPlaybookConfig,
   type CommunityPlaybookKey,
   type CommunityPlaybookRunRecord,
@@ -36,7 +43,15 @@ type CommunityAutomationMetadata = {
   activationBoardsEnabled?: boolean;
   activationBoardCadence?: CommunityAutomationCadence;
   captainPermissionMap?: Record<string, unknown>;
+  captainSeatScopeMap?: Record<string, unknown>;
+  captainAssignments?: unknown;
   playbookConfigs?: Record<string, unknown>;
+};
+
+type CommunityAutomationSeedContext = {
+  sequencingKey: CommunityAutomationSequence;
+  ownerLabel: string;
+  ownerSummary: string;
 };
 
 type CommunityAutomationRow = {
@@ -49,6 +64,14 @@ type CommunityAutomationRow = {
   target_provider: string | null;
   title: string | null;
   config: Record<string, unknown> | null;
+  sequencing_key: string | null;
+  execution_posture: string | null;
+  owner_label: string | null;
+  owner_summary: string | null;
+  paused_reason: string | null;
+  last_success_at: string | null;
+  last_error_code: string | null;
+  last_error_at: string | null;
   last_run_at: string | null;
   next_run_at: string | null;
   last_result: string | null;
@@ -87,6 +110,13 @@ type CommunityCaptainActionRow = {
   target_id: string | null;
   status: string;
   summary: string | null;
+  queue_item_id: string | null;
+  actor_scope: string | null;
+  due_state: string | null;
+  resolution_state: string | null;
+  blocked_reason_code: string | null;
+  blocked_reason_summary: string | null;
+  resolved_at: string | null;
   created_at: string;
 };
 
@@ -133,6 +163,90 @@ function sanitizeAutomationStatus(value: unknown) {
   return value === "active" ? "active" : "paused";
 }
 
+function sanitizeAutomationSequence(value: unknown): CommunityAutomationSequence {
+  return value === "launch" ||
+    value === "raid" ||
+    value === "comeback" ||
+    value === "campaign_push"
+    ? value
+    : "always_on";
+}
+
+function sanitizeAutomationExecutionPosture(value: unknown): CommunityAutomationExecutionPosture {
+  return value === "ready" ||
+    value === "running" ||
+    value === "blocked" ||
+    value === "degraded"
+    ? value
+    : "watching";
+}
+
+function sanitizeCaptainDueState(value: unknown): CommunityCaptainDueState {
+  return value === "due_now" || value === "overdue" || value === "resolved" ? value : "upcoming";
+}
+
+function sanitizeCaptainResolutionState(value: unknown): CommunityCaptainResolutionState {
+  return value === "waiting" || value === "resolved" || value === "canceled" ? value : "open";
+}
+
+function buildAutomationSeedContext(
+  automationType: CommunityAutomationType
+): CommunityAutomationSeedContext {
+  if (automationType === "leaderboard_pulse") {
+    return {
+      sequencingKey: "always_on",
+      ownerLabel: "Leaderboard cadence",
+      ownerSummary: "Keep community momentum visible with recurring leaderboard pressure.",
+    };
+  }
+
+  if (automationType === "mission_digest") {
+    return {
+      sequencingKey: "launch",
+      ownerLabel: "Mission visibility",
+      ownerSummary: "Keep live mission inventory in front of the community at the right cadence.",
+    };
+  }
+
+  if (automationType === "raid_reminder") {
+    return {
+      sequencingKey: "raid",
+      ownerLabel: "Raid pressure",
+      ownerSummary: "Support live raids with reminder waves and coordinated follow-through.",
+    };
+  }
+
+  if (automationType === "newcomer_pulse") {
+    return {
+      sequencingKey: "always_on",
+      ownerLabel: "Newcomer lane",
+      ownerSummary: "Move fresh contributors into the first useful community lane.",
+    };
+  }
+
+  if (automationType === "reactivation_pulse") {
+    return {
+      sequencingKey: "comeback",
+      ownerLabel: "Comeback lane",
+      ownerSummary: "Bring dormant contributors back into live project pressure.",
+    };
+  }
+
+  if (automationType === "activation_board") {
+    return {
+      sequencingKey: "campaign_push",
+      ownerLabel: "Activation board",
+      ownerSummary: "Publish the strongest lane recommendation for the current campaign pressure.",
+    };
+  }
+
+  return {
+    sequencingKey: "always_on",
+    ownerLabel: "Rank sync",
+    ownerSummary: "Keep Discord rank state aligned with live Veltrix contributor progress.",
+  };
+}
+
 function readPrimaryCommunityMetadata(settingsByIntegrationId: Map<string, CommunitySettingsRow>, integrationId: string | null) {
   if (!integrationId) {
     return {} as CommunityAutomationMetadata;
@@ -153,6 +267,13 @@ function buildDefaultAutomationSeed(params: {
   metadata: CommunityAutomationMetadata;
 }) {
   const { projectId, integrationId, settingsRow, metadata } = params;
+  const rankSeed = buildAutomationSeedContext("rank_sync");
+  const leaderboardSeed = buildAutomationSeedContext("leaderboard_pulse");
+  const missionSeed = buildAutomationSeedContext("mission_digest");
+  const raidSeed = buildAutomationSeedContext("raid_reminder");
+  const newcomerSeed = buildAutomationSeedContext("newcomer_pulse");
+  const reactivationSeed = buildAutomationSeedContext("reactivation_pulse");
+  const activationSeed = buildAutomationSeedContext("activation_board");
 
   return {
     rank_sync: {
@@ -164,6 +285,10 @@ function buildDefaultAutomationSeed(params: {
       provider_scope: "discord",
       target_provider: "discord",
       title: "Rank sync",
+      sequencing_key: rankSeed.sequencingKey,
+      execution_posture: "watching",
+      owner_label: rankSeed.ownerLabel,
+      owner_summary: rankSeed.ownerSummary,
       config: { permission: "rank_sync" },
     },
     leaderboard_pulse: {
@@ -175,6 +300,10 @@ function buildDefaultAutomationSeed(params: {
       provider_scope: "discord",
       target_provider: "discord",
       title: "Leaderboard pulse",
+      sequencing_key: leaderboardSeed.sequencingKey,
+      execution_posture: "watching",
+      owner_label: leaderboardSeed.ownerLabel,
+      owner_summary: leaderboardSeed.ownerSummary,
       config: { permission: "leaderboard_post" },
     },
     mission_digest: {
@@ -186,6 +315,10 @@ function buildDefaultAutomationSeed(params: {
       provider_scope: sanitizeProviderScope(metadata.missionDigestTarget),
       target_provider: sanitizeProviderScope(metadata.missionDigestTarget),
       title: "Mission digest",
+      sequencing_key: missionSeed.sequencingKey,
+      execution_posture: "watching",
+      owner_label: missionSeed.ownerLabel,
+      owner_summary: missionSeed.ownerSummary,
       config: { permission: "mission_digest" },
     },
     raid_reminder: {
@@ -200,6 +333,10 @@ function buildDefaultAutomationSeed(params: {
       provider_scope: "both",
       target_provider: "both",
       title: "Raid reminder",
+      sequencing_key: raidSeed.sequencingKey,
+      execution_posture: "watching",
+      owner_label: raidSeed.ownerLabel,
+      owner_summary: raidSeed.ownerSummary,
       config: { permission: "raid_alert" },
     },
     newcomer_pulse: {
@@ -211,6 +348,10 @@ function buildDefaultAutomationSeed(params: {
       provider_scope: "both",
       target_provider: "both",
       title: "Newcomer pulse",
+      sequencing_key: newcomerSeed.sequencingKey,
+      execution_posture: "watching",
+      owner_label: newcomerSeed.ownerLabel,
+      owner_summary: newcomerSeed.ownerSummary,
       config: { permission: "newcomer_wave" },
     },
     reactivation_pulse: {
@@ -222,6 +363,10 @@ function buildDefaultAutomationSeed(params: {
       provider_scope: "both",
       target_provider: "both",
       title: "Reactivation pulse",
+      sequencing_key: reactivationSeed.sequencingKey,
+      execution_posture: "watching",
+      owner_label: reactivationSeed.ownerLabel,
+      owner_summary: reactivationSeed.ownerSummary,
       config: { permission: "reactivation_wave" },
     },
     activation_board: {
@@ -233,6 +378,10 @@ function buildDefaultAutomationSeed(params: {
       provider_scope: "both",
       target_provider: "both",
       title: "Activation board",
+      sequencing_key: activationSeed.sequencingKey,
+      execution_posture: "watching",
+      owner_label: activationSeed.ownerLabel,
+      owner_summary: activationSeed.ownerSummary,
       config: { permission: "activation_board" },
     },
   } satisfies Record<CommunityAutomationType, Record<string, unknown>>;
@@ -254,7 +403,7 @@ async function ensureCommunityAutomationRows(projectId: string) {
   const { data: rows, error } = await supabase
     .from("community_automations")
     .select(
-      "id, project_id, automation_type, status, cadence, provider_scope, target_provider, title, config, last_run_at, next_run_at, last_result, last_result_summary"
+      "id, project_id, automation_type, status, cadence, provider_scope, target_provider, title, config, sequencing_key, execution_posture, owner_label, owner_summary, paused_reason, last_success_at, last_error_code, last_error_at, last_run_at, next_run_at, last_result, last_result_summary"
     )
     .eq("project_id", projectId);
 
@@ -290,7 +439,7 @@ async function ensureCommunityAutomationRows(projectId: string) {
   const { data: refreshedRows, error: refreshedError } = await supabase
     .from("community_automations")
     .select(
-      "id, project_id, automation_type, status, cadence, provider_scope, target_provider, title, config, last_run_at, next_run_at, last_result, last_result_summary"
+      "id, project_id, automation_type, status, cadence, provider_scope, target_provider, title, config, sequencing_key, execution_posture, owner_label, owner_summary, paused_reason, last_success_at, last_error_code, last_error_at, last_run_at, next_run_at, last_result, last_result_summary"
     )
     .eq("project_id", projectId)
     .order("created_at", { ascending: true });
@@ -312,6 +461,9 @@ function mapAutomationRow(row: CommunityAutomationRow): CommunityAutomationRecor
   const automationType = (AUTOMATION_TYPES.includes(row.automation_type as CommunityAutomationType)
     ? row.automation_type
     : "mission_digest") as CommunityAutomationType;
+  const seedContext = buildAutomationSeedContext(automationType);
+  const sequencingKey = sanitizeAutomationSequence(row.sequencing_key);
+  const executionPosture = sanitizeAutomationExecutionPosture(row.execution_posture);
 
   return {
     id: row.id,
@@ -337,6 +489,18 @@ function mapAutomationRow(row: CommunityAutomationRow): CommunityAutomationRecor
                   ? "Pull dormant contributors back into live campaign pressure."
                   : "Surface a campaign activation board with the right lane recommendation.",
     config: row.config ?? {},
+    sequencingKey,
+    executionPosture,
+    ownerLabel:
+      trimText(row.owner_label) ||
+      `${seedContext.ownerLabel} · ${COMMUNITY_AUTOMATION_SEQUENCE_LABELS[sequencingKey]}`,
+    ownerSummary:
+      trimText(row.owner_summary) ||
+      `${seedContext.ownerSummary} Current posture: ${COMMUNITY_AUTOMATION_POSTURE_LABELS[executionPosture].toLowerCase()}.`,
+    pausedReason: trimText(row.paused_reason),
+    lastSuccessAt: row.last_success_at ?? "",
+    lastErrorCode: trimText(row.last_error_code),
+    lastErrorAt: row.last_error_at ?? "",
     lastRunAt: row.last_run_at ?? "",
     nextRunAt: row.next_run_at ?? "",
     lastResult: trimText(row.last_result),
@@ -381,19 +545,41 @@ function mapCaptainActionRow(row: CommunityCaptainActionRow): CommunityCaptainAc
     targetId: trimText(row.target_id),
     status: (row.status || "success") as CommunityCaptainActionRecord["status"],
     summary: trimText(row.summary),
+    queueItemId: row.queue_item_id,
+    actorScope:
+      row.actor_scope === "owner" || row.actor_scope === "system" ? row.actor_scope : "captain",
+    dueState: sanitizeCaptainDueState(row.due_state),
+    resolutionState: sanitizeCaptainResolutionState(row.resolution_state),
+    blockedReasonCode: trimText(row.blocked_reason_code),
+    blockedReasonSummary: trimText(row.blocked_reason_summary),
+    resolvedAt: row.resolved_at ?? "",
     createdAt: row.created_at,
   };
 }
 
 function readCaptainPermissionMap(metadata: CommunityAutomationMetadata) {
+  const assignments = Array.isArray(metadata.captainAssignments)
+    ? metadata.captainAssignments
+        .map((candidate) =>
+          candidate && typeof candidate === "object"
+            ? (candidate as Record<string, unknown>)
+            : {}
+        )
+        .map((candidate) => ({
+          authUserId:
+            typeof candidate.authUserId === "string" ? candidate.authUserId.trim() : "",
+          role: typeof candidate.role === "string" ? candidate.role.trim() : "community_captain",
+        }))
+        .filter((assignment) => assignment.authUserId.length > 0)
+    : [];
   const raw = metadata.captainPermissionMap;
   if (!raw || typeof raw !== "object") {
     return {} as Record<string, CommunityCaptainPermission[]>;
   }
 
   const result: Record<string, CommunityCaptainPermission[]> = {};
-  for (const [authUserId, permissions] of Object.entries(raw)) {
-    if (!authUserId.trim()) {
+  for (const [seatKey, permissions] of Object.entries(raw)) {
+    if (!seatKey.trim()) {
       continue;
     }
 
@@ -401,7 +587,79 @@ function readCaptainPermissionMap(metadata: CommunityAutomationMetadata) {
       ? permissions
           .filter((value): value is CommunityCaptainPermission => typeof value === "string" && CAPTAIN_PERMISSION_VALUES.has(value as CommunityCaptainPermission))
       : [];
-    result[authUserId] = Array.from(new Set(normalized));
+    const normalizedPermissions = Array.from(new Set(normalized));
+
+    if (seatKey.includes(":")) {
+      result[seatKey] = normalizedPermissions;
+      continue;
+    }
+
+    const matchingAssignments = assignments.filter((assignment) => assignment.authUserId === seatKey);
+    if (matchingAssignments.length === 0) {
+      result[seatKey] = normalizedPermissions;
+      continue;
+    }
+
+    for (const assignment of matchingAssignments) {
+      result[`${assignment.authUserId}:${assignment.role}`] = normalizedPermissions;
+    }
+  }
+
+  return result;
+}
+
+function normalizeCaptainSeatScope(value: unknown): CommunityCaptainSeatScope {
+  if (
+    value === "project_only" ||
+    value === "community_only" ||
+    value === "project_and_community"
+  ) {
+    return value;
+  }
+
+  return "project_and_community";
+}
+
+function readCaptainSeatScopeMap(metadata: CommunityAutomationMetadata) {
+  const assignments = Array.isArray(metadata.captainAssignments)
+    ? metadata.captainAssignments
+        .map((candidate) =>
+          candidate && typeof candidate === "object"
+            ? (candidate as Record<string, unknown>)
+            : {}
+        )
+        .map((candidate) => ({
+          authUserId:
+            typeof candidate.authUserId === "string" ? candidate.authUserId.trim() : "",
+          role: typeof candidate.role === "string" ? candidate.role.trim() : "community_captain",
+        }))
+        .filter((assignment) => assignment.authUserId.length > 0)
+    : [];
+  const raw = metadata.captainSeatScopeMap;
+  if (!raw || typeof raw !== "object") {
+    return {} as Record<string, CommunityCaptainSeatScope>;
+  }
+
+  const result: Record<string, CommunityCaptainSeatScope> = {};
+  for (const [seatKey, scope] of Object.entries(raw)) {
+    if (!seatKey.trim()) {
+      continue;
+    }
+
+    if (seatKey.includes(":")) {
+      result[seatKey] = normalizeCaptainSeatScope(scope);
+      continue;
+    }
+
+    const matchingAssignments = assignments.filter((assignment) => assignment.authUserId === seatKey);
+    if (matchingAssignments.length === 0) {
+      result[seatKey] = normalizeCaptainSeatScope(scope);
+      continue;
+    }
+
+    for (const assignment of matchingAssignments) {
+      result[`${assignment.authUserId}:${assignment.role}`] = normalizeCaptainSeatScope(scope);
+    }
   }
 
   return result;
@@ -462,7 +720,7 @@ export async function loadProjectCommunityExecution(projectId: string) {
     supabase
       .from("community_captain_actions")
       .select(
-        "id, auth_user_id, captain_role, action_type, target_type, target_id, status, summary, created_at"
+        "id, auth_user_id, captain_role, action_type, target_type, target_id, status, summary, queue_item_id, actor_scope, due_state, resolution_state, blocked_reason_code, blocked_reason_summary, resolved_at, created_at"
       )
       .eq("project_id", projectId)
       .order("created_at", { ascending: false })
@@ -492,6 +750,7 @@ export async function loadProjectCommunityExecution(projectId: string) {
     playbooks: readPlaybookConfigs(metadata, mappedPlaybookRuns),
     playbookRuns: mappedPlaybookRuns,
     captainPermissions: readCaptainPermissionMap(metadata),
+    captainSeatScopes: readCaptainSeatScopeMap(metadata),
     captainActions: ((captainActions ?? []) as CommunityCaptainActionRow[]).map(
       mapCaptainActionRow
     ),
@@ -517,6 +776,17 @@ export async function saveProjectCommunityAutomations(params: {
       provider_scope: sanitizeProviderScope(automation.providerScope),
       target_provider: sanitizeProviderScope(automation.targetProvider),
       title: trimText(automation.title) || COMMUNITY_AUTOMATION_LABELS[automation.automationType],
+      sequencing_key: sanitizeAutomationSequence(automation.sequencingKey),
+      execution_posture: sanitizeAutomationExecutionPosture(automation.executionPosture),
+      owner_label:
+        trimText(automation.ownerLabel) || buildAutomationSeedContext(automation.automationType).ownerLabel,
+      owner_summary:
+        trimText(automation.ownerSummary) ||
+        buildAutomationSeedContext(automation.automationType).ownerSummary,
+      paused_reason: trimText(automation.pausedReason) || null,
+      last_success_at: automation.lastSuccessAt || null,
+      last_error_code: trimText(automation.lastErrorCode) || null,
+      last_error_at: automation.lastErrorAt || null,
       config: automation.config ?? {},
       next_run_at:
         sanitizeAutomationStatus(automation.status) === "active" &&
@@ -579,11 +849,13 @@ export async function runProjectCommunityAutomation(params: {
 export async function saveProjectCaptainPermissions(params: {
   projectId: string;
   permissionMap: Record<string, CommunityCaptainPermission[]>;
+  seatScopeMap: Record<string, CommunityCaptainSeatScope>;
 }) {
   await updateCommunityMetadata({
     projectId: params.projectId,
     metadataPatch: {
       captainPermissionMap: params.permissionMap,
+      captainSeatScopeMap: params.seatScopeMap,
     },
   });
 

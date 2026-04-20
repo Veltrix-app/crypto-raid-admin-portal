@@ -1,12 +1,18 @@
 import {
   COMMUNITY_CAPTAIN_PERMISSION_LABELS,
+  type CommunityAutomationExecutionPosture,
   type CommunityAutomationType,
   type CommunityCaptainActionRecord,
+  type CommunityCaptainCoverageSignal,
+  type CommunityCaptainDueState,
   type CommunityCaptainPermission,
   type CommunityCaptainQueueItem,
   type CommunityCaptainQueueItemPriority,
+  type CommunityCaptainResolutionState,
   type CommunityCaptainQueueItemStatus,
+  type CommunityCohortSnapshot,
   type CommunityHealthSignal,
+  type CommunityHealthRollup,
   type CommunityJourneyOutcome,
   type CommunityJourneyOutcomeKey,
   type CommunityJourneyOutcomeRecord,
@@ -56,10 +62,42 @@ type ProjectCommunityCaptainQueueRow = RawRecord & {
   escalation_state?: string | null;
   escalationState?: string | null;
   due_at?: string | null;
+  priority?: string | null;
+  seat_key?: string | null;
+  due_state?: string | null;
+  resolution_state?: string | null;
+  action_type?: string | null;
+  target_type?: string | null;
+  target_id?: string | null;
+  blocked_reason_code?: string | null;
+  blocked_reason_summary?: string | null;
+  last_actor_auth_user_id?: string | null;
+  resolved_at?: string | null;
   source_type?: string | null;
   source?: string | null;
   metadata?: RawRecord | null;
   created_at?: string | null;
+  updated_at?: string | null;
+};
+
+type ProjectCommunityCohortSnapshotRow = RawRecord & {
+  cohort_key?: string | null;
+  member_count?: number | null;
+  ready_count?: number | null;
+  blocked_count?: number | null;
+  active_count?: number | null;
+  average_trust?: number | null;
+  computed_at?: string | null;
+  updated_at?: string | null;
+};
+
+type ProjectCommunityHealthRollupRow = RawRecord & {
+  signal_key?: string | null;
+  signal_value?: string | null;
+  signal_tone?: string | null;
+  summary?: string | null;
+  window_key?: string | null;
+  computed_at?: string | null;
   updated_at?: string | null;
 };
 
@@ -103,15 +141,21 @@ type ProjectCommunityJourneyRow = RawRecord & {
 
 type ProjectCommunityExecutionSampleRow = {
   status?: string | null;
+  execution_posture?: string | null;
 };
 
 export type ProjectCommunityV5ExecutionSummary = {
   automations: number;
+  activeAutomationCount: number;
+  readyAutomationCount: number;
+  blockedAutomationCount: number;
+  degradedAutomationCount: number;
   recentAutomationRuns: number;
   recentPlaybookRuns: number;
   recentCaptainActions: number;
   recentFailureCount: number;
   recentSuccessCount: number;
+  automationSuccessRate: number;
 };
 
 export type ProjectCommunityCaptainWorkspaceSummary = {
@@ -120,6 +164,9 @@ export type ProjectCommunityCaptainWorkspaceSummary = {
   blockedCount: number;
   dueSoonCount: number;
   escalatedCount: number;
+  overdueCount: number;
+  highPriorityCount: number;
+  unassignedCount: number;
   items: CommunityCaptainQueueItem[];
 };
 
@@ -139,6 +186,9 @@ export type ProjectCommunityV5Payload = {
   journeyOutcomes: CommunityJourneyOutcomeRecord;
   ownerRecommendations: CommunityOwnerRecommendation[];
   healthSignals: CommunityHealthSignal[];
+  cohortSnapshots: CommunityCohortSnapshot[];
+  healthRollups: CommunityHealthRollup[];
+  captainCoverage: CommunityCaptainCoverageSignal;
 };
 
 export type ProjectCommunityCaptainWorkspacePayload = {
@@ -157,6 +207,7 @@ export type ProjectCommunityRecommendationsPayload = {
   healthSignals: CommunityHealthSignal[];
   execution: ProjectCommunityV5ExecutionSummary;
   captainWorkspace: ProjectCommunityCaptainWorkspaceSummary;
+  captainCoverage: CommunityCaptainCoverageSignal;
 };
 
 export type ProjectCommunityOutcomesPayload = {
@@ -166,6 +217,9 @@ export type ProjectCommunityOutcomesPayload = {
   execution: ProjectCommunityV5ExecutionSummary;
   captainWorkspace: ProjectCommunityCaptainWorkspaceSummary;
   recentResults: CommunityCaptainActionRecord[];
+  cohortSnapshots: CommunityCohortSnapshot[];
+  healthRollups: CommunityHealthRollup[];
+  captainCoverage: CommunityCaptainCoverageSignal;
 };
 
 export type ProjectCommunityCaptainActionRunPayload = {
@@ -266,10 +320,18 @@ async function loadCountOrZero(
 async function loadProjectCommunityExecutionReadOnly(projectId: string) {
   const supabase = getServiceSupabaseClient();
   const [
+    automationRows,
     automationRuns,
     playbookRuns,
     captainActions,
   ] = await Promise.all([
+    loadOptionalRows<ProjectCommunityExecutionSampleRow>(
+      supabase
+        .from("community_automations")
+        .select("status, execution_posture")
+        .eq("project_id", projectId),
+      "Failed to load community automations."
+    ),
     loadOptionalRows<ProjectCommunityExecutionSampleRow>(
       supabase
         .from("community_automation_runs")
@@ -300,7 +362,8 @@ async function loadProjectCommunityExecutionReadOnly(projectId: string) {
   ]);
 
   return {
-    automations: AUTOMATION_TYPES.length,
+    automations: automationRows.length > 0 ? automationRows.length : AUTOMATION_TYPES.length,
+    automationRows,
     automationRuns,
     playbookRuns,
     captainActions,
@@ -368,6 +431,49 @@ function normalizeQueuePriority(value: unknown): CommunityCaptainQueueItemPriori
   return "normal";
 }
 
+function normalizeExecutionPosture(value: unknown): CommunityAutomationExecutionPosture {
+  const posture = toText(value);
+  if (posture === "ready" || posture === "running" || posture === "blocked" || posture === "degraded") {
+    return posture;
+  }
+  return "watching";
+}
+
+function normalizeDueState(value: unknown, dueAt: string, resolutionState: CommunityCaptainResolutionState) {
+  const dueState = toText(value);
+  if (dueState === "due_now" || dueState === "overdue" || dueState === "resolved") {
+    return dueState as CommunityCaptainDueState;
+  }
+  if (resolutionState === "resolved") {
+    return "resolved";
+  }
+  if (!dueAt) {
+    return "upcoming";
+  }
+
+  const dueTimestamp = timestampValue(dueAt);
+  if (!dueTimestamp) {
+    return "upcoming";
+  }
+
+  const now = Date.now();
+  if (dueTimestamp < now) {
+    return "overdue";
+  }
+  if (dueTimestamp - now <= 24 * 60 * 60 * 1000) {
+    return "due_now";
+  }
+  return "upcoming";
+}
+
+function normalizeResolutionState(value: unknown, status: CommunityCaptainQueueItemStatus) {
+  const resolutionState = toText(value);
+  if (resolutionState === "waiting" || resolutionState === "resolved" || resolutionState === "canceled") {
+    return resolutionState as CommunityCaptainResolutionState;
+  }
+  return status === "completed" ? "resolved" : "open";
+}
+
 function normalizeQueueSource(value: unknown) {
   const source = toText(value);
   if (source === "owner_assigned") {
@@ -375,6 +481,12 @@ function normalizeQueueSource(value: unknown) {
   }
   if (source === "automation_generated") {
     return "automation" as const;
+  }
+  if (source === "playbook_generated") {
+    return "playbook" as const;
+  }
+  if (source === "journey_generated") {
+    return "journey" as const;
   }
   if (source === "playbook" || source === "owner" || source === "journey") {
     return source;
@@ -456,7 +568,7 @@ function readQueueSource(row: ProjectCommunityCaptainQueueRow) {
 
 function readQueuePriority(row: ProjectCommunityCaptainQueueRow) {
   const metadata = readQueueMetadata(row);
-  return normalizeQueuePriority(metadata.priority);
+  return normalizeQueuePriority(metadata.priority ?? row.priority);
 }
 
 function readQueueActionLabel(row: ProjectCommunityCaptainQueueRow) {
@@ -466,7 +578,13 @@ function readQueueActionLabel(row: ProjectCommunityCaptainQueueRow) {
 
 function readQueueBlockedReason(row: ProjectCommunityCaptainQueueRow) {
   const metadata = readQueueMetadata(row);
-  return metadata.blockedReason ?? metadata.blocked_reason ?? "";
+  return (
+    metadata.blockedReason ??
+    metadata.blocked_reason ??
+    row.blocked_reason_summary ??
+    row.blocked_reason_code ??
+    ""
+  );
 }
 
 function inferQueuePermission(row: ProjectCommunityCaptainQueueRow): CommunityCaptainPermission | null {
@@ -538,6 +656,9 @@ function buildCaptainQueueItems(rows: ProjectCommunityCaptainQueueRow[]) {
       const source = readQueueSource(row);
       const status = normalizeQueueStatus(row.status, row.escalation_state ?? row.escalationState);
       const priority = readQueuePriority(row);
+      const resolutionState = normalizeResolutionState(row.resolution_state, status);
+      const dueAt = toIsoTimestamp(row.due_at);
+      const dueState = normalizeDueState(row.due_state, dueAt, resolutionState);
       const fallbackId = [
         "queue",
         source,
@@ -553,7 +674,7 @@ function buildCaptainQueueItems(rows: ProjectCommunityCaptainQueueRow[]) {
         summary: toText(row.summary, "Keep this project rail moving."),
         status,
         priority,
-        dueAt: toIsoTimestamp(row.due_at),
+        dueAt,
         blockedReason: sanitizeBlockedReason({
           rawReason: readQueueBlockedReason(row),
           status,
@@ -561,6 +682,14 @@ function buildCaptainQueueItems(rows: ProjectCommunityCaptainQueueRow[]) {
         }),
         source,
         actionLabel: toText(readQueueActionLabel(row), getQueueActionLabel(source)),
+        dueState,
+        resolutionState,
+        seatKey: toText(row.seat_key),
+        actionType: toText(row.action_type),
+        targetType: toText(row.target_type),
+        targetId: toText(row.target_id),
+        lastActorAuthUserId: toText(row.last_actor_auth_user_id),
+        resolvedAt: toIsoTimestamp(row.resolved_at),
       };
     })
     .filter((item) => isActionableQueueStatus(item.status))
@@ -575,24 +704,43 @@ function buildCaptainQueueItems(rows: ProjectCommunityCaptainQueueRow[]) {
 
 function summarizeExecutionHistory(execution: {
   automations: number;
+  automationRows: ProjectCommunityExecutionSampleRow[];
   automationRuns: ProjectCommunityExecutionSampleRow[];
   playbookRuns: ProjectCommunityExecutionSampleRow[];
   captainActions: ProjectCommunityExecutionSampleRow[];
 }): ProjectCommunityV5ExecutionSummary {
+  const activeAutomationCount = execution.automationRows.filter((row) => row.status === "active").length;
+  const readyAutomationCount = execution.automationRows.filter(
+    (row) => normalizeExecutionPosture(row.execution_posture) === "ready"
+  ).length;
+  const blockedAutomationCount = execution.automationRows.filter(
+    (row) => normalizeExecutionPosture(row.execution_posture) === "blocked"
+  ).length;
+  const degradedAutomationCount = execution.automationRows.filter(
+    (row) => normalizeExecutionPosture(row.execution_posture) === "degraded"
+  ).length;
   const failedAutomationRuns = execution.automationRuns.filter((run) => run.status === "failed").length;
   const failedPlaybookRuns = execution.playbookRuns.filter((run) => run.status === "failed").length;
   const failedCaptainActions = execution.captainActions.filter((action) => action.status === "failed").length;
   const successAutomationRuns = execution.automationRuns.filter((run) => run.status === "success").length;
   const successPlaybookRuns = execution.playbookRuns.filter((run) => run.status === "success").length;
   const successCaptainActions = execution.captainActions.filter((action) => action.status === "success").length;
+  const runSampleCount =
+    execution.automationRuns.length + execution.playbookRuns.length + execution.captainActions.length;
+  const successSampleCount = successAutomationRuns + successPlaybookRuns + successCaptainActions;
 
   return {
     automations: execution.automations,
+    activeAutomationCount,
+    readyAutomationCount,
+    blockedAutomationCount,
+    degradedAutomationCount,
     recentAutomationRuns: execution.automationRuns.length,
     recentPlaybookRuns: execution.playbookRuns.length,
     recentCaptainActions: execution.captainActions.length,
     recentFailureCount: failedAutomationRuns + failedPlaybookRuns + failedCaptainActions,
     recentSuccessCount: successAutomationRuns + successPlaybookRuns + successCaptainActions,
+    automationSuccessRate: roundPercentage(successSampleCount, runSampleCount),
   };
 }
 
@@ -762,15 +910,98 @@ function buildJourneyOutcomes(input: {
   };
 }
 
+function mapCohortSnapshotRow(row: ProjectCommunityCohortSnapshotRow): CommunityCohortSnapshot | null {
+  const key = toText(row.cohort_key);
+  if (
+    key !== "newcomer" &&
+    key !== "active" &&
+    key !== "reactivation" &&
+    key !== "high_trust" &&
+    key !== "watchlist"
+  ) {
+    return null;
+  }
+
+  return {
+    key,
+    label:
+      key === "newcomer"
+        ? "Newcomers"
+        : key === "active"
+          ? "Active contributors"
+          : key === "reactivation"
+            ? "Reactivation"
+            : key === "high_trust"
+              ? "High trust"
+              : "Watchlist",
+    memberCount: Number(row.member_count ?? 0),
+    readyCount: Number(row.ready_count ?? 0),
+    blockedCount: Number(row.blocked_count ?? 0),
+    activeCount: Number(row.active_count ?? 0),
+    averageTrust: Number(row.average_trust ?? 0),
+    updatedAt: toIsoTimestamp(row.computed_at ?? row.updated_at),
+  };
+}
+
+function mapHealthRollupRow(row: ProjectCommunityHealthRollupRow): CommunityHealthRollup | null {
+  const key = toText(row.signal_key);
+  if (!key) {
+    return null;
+  }
+
+  const tone =
+    row.signal_tone === "success" ||
+    row.signal_tone === "warning" ||
+    row.signal_tone === "danger"
+      ? row.signal_tone
+      : "default";
+
+  return {
+    key,
+    label: key.replace(/[_-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
+    value: toText(row.signal_value),
+    tone,
+    summary: toText(row.summary),
+    windowKey: toText(row.window_key, "current"),
+    updatedAt: toIsoTimestamp(row.computed_at ?? row.updated_at),
+  };
+}
+
+function buildCaptainCoverage(input: {
+  activeAssignments: number;
+  queueItems: CommunityCaptainQueueItem[];
+  unassignedCount: number;
+}): CommunityCaptainCoverageSignal {
+  const inferredSeatCount =
+    input.activeAssignments > 0
+      ? input.activeAssignments + input.unassignedCount
+      : input.queueItems.length > 0
+        ? Math.max(1, input.unassignedCount)
+        : 0;
+
+  return {
+    totalSeats: inferredSeatCount,
+    activeCaptains: input.activeAssignments,
+    unassignedSeats: input.unassignedCount,
+    coverageRate: roundPercentage(input.activeAssignments, inferredSeatCount),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 function buildOwnerRecommendations(input: {
   projectId: string;
   captainWorkspace: ProjectCommunityCaptainWorkspaceSummary;
   journeyOutcomes: CommunityJourneyOutcomeRecord;
   execution: ProjectCommunityV5ExecutionSummary;
+  captainCoverage: CommunityCaptainCoverageSignal;
+  cohortSnapshots: CommunityCohortSnapshot[];
+  healthRollups: CommunityHealthRollup[];
 }): CommunityOwnerRecommendation[] {
   const recommendations: CommunityOwnerRecommendation[] = [];
   const onboarding = input.journeyOutcomes.onboarding;
   const comeback = input.journeyOutcomes.comeback;
+  const watchlistCohort = input.cohortSnapshots.find((cohort) => cohort.key === "watchlist");
+  const highTrustCohort = input.cohortSnapshots.find((cohort) => cohort.key === "high_trust");
 
   if (input.captainWorkspace.blockedCount > 0 || input.captainWorkspace.escalatedCount > 0) {
     recommendations.push({
@@ -790,6 +1021,17 @@ function buildOwnerRecommendations(input: {
       summary: "Recent sampled automation, playbook, or captain failures are worth a direct owner check-in.",
       priority: "high",
       actionLabel: "Review failed runs",
+      route: `/projects/${input.projectId}/community`,
+    });
+  }
+
+  if (input.execution.blockedAutomationCount > 0 || input.execution.degradedAutomationCount > 0) {
+    recommendations.push({
+      key: "stabilize-automation-posture",
+      title: "Stabilize automation posture",
+      summary: "One or more project automations are blocked or degraded and need owner attention before cadence slips.",
+      priority: "high",
+      actionLabel: "Open automation center",
       route: `/projects/${input.projectId}/community`,
     });
   }
@@ -816,13 +1058,46 @@ function buildOwnerRecommendations(input: {
     });
   }
 
-  if (input.captainWorkspace.activeAssignments === 0 && input.captainWorkspace.queueItemCount > 0) {
+  if (input.captainCoverage.activeCaptains === 0 && input.captainWorkspace.queueItemCount > 0) {
     recommendations.push({
       key: "assign-captain-coverage",
       title: "Assign captain coverage",
       summary: "This project has active work queued, but no live captain assignment to own it.",
       priority: "high",
       actionLabel: "Assign a captain",
+      route: `/projects/${input.projectId}/community`,
+    });
+  }
+
+  if (input.captainWorkspace.overdueCount > 0) {
+    recommendations.push({
+      key: "clear-overdue-actions",
+      title: "Clear overdue captain actions",
+      summary: "There are overdue community actions that should either be resolved, reassigned or explicitly escalated.",
+      priority: "high",
+      actionLabel: "Open captain workspace",
+      route: `/projects/${input.projectId}/community`,
+    });
+  }
+
+  if (watchlistCohort && watchlistCohort.memberCount > 0 && !highTrustCohort?.memberCount) {
+    recommendations.push({
+      key: "rebalance-community-quality",
+      title: "Rebalance community quality",
+      summary: "Watchlist pressure is visible while trusted depth is thin. Tighten who gets pushed into live rails.",
+      priority: "medium",
+      actionLabel: "Review cohorts",
+      route: `/projects/${input.projectId}/community`,
+    });
+  }
+
+  if (input.healthRollups.some((signal) => signal.tone === "danger")) {
+    recommendations.push({
+      key: "review-health-rollups",
+      title: "Review community health rollups",
+      summary: "Recent community health rollups show danger-level posture that should be reviewed before the next push cycle.",
+      priority: "medium",
+      actionLabel: "Open community health",
       route: `/projects/${input.projectId}/community`,
     });
   }
@@ -845,7 +1120,19 @@ function buildHealthSignals(input: {
   captainWorkspace: ProjectCommunityCaptainWorkspaceSummary;
   journeyOutcomes: CommunityJourneyOutcomeRecord;
   execution: ProjectCommunityV5ExecutionSummary;
+  captainCoverage: CommunityCaptainCoverageSignal;
+  healthRollups: CommunityHealthRollup[];
 }): CommunityHealthSignal[] {
+  if (input.healthRollups.length > 0) {
+    return input.healthRollups.slice(0, 4).map((signal) => ({
+      key: signal.key,
+      label: signal.label,
+      value: signal.value,
+      tone: signal.tone,
+      summary: signal.summary,
+    }));
+  }
+
   const onboarding = input.journeyOutcomes.onboarding;
   const comeback = input.journeyOutcomes.comeback;
   const weightedCompletion = [onboarding, comeback].reduce(
@@ -876,9 +1163,14 @@ function buildHealthSignals(input: {
     {
       key: "execution_health",
       label: "Execution health",
-      value: `${input.execution.recentFailureCount} recent failures`,
-      tone: input.execution.recentFailureCount > 0 ? "warning" : "success",
-      summary: "Recent sampled automation, playbook, and captain activity stays folded into the owner view.",
+      value: `${input.execution.automationSuccessRate}%`,
+      tone:
+        input.execution.blockedAutomationCount > 0 || input.execution.degradedAutomationCount > 0
+          ? "warning"
+          : input.execution.automationSuccessRate >= 75
+            ? "success"
+            : "danger",
+      summary: "Automation and execution health reflects sampled success plus blocked or degraded posture.",
     },
     {
       key: "journey_conversion",
@@ -891,9 +1183,9 @@ function buildHealthSignals(input: {
     {
       key: "captain_coverage",
       label: "Captain coverage",
-      value: `${input.captainWorkspace.activeAssignments} active`,
-      tone: input.captainWorkspace.activeAssignments > 0 ? "success" : "warning",
-      summary: "Captain seats are counted only at the project scope.",
+      value: `${input.captainCoverage.coverageRate}%`,
+      tone: input.captainCoverage.activeCaptains > 0 ? "success" : "warning",
+      summary: "Captain coverage is derived from active seats versus unassigned project queue pressure.",
     },
   ];
 }
@@ -919,7 +1211,12 @@ export async function loadProjectCommunityV5(projectId: string): Promise<Project
     blockedCount,
     escalatedCount,
     dueSoonCount,
+    overdueCount,
+    highPriorityCount,
+    unassignedCount,
     captainQueueRows,
+    cohortRows,
+    healthRollupRows,
     snapshotRows,
     journeyRows,
     eventRows,
@@ -963,16 +1260,57 @@ export async function loadProjectCommunityV5(projectId: string): Promise<Project
         .gte("due_at", dueSoonLowerBoundIso)
         .lte("due_at", dueSoonWindowIso)
     ),
+    loadCountOrZero(
+      supabase
+        .from("community_captain_action_queue")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", access.projectId)
+        .in("status", ACTIONABLE_QUEUE_DB_STATUSES)
+        .lt("due_at", queueDueSoonWindowIso)
+    ),
+    loadCountOrZero(
+      supabase
+        .from("community_captain_action_queue")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", access.projectId)
+        .in("status", ACTIONABLE_QUEUE_DB_STATUSES)
+        .in("priority", ["high", "urgent"])
+    ),
+    loadCountOrZero(
+      supabase
+        .from("community_captain_action_queue")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", access.projectId)
+        .in("status", ACTIONABLE_QUEUE_DB_STATUSES)
+        .is("auth_user_id", null)
+    ),
     loadOptionalRows<ProjectCommunityCaptainQueueRow>(
       supabase
         .from("community_captain_action_queue")
-        .select("project_id, id, auth_user_id, captain_assignment_id, title, summary, status, escalation_state, due_at, source_type, metadata, updated_at")
+        .select("project_id, id, auth_user_id, captain_assignment_id, title, summary, status, escalation_state, due_at, priority, seat_key, due_state, resolution_state, action_type, target_type, target_id, blocked_reason_code, blocked_reason_summary, last_actor_auth_user_id, resolved_at, source_type, metadata, updated_at")
         .eq("project_id", access.projectId)
         .in("status", ACTIONABLE_QUEUE_DB_STATUSES)
         .order("due_at", { ascending: true, nullsFirst: false })
         .order("updated_at", { ascending: false })
         .limit(48),
       "Failed to load captain queue rows."
+    ),
+    loadOptionalRows<ProjectCommunityCohortSnapshotRow>(
+      supabase
+        .from("community_cohort_snapshots")
+        .select("cohort_key, member_count, ready_count, blocked_count, active_count, average_trust, computed_at, updated_at")
+        .eq("project_id", access.projectId)
+        .order("cohort_key", { ascending: true }),
+      "Failed to load community cohort snapshots."
+    ),
+    loadOptionalRows<ProjectCommunityHealthRollupRow>(
+      supabase
+        .from("community_health_rollups")
+        .select("signal_key, signal_value, signal_tone, summary, window_key, computed_at, updated_at")
+        .eq("project_id", access.projectId)
+        .eq("window_key", "current")
+        .order("computed_at", { ascending: false }),
+      "Failed to load community health rollups."
     ),
     loadOptionalRows<ProjectCommunityJourneySnapshotRow>(
       supabase
@@ -1011,10 +1349,24 @@ export async function loadProjectCommunityV5(projectId: string): Promise<Project
     blockedCount,
     dueSoonCount,
     escalatedCount,
+    overdueCount,
+    highPriorityCount,
+    unassignedCount,
     items: captainWorkspaceItems.slice(0, 12),
   };
 
   const executionSummary = summarizeExecutionHistory(execution);
+  const cohortSnapshots = cohortRows
+    .map((row) => mapCohortSnapshotRow(row))
+    .filter((row): row is CommunityCohortSnapshot => Boolean(row));
+  const healthRollups = healthRollupRows
+    .map((row) => mapHealthRollupRow(row))
+    .filter((row): row is CommunityHealthRollup => Boolean(row));
+  const captainCoverage = buildCaptainCoverage({
+    activeAssignments,
+    queueItems: captainWorkspaceItems,
+    unassignedCount,
+  });
   const journeyOutcomes = buildJourneyOutcomes({
     journeyRows,
     snapshotRows,
@@ -1025,11 +1377,16 @@ export async function loadProjectCommunityV5(projectId: string): Promise<Project
     captainWorkspace,
     journeyOutcomes,
     execution: executionSummary,
+    captainCoverage,
+    cohortSnapshots,
+    healthRollups,
   });
   const healthSignals = buildHealthSignals({
     captainWorkspace,
     journeyOutcomes,
     execution: executionSummary,
+    captainCoverage,
+    healthRollups,
   });
 
   return {
@@ -1039,6 +1396,9 @@ export async function loadProjectCommunityV5(projectId: string): Promise<Project
     journeyOutcomes,
     ownerRecommendations,
     healthSignals,
+    cohortSnapshots,
+    healthRollups,
+    captainCoverage,
   };
 }
 
@@ -1061,7 +1421,7 @@ async function loadProjectCaptainQueueRows(projectId: string) {
   return loadOptionalRows<ProjectCommunityCaptainQueueRow>(
     supabase
       .from("community_captain_action_queue")
-      .select("id, project_id, auth_user_id, captain_assignment_id, title, summary, status, escalation_state, due_at, source_type, metadata, created_at, updated_at")
+      .select("id, project_id, auth_user_id, captain_assignment_id, title, summary, status, escalation_state, due_at, priority, seat_key, due_state, resolution_state, action_type, target_type, target_id, blocked_reason_code, blocked_reason_summary, last_actor_auth_user_id, resolved_at, source_type, metadata, created_at, updated_at")
       .eq("project_id", projectId)
       .in("status", ACTIONABLE_QUEUE_DB_STATUSES)
       .order("due_at", { ascending: true, nullsFirst: false })
@@ -1140,7 +1500,7 @@ function buildCaptainWorkspacePayload(input: {
 
 function resolveCaptainQueueExecutionTarget(row: ProjectCommunityCaptainQueueRow) {
   const metadata = readQueueMetadata(row);
-  const automationId = toText(metadata.automationId ?? metadata.automation_id);
+  const automationId = toText(metadata.automationId ?? metadata.automation_id ?? row.target_id);
   const automationTypeRaw = metadata.automationType ?? metadata.automation_type;
   const automationType = isCommunityAutomationType(automationTypeRaw) ? automationTypeRaw : null;
   const playbookKeyRaw = metadata.playbookKey ?? metadata.playbook_key;
@@ -1156,9 +1516,9 @@ function resolveCaptainQueueExecutionTarget(row: ProjectCommunityCaptainQueueRow
     automationType,
     playbookKey,
     requiredPermission,
-    actionType: toText(metadata.actionType ?? metadata.action_type, fallbackActionType),
-    targetType: toText(metadata.targetType ?? metadata.target_type, fallbackTargetType),
-    targetId: toText(metadata.targetId ?? metadata.target_id, fallbackTargetId),
+    actionType: toText(metadata.actionType ?? metadata.action_type ?? row.action_type, fallbackActionType),
+    targetType: toText(metadata.targetType ?? metadata.target_type ?? row.target_type, fallbackTargetType),
+    targetId: toText(metadata.targetId ?? metadata.target_id ?? row.target_id, fallbackTargetId),
   };
 }
 
@@ -1171,6 +1531,13 @@ async function insertCaptainActionRecord(input: {
   targetId: string;
   status: "success" | "failed" | "skipped";
   summary: string;
+  queueItemId: string;
+  actorScope: "owner" | "captain" | "system";
+  dueState: CommunityCaptainDueState;
+  resolutionState: CommunityCaptainResolutionState;
+  blockedReasonCode: string;
+  blockedReasonSummary: string;
+  resolvedAt: string | null;
   metadata: RawRecord;
 }) {
   const supabase = getServiceSupabaseClient();
@@ -1185,6 +1552,13 @@ async function insertCaptainActionRecord(input: {
       target_id: input.targetId,
       status: input.status,
       summary: input.summary,
+      queue_item_id: input.queueItemId,
+      actor_scope: input.actorScope,
+      due_state: input.dueState,
+      resolution_state: input.resolutionState,
+      blocked_reason_code: input.blockedReasonCode || null,
+      blocked_reason_summary: input.blockedReasonSummary || null,
+      resolved_at: input.resolvedAt,
       metadata: input.metadata,
     })
     .select("id")
@@ -1228,6 +1602,7 @@ export async function loadProjectCommunityRecommendations(
     healthSignals: payload.healthSignals,
     execution: payload.execution,
     captainWorkspace: payload.captainWorkspace,
+    captainCoverage: payload.captainCoverage,
   };
 }
 
@@ -1246,6 +1621,9 @@ export async function loadProjectCommunityOutcomes(
     execution: payload.execution,
     captainWorkspace: payload.captainWorkspace,
     recentResults: execution.captainActions.slice(0, 8),
+    cohortSnapshots: payload.cohortSnapshots,
+    healthRollups: payload.healthRollups,
+    captainCoverage: payload.captainCoverage,
   };
 }
 
@@ -1257,7 +1635,7 @@ export async function runProjectCommunityCaptainAction(
   const [{ data: queueRow, error: queueError }, execution, captainAssignments] = await Promise.all([
     supabase
       .from("community_captain_action_queue")
-      .select("id, project_id, auth_user_id, captain_assignment_id, title, summary, status, escalation_state, due_at, source_type, metadata, created_at, updated_at")
+      .select("id, project_id, auth_user_id, captain_assignment_id, title, summary, status, escalation_state, due_at, priority, seat_key, due_state, resolution_state, action_type, target_type, target_id, blocked_reason_code, blocked_reason_summary, last_actor_auth_user_id, resolved_at, source_type, metadata, created_at, updated_at")
       .eq("project_id", access.projectId)
       .eq("id", input.actionId)
       .maybeSingle(),
@@ -1301,6 +1679,7 @@ export async function runProjectCommunityCaptainAction(
 
   const nowIso = new Date().toISOString();
   const queueMetadata = readQueueMetadata(queueRecord);
+  const queueItem = buildCaptainQueueItems([queueRecord])[0];
   const captainRole = viewer.isOwner
     ? access.membershipRole ?? "owner"
     : toText(captainAssignments[0]?.role_type ?? captainAssignments[0]?.roleType, "captain");
@@ -1311,6 +1690,9 @@ export async function runProjectCommunityCaptainAction(
       status: "in_progress",
       started_at: nowIso,
       auth_user_id: assignedAuthUserId || access.authUserId,
+      due_state: queueItem?.dueState ?? "upcoming",
+      resolution_state: "open",
+      last_actor_auth_user_id: access.authUserId,
       updated_by_auth_user_id: access.authUserId,
       updated_at: nowIso,
     })
@@ -1350,6 +1732,8 @@ export async function runProjectCommunityCaptainAction(
   }
 
   const finishStatus = actionStatus === "success" ? "done" : actionStatus === "failed" ? "blocked" : "blocked";
+  const finishResolutionState: CommunityCaptainResolutionState =
+    actionStatus === "success" ? "resolved" : "waiting";
   const finishMetadata: RawRecord = {
     ...queueMetadata,
     lastRunStatus: actionStatus,
@@ -1363,6 +1747,9 @@ export async function runProjectCommunityCaptainAction(
     .update({
       status: finishStatus,
       completed_at: actionStatus === "success" ? nowIso : null,
+      resolution_state: finishResolutionState,
+      resolved_at: actionStatus === "success" ? nowIso : null,
+      last_actor_auth_user_id: access.authUserId,
       updated_by_auth_user_id: access.authUserId,
       updated_at: nowIso,
       metadata: finishMetadata,
@@ -1383,6 +1770,13 @@ export async function runProjectCommunityCaptainAction(
     targetId: resolvedTarget.targetId,
     status: actionStatus,
     summary: actionSummary,
+    queueItemId: input.actionId,
+    actorScope: viewer.isOwner ? "owner" : "captain",
+    dueState: queueItem?.dueState ?? "upcoming",
+    resolutionState: finishResolutionState,
+    blockedReasonCode: queueItem?.blockedReason.code ?? "",
+    blockedReasonSummary: queueItem?.blockedReason.summary ?? "",
+    resolvedAt: actionStatus === "success" ? nowIso : null,
     metadata: {
       queueItemId: input.actionId,
       viewerRole: viewer.role,

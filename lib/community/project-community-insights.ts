@@ -80,6 +80,7 @@ type CohortSummary = {
   newcomers: number;
   warmingUp: number;
   core: number;
+  highTrust: number;
   watchlist: number;
   reactivation: number;
   commandReady: number;
@@ -93,6 +94,14 @@ type CommunityAnalytics = {
   walletVerifiedRate: number;
   fullStackReadyRate: number;
   recentActiveRate: number;
+  newcomerReadyCount: number;
+  reactivationReadyCount: number;
+  highTrustCount: number;
+  highTrustRate: number;
+  commandGapCount: number;
+  walletGapCount: number;
+  xGapCount: number;
+  retentionPressureCount: number;
   averageTrust: number;
   watchlistCount: number;
   openFlagCount: number;
@@ -129,6 +138,7 @@ export type ProjectCommunityGrowthPayload = {
     newcomers: CommunityGrowthContributor[];
     warmingUp: CommunityGrowthContributor[];
     core: CommunityGrowthContributor[];
+    highTrust: CommunityGrowthContributor[];
     watchlist: CommunityGrowthContributor[];
     reactivation: CommunityGrowthContributor[];
   };
@@ -662,12 +672,17 @@ export async function loadProjectCommunityGrowth(
     newcomers: contributors.filter((item) => item.cohort === "newcomer").slice(0, 8),
     warmingUp: contributors.filter((item) => item.cohort === "warming_up").slice(0, 8),
     core: contributors.filter((item) => item.cohort === "core").slice(0, 8),
+    highTrust: contributors
+      .filter((item) => item.trust >= 80 && item.openFlagCount === 0)
+      .slice(0, 8),
     watchlist: contributors.filter((item) => item.cohort === "watchlist").slice(0, 8),
     reactivation: contributors.filter((item) => item.cohort === "reactivation").slice(0, 8),
   };
 
   const commandReadyCount = contributors.filter((item) => item.commandReady).length;
   const fullStackReadyCount = contributors.filter((item) => item.fullStackReady).length;
+  const walletVerifiedCount = contributors.filter((item) => item.walletVerified).length;
+  const xReadyCount = contributors.filter((item) => item.linkedProviders.includes("x")).length;
   const recentActiveCount = contributors.filter(
     (item) => item.daysSinceActive !== null && item.daysSinceActive <= 14
   ).length;
@@ -692,6 +707,7 @@ export async function loadProjectCommunityGrowth(
     newcomers: contributors.filter((item) => item.cohort === "newcomer").length,
     warmingUp: contributors.filter((item) => item.cohort === "warming_up").length,
     core: contributors.filter((item) => item.cohort === "core").length,
+    highTrust: contributors.filter((item) => item.trust >= 80 && item.openFlagCount === 0).length,
     watchlist: contributors.filter((item) => item.cohort === "watchlist").length,
     reactivation: contributors.filter((item) => item.cohort === "reactivation").length,
     commandReady: commandReadyCount,
@@ -703,11 +719,19 @@ export async function loadProjectCommunityGrowth(
     contributorCount: contributors.length,
     commandReadyRate: roundPercentage(commandReadyCount, contributors.length),
     walletVerifiedRate: roundPercentage(
-      contributors.filter((item) => item.walletVerified).length,
+      walletVerifiedCount,
       contributors.length
     ),
     fullStackReadyRate: roundPercentage(fullStackReadyCount, contributors.length),
     recentActiveRate: roundPercentage(recentActiveCount, contributors.length),
+    newcomerReadyCount: cohorts.newcomers.filter((item) => item.commandReady).length,
+    reactivationReadyCount: cohorts.reactivation.filter((item) => item.commandReady).length,
+    highTrustCount: summary.highTrust,
+    highTrustRate: roundPercentage(summary.highTrust, contributors.length),
+    commandGapCount: Math.max(0, contributors.length - commandReadyCount),
+    walletGapCount: Math.max(0, contributors.length - walletVerifiedCount),
+    xGapCount: Math.max(0, contributors.length - xReadyCount),
+    retentionPressureCount: summary.reactivation,
     averageTrust,
     watchlistCount: summary.watchlist,
     openFlagCount,
@@ -813,6 +837,7 @@ export async function loadProjectCommunityGrowth(
       newcomers: cohorts.newcomers,
       warmingUp: cohorts.warmingUp,
       core: cohorts.core,
+      highTrust: cohorts.highTrust,
       watchlist: cohorts.watchlist,
       reactivation: cohorts.reactivation,
     },

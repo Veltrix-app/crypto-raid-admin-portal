@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { type CommunityCaptainPermission } from "@/components/community/community-config";
+import {
+  type CommunityCaptainPermission,
+  type CommunityCaptainSeatScope,
+} from "@/components/community/community-config";
 import {
   assertProjectCommunityAccess,
   ProjectCommunityAccessError,
@@ -26,6 +29,26 @@ function sanitizeCaptainPermissionMap(input: unknown) {
   return result;
 }
 
+function sanitizeCaptainSeatScopeMap(input: unknown) {
+  if (!input || typeof input !== "object") {
+    return {} as Record<string, CommunityCaptainSeatScope>;
+  }
+
+  const result: Record<string, CommunityCaptainSeatScope> = {};
+  for (const [seatKey, scope] of Object.entries(input as Record<string, unknown>)) {
+    if (!seatKey.trim()) {
+      continue;
+    }
+
+    result[seatKey] =
+      scope === "project_only" || scope === "community_only" || scope === "project_and_community"
+        ? scope
+        : "project_and_community";
+  }
+
+  return result;
+}
+
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> }
@@ -38,6 +61,7 @@ export async function GET(
     return NextResponse.json({
       ok: true,
       captainPermissions: payload.captainPermissions,
+      captainSeatScopes: payload.captainSeatScopes,
       captainActions: payload.captainActions,
     });
   } catch (error) {
@@ -64,13 +88,18 @@ export async function POST(
     const { id } = await context.params;
     const access = await assertProjectCommunityAccess(id?.trim() ?? "");
     const body = (await request.json().catch(() => null)) as
-      | { captainPermissions?: Record<string, CommunityCaptainPermission[]> }
+      | {
+          captainPermissions?: Record<string, CommunityCaptainPermission[]>;
+          captainSeatScopes?: Record<string, CommunityCaptainSeatScope>;
+        }
       | null;
 
     const captainPermissions = sanitizeCaptainPermissionMap(body?.captainPermissions);
+    const captainSeatScopes = sanitizeCaptainSeatScopeMap(body?.captainSeatScopes);
     const payload = await saveProjectCaptainPermissions({
       projectId: access.projectId,
       permissionMap: captainPermissions,
+      seatScopeMap: captainSeatScopes,
     });
 
     await writeProjectCommunityAuditLog({
@@ -82,12 +111,14 @@ export async function POST(
       metadata: {
         updatedBy: access.authUserId,
         captainPermissions,
+        captainSeatScopes,
       },
     });
 
     return NextResponse.json({
       ok: true,
       captainPermissions: payload.captainPermissions,
+      captainSeatScopes: payload.captainSeatScopes,
       captainActions: payload.captainActions,
       message: "Captain permissions saved.",
     });
