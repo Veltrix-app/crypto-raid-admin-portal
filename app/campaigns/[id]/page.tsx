@@ -352,7 +352,11 @@ export default function CampaignDetailPage() {
           >
             <div className="mt-5 space-y-3">
               <DetailActionTile
-                href={relatedQuests.length > 0 ? "/quests" : "/quests/new"}
+                href={
+                  relatedQuests.length > 0
+                    ? "/quests"
+                    : `/quests/new?projectId=${campaign.projectId}&campaignId=${campaign.id}`
+                }
                 label={relatedQuests.length > 0 ? "Review quests" : "Create first quest"}
                 description={
                   relatedQuests.length > 0
@@ -361,7 +365,11 @@ export default function CampaignDetailPage() {
                 }
               />
               <DetailActionTile
-                href={relatedRaids.length > 0 ? "/raids" : "/raids/new"}
+                href={
+                  relatedRaids.length > 0
+                    ? "/raids"
+                    : `/raids/new?projectId=${campaign.projectId}&campaignId=${campaign.id}`
+                }
                 label={relatedRaids.length > 0 ? "Review raids" : "Add a raid"}
                 description={
                   relatedRaids.length > 0

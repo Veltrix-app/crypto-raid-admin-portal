@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import QuestForm from "@/components/forms/quest/QuestForm";
 import {
   OpsMetricCard,
@@ -12,15 +13,19 @@ import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
-export default function NewQuestPage() {
+function NewQuestPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const createQuest = useAdminPortalStore((s) => s.createQuest);
   const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
+  const requestedProjectId = searchParams.get("projectId") || undefined;
+  const requestedCampaignId = searchParams.get("campaignId") || undefined;
+  const effectiveProjectId = requestedProjectId || activeProjectId || undefined;
 
-  const activeProject = projects.find((project) => project.id === activeProjectId);
-  const activeProjectCampaigns = campaigns.filter((campaign) => campaign.projectId === activeProjectId);
+  const activeProject = projects.find((project) => project.id === effectiveProjectId);
+  const activeProjectCampaigns = campaigns.filter((campaign) => campaign.projectId === effectiveProjectId);
 
   return (
     <AdminShell>
@@ -55,7 +60,8 @@ export default function NewQuestPage() {
             <QuestForm
               projects={projects}
               campaigns={campaigns}
-              defaultProjectId={activeProjectId ?? undefined}
+              defaultProjectId={effectiveProjectId}
+              defaultCampaignId={requestedCampaignId}
               onSubmit={async (values) => {
                 const id = await createQuest(values);
                 router.push(`/quests/${id}`);
@@ -100,5 +106,13 @@ export default function NewQuestPage() {
         </div>
       </PortalPageFrame>
     </AdminShell>
+  );
+}
+
+export default function NewQuestPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewQuestPageContent />
+    </Suspense>
   );
 }

@@ -20,6 +20,7 @@ type Props = {
   campaigns: AdminCampaign[];
   initialValues?: Omit<AdminQuest, "id">;
   defaultProjectId?: string;
+  defaultCampaignId?: string;
   onSubmit: (values: Omit<AdminQuest, "id">) => void | Promise<void>;
   submitLabel?: string;
 };
@@ -249,6 +250,7 @@ export default function QuestForm({
   campaigns,
   initialValues,
   defaultProjectId,
+  defaultCampaignId,
   onSubmit,
   submitLabel = "Save Quest",
 }: Props) {
@@ -258,7 +260,7 @@ export default function QuestForm({
   const [values, setValues] = useState<Omit<AdminQuest, "id">>(
     initialValues || {
       projectId: defaultProjectId || projects[0]?.id || "",
-      campaignId: "",
+      campaignId: defaultCampaignId || "",
 
       title: "",
       description: "",
@@ -357,6 +359,17 @@ export default function QuestForm({
       setValues((current) => ({ ...current, projectId: defaultProjectId }));
     }
   }, [defaultProjectId, values.projectId]);
+
+  useEffect(() => {
+    if (!defaultCampaignId || !filteredCampaigns.length) {
+      return;
+    }
+
+    const hasDefaultCampaign = filteredCampaigns.some((campaign) => campaign.id === defaultCampaignId);
+    if (hasDefaultCampaign && values.campaignId !== defaultCampaignId) {
+      setValues((current) => ({ ...current, campaignId: defaultCampaignId }));
+    }
+  }, [defaultCampaignId, filteredCampaigns, values.campaignId]);
 
   useEffect(() => {
     if (!filteredCampaigns.length) {

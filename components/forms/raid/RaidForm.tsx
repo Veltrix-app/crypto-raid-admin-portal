@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminRaid } from "@/types/entities/raid";
 import { AdminProject } from "@/types/entities/project";
 import { AdminCampaign } from "@/types/entities/campaign";
@@ -9,6 +9,8 @@ type Props = {
   projects: AdminProject[];
   campaigns: AdminCampaign[];
   initialValues?: Omit<AdminRaid, "id">;
+  defaultProjectId?: string;
+  defaultCampaignId?: string;
   onSubmit: (values: Omit<AdminRaid, "id">) => void | Promise<void>;
   submitLabel?: string;
 };
@@ -17,13 +19,15 @@ export default function RaidForm({
   projects,
   campaigns,
   initialValues,
+  defaultProjectId,
+  defaultCampaignId,
   onSubmit,
   submitLabel = "Save Raid",
 }: Props) {
   const [values, setValues] = useState<Omit<AdminRaid, "id">>(
     initialValues || {
-      projectId: projects[0]?.id || "",
-      campaignId: "",
+      projectId: defaultProjectId || projects[0]?.id || "",
+      campaignId: defaultCampaignId || "",
 
       title: "",
       shortDescription: "",
@@ -58,6 +62,40 @@ export default function RaidForm({
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter((campaign) => campaign.projectId === values.projectId);
   }, [campaigns, values.projectId]);
+
+  useEffect(() => {
+    if (!values.projectId && defaultProjectId) {
+      setValues((current) => ({ ...current, projectId: defaultProjectId }));
+    }
+  }, [defaultProjectId, values.projectId]);
+
+  useEffect(() => {
+    if (!defaultCampaignId || !filteredCampaigns.length) {
+      return;
+    }
+
+    const hasDefaultCampaign = filteredCampaigns.some((campaign) => campaign.id === defaultCampaignId);
+    if (hasDefaultCampaign && values.campaignId !== defaultCampaignId) {
+      setValues((current) => ({ ...current, campaignId: defaultCampaignId }));
+    }
+  }, [defaultCampaignId, filteredCampaigns, values.campaignId]);
+
+  useEffect(() => {
+    if (!filteredCampaigns.length) {
+      if (values.campaignId) {
+        setValues((current) => ({ ...current, campaignId: "" }));
+      }
+      return;
+    }
+
+    const hasSelectedCampaign = filteredCampaigns.some((campaign) => campaign.id === values.campaignId);
+    if (!hasSelectedCampaign) {
+      setValues((current) => ({
+        ...current,
+        campaignId: filteredCampaigns[0]?.id || "",
+      }));
+    }
+  }, [filteredCampaigns, values.campaignId]);
 
   function updateInstruction(index: number, nextValue: string) {
     const next = [...values.instructions];

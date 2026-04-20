@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
-import { FolderPlus } from "lucide-react";
+import { FolderPlus, Swords, Target } from "lucide-react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
@@ -126,13 +126,29 @@ export default function ProjectCampaignsPage() {
           title="Project campaigns"
           description="A focused read on the campaigns that belong to this workspace, with fast links into deeper campaign operations."
           action={
-            <Link
-              href="/campaigns/new"
-              className="inline-flex items-center gap-2 rounded-[18px] bg-primary px-4 py-3 font-bold text-black"
-            >
-              <FolderPlus size={16} />
-              New campaign
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/campaigns/new"
+                className="inline-flex items-center gap-2 rounded-[18px] bg-primary px-4 py-3 font-bold text-black"
+              >
+                <FolderPlus size={16} />
+                New campaign
+              </Link>
+              <Link
+                href={`/quests/new?projectId=${project.id}`}
+                className="inline-flex items-center gap-2 rounded-[18px] border border-line bg-card2 px-4 py-3 font-bold text-text transition hover:border-primary/35"
+              >
+                <Target size={16} />
+                New quest
+              </Link>
+              <Link
+                href={`/raids/new?projectId=${project.id}`}
+                className="inline-flex items-center gap-2 rounded-[18px] border border-line bg-card2 px-4 py-3 font-bold text-text transition hover:border-primary/35"
+              >
+                <Swords size={16} />
+                New raid
+              </Link>
+            </div>
           }
         >
           <div className="grid gap-4 md:grid-cols-4">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import RaidForm from "@/components/forms/raid/RaidForm";
 import {
   OpsMetricCard,
@@ -9,13 +10,20 @@ import {
 } from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
+import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
-export default function NewRaidPage() {
+function NewRaidPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const createRaid = useAdminPortalStore((s) => s.createRaid);
   const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
+  const requestedProjectId = searchParams.get("projectId") || undefined;
+  const requestedCampaignId = searchParams.get("campaignId") || undefined;
+  const effectiveProjectId = requestedProjectId || activeProjectId || undefined;
+  const activeProject = projects.find((project) => project.id === effectiveProjectId);
   const liveCampaigns = campaigns.filter((campaign) => campaign.status === "active");
 
   return (
@@ -24,6 +32,12 @@ export default function NewRaidPage() {
         eyebrow="Raid builder"
         title="New Raid"
         description="A cleaner launch rail for pressure-based missions, with live campaign context visible before the raid goes out."
+        actions={
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Default workspace</p>
+            <p className="text-lg font-extrabold text-text">{activeProject?.name || "No active project"}</p>
+          </div>
+        }
         statusBand={
           <div className="grid gap-4 md:grid-cols-3">
             <OpsMetricCard label="Projects" value={projects.length} />
@@ -45,6 +59,8 @@ export default function NewRaidPage() {
             <RaidForm
               projects={projects}
               campaigns={campaigns}
+              defaultProjectId={effectiveProjectId}
+              defaultCampaignId={requestedCampaignId}
               onSubmit={async (values) => {
                 const id = await createRaid(values);
                 router.push(`/raids/${id}`);
@@ -88,5 +104,13 @@ export default function NewRaidPage() {
         </div>
       </PortalPageFrame>
     </AdminShell>
+  );
+}
+
+export default function NewRaidPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewRaidPageContent />
+    </Suspense>
   );
 }

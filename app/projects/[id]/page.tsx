@@ -1003,7 +1003,19 @@ export default function ProjectDetailPage() {
       label: "Campaign board",
       description:
         "Open the campaign layer to manage activation work without digging through setup details.",
-      href: "/campaigns",
+      href: `/projects/${project.id}/campaigns`,
+    },
+    {
+      label: "New quest",
+      description:
+        "Create a quest directly in this project so mission logic starts where the team is already working.",
+      href: `/quests/new?projectId=${project.id}`,
+    },
+    {
+      label: "New raid",
+      description:
+        "Create a raid directly in this project so social pressure flows from the same workspace.",
+      href: `/raids/new?projectId=${project.id}`,
     },
     {
       label: "Claims queue",
