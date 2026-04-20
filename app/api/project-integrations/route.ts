@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
-  assertProjectCommunityAccess,
+  assertProjectAccess,
   createProjectCommunityAccessErrorResponse,
 } from "@/lib/community/project-community-auth";
+import { createProjectOperationAudit } from "@/lib/platform/core-ops";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -240,7 +241,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Missing projectId." }, { status: 400 });
     }
 
-    await assertProjectCommunityAccess(projectId);
+    await assertProjectAccess(projectId);
     const supabase = getServiceSupabaseClient();
     const { data, error } = await supabase
       .from("project_integrations")
@@ -337,7 +338,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Invalid provider." }, { status: 400 });
     }
 
-    await assertProjectCommunityAccess(projectId);
+    const access = await assertProjectAccess(projectId);
     const now = new Date().toISOString();
     const pushSettings = sanitizePushSettings(rawConfig, provider);
     const config =
@@ -481,6 +482,23 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: false, error: scopeInsertError.message }, { status: 500 });
       }
     }
+
+    await createProjectOperationAudit({
+      projectId,
+      objectType: "provider_sync",
+      objectId: data.id,
+      actionType: "updated",
+      actorAuthUserId: access.authUserId,
+      actorRole: access.membershipRole,
+      metadata: {
+        provider,
+        integrationStatus: data.status,
+        pushTarget:
+          provider === "discord"
+            ? normalizedPushSettings.targetChannelId || null
+            : normalizedPushSettings.targetChatId || null,
+      },
+    });
 
     return NextResponse.json({
       ok: true,

@@ -5,6 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
+import LifecycleStatusPill from "@/components/platform/LifecycleStatusPill";
+import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
+import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import {
   DetailActionTile,
   DetailBadge,
@@ -15,6 +18,8 @@ import {
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
+import { deriveLifecycleState } from "@/lib/platform/core-lifecycle";
+import { useProjectOps } from "@/hooks/useProjectOps";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { DbAuditLog, DbVerificationResult } from "@/types/database";
@@ -59,6 +64,10 @@ export default function CampaignDetailPage() {
     () => getCampaignById(params.id),
     [getCampaignById, params.id]
   );
+  const campaignOps = useProjectOps(campaign?.projectId, {
+    objectType: "campaign",
+    objectId: params.id,
+  });
 
   if (!campaign) {
     return (
@@ -72,6 +81,7 @@ export default function CampaignDetailPage() {
   }
 
   const currentCampaign = campaign;
+  const lifecycleState = deriveLifecycleState(currentCampaign.status, "draft");
   const project = projects.find((p) => p.id === campaign.projectId);
   const relatedRaids = raids.filter((r) => r.campaignId === campaign.id);
   const relatedQuests = quests.filter((q) => q.campaignId === campaign.id);
@@ -109,6 +119,26 @@ export default function CampaignDetailPage() {
       label: "Reward Loop",
       value: relatedRewards.length ? `${relatedRewards.length} rewards linked` : "No linked rewards",
       complete: relatedRewards.length > 0,
+    },
+  ];
+  const overrideActions = [
+    {
+      label: "Pause campaign rail",
+      description:
+        "Freeze new traffic while you stabilize messaging, rewards or moderation pressure.",
+      objectType: "campaign" as const,
+      objectId: currentCampaign.id,
+      overrideType: "pause" as const,
+      reason: "Campaign rail paused from detail workspace.",
+    },
+    {
+      label: "Queue manual retry",
+      description:
+        "Mark this campaign for a manual retry pass when the next move is operator recovery.",
+      objectType: "campaign" as const,
+      objectId: currentCampaign.id,
+      overrideType: "manual_retry" as const,
+      reason: "Manual retry queued from campaign detail.",
     },
   ];
 
@@ -270,9 +300,7 @@ export default function CampaignDetailPage() {
               <DetailBadge>{project?.name || "Unknown Project"}</DetailBadge>
               <DetailBadge>{campaign.campaignType.replace(/_/g, " ")}</DetailBadge>
               <DetailBadge>{campaign.visibility}</DetailBadge>
-              <DetailBadge tone={campaign.status === "active" ? "primary" : "default"}>
-                {campaign.status}
-              </DetailBadge>
+              <LifecycleStatusPill state={lifecycleState} fallback="draft" />
               {campaign.featured ? <DetailBadge tone="warning">Featured</DetailBadge> : null}
             </>
           }
@@ -407,6 +435,48 @@ export default function CampaignDetailPage() {
               label="Duplicate Signals"
               value={snapshot?.duplicateSignals ?? 0}
               hint="Identity or proof overlap detected in this campaign."
+            />
+          </div>
+        </DetailSurface>
+
+        <DetailSurface
+          eyebrow="Platform Core"
+          title="Lifecycle, incidents and overrides"
+          description="This operator rail keeps the campaign's runtime incidents, manual overrides and explicit lifecycle state in one place."
+        >
+          <div className="mt-5 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+            <div className="space-y-4">
+              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                      Lifecycle posture
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-sub">
+                      Campaign state is explicit now, so operators can immediately tell whether
+                      this loop is live, paused, ready or in recovery.
+                    </p>
+                  </div>
+                  <LifecycleStatusPill state={lifecycleState} fallback="draft" />
+                </div>
+              </div>
+
+              <OpsIncidentPanel
+                incidents={campaignOps.openIncidents}
+                emptyTitle="No campaign incidents"
+                emptyDescription="No provider, runtime or manual-test incidents are currently open for this campaign."
+                workingIncidentId={campaignOps.workingIncidentId}
+                onUpdateStatus={campaignOps.updateIncidentStatus}
+              />
+            </div>
+
+            <OpsOverridePanel
+              overrides={campaignOps.activeOverrides}
+              quickActions={overrideActions}
+              creatingOverride={campaignOps.creatingOverride}
+              workingOverrideId={campaignOps.workingOverrideId}
+              onCreateOverride={campaignOps.createOverride}
+              onResolveOverride={campaignOps.resolveOverride}
             />
           </div>
         </DetailSurface>
@@ -593,6 +663,31 @@ export default function CampaignDetailPage() {
                   label="Latest callback issue"
                   value={callbackFailures[0]?.summary ?? "No callback failures logged"}
                 />
+              </div>
+            </DetailSidebarSurface>
+
+            <DetailSidebarSurface title="Operator History">
+              <div className="mt-4 space-y-3">
+                {campaignOps.audits.slice(0, 4).map((audit) => (
+                  <div key={audit.id} className="rounded-2xl border border-line bg-card2 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                      {audit.action_type.replace(/_/g, " ")}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-text">
+                      {new Date(audit.created_at).toLocaleString()}
+                    </p>
+                    <p className="mt-2 text-sm text-sub">
+                      {typeof audit.metadata.summary === "string"
+                        ? audit.metadata.summary
+                        : `${audit.object_type} · ${audit.object_id}`}
+                    </p>
+                  </div>
+                ))}
+                {campaignOps.audits.length === 0 ? (
+                  <p className="text-sm text-sub">
+                    No platform audit entries are logged for this campaign yet.
+                  </p>
+                ) : null}
               </div>
             </DetailSidebarSurface>
           </div>

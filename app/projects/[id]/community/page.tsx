@@ -47,9 +47,12 @@ import { CommunityOutcomesPanel } from "@/components/community/CommunityOutcomes
 import { CommunityPlaybooksPanel } from "@/components/community/CommunityPlaybooksPanel";
 import { CommunityRaidOpsPanel } from "@/components/community/CommunityRaidOpsPanel";
 import { CommunityRanksPanel } from "@/components/community/CommunityRanksPanel";
+import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
+import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import { OpsPanel, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import { LoadingState, NotFoundState } from "@/components/layout/state/StatePrimitives";
+import { useProjectOps } from "@/hooks/useProjectOps";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -580,8 +583,32 @@ export default function ProjectCommunityManagementPage() {
   >("success");
 
   const project = useMemo(() => getProjectById(params.id), [getProjectById, params.id]);
+  const projectOps = useProjectOps(project?.id, {
+    objectType: undefined,
+    objectId: undefined,
+  });
   const hasProjectMembership = memberships.some((item) => item.projectId === project?.id);
   const hasProjectAccess = authRole === "super_admin" || hasProjectMembership;
+  const projectOverrideActions = [
+    {
+      label: "Pause automation rail",
+      description:
+        "Freeze project-level automations while the team stabilizes community runs or provider delivery.",
+      objectType: "automation" as const,
+      objectId: "community-automation-rail",
+      overrideType: "pause" as const,
+      reason: "Community automation rail paused from Community OS.",
+    },
+    {
+      label: "Queue provider retry",
+      description:
+        "Mark the provider sync rail for a manual retry after delivery or webhook issues are reviewed.",
+      objectType: "provider_sync" as const,
+      objectId: "community-provider-rail",
+      overrideType: "manual_retry" as const,
+      reason: "Provider sync retry queued from Community OS.",
+    },
+  ];
 
   useEffect(() => {
     if (!project || !hasProjectMembership) return;
@@ -2458,6 +2485,38 @@ export default function ProjectCommunityManagementPage() {
           captainPriorityCount={communityCaptainWorkspace.priorities.length}
           activeMode={communityViewMode}
         />
+
+        <OpsPanel
+          eyebrow="Platform Core"
+          title="Project incidents and manual overrides"
+          description="Community OS now surfaces project-scoped incidents, override posture and operator history in the same workspace where the team already runs commands, automations and pushes."
+        >
+          <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+            <div className="space-y-4">
+              {projectOps.error ? (
+                <div className="rounded-[22px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                  {projectOps.error}
+                </div>
+              ) : null}
+              <OpsIncidentPanel
+                incidents={projectOps.openIncidents}
+                emptyTitle="No project incidents"
+                emptyDescription="No provider, runtime or manual-test incidents are open for this project right now."
+                workingIncidentId={projectOps.workingIncidentId}
+                onUpdateStatus={projectOps.updateIncidentStatus}
+              />
+            </div>
+
+            <OpsOverridePanel
+              overrides={projectOps.activeOverrides}
+              quickActions={projectOverrideActions}
+              creatingOverride={projectOps.creatingOverride}
+              workingOverrideId={projectOps.workingOverrideId}
+              onCreateOverride={projectOps.createOverride}
+              onResolveOverride={projectOps.resolveOverride}
+            />
+          </div>
+        </OpsPanel>
 
         {communitySurfaceMode === "operate" ? (
           <>

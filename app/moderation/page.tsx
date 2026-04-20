@@ -10,9 +10,13 @@ import {
   OpsSelect,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
+import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
+import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
 import { createClient } from "@/lib/supabase/client";
+import { useProjectOps } from "@/hooks/useProjectOps";
+import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { DbAuditLog, DbTrustSnapshot } from "@/types/database";
 
@@ -26,9 +30,11 @@ type TrustAlert = {
 };
 
 export default function ModerationPage() {
+  const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const submissions = useAdminPortalStore((s) => s.submissions);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
   const users = useAdminPortalStore((s) => s.users);
+  const projects = useAdminPortalStore((s) => s.projects);
   const approveSubmission = useAdminPortalStore((s) => s.approveSubmission);
   const rejectSubmission = useAdminPortalStore((s) => s.rejectSubmission);
   const updateReviewFlagStatus = useAdminPortalStore((s) => s.updateReviewFlagStatus);
@@ -51,6 +57,30 @@ export default function ModerationPage() {
   const [moderationView, setModerationView] = useState<"reviews" | "trust" | "pipeline">(
     "reviews"
   );
+  const moderationOps = useProjectOps(activeProjectId);
+  const activeProjectName = activeProjectId
+    ? projects.find((project) => project.id === activeProjectId)?.name ?? "Active project"
+    : "No active project";
+  const moderationOverrideActions = [
+    {
+      label: "Pause provider rail",
+      description:
+        "Freeze provider-side moderation inputs for the active project while the team stabilizes callbacks or on-chain intake.",
+      objectType: "provider_sync" as const,
+      objectId: "moderation-provider-rail",
+      overrideType: "pause" as const,
+      reason: "Provider rail paused from moderation workspace.",
+    },
+    {
+      label: "Mute pipeline noise",
+      description:
+        "Silence repetitive pipeline alerts while the active project is being repaired manually.",
+      objectType: "provider_sync" as const,
+      objectId: "moderation-provider-rail",
+      overrideType: "mute" as const,
+      reason: "Pipeline alerts muted from moderation workspace.",
+    },
+  ];
 
   useEffect(() => {
     let active = true;
@@ -470,6 +500,38 @@ export default function ModerationPage() {
                 <option value="rejected">rejected</option>
               </OpsSelect>
             </OpsFilterBar>
+
+            <OpsPanel
+              eyebrow="Platform Core"
+              title={`Incidents and overrides for ${activeProjectName}`}
+              description="The active project's callback, pipeline and moderation rails now expose the same incident and override language as Community OS and Claims."
+            >
+              <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+                <div className="space-y-4">
+                  {moderationOps.error ? (
+                    <div className="rounded-[22px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                      {moderationOps.error}
+                    </div>
+                  ) : null}
+                  <OpsIncidentPanel
+                    incidents={moderationOps.openIncidents}
+                    emptyTitle="No moderation incidents"
+                    emptyDescription="No provider, runtime or moderation incidents are currently open for the active project."
+                    workingIncidentId={moderationOps.workingIncidentId}
+                    onUpdateStatus={moderationOps.updateIncidentStatus}
+                  />
+                </div>
+
+                <OpsOverridePanel
+                  overrides={moderationOps.activeOverrides}
+                  quickActions={activeProjectId ? moderationOverrideActions : []}
+                  creatingOverride={moderationOps.creatingOverride}
+                  workingOverrideId={moderationOps.workingOverrideId}
+                  onCreateOverride={moderationOps.createOverride}
+                  onResolveOverride={moderationOps.resolveOverride}
+                />
+              </div>
+            </OpsPanel>
           </div>
         }
       >

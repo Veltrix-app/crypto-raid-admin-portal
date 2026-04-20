@@ -4,6 +4,9 @@ import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import RaidForm from "@/components/forms/raid/RaidForm";
+import LifecycleStatusPill from "@/components/platform/LifecycleStatusPill";
+import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
+import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import {
   DetailActionTile,
   DetailBadge,
@@ -15,6 +18,8 @@ import {
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import { deriveLifecycleState } from "@/lib/platform/core-lifecycle";
+import { useProjectOps } from "@/hooks/useProjectOps";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function RaidDetailPage() {
@@ -29,6 +34,10 @@ export default function RaidDetailPage() {
   const campaigns = useAdminPortalStore((s) => s.campaigns);
 
   const raid = useMemo(() => getRaidById(params.id), [getRaidById, params.id]);
+  const raidOps = useProjectOps(raid?.projectId, {
+    objectType: "raid",
+    objectId: params.id,
+  });
 
   if (!raid) {
     return (
@@ -42,6 +51,7 @@ export default function RaidDetailPage() {
   }
 
   const project = projects.find((p) => p.id === raid.projectId);
+  const lifecycleState = deriveLifecycleState(raid.status, "draft");
   const campaign = campaigns.find((c) => c.id === raid.campaignId);
   const readinessItems = [
     {
@@ -65,6 +75,26 @@ export default function RaidDetailPage() {
       complete: !!raid.timer,
     },
   ];
+  const overrideActions = [
+    {
+      label: "Pause raid",
+      description:
+        "Hold back new raid pressure while you stabilize the target post, timing or instruction quality.",
+      objectType: "raid" as const,
+      objectId: raid.id,
+      overrideType: "pause" as const,
+      reason: "Raid paused from detail workspace.",
+    },
+    {
+      label: "Mute raid noise",
+      description:
+        "Silence repetitive raid alerts for this object while the team works through the issue manually.",
+      objectType: "raid" as const,
+      objectId: raid.id,
+      overrideType: "mute" as const,
+      reason: "Raid notifications muted from detail workspace.",
+    },
+  ];
 
   return (
     <AdminShell>
@@ -79,9 +109,7 @@ export default function RaidDetailPage() {
               <DetailBadge>{campaign?.title || "Unknown Campaign"}</DetailBadge>
               <DetailBadge>{raid.platform}</DetailBadge>
               <DetailBadge>{raid.verificationType}</DetailBadge>
-              <DetailBadge tone={raid.status === "active" ? "primary" : "default"}>
-                {raid.status}
-              </DetailBadge>
+              <LifecycleStatusPill state={lifecycleState} fallback="draft" />
             </>
           }
           actions={
@@ -201,6 +229,48 @@ export default function RaidDetailPage() {
                 </div>
               </DetailSurface>
             </div>
+
+            <DetailSurface
+              eyebrow="Platform Core"
+              title="Lifecycle, incidents and overrides"
+              description="This operator rail keeps raid-side delivery issues and manual pause or mute controls attached directly to the raid object."
+            >
+              <div className="mt-5 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+                <div className="space-y-4">
+                  <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                          Lifecycle posture
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-sub">
+                          Raid state is explicit so the team can tell when this pressure wave is
+                          live, paused or sitting in operator recovery.
+                        </p>
+                      </div>
+                      <LifecycleStatusPill state={lifecycleState} fallback="draft" />
+                    </div>
+                  </div>
+
+                  <OpsIncidentPanel
+                    incidents={raidOps.openIncidents}
+                    emptyTitle="No raid incidents"
+                    emptyDescription="No provider, runtime or delivery incidents are currently open for this raid."
+                    workingIncidentId={raidOps.workingIncidentId}
+                    onUpdateStatus={raidOps.updateIncidentStatus}
+                  />
+                </div>
+
+                <OpsOverridePanel
+                  overrides={raidOps.activeOverrides}
+                  quickActions={overrideActions}
+                  creatingOverride={raidOps.creatingOverride}
+                  workingOverrideId={raidOps.workingOverrideId}
+                  onCreateOverride={raidOps.createOverride}
+                  onResolveOverride={raidOps.resolveOverride}
+                />
+              </div>
+            </DetailSurface>
           </>
         ) : null}
 
@@ -284,6 +354,31 @@ export default function RaidDetailPage() {
                   ) : (
                     <p className="text-sm text-sub">No instructions configured.</p>
                   )}
+                </div>
+              </DetailSidebarSurface>
+
+              <DetailSidebarSurface title="Operator History">
+                <div className="mt-4 space-y-3">
+                  {raidOps.audits.slice(0, 4).map((audit) => (
+                    <div key={audit.id} className="rounded-2xl border border-line bg-card2 px-4 py-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                        {audit.action_type.replace(/_/g, " ")}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-text">
+                        {new Date(audit.created_at).toLocaleString()}
+                      </p>
+                      <p className="mt-2 text-sm text-sub">
+                        {typeof audit.metadata.summary === "string"
+                          ? audit.metadata.summary
+                          : `${audit.object_type} · ${audit.object_id}`}
+                      </p>
+                    </div>
+                  ))}
+                  {raidOps.audits.length === 0 ? (
+                    <p className="text-sm text-sub">
+                      No platform audit entries are logged for this raid yet.
+                    </p>
+                  ) : null}
                 </div>
               </DetailSidebarSurface>
             </div>

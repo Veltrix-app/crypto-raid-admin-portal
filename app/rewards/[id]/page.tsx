@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import RewardForm from "@/components/forms/reward/RewardForm";
+import LifecycleStatusPill from "@/components/platform/LifecycleStatusPill";
+import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
+import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import {
   DetailActionTile,
   DetailBadge,
@@ -15,6 +18,8 @@ import {
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
+import { deriveLifecycleState } from "@/lib/platform/core-lifecycle";
+import { useProjectOps } from "@/hooks/useProjectOps";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function RewardDetailPage() {
@@ -34,6 +39,10 @@ export default function RewardDetailPage() {
     () => getRewardById(params.id),
     [getRewardById, params.id]
   );
+  const rewardOps = useProjectOps(reward?.projectId, {
+    objectType: "reward",
+    objectId: params.id,
+  });
 
   if (!reward) {
     return (
@@ -47,6 +56,7 @@ export default function RewardDetailPage() {
   }
 
   const project = projects.find((p) => p.id === reward.projectId);
+  const lifecycleState = deriveLifecycleState(reward.status, "draft");
   const campaign = campaigns.find((c) => c.id === reward.campaignId);
   const relatedClaims = claims.filter((claim) => claim.rewardId === reward.id);
   const pendingClaims = relatedClaims.filter((claim) => claim.status === "pending");
@@ -74,6 +84,26 @@ export default function RewardDetailPage() {
       complete: pendingClaims.length === 0,
     },
   ];
+  const overrideActions = [
+    {
+      label: "Pause reward",
+      description:
+        "Stop fresh demand from piling into this reward while the claim or stock posture is being corrected.",
+      objectType: "reward" as const,
+      objectId: reward.id,
+      overrideType: "pause" as const,
+      reason: "Reward paused from detail workspace.",
+    },
+    {
+      label: "Manual complete",
+      description:
+        "Mark this reward for manual completion when the team is handling a claim or delivery path outside automation.",
+      objectType: "reward" as const,
+      objectId: reward.id,
+      overrideType: "manual_complete" as const,
+      reason: "Manual completion path queued from reward detail.",
+    },
+  ];
 
   return (
     <AdminShell>
@@ -89,7 +119,7 @@ export default function RewardDetailPage() {
               <DetailBadge>{reward.rewardType}</DetailBadge>
               <DetailBadge>{reward.rarity}</DetailBadge>
               <DetailBadge>{reward.claimMethod}</DetailBadge>
-              <DetailBadge tone={reward.status === "active" ? "primary" : "default"}>{reward.status}</DetailBadge>
+              <LifecycleStatusPill state={lifecycleState} fallback="draft" />
             </>
           }
           actions={
@@ -207,6 +237,48 @@ export default function RewardDetailPage() {
                 </div>
               </DetailSurface>
             </div>
+
+            <DetailSurface
+              eyebrow="Platform Core"
+              title="Lifecycle, incidents and overrides"
+              description="This operator rail keeps reward-side claim issues and manual pause or completion controls attached directly to the reward."
+            >
+              <div className="mt-5 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+                <div className="space-y-4">
+                  <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                          Lifecycle posture
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-sub">
+                          Reward state is explicit so operators can tell when this incentive is
+                          live, paused or already in a recovery path.
+                        </p>
+                      </div>
+                      <LifecycleStatusPill state={lifecycleState} fallback="draft" />
+                    </div>
+                  </div>
+
+                  <OpsIncidentPanel
+                    incidents={rewardOps.openIncidents}
+                    emptyTitle="No reward incidents"
+                    emptyDescription="No provider, runtime or claim-delivery incidents are currently open for this reward."
+                    workingIncidentId={rewardOps.workingIncidentId}
+                    onUpdateStatus={rewardOps.updateIncidentStatus}
+                  />
+                </div>
+
+                <OpsOverridePanel
+                  overrides={rewardOps.activeOverrides}
+                  quickActions={overrideActions}
+                  creatingOverride={rewardOps.creatingOverride}
+                  workingOverrideId={rewardOps.workingOverrideId}
+                  onCreateOverride={rewardOps.createOverride}
+                  onResolveOverride={rewardOps.resolveOverride}
+                />
+              </div>
+            </DetailSurface>
           </>
         ) : null}
 
@@ -277,6 +349,31 @@ export default function RewardDetailPage() {
                   <DetailMetaRow label="Image URL" value={reward.imageUrl || "-"} />
                   <DetailMetaRow label="Claims" value={relatedClaims.length} />
                   <DetailMetaRow label="Pending Claims" value={pendingClaims.length} />
+                </div>
+              </DetailSidebarSurface>
+
+              <DetailSidebarSurface title="Operator History">
+                <div className="mt-4 space-y-3">
+                  {rewardOps.audits.slice(0, 4).map((audit) => (
+                    <div key={audit.id} className="rounded-2xl border border-line bg-card2 px-4 py-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                        {audit.action_type.replace(/_/g, " ")}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-text">
+                        {new Date(audit.created_at).toLocaleString()}
+                      </p>
+                      <p className="mt-2 text-sm text-sub">
+                        {typeof audit.metadata.summary === "string"
+                          ? audit.metadata.summary
+                          : `${audit.object_type} · ${audit.object_id}`}
+                      </p>
+                    </div>
+                  ))}
+                  {rewardOps.audits.length === 0 ? (
+                    <p className="text-sm text-sub">
+                      No platform audit entries are logged for this reward yet.
+                    </p>
+                  ) : null}
                 </div>
               </DetailSidebarSurface>
             </div>

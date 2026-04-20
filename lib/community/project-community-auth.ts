@@ -78,6 +78,10 @@ export async function assertProjectCommunityAccess(projectId: string) {
   };
 }
 
+export async function assertProjectAccess(projectId: string) {
+  return assertProjectCommunityAccess(projectId);
+}
+
 export function createProjectCommunityAccessErrorResponse(
   error: unknown,
   fallbackMessage: string

@@ -4,6 +4,7 @@ import {
   assertProjectCommunityAccess,
   createProjectCommunityAccessErrorResponse,
 } from "@/lib/community/project-community-auth";
+import { createProjectOperationIncident } from "@/lib/platform/core-ops";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -737,6 +738,9 @@ export async function POST(request: NextRequest) {
       const payload =
         provider === "discord"
           ? {
+              projectId: item.projectId,
+              objectType: "provider_sync",
+              objectId: settings.targetThreadId || settings.targetChannelId,
               targetChannelId: settings.targetChannelId,
               targetThreadId: settings.targetThreadId || undefined,
               title: item.title,
@@ -751,6 +755,9 @@ export async function POST(request: NextRequest) {
               buttonLabel: item.buttonLabel,
             }
           : {
+              projectId: item.projectId,
+              objectType: "provider_sync",
+              objectId: settings.targetChatId,
               targetChatId: settings.targetChatId,
               title: item.title,
               body: item.body,
@@ -767,12 +774,35 @@ export async function POST(request: NextRequest) {
               buttonLabel: item.buttonLabel,
             };
 
-      const result = await sendCommunityPush(provider, payload);
-      deliveries.push({
-        provider,
-        integrationProjectId: integration.integrationProjectId,
-        result,
-      });
+      try {
+        const result = await sendCommunityPush(provider, payload);
+        deliveries.push({
+          provider,
+          integrationProjectId: integration.integrationProjectId,
+          result,
+        });
+      } catch (error) {
+        await createProjectOperationIncident({
+          projectId: item.projectId,
+          objectType: "provider_sync",
+          objectId:
+            provider === "discord"
+              ? settings.targetThreadId || settings.targetChannelId
+              : settings.targetChatId,
+          sourceType: "provider",
+          severity: "warning",
+          title: `${provider === "discord" ? "Discord" : "Telegram"} community push failed`,
+          summary: error instanceof Error ? error.message : "Community push delivery failed.",
+          metadata: {
+            contentType,
+            contentId,
+            provider,
+            integrationProjectId: integration.integrationProjectId,
+          },
+        }).catch(() => null);
+
+        throw error;
+      }
     }
 
     return NextResponse.json({

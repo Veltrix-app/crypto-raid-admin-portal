@@ -13,11 +13,16 @@ import {
   OpsSelect,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
+import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
+import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import { createClient } from "@/lib/supabase/client";
+import { useProjectOps } from "@/hooks/useProjectOps";
+import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { DbAuditLog } from "@/types/database";
 
 export default function ClaimsPage() {
+  const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const claims = useAdminPortalStore((s) => s.claims);
   const users = useAdminPortalStore((s) => s.users);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
@@ -35,12 +40,14 @@ export default function ClaimsPage() {
     text: string;
   } | null>(null);
   const [claimsView, setClaimsView] = useState<"queue" | "finalization">("queue");
+  const claimsOps = useProjectOps(activeProjectId);
 
   const usersByAuthId = new Map(
     users.filter((user) => !!user.authUserId).map((user) => [user.authUserId as string, user])
   );
   const campaignsById = new Map(campaigns.map((campaign) => [campaign.id, campaign]));
   const projectsById = new Map(projects.map((project) => [project.id, project]));
+  const activeProjectName = activeProjectId ? projectsById.get(activeProjectId)?.name ?? "Active project" : "No active project";
   const flagsByClaimId = reviewFlags.reduce((acc, flag) => {
     if (flag.sourceTable !== "reward_claims") return acc;
     const existing = acc.get(flag.sourceId) ?? [];
@@ -118,6 +125,24 @@ export default function ClaimsPage() {
   const failedFinalizationAttempts = rewardFinalizationLogs.filter(
     (log) => log.action === "reward_finalization_failed"
   ).length;
+  const claimOverrideActions = [
+    {
+      label: "Pause claim rail",
+      description: "Freeze claim processing for the active project while the team works through delivery or payout issues.",
+      objectType: "claim" as const,
+      objectId: "fulfillment-queue",
+      overrideType: "pause" as const,
+      reason: "Claim rail paused from claims workspace.",
+    },
+    {
+      label: "Queue manual retry",
+      description: "Mark the active project's claim rail for a manual retry pass after payout issues are reviewed.",
+      objectType: "claim" as const,
+      objectId: "fulfillment-queue",
+      overrideType: "manual_retry" as const,
+      reason: "Manual retry queued from claims workspace.",
+    },
+  ];
 
   async function loadRewardFinalizationLogs() {
     const supabase = createClient();
@@ -261,7 +286,7 @@ export default function ClaimsPage() {
                   </div>
                 </OpsPanel>
 
-                <OpsPanel
+              <OpsPanel
                   eyebrow="Volume mix"
                   title="Reward pressure by route"
                   description="A compact read on expensive and manual claim inventory."
@@ -281,6 +306,38 @@ export default function ClaimsPage() {
                   </div>
                 </OpsPanel>
               </div>
+
+              <OpsPanel
+                eyebrow="Platform Core"
+                title={`Incidents and overrides for ${activeProjectName}`}
+                description="The active project's claim and payout rails now expose the same incident and override language as the rest of the platform."
+              >
+                <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+                  <div className="space-y-4">
+                    {claimsOps.error ? (
+                      <div className="rounded-[22px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                        {claimsOps.error}
+                      </div>
+                    ) : null}
+                    <OpsIncidentPanel
+                      incidents={claimsOps.openIncidents}
+                      emptyTitle="No claim-side incidents"
+                      emptyDescription="No open incidents are currently logged for the active project's payout rails."
+                      workingIncidentId={claimsOps.workingIncidentId}
+                      onUpdateStatus={claimsOps.updateIncidentStatus}
+                    />
+                  </div>
+
+                  <OpsOverridePanel
+                    overrides={claimsOps.activeOverrides}
+                    quickActions={activeProjectId ? claimOverrideActions : []}
+                    creatingOverride={claimsOps.creatingOverride}
+                    workingOverrideId={claimsOps.workingOverrideId}
+                    onCreateOverride={claimsOps.createOverride}
+                    onResolveOverride={claimsOps.resolveOverride}
+                  />
+                </div>
+              </OpsPanel>
 
               <OpsFilterBar>
                 <OpsSearchInput

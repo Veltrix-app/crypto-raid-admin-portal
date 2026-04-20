@@ -228,6 +228,9 @@ export async function sendProjectCommunityMessage(params: {
     const payload =
       target.provider === "discord"
         ? {
+            projectId: params.projectId,
+            objectType: "provider_sync",
+            objectId: target.targetThreadId || target.targetChannelId,
             targetChannelId: target.targetChannelId,
             targetThreadId: target.targetThreadId || undefined,
             title: params.title,
@@ -242,6 +245,9 @@ export async function sendProjectCommunityMessage(params: {
             buttonLabel: params.buttonLabel || undefined,
           }
         : {
+            projectId: params.projectId,
+            objectType: "provider_sync",
+            objectId: target.targetChatId,
             targetChatId: target.targetChatId,
             title: params.title,
             body: params.body,

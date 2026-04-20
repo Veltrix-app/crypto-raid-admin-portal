@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import QuestForm from "@/components/forms/quest/QuestForm";
+import LifecycleStatusPill from "@/components/platform/LifecycleStatusPill";
+import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
+import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import {
   DetailActionTile,
   DetailBadge,
@@ -16,6 +19,8 @@ import {
 } from "@/components/layout/detail/DetailPrimitives";
 import { getQuestVerificationPreview } from "@/lib/quest-verification";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
+import { deriveLifecycleState } from "@/lib/platform/core-lifecycle";
+import { useProjectOps } from "@/hooks/useProjectOps";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function QuestDetailPage() {
@@ -35,6 +40,10 @@ export default function QuestDetailPage() {
     () => getQuestById(params.id),
     [getQuestById, params.id]
   );
+  const questOps = useProjectOps(quest?.projectId, {
+    objectType: "quest",
+    objectId: params.id,
+  });
 
   if (!quest) {
     return (
@@ -48,6 +57,7 @@ export default function QuestDetailPage() {
   }
 
   const project = projects.find((p) => p.id === quest.projectId);
+  const lifecycleState = deriveLifecycleState(quest.status, "draft");
   const campaign = campaigns.find((c) => c.id === quest.campaignId);
   const relatedRewards = rewards.filter((reward) => reward.projectId === quest.projectId);
   const relatedSubmissions = submissions.filter((submission) => submission.questId === quest.id);
@@ -91,6 +101,26 @@ export default function QuestDetailPage() {
       complete: pendingSubmissions.length === 0,
     },
   ];
+  const overrideActions = [
+    {
+      label: "Pause quest",
+      description:
+        "Stop routing fresh completions into this quest while you stabilize the action or proof logic.",
+      objectType: "quest" as const,
+      objectId: quest.id,
+      overrideType: "pause" as const,
+      reason: "Quest paused from detail workspace.",
+    },
+    {
+      label: "Retry verification",
+      description:
+        "Queue a manual retry when the next move is re-running verification or proof recovery.",
+      objectType: "quest" as const,
+      objectId: quest.id,
+      overrideType: "manual_retry" as const,
+      reason: "Manual verification retry queued from quest detail.",
+    },
+  ];
 
   return (
     <AdminShell>
@@ -105,7 +135,7 @@ export default function QuestDetailPage() {
               <DetailBadge>{campaign?.title || "Unknown Campaign"}</DetailBadge>
               <DetailBadge>{quest.questType}</DetailBadge>
               <DetailBadge>{quest.verificationType}</DetailBadge>
-              <DetailBadge tone={quest.status === "active" ? "primary" : "default"}>{quest.status}</DetailBadge>
+              <LifecycleStatusPill state={lifecycleState} fallback="draft" />
             </>
           }
           actions={
@@ -235,6 +265,48 @@ export default function QuestDetailPage() {
                 </div>
               </DetailSurface>
             </div>
+
+            <DetailSurface
+              eyebrow="Platform Core"
+              title="Lifecycle, incidents and overrides"
+              description="This operator rail keeps quest verification issues and manual pause or retry controls attached directly to the quest."
+            >
+              <div className="mt-5 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+                <div className="space-y-4">
+                  <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                          Lifecycle posture
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-sub">
+                          Quest state is explicit so the team can tell when this mission is live,
+                          paused or already in a recovery posture.
+                        </p>
+                      </div>
+                      <LifecycleStatusPill state={lifecycleState} fallback="draft" />
+                    </div>
+                  </div>
+
+                  <OpsIncidentPanel
+                    incidents={questOps.openIncidents}
+                    emptyTitle="No quest incidents"
+                    emptyDescription="No verification, provider or runtime incidents are currently open for this quest."
+                    workingIncidentId={questOps.workingIncidentId}
+                    onUpdateStatus={questOps.updateIncidentStatus}
+                  />
+                </div>
+
+                <OpsOverridePanel
+                  overrides={questOps.activeOverrides}
+                  quickActions={overrideActions}
+                  creatingOverride={questOps.creatingOverride}
+                  workingOverrideId={questOps.workingOverrideId}
+                  onCreateOverride={questOps.createOverride}
+                  onResolveOverride={questOps.resolveOverride}
+                />
+              </div>
+            </DetailSurface>
           </>
         ) : null}
 
@@ -341,6 +413,31 @@ export default function QuestDetailPage() {
                   <DetailMetaRow label="Action URL" value={quest.actionUrl || "-"} />
                   <DetailMetaRow label="Submissions" value={relatedSubmissions.length} />
                   <DetailMetaRow label="Pending Reviews" value={pendingSubmissions.length} />
+                </div>
+              </DetailSidebarSurface>
+
+              <DetailSidebarSurface title="Operator History">
+                <div className="mt-4 space-y-3">
+                  {questOps.audits.slice(0, 4).map((audit) => (
+                    <div key={audit.id} className="rounded-2xl border border-line bg-card2 px-4 py-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                        {audit.action_type.replace(/_/g, " ")}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-text">
+                        {new Date(audit.created_at).toLocaleString()}
+                      </p>
+                      <p className="mt-2 text-sm text-sub">
+                        {typeof audit.metadata.summary === "string"
+                          ? audit.metadata.summary
+                          : `${audit.object_type} · ${audit.object_id}`}
+                      </p>
+                    </div>
+                  ))}
+                  {questOps.audits.length === 0 ? (
+                    <p className="text-sm text-sub">
+                      No platform audit entries are logged for this quest yet.
+                    </p>
+                  ) : null}
                 </div>
               </DetailSidebarSurface>
             </div>

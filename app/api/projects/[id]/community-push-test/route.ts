@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
-  assertProjectCommunityAccess,
+  assertProjectAccess,
   createProjectCommunityAccessErrorResponse,
 } from "@/lib/community/project-community-auth";
+import {
+  createProjectOperationAudit,
+  createProjectOperationIncident,
+} from "@/lib/platform/core-ops";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -107,7 +111,7 @@ export async function POST(
       return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
     }
 
-    await assertProjectCommunityAccess(projectId);
+    const access = await assertProjectAccess(projectId);
     const supabase = getServiceSupabaseClient();
     const { data: project, error: projectError } = await supabase
       .from("projects")
@@ -168,9 +172,22 @@ export async function POST(
       }
 
       const result = await sendCommunityPush("discord", {
+        projectId: projectId.trim(),
+        objectType: "provider_sync",
+        objectId: targetThreadId || targetChannelId,
         ...payloadBase,
         targetChannelId,
         targetThreadId: targetThreadId || undefined,
+      });
+
+      await createProjectOperationAudit({
+        projectId: projectId.trim(),
+        objectType: "provider_sync",
+        objectId: targetThreadId || targetChannelId,
+        actionType: "tested",
+        actorAuthUserId: access.authUserId,
+        actorRole: access.membershipRole,
+        metadata: { provider: "discord", result },
       });
 
       return NextResponse.json({
@@ -202,9 +219,22 @@ export async function POST(
     }
 
     const result = await sendCommunityPush("telegram", {
+      projectId: projectId.trim(),
+      objectType: "provider_sync",
+      objectId: targetChatId,
       ...payloadBase,
       targetChatId,
       fallbackImageUrl: imageUrl,
+    });
+
+    await createProjectOperationAudit({
+      projectId: projectId.trim(),
+      objectType: "provider_sync",
+      objectId: targetChatId,
+      actionType: "tested",
+      actorAuthUserId: access.authUserId,
+      actorRole: access.membershipRole,
+      metadata: { provider: "telegram", result },
     });
 
     return NextResponse.json({
@@ -214,6 +244,22 @@ export async function POST(
       result,
     });
   } catch (error) {
+    const params = await context.params.catch(() => ({ id: "" }));
+    if (params.id?.trim()) {
+      try {
+        await createProjectOperationIncident({
+          projectId: params.id.trim(),
+          objectType: "provider_sync",
+          objectId: "community-push-test",
+          sourceType: "manual_test",
+          severity: "warning",
+          title: "Community push test failed",
+          summary: error instanceof Error ? error.message : "Community push test delivery failed.",
+        });
+      } catch {
+        // ignore secondary incident logging failure
+      }
+    }
     return createProjectCommunityAccessErrorResponse(
       error,
       "Community push test delivery failed."

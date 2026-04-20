@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
-  assertProjectCommunityAccess,
+  assertProjectAccess,
   createProjectCommunityAccessErrorResponse,
 } from "@/lib/community/project-community-auth";
+import { createProjectOperationAudit } from "@/lib/platform/core-ops";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -211,7 +212,7 @@ export async function GET(
       return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
     }
 
-    await assertProjectCommunityAccess(projectId);
+    await assertProjectAccess(projectId);
     const supabase = getServiceSupabaseClient();
     const { data: integrations, error: integrationError } = await supabase
       .from("project_integrations")
@@ -363,7 +364,7 @@ export async function POST(
       return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
     }
 
-    await assertProjectCommunityAccess(projectId);
+    const access = await assertProjectAccess(projectId);
     const supabase = getServiceSupabaseClient();
     const { data: integrations, error: integrationError } = await supabase
       .from("project_integrations")
@@ -561,6 +562,22 @@ export async function POST(
         return NextResponse.json({ ok: false, error: telegramSaveError.message }, { status: 500 });
       }
     }
+
+    await createProjectOperationAudit({
+      projectId,
+      objectType: "automation",
+      objectId: primaryIntegration?.id ?? projectId,
+      actionType: "updated",
+      actorAuthUserId: access.authUserId,
+      actorRole: access.membershipRole,
+      metadata: {
+        commandsEnabled: rawSettings.commandsEnabled !== false,
+        telegramCommandsEnabled: rawSettings.telegramCommandsEnabled === true,
+        rankSyncEnabled: rawSettings.rankSyncEnabled === true,
+        leaderboardEnabled: rawSettings.leaderboardEnabled !== false,
+        raidOpsEnabled: rawSettings.raidOpsEnabled === true,
+      },
+    });
 
     return NextResponse.json({
       ok: true,
