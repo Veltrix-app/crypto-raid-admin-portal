@@ -4,15 +4,22 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
 import ProjectForm from "@/components/forms/project/ProjectForm";
+import ProjectOverviewQuickActions from "@/components/projects/ProjectOverviewQuickActions";
+import ProjectOverviewQueues from "@/components/projects/ProjectOverviewQueues";
+import ProjectOverviewSummary from "@/components/projects/ProjectOverviewSummary";
 import {
   DetailBadge,
-  DetailHero,
   DetailMetaRow,
   DetailMetricCard,
   DetailSidebarSurface,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
+import {
+  buildProjectOverviewStats,
+  buildProjectWorkspaceHealthPills,
+} from "@/lib/projects/workspace-selectors";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -936,6 +943,81 @@ export default function ProjectDetailPage() {
     relatedCampaigns.length === 0 ||
     relatedQuests.length === 0 ||
     relatedTeamMembers.length <= 1;
+  const operatorIncidentCount =
+    operatorSignals.callbackFailures + operatorSignals.onchainFailures;
+  const connectedSystemCount = [
+    discordIntegrationStatus,
+    telegramIntegrationStatus,
+    xIntegrationStatus,
+  ].filter((status) => status === "connected").length;
+  const workspaceHealthPills = buildProjectWorkspaceHealthPills({
+    project,
+    campaignCount: relatedCampaigns.length,
+    questCount: relatedQuests.length,
+    rewardCount: relatedRewards.length,
+    operatorIncidentCount,
+  });
+  const overviewMetrics = buildProjectOverviewStats({
+    campaignCount: relatedCampaigns.length,
+    questCount: relatedQuests.length,
+    rewardCount: relatedRewards.length,
+    memberCount: project.members,
+    connectedLinks,
+    templateContextCount,
+  });
+  const overviewSignals = [
+    {
+      label: "Launchpad",
+      value: `${completedLaunchpadSteps}/4 ready`,
+      description: showLaunchpad
+        ? "The workspace still has setup pressure before it feels fully launch-ready."
+        : "The launchpad is in a healthy place for this project.",
+      href: "#project-launchpad",
+      tone: showLaunchpad ? ("warning" as const) : ("success" as const),
+    },
+    {
+      label: "Connected systems",
+      value: `${connectedSystemCount}/3 live`,
+      description:
+        "Discord, Telegram and X integrations power verification, pushes and community automation.",
+      href: `/projects/${project.id}/community`,
+      tone: connectedSystemCount >= 2 ? ("success" as const) : ("warning" as const),
+    },
+    {
+      label: "Operator incidents",
+      value: operatorIncidentCount > 0 ? `${operatorIncidentCount} open` : "No open incidents",
+      description:
+        "Callback and on-chain failures are tracked here so the project never drifts into a silent broken state.",
+      href: `/projects/${project.id}/community`,
+      tone: operatorIncidentCount > 0 ? ("warning" as const) : ("success" as const),
+    },
+  ];
+  const overviewQuickActions = [
+    {
+      label: "Open Community OS",
+      description:
+        "Run commands, ranks, captains, playbooks and delivery rails from the project community workspace.",
+      href: `/projects/${project.id}/community`,
+    },
+    {
+      label: "Campaign board",
+      description:
+        "Open the campaign layer to manage activation work without digging through setup details.",
+      href: "/campaigns",
+    },
+    {
+      label: "Claims queue",
+      description:
+        "Check reward fulfillment pressure and payout incidents tied to this workspace.",
+      href: "/claims",
+    },
+    {
+      label: "Team settings",
+      description:
+        "Invite collaborators and reviewers so the workspace does not bottleneck on one operator.",
+      href: "/settings/team",
+    },
+  ];
 
   async function saveProjectIntegration(provider: "discord" | "telegram") {
     if (!project?.id) return;
@@ -1429,63 +1511,35 @@ export default function ProjectDetailPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
-        <DetailHero
-          eyebrow="Project Detail"
-          title={`${project.logo} ${project.name}`}
-          description={project.longDescription || project.description}
-          badges={
-            <>
-              <DetailBadge>{project.chain}</DetailBadge>
-              {project.category ? <DetailBadge>{project.category}</DetailBadge> : null}
-              <DetailBadge tone={project.status === "active" ? "primary" : "default"}>
-                {project.status}
-              </DetailBadge>
-              <DetailBadge tone={project.onboardingStatus === "approved" ? "primary" : "warning"}>
-                {project.onboardingStatus}
-              </DetailBadge>
-              {project.isFeatured ? <DetailBadge tone="warning">Featured</DetailBadge> : null}
-              <DetailBadge>{project.isPublic ? "Public" : "Private"}</DetailBadge>
-            </>
-          }
-          actions={
-            <>
-              <Link
-                href={`/projects/${project.id}/community`}
-                className="rounded-[18px] border border-primary/30 bg-primary/10 px-4 py-3 font-bold text-primary transition hover:bg-primary/15"
-              >
-                Open Community OS
-              </Link>
-              <button
-                onClick={async () => {
-                  await deleteProject(project.id);
-                  router.push("/projects");
-                }}
-                className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
-              >
-                Delete Project
-              </button>
-            </>
-          }
-          metrics={
-            <>
-              <DetailMetricCard label="Chain" value={project.chain} hint="Primary ecosystem for this workspace." />
-              <DetailMetricCard label="Members" value={project.members.toLocaleString()} hint="Community size currently visible on the public surface." />
-              <DetailMetricCard label="Campaigns" value={relatedCampaigns.length} hint="Active campaign spaces inside this workspace." />
-              <DetailMetricCard label="Onboarding" value={project.onboardingStatus} hint="Current approval posture for this workspace." />
-              <DetailMetricCard label="Template Context" value={templateContextCount} hint="Advanced autofill fields currently attached." />
-            </>
-          }
-        />
+      <ProjectWorkspaceFrame
+        projectId={project.id}
+        projectName={project.name}
+        projectChain={project.chain}
+        healthPills={workspaceHealthPills}
+      >
+        <div className="space-y-6">
+          <ProjectOverviewSummary
+            title={`${project.logo} ${project.name}`}
+            description={
+              project.longDescription ||
+              project.description ||
+              "This overview keeps the top of the workspace focused on posture, pressure and next actions."
+            }
+            metrics={overviewMetrics}
+          />
 
-        {showLaunchpad ? (
-          <DetailSurface
-            eyebrow="Workspace Launchpad"
-            title={`Give ${project.name} a strong first setup`}
-            description="This checklist keeps a newly approved project moving from onboarding into a campaign-ready workspace."
-            aside={<DetailMetricCard label="Progress" value={`${completedLaunchpadSteps}/4`} />}
-          >
-            <div className="mt-6 grid gap-4 xl:grid-cols-2">
+          <ProjectOverviewQueues signals={overviewSignals} />
+
+          <ProjectOverviewQuickActions actions={overviewQuickActions} />
+
+          {showLaunchpad ? (
+            <DetailSurface
+              eyebrow="Workspace Launchpad"
+              title={`Give ${project.name} a strong first setup`}
+              description="This checklist keeps a newly approved project moving from onboarding into a campaign-ready workspace."
+              aside={<DetailMetricCard label="Progress" value={`${completedLaunchpadSteps}/4`} />}
+            >
+              <div id="project-launchpad" className="mt-6 grid gap-4 xl:grid-cols-2">
               {launchpadSteps.map((step) => (
                 <Link
                   key={step.title}
@@ -1514,9 +1568,9 @@ export default function ProjectDetailPage() {
                   </div>
                 </Link>
               ))}
-            </div>
-          </DetailSurface>
-        ) : null}
+              </div>
+            </DetailSurface>
+          ) : null}
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
           <DetailSurface
@@ -3170,7 +3224,8 @@ export default function ProjectDetailPage() {
             </DetailSidebarSurface>
           </div>
         </div>
-      </div>
+        </div>
+      </ProjectWorkspaceFrame>
     </AdminShell>
   );
 }

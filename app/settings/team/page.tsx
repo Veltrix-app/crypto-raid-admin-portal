@@ -1,46 +1,53 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  OpsMetricCard,
+  OpsPanel,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import WorkspaceSettingsFrame from "@/components/layout/shell/WorkspaceSettingsFrame";
 import { InlineEmptyNotice } from "@/components/layout/state/StatePrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { AdminTeamMember } from "@/types/entities/team-member";
 
-const ROLE_OPTIONS: AdminTeamMember["role"][] = [
-  "reviewer",
-  "analyst",
-  "admin",
-  "owner",
-];
-
+const ROLE_OPTIONS: AdminTeamMember["role"][] = ["reviewer", "analyst", "admin", "owner"];
 const STATUS_OPTIONS: AdminTeamMember["status"][] = ["invited", "active"];
 
 export default function SettingsTeamPage() {
+  const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
+  const memberships = useAdminAuthStore((s) => s.memberships);
+  const portalRole = useAdminAuthStore((s) => s.role);
+  const projects = useAdminPortalStore((s) => s.projects);
   const teamMembers = useAdminPortalStore((s) => s.teamMembers);
   const inviteTeamMember = useAdminPortalStore((s) => s.inviteTeamMember);
   const updateTeamMember = useAdminPortalStore((s) => s.updateTeamMember);
-  const activeMembership = useAdminAuthStore((s) =>
-    s.memberships.find((item) => item.projectId === s.activeProjectId)
-  );
-  const portalRole = useAdminAuthStore((s) => s.role);
+
+  const activeMembership = memberships.find((item) => item.projectId === activeProjectId);
+  const activeProject = projects.find((project) => project.id === activeProjectId);
+  const workspaceTeam = teamMembers.filter((member) => member.projectId === activeProjectId);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<AdminTeamMember["role"]>("reviewer");
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const canManageTeam = portalRole === "super_admin" || activeMembership?.role === "owner" || activeMembership?.role === "admin";
+  const canManageTeam =
+    portalRole === "super_admin" ||
+    activeMembership?.role === "owner" ||
+    activeMembership?.role === "admin";
   const canAssignOwner = portalRole === "super_admin" || activeMembership?.role === "owner";
-  const pendingInvites = teamMembers.filter((member) => member.status === "invited");
-  const activeMembers = teamMembers.filter((member) => member.status === "active");
+  const pendingInvites = workspaceTeam.filter((member) => member.status === "invited");
+  const activeMembers = workspaceTeam.filter((member) => member.status === "active");
   const roleBreakdown = useMemo(
     () =>
       ROLE_OPTIONS.map((itemRole) => ({
         role: itemRole,
-        count: teamMembers.filter((member) => member.role === itemRole).length,
+        count: workspaceTeam.filter((member) => member.role === itemRole).length,
       })),
-    [teamMembers]
+    [workspaceTeam]
   );
 
   async function handleMemberUpdate(
@@ -57,48 +64,47 @@ export default function SettingsTeamPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Team Management
-            </p>
-            <h1 className="mt-2 text-3xl font-extrabold text-text">Team</h1>
-            <p className="mt-2 text-sm text-sub">
-              Managing workspace access for {activeMembership?.projectName || "this project"}.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-card px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-              Your access
-            </p>
-            <p className="mt-2 text-lg font-extrabold capitalize text-text">
-              {portalRole === "super_admin" ? "super admin" : activeMembership?.role || "viewer"}
-            </p>
-          </div>
-        </div>
-
+      <WorkspaceSettingsFrame
+        title="Team"
+        description="Structure operators, reviewers and owners with a cleaner access model instead of one mixed member dump."
+        workspaceName={activeMembership?.projectName || activeProject?.name || "Workspace"}
+        healthPills={[
+          {
+            label: portalRole === "super_admin" ? "Super admin" : activeMembership?.role || "Viewer",
+            tone: portalRole === "super_admin" ? "success" : "default",
+          },
+          {
+            label: `${workspaceTeam.length} operators`,
+            tone: workspaceTeam.length > 1 ? "success" : "warning",
+          },
+          {
+            label: `${pendingInvites.length} invites`,
+            tone: pendingInvites.length > 0 ? "warning" : "default",
+          },
+        ]}
+      >
         <div className="grid gap-4 md:grid-cols-4">
-          <MetricCard label="Active Members" value={activeMembers.length} />
-          <MetricCard label="Pending Invites" value={pendingInvites.length} />
-          <MetricCard
-            label="Admins + Owners"
-            value={teamMembers.filter((member) => ["admin", "owner"].includes(member.role)).length}
+          <OpsMetricCard label="Active members" value={activeMembers.length} />
+          <OpsMetricCard label="Pending invites" value={pendingInvites.length} emphasis={pendingInvites.length > 0 ? "warning" : "default"} />
+          <OpsMetricCard
+            label="Admins + owners"
+            value={workspaceTeam.filter((member) => ["admin", "owner"].includes(member.role)).length}
           />
-          <MetricCard label="Review Capacity" value={teamMembers.filter((member) => member.role === "reviewer").length} />
+          <OpsMetricCard
+            label="Review capacity"
+            value={workspaceTeam.filter((member) => member.role === "reviewer").length}
+          />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Invite Team Member</h2>
-            <p className="mt-2 text-sm text-sub">
-              Bring in operators, reviewers and analysts without over-granting access.
-            </p>
-
+          <OpsPanel
+            eyebrow="Invite rail"
+            title="Invite team member"
+            description="Bring in operators, reviewers and analysts without over-granting access."
+          >
             {canManageTeam ? (
               <form
-                className="mt-5 grid gap-4 md:grid-cols-4"
+                className="grid gap-4 md:grid-cols-4"
                 onSubmit={async (e) => {
                   e.preventDefault();
                   await inviteTeamMember({
@@ -116,7 +122,7 @@ export default function SettingsTeamPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Name"
-                  className="rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                  className="rounded-[20px] border border-line bg-card2 px-4 py-3 outline-none transition focus:border-primary/40"
                   required
                 />
                 <input
@@ -124,39 +130,39 @@ export default function SettingsTeamPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
-                  className="rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                  className="rounded-[20px] border border-line bg-card2 px-4 py-3 outline-none transition focus:border-primary/40"
                   required
                 />
                 <select
                   value={role}
-                  onChange={(e) =>
-                    setRole(e.target.value as AdminTeamMember["role"])
-                  }
-                  className="rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                  onChange={(e) => setRole(e.target.value as AdminTeamMember["role"])}
+                  className="rounded-[20px] border border-line bg-card2 px-4 py-3 outline-none transition focus:border-primary/40"
                 >
-                  {ROLE_OPTIONS.filter((option) => canAssignOwner || option !== "owner").map(
-                    (option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    )
-                  )}
+                  {ROLE_OPTIONS.filter((option) => canAssignOwner || option !== "owner").map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
                 </select>
-                <button className="rounded-2xl bg-primary px-4 py-3 font-bold text-black">
+                <button className="rounded-[20px] bg-primary px-4 py-3 font-bold text-black">
                   Invite
                 </button>
               </form>
             ) : (
-              <div className="mt-5 rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-200">
+              <div className="rounded-[22px] border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-200">
                 Your current role is view-only for team settings. Owners and admins can invite or
                 update members.
               </div>
             )}
-          </div>
+          </OpsPanel>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Role Guide</h2>
-            <div className="mt-5 space-y-3">
+          <OpsPanel
+            eyebrow="Permission guide"
+            title="Role ladder"
+            description="A cleaner read on which role should own which class of work."
+            tone="accent"
+          >
+            <div className="space-y-3">
               <RoleGuideCard
                 role="owner"
                 description="Full control over workspace settings, team access and high-risk operations."
@@ -174,28 +180,27 @@ export default function SettingsTeamPage() {
                 description="Read-only access for campaign, user and performance insights."
               />
             </div>
-          </div>
+          </OpsPanel>
         </div>
 
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <h2 className="text-xl font-extrabold text-text">Role Breakdown</h2>
-          <div className="mt-5 grid gap-3 md:grid-cols-4">
+        <OpsPanel
+          eyebrow="Coverage view"
+          title="Role breakdown"
+          description="See whether the workspace is skewing too heavily to one kind of operator."
+        >
+          <div className="grid gap-3 md:grid-cols-4">
             {roleBreakdown.map((item) => (
-              <div key={item.role} className="rounded-2xl border border-line bg-card2 p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                  {item.role}
-                </p>
-                <p className="mt-2 text-2xl font-extrabold capitalize text-text">
-                  {item.count}
-                </p>
+              <div key={item.role} className="rounded-[22px] border border-line bg-card2 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{item.role}</p>
+                <p className="mt-2 text-2xl font-extrabold capitalize text-text">{item.count}</p>
               </div>
             ))}
           </div>
-        </div>
+        </OpsPanel>
 
         <div className="grid gap-6 xl:grid-cols-2">
           <TeamSection
-            title="Pending Invites"
+            title="Pending invites"
             subtitle="People who have been invited but have not fully become active in this workspace yet."
             members={pendingInvites}
             canManageTeam={canManageTeam}
@@ -205,7 +210,7 @@ export default function SettingsTeamPage() {
           />
 
           <TeamSection
-            title="Active Team"
+            title="Active team"
             subtitle="Current operators inside this workspace."
             members={activeMembers}
             canManageTeam={canManageTeam}
@@ -214,17 +219,8 @@ export default function SettingsTeamPage() {
             onMemberUpdate={handleMemberUpdate}
           />
         </div>
-      </div>
+      </WorkspaceSettingsFrame>
     </AdminShell>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-3xl font-extrabold text-text">{value}</p>
-    </div>
   );
 }
 
@@ -236,9 +232,14 @@ function RoleGuideCard({
   description: string;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-card2 p-4">
-      <p className="text-sm font-bold capitalize text-text">{role}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{description}</p>
+    <div className="rounded-[22px] border border-line bg-card2 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-bold capitalize text-text">{role}</p>
+        <OpsStatusPill tone={role === "owner" ? "warning" : role === "reviewer" ? "success" : "default"}>
+          {role}
+        </OpsStatusPill>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-sub">{description}</p>
     </div>
   );
 }
@@ -264,11 +265,8 @@ function TeamSection({
   ) => Promise<void>;
 }) {
   return (
-    <div className="rounded-[28px] border border-line bg-card p-6">
-      <h2 className="text-xl font-extrabold text-text">{title}</h2>
-      <p className="mt-2 text-sm text-sub">{subtitle}</p>
-
-      <div className="mt-5 space-y-4">
+    <OpsPanel eyebrow="Team lane" title={title} description={subtitle}>
+      <div className="space-y-4">
         {members.map((member) => (
           <div key={member.id} className="rounded-[24px] border border-line bg-card2 p-5">
             <div className="flex items-center justify-between gap-4">
@@ -293,15 +291,13 @@ function TeamSection({
                         status: member.status,
                       })
                     }
-                    className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+                    className="rounded-[18px] border border-line bg-card px-4 py-3 outline-none"
                   >
-                    {ROLE_OPTIONS.filter((option) => canAssignOwner || option !== "owner").map(
-                      (option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      )
-                    )}
+                    {ROLE_OPTIONS.filter((option) => canAssignOwner || option !== "owner").map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
                   </select>
 
                   <select
@@ -313,7 +309,7 @@ function TeamSection({
                         status: e.target.value as AdminTeamMember["status"],
                       })
                     }
-                    className="rounded-2xl border border-line bg-card px-4 py-3 outline-none"
+                    className="rounded-[18px] border border-line bg-card px-4 py-3 outline-none"
                   >
                     {STATUS_OPTIONS.map((option) => (
                       <option key={option} value={option}>
@@ -339,6 +335,6 @@ function TeamSection({
           />
         ) : null}
       </div>
-    </div>
+    </OpsPanel>
   );
 }

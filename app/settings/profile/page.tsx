@@ -1,6 +1,13 @@
 "use client";
 
 import AdminShell from "@/components/layout/shell/AdminShell";
+import WorkspaceSettingsFrame from "@/components/layout/shell/WorkspaceSettingsFrame";
+import {
+  OpsMetricCard,
+  OpsPanel,
+  OpsSnapshotRow,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -61,161 +68,123 @@ export default function SettingsProfilePage() {
           : "Add launch, docs, waitlist or contract context",
       complete: templateContextCount > 0,
     },
-    {
-      label: "Operations",
-      value: `${activeCampaignCount} active campaigns | ${openFlags} open flags`,
-      complete: true,
-    },
-  ];
+  ] as const;
 
   return (
     <AdminShell>
-      <div className="space-y-6">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Workspace Profile
-            </p>
-            <h1 className="mt-2 text-3xl font-extrabold text-text">Profile</h1>
-            <p className="mt-2 text-sm text-sub">
-              Keep this workspace legible for both your internal team and the
-              public-facing campaign layer.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-card px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-              Active workspace
-            </p>
-            <p className="mt-2 text-lg font-extrabold text-text">
-              {activeMembership?.projectName || project?.name || "Workspace"}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
-          <MetricCard
-            label="Workspace Role"
-            value={role === "super_admin" ? "super admin" : activeMembership?.role || "project admin"}
-          />
-          <MetricCard label="Active Campaigns" value={String(activeCampaignCount)} />
-          <MetricCard label="Pending Invites" value={String(pendingTeamInvites)} />
-          <MetricCard label="Open Flags" value={String(openFlags)} />
-          <MetricCard label="Template Context" value={String(templateContextCount)} />
+      <WorkspaceSettingsFrame
+        title="Profile"
+        description="Shape the workspace identity that operators, community rails and public-facing launches rely on."
+        workspaceName={activeMembership?.projectName || project?.name || "Workspace"}
+        healthPills={[
+          {
+            label: role === "super_admin" ? "Super admin" : activeMembership?.role || "Project operator",
+            tone: role === "super_admin" ? "success" : "default",
+          },
+          {
+            label: project?.isPublic ? "Public profile" : "Private profile",
+            tone: project?.isPublic ? "success" : "warning",
+          },
+          {
+            label: connectedPublicLinks > 0 ? `${connectedPublicLinks} links` : "No links",
+            tone: connectedPublicLinks > 0 ? "success" : "warning",
+          },
+        ]}
+      >
+        <div className="grid gap-4 md:grid-cols-5">
+          <OpsMetricCard label="Role" value={role === "super_admin" ? "Super admin" : activeMembership?.role || "Project admin"} />
+          <OpsMetricCard label="Active campaigns" value={activeCampaignCount} />
+          <OpsMetricCard label="Pending invites" value={pendingTeamInvites} />
+          <OpsMetricCard label="Open flags" value={openFlags} emphasis={openFlags > 0 ? "warning" : "default"} />
+          <OpsMetricCard label="Template context" value={templateContextCount} emphasis={templateContextCount > 0 ? "primary" : "warning"} />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Workspace Snapshot</h2>
-            <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <Field label="Owner Email" value={email || project?.contactEmail || "Not set"} />
-              <Field label="Workspace Name" value={project?.name || "Unnamed workspace"} />
-              <Field label="Slug" value={project?.slug || "Not set"} />
-              <Field label="Environment" value="Production-ready workspace" />
-              <Field label="Chain" value={project?.chain || "Not set"} />
-              <Field label="Category" value={project?.category || "Not set"} />
+          <OpsPanel
+            eyebrow="Workspace snapshot"
+            title="Identity and context"
+            description="The naming, contact and launch context operators lean on when they work inside this workspace."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <OpsSnapshotRow label="Owner email" value={email || project?.contactEmail || "Not set"} />
+              <OpsSnapshotRow label="Workspace name" value={project?.name || "Unnamed workspace"} />
+              <OpsSnapshotRow label="Slug" value={project?.slug || "Not set"} />
+              <OpsSnapshotRow label="Chain" value={project?.chain || "Not set"} />
+              <OpsSnapshotRow label="Category" value={project?.category || "Not set"} />
+              <OpsSnapshotRow label="Visibility" value={project?.isPublic ? "Public workspace" : "Private workspace"} />
             </div>
 
-            <div className="mt-6 rounded-2xl border border-line bg-card2 p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Description
-              </p>
+            <div className="mt-5 rounded-[24px] border border-line bg-card2 p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Description</p>
               <p className="mt-3 text-sm leading-6 text-sub">
                 {project?.description ||
-                  "Add a short workspace description so project context is clear inside the portal and later across public surfaces."}
+                  "Add a short workspace description so project context is clear across the portal and the public-facing rails."}
               </p>
             </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <Field label="Docs URL" value={project?.docsUrl || "Not set"} />
-              <Field label="Waitlist URL" value={project?.waitlistUrl || "Not set"} />
-              <Field label="Launch Post URL" value={project?.launchPostUrl || "Not set"} />
-              <Field label="Primary Wallet" value={project?.primaryWallet || "Not set"} />
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <OpsSnapshotRow label="Docs URL" value={project?.docsUrl || "Not set"} />
+              <OpsSnapshotRow label="Waitlist URL" value={project?.waitlistUrl || "Not set"} />
+              <OpsSnapshotRow label="Launch post URL" value={project?.launchPostUrl || "Not set"} />
+              <OpsSnapshotRow label="Primary wallet" value={project?.primaryWallet || "Not set"} />
             </div>
-          </div>
+          </OpsPanel>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Profile Readiness</h2>
-            <div className="mt-5 space-y-3">
+          <OpsPanel
+            eyebrow="Readiness rail"
+            title="Profile readiness"
+            description="The highest-signal checks for whether this workspace identity is ready to support campaigns and community surfaces."
+            tone="accent"
+          >
+            <div className="space-y-3">
               {profileReadiness.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
+                <div key={item.label} className="rounded-[22px] border border-line bg-card2 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                        item.complete
-                          ? "bg-primary/15 text-primary"
-                          : "bg-amber-500/15 text-amber-300"
-                      }`}
-                    >
+                    <OpsStatusPill tone={item.complete ? "success" : "warning"}>
                       {item.complete ? "Ready" : "Needs attention"}
-                    </span>
+                    </OpsStatusPill>
                   </div>
                   <p className="mt-3 text-sm text-sub">{item.value}</p>
                 </div>
               ))}
             </div>
-          </div>
+          </OpsPanel>
         </div>
 
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <h2 className="text-xl font-extrabold text-text">Workspace Links</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <Field label="Website" value={project?.website || "Not connected"} />
-            <Field label="X" value={project?.xUrl || "Not connected"} />
-            <Field label="Telegram" value={project?.telegramUrl || "Not connected"} />
-            <Field label="Discord" value={project?.discordUrl || "Not connected"} />
-            <Field label="Docs" value={project?.docsUrl || "Not connected"} />
-            <Field label="Waitlist" value={project?.waitlistUrl || "Not connected"} />
-            <Field label="Launch Post" value={project?.launchPostUrl || "Not connected"} />
-            <Field label="Contact" value={project?.contactEmail || "Not connected"} />
-          </div>
-        </div>
+        <div className="grid gap-6 xl:grid-cols-2">
+          <OpsPanel
+            eyebrow="Public links"
+            title="Connected presence"
+            description="The key external surfaces that help operators and members understand where this workspace lives."
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              <OpsSnapshotRow label="Website" value={project?.website || "Not connected"} />
+              <OpsSnapshotRow label="X" value={project?.xUrl || "Not connected"} />
+              <OpsSnapshotRow label="Telegram" value={project?.telegramUrl || "Not connected"} />
+              <OpsSnapshotRow label="Discord" value={project?.discordUrl || "Not connected"} />
+              <OpsSnapshotRow label="Docs" value={project?.docsUrl || "Not connected"} />
+              <OpsSnapshotRow label="Waitlist" value={project?.waitlistUrl || "Not connected"} />
+              <OpsSnapshotRow label="Launch post" value={project?.launchPostUrl || "Not connected"} />
+              <OpsSnapshotRow label="Contact" value={project?.contactEmail || "Not connected"} />
+            </div>
+          </OpsPanel>
 
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <h2 className="text-xl font-extrabold text-text">Template Context</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <Field
-              label="Token Contract"
-              value={project?.tokenContractAddress || "Not set"}
-            />
-            <Field
-              label="NFT Contract"
-              value={project?.nftContractAddress || "Not set"}
-            />
-            <Field
-              label="Primary Wallet"
-              value={project?.primaryWallet || "Not set"}
-            />
-            <Field
-              label="Brand Accent"
-              value={project?.brandAccent || "Not set"}
-            />
-            <Field
-              label="Brand Mood"
-              value={project?.brandMood || "Not set"}
-            />
-          </div>
+          <OpsPanel
+            eyebrow="Template context"
+            title="Advanced launch context"
+            description="These fields enrich automations, prompts and operator workflows with stronger project context."
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              <OpsSnapshotRow label="Token contract" value={project?.tokenContractAddress || "Not set"} />
+              <OpsSnapshotRow label="NFT contract" value={project?.nftContractAddress || "Not set"} />
+              <OpsSnapshotRow label="Primary wallet" value={project?.primaryWallet || "Not set"} />
+              <OpsSnapshotRow label="Brand accent" value={project?.brandAccent || "Not set"} />
+              <OpsSnapshotRow label="Brand mood" value={project?.brandMood || "Not set"} />
+            </div>
+          </OpsPanel>
         </div>
-      </div>
+      </WorkspaceSettingsFrame>
     </AdminShell>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold capitalize text-text">{value}</p>
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-card2 px-4 py-4">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 break-all font-bold capitalize text-text">{value}</p>
-    </div>
   );
 }

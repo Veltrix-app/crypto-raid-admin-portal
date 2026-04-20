@@ -1,16 +1,24 @@
 "use client";
 
+import {
+  OpsMetricCard,
+  OpsPanel,
+  OpsSnapshotRow,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
+import WorkspaceSettingsFrame from "@/components/layout/shell/WorkspaceSettingsFrame";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function SettingsBillingPage() {
-  const { activeProjectId, role } = useAdminAuthStore();
+  const { activeProjectId, role, memberships } = useAdminAuthStore();
   const billingPlans = useAdminPortalStore((s) => s.billingPlans);
   const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const rewards = useAdminPortalStore((s) => s.rewards);
 
+  const activeMembership = memberships.find((item) => item.projectId === activeProjectId);
   const activeProject = projects.find((item) => item.id === activeProjectId);
   const currentPlan = billingPlans.find((item) => item.current) ?? billingPlans[0];
   const activeProjects = projects.filter((item) => item.status === "active").length;
@@ -34,48 +42,52 @@ export default function SettingsBillingPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
-              Workspace Billing
-            </p>
-            <h1 className="mt-2 text-3xl font-extrabold text-text">Billing</h1>
-            <p className="mt-2 max-w-3xl text-sm text-sub">
-              Track plan capacity, campaign usage and how much room this workspace still has before
-              it needs a higher-tier operating setup.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-card px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Workspace</p>
-            <p className="mt-2 text-lg font-extrabold text-text">
-              {activeProject?.name || "Active workspace"}
-            </p>
-          </div>
-        </div>
-
+      <WorkspaceSettingsFrame
+        title="Billing"
+        description="Track plan posture, usage pressure and how much headroom this workspace still has before growth starts to squeeze operations."
+        workspaceName={activeMembership?.projectName || activeProject?.name || "Workspace"}
+        healthPills={[
+          {
+            label: currentPlan?.name || "No plan",
+            tone: currentPlan ? "default" : "warning",
+          },
+          {
+            label: billingPressure,
+            tone:
+              billingPressure === "Upgrade recommended"
+                ? "warning"
+                : billingPressure === "Healthy but growing"
+                  ? "default"
+                  : "success",
+          },
+          {
+            label: role === "super_admin" ? "Portfolio view" : "Workspace view",
+            tone: role === "super_admin" ? "success" : "default",
+          },
+        ]}
+      >
         <div className="grid gap-4 md:grid-cols-4">
-          <MetricCard label="Current Plan" value={currentPlan?.name || "No plan"} />
-          <MetricCard
-            label="Projects Used"
-            value={projectLimit > 0 ? `${activeProjects} / ${projectLimit}` : String(activeProjects)}
+          <OpsMetricCard label="Current plan" value={currentPlan?.name || "No plan"} />
+          <OpsMetricCard
+            label="Projects used"
+            value={projectLimit > 0 ? `${activeProjects} / ${projectLimit}` : activeProjects}
+            emphasis={projectUtilization >= 85 ? "warning" : "default"}
           />
-          <MetricCard
-            label="Campaign Capacity"
-            value={
-              campaignLimit > 0
-                ? `${activeCampaignCount} / ${campaignLimit}`
-                : String(activeCampaignCount)
-            }
+          <OpsMetricCard
+            label="Campaign capacity"
+            value={campaignLimit > 0 ? `${activeCampaignCount} / ${campaignLimit}` : activeCampaignCount}
+            emphasis={campaignUtilization >= 85 ? "warning" : campaignUtilization >= 60 ? "primary" : "default"}
           />
-          <MetricCard label="Billing Pressure" value={billingPressure} />
+          <OpsMetricCard label="Reward inventory" value={liveRewards} />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Usage Overview</h2>
-            <div className="mt-5 space-y-4">
+          <OpsPanel
+            eyebrow="Usage overview"
+            title="Capacity posture"
+            description="See where workspace growth is starting to push into plan limits or operational support load."
+          >
+            <div className="space-y-4">
               <UsageRow
                 label="Portfolio projects"
                 value={`${activeProjects}${projectLimit > 0 ? ` / ${projectLimit}` : ""}`}
@@ -92,79 +104,99 @@ export default function SettingsBillingPage() {
                 label="Reward inventory"
                 value={String(liveRewards)}
                 percentage={Math.min(100, liveRewards * 10)}
-                hint="Reward operations are not limit-gated yet, but they increase support load."
+                hint="Reward operations are not limit-gated yet, but they still increase support load."
               />
             </div>
+          </OpsPanel>
 
-            <div className="mt-6 rounded-2xl border border-line bg-card2 p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Workspace Billing Posture
-              </p>
-              <p className="mt-3 text-sm leading-6 text-sub">
-                {role === "super_admin"
-                  ? "Use this view to gauge which projects are approaching plan pressure before onboarding volume increases further."
-                  : "Use this view to judge whether your current plan still fits the amount of campaigns and operations this workspace is starting to handle."}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Plan Ladder</h2>
-            <div className="mt-5 space-y-3">
-              {billingPlans.map((plan) => {
-                const isCurrent = plan.id === currentPlan?.id;
-
-                return (
-                  <div
-                    key={plan.id}
-                    className={`rounded-2xl border p-4 ${
-                      isCurrent ? "border-primary bg-primary/10" : "border-line bg-card2"
-                    }`}
+          <OpsPanel
+            eyebrow="Posture summary"
+            title="Billing pressure"
+            description="A quick operator read on whether the current plan still fits the shape of the workspace."
+            tone="accent"
+          >
+            <div className="space-y-3">
+              <div className="rounded-[22px] border border-line bg-card2 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold text-text">Plan signal</p>
+                  <OpsStatusPill
+                    tone={
+                      billingPressure === "Upgrade recommended"
+                        ? "warning"
+                        : billingPressure === "Healthy but growing"
+                          ? "default"
+                          : "success"
+                    }
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-lg font-extrabold text-text">{plan.name}</p>
-                        <p className="mt-1 text-sm text-sub">
-                          EUR {plan.priceMonthly}/month | {plan.projectsLimit} projects |{" "}
-                          {plan.campaignsLimit} campaigns
-                        </p>
-                      </div>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                          isCurrent ? "bg-primary text-background" : "bg-card text-sub"
-                        }`}
-                      >
-                        {isCurrent ? "Current" : "Available"}
-                      </span>
-                    </div>
+                    {billingPressure}
+                  </OpsStatusPill>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-sub">
+                  {role === "super_admin"
+                    ? "Use this view to gauge which projects are approaching plan pressure before onboarding volume increases further."
+                    : "Use this view to judge whether your current plan still fits the amount of campaigns and operations this workspace is starting to handle."}
+                </p>
+              </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {plan.features.map((feature) => (
-                        <span
-                          key={feature}
-                          className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-sub"
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+              <OpsSnapshotRow label="Current plan" value={currentPlan?.name || "No plan"} />
+              <OpsSnapshotRow
+                label="Project capacity"
+                value={projectLimit > 0 ? `${activeProjects} of ${projectLimit} used` : `${activeProjects} used`}
+              />
+              <OpsSnapshotRow
+                label="Campaign capacity"
+                value={campaignLimit > 0 ? `${activeCampaignCount} of ${campaignLimit} used` : `${activeCampaignCount} used`}
+              />
             </div>
-          </div>
+          </OpsPanel>
         </div>
-      </div>
-    </AdminShell>
-  );
-}
 
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold text-text">{value}</p>
-    </div>
+        <OpsPanel
+          eyebrow="Plan ladder"
+          title="Available tiers"
+          description="The current plan plus the next levels the workspace can grow into."
+        >
+          <div className="space-y-3">
+            {billingPlans.map((plan) => {
+              const isCurrent = plan.id === currentPlan?.id;
+
+              return (
+                <div
+                  key={plan.id}
+                  className={`rounded-[22px] border p-4 ${
+                    isCurrent ? "border-primary bg-primary/10" : "border-line bg-card2"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-lg font-extrabold text-text">{plan.name}</p>
+                      <p className="mt-1 text-sm text-sub">
+                        EUR {plan.priceMonthly}/month | {plan.projectsLimit} projects |{" "}
+                        {plan.campaignsLimit} campaigns
+                      </p>
+                    </div>
+                    <OpsStatusPill tone={isCurrent ? "success" : "default"}>
+                      {isCurrent ? "Current" : "Available"}
+                    </OpsStatusPill>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {plan.features.map((feature) => (
+                      <span
+                        key={feature}
+                        className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-sub"
+                      >
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </OpsPanel>
+      </WorkspaceSettingsFrame>
+    </AdminShell>
   );
 }
 
@@ -180,7 +212,7 @@ function UsageRow({
   hint: string;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-card2 p-4">
+    <div className="rounded-[22px] border border-line bg-card2 p-4">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-bold text-text">{label}</p>

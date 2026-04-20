@@ -2,12 +2,18 @@
 
 import Link from "next/link";
 import AdminShell from "@/components/layout/shell/AdminShell";
-import { OpsHero, OpsPanel, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import WorkspaceSettingsFrame from "@/components/layout/shell/WorkspaceSettingsFrame";
+import {
+  OpsMetricCard,
+  OpsPanel,
+  OpsSnapshotRow,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function SettingsPage() {
-  const { activeProjectId, memberships } = useAdminAuthStore();
+  const { activeProjectId, memberships, role } = useAdminAuthStore();
   const projects = useAdminPortalStore((s) => s.projects);
   const teamMembers = useAdminPortalStore((s) => s.teamMembers);
   const billingPlans = useAdminPortalStore((s) => s.billingPlans);
@@ -23,66 +29,89 @@ export default function SettingsPage() {
       title: "Profile",
       description: "Workspace profile, links, branding and public readiness.",
       metric: activeProject?.isPublic ? "Public profile live" : "Private workspace",
+      tone: activeProject?.isPublic ? "success" : "warning",
     },
     {
       href: "/settings/team",
       title: "Team",
       description: "Invite operators, reviewers and admins into the workspace.",
       metric: `${workspaceTeam.length} team members`,
+      tone: workspaceTeam.length > 1 ? "success" : "warning",
     },
     {
       href: "/settings/billing",
       title: "Billing",
       description: "Plan posture, usage limits and capacity planning.",
       metric: currentPlan ? currentPlan.name : "No active plan",
+      tone: currentPlan ? "default" : "warning",
     },
-  ];
+  ] as const;
 
   return (
     <AdminShell>
-      <div className="space-y-6">
-        <OpsHero
-          eyebrow="Workspace Settings"
-          title="Settings"
-          description="Keep identity, team structure and billing posture aligned for this workspace."
-          aside={
-            <>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Active workspace</p>
-              <p className="mt-2 text-lg font-extrabold text-text">
-                {activeMembership?.projectName || activeProject?.name || "Workspace"}
-              </p>
-              <div className="mt-3">
-                <OpsStatusPill tone={activeProject?.isPublic ? "success" : "warning"}>
-                  {activeProject?.isPublic ? "Public profile live" : "Private workspace"}
-                </OpsStatusPill>
-              </div>
-            </>
-          }
-        />
-
+      <WorkspaceSettingsFrame
+        title="Settings"
+        description="One clean control rail for workspace identity, access structure and billing posture."
+        workspaceName={activeMembership?.projectName || activeProject?.name || "Workspace"}
+        healthPills={[
+          {
+            label: role === "super_admin" ? "Super admin" : activeMembership?.role || "Project operator",
+            tone: role === "super_admin" ? "success" : "default",
+          },
+          {
+            label: activeProject?.isPublic ? "Public" : "Private",
+            tone: activeProject?.isPublic ? "success" : "warning",
+          },
+          {
+            label: currentPlan?.name || "No plan",
+            tone: currentPlan ? "default" : "warning",
+          },
+        ]}
+      >
         <div className="grid gap-4 md:grid-cols-3">
-          {settingsCards.map((item) => (
-            <Link
-              key={item.title}
-              href={item.href}
-              className="rounded-[28px] border border-line bg-card p-6 transition hover:border-primary/40 hover:bg-card2"
-            >
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Workspace module</p>
-              <h2 className="mt-3 text-xl font-extrabold text-text">{item.title}</h2>
-              <p className="mt-3 text-sm leading-6 text-sub">{item.description}</p>
-              <div className="mt-5 rounded-2xl border border-line bg-card2 px-4 py-3">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Current signal</p>
-                <p className="mt-2 text-sm font-bold text-text">{item.metric}</p>
-              </div>
-            </Link>
-          ))}
+          <OpsMetricCard
+            label="Workspace profile"
+            value={activeProject?.description ? "Ready" : "Needs work"}
+            emphasis={activeProject?.description ? "primary" : "warning"}
+          />
+          <OpsMetricCard
+            label="Team operators"
+            value={workspaceTeam.length}
+            emphasis={workspaceTeam.length > 1 ? "primary" : "warning"}
+          />
+          <OpsMetricCard label="Current plan" value={currentPlan?.name || "None"} />
         </div>
+
+        <OpsPanel
+          eyebrow="Settings modules"
+          title="Choose the rail you want to tune"
+          description="Each surface now owns one clear concern, so identity, team and billing no longer blur into each other."
+        >
+          <div className="grid gap-4 md:grid-cols-3">
+            {settingsCards.map((item) => (
+              <Link
+                key={item.title}
+                href={item.href}
+                className="rounded-[24px] border border-line bg-card2 p-5 transition hover:border-primary/35 hover:-translate-y-0.5"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                    Workspace module
+                  </p>
+                  <OpsStatusPill tone={item.tone}>{item.metric}</OpsStatusPill>
+                </div>
+                <h2 className="mt-4 text-xl font-extrabold text-text">{item.title}</h2>
+                <p className="mt-3 text-sm leading-6 text-sub">{item.description}</p>
+              </Link>
+            ))}
+          </div>
+        </OpsPanel>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <OpsPanel
             eyebrow="Configuration priorities"
             title="What still deserves cleanup"
-            description="A concise read on identity, team structure and plan posture before a workspace feels truly launch-ready."
+            description="A short read on the areas that still create friction before a workspace feels truly launch-ready."
             tone="accent"
           >
             <div className="space-y-3">
@@ -117,12 +146,15 @@ export default function SettingsPage() {
             <div className="space-y-3">
               <OpsSnapshotRow label="Role" value={activeMembership?.role || "project admin"} />
               <OpsSnapshotRow label="Contact email" value={activeProject?.contactEmail || "Not set"} />
-              <OpsSnapshotRow label="Visibility" value={activeProject?.isPublic ? "Public workspace" : "Private workspace"} />
+              <OpsSnapshotRow
+                label="Visibility"
+                value={activeProject?.isPublic ? "Public workspace" : "Private workspace"}
+              />
               <OpsSnapshotRow label="Current plan" value={currentPlan?.name || "No plan"} />
             </div>
           </OpsPanel>
         </div>
-      </div>
+      </WorkspaceSettingsFrame>
     </AdminShell>
   );
 }

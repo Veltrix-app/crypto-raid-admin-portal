@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import RewardForm from "@/components/forms/reward/RewardForm";
 import {
@@ -20,6 +20,7 @@ import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 export default function RewardDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const [rewardView, setRewardView] = useState<"operate" | "configure">("operate");
 
   const getRewardById = useAdminPortalStore((s) => s.getRewardById);
   const updateReward = useAdminPortalStore((s) => s.updateReward);
@@ -112,148 +113,175 @@ export default function RewardDetailPage() {
           }
         />
 
-        <DetailSurface
-          eyebrow="Reward Logic"
-          title="Builder Summary"
-          description={rewardSummary}
-        >
-          <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-            <p className="text-sm leading-7 text-sub">
-              Use the settings below to keep scarcity, visibility and claim pressure aligned with how this reward should feel inside the contributor journey.
-            </p>
+        <div className="rounded-[28px] border border-line bg-card p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                Reward workspace
+              </p>
+              <p className="mt-2 text-sm leading-6 text-sub">
+                Operate mode keeps claim and readiness context visible. Configure mode keeps the builder and settings focused.
+              </p>
+            </div>
+            <SegmentToggle
+              value={rewardView}
+              onChange={setRewardView}
+              options={[
+                { value: "operate", label: "Operate" },
+                { value: "configure", label: "Configure" },
+              ]}
+            />
           </div>
-        </DetailSurface>
-
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <DetailSurface
-            eyebrow="Reward Readiness"
-            title="What this reward still needs"
-            description="A concise read on claim posture, visibility and operational drag before more demand routes into this reward."
-            aside={<DetailMetricCard label="Pending Claims" value={pendingClaims.length} />}
-          >
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {rewardReadinessItems.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold text-text">{item.label}</p>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                        item.complete
-                          ? "bg-primary/15 text-primary"
-                          : "bg-amber-500/15 text-amber-300"
-                      }`}
-                    >
-                      {item.complete ? "Ready" : "Needs attention"}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
-                </div>
-              ))}
-            </div>
-          </DetailSurface>
-
-          <DetailSurface
-            eyebrow="Next Actions"
-            title="Keep the reward loop healthy"
-            description="Use these routes to manage demand, connect new quest pressure and tune scarcity."
-          >
-            <div className="mt-5 space-y-3">
-              <DetailActionTile
-                href="/claims"
-                label="Review reward claims"
-                description={`${relatedClaims.length} claim${relatedClaims.length === 1 ? "" : "s"} currently route through this reward.`}
-              />
-              <DetailActionTile
-                href={relatedQuests.length > 0 ? "/quests" : "/quests/new"}
-                label={relatedQuests.length > 0 ? "Connect to active quests" : "Create a quest"}
-                description={
-                  relatedQuests.length > 0
-                    ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} exist in this project and can be used to drive reward demand.`
-                    : "Add a quest next so contributors have a clear path to unlock this reward."
-                }
-              />
-              <DetailActionTile
-                href="#edit-reward"
-                label="Tune stock and delivery"
-                description="Use the builder below to align scarcity, visibility and claim behavior with the intended campaign pressure."
-              />
-            </div>
-          </DetailSurface>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-          <DetailSurface
-            title="Edit Reward"
-            description="Update reward settings, fulfillment and visibility without leaving the detail workspace."
-          >
-            <div className="mt-6">
-              <RewardForm
-                projects={projects}
-                campaigns={campaigns}
-                defaultProjectId={reward.projectId}
-                initialValues={{
-                  projectId: reward.projectId,
-                  campaignId: reward.campaignId || "",
+        {rewardView === "operate" ? (
+          <>
+            <DetailSurface
+              eyebrow="Reward Logic"
+              title="Builder Summary"
+              description={rewardSummary}
+            >
+              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                <p className="text-sm leading-7 text-sub">
+                  Use the settings below to keep scarcity, visibility and claim pressure aligned with how this reward should feel inside the contributor journey.
+                </p>
+              </div>
+            </DetailSurface>
 
-                  title: reward.title,
-                  description: reward.description,
+            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <DetailSurface
+                eyebrow="Reward Readiness"
+                title="What this reward still needs"
+                description="A concise read on claim posture, visibility and operational drag before more demand routes into this reward."
+                aside={<DetailMetricCard label="Pending Claims" value={pendingClaims.length} />}
+              >
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  {rewardReadinessItems.map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-bold text-text">{item.label}</p>
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+                            item.complete
+                              ? "bg-primary/15 text-primary"
+                              : "bg-amber-500/15 text-amber-300"
+                          }`}
+                        >
+                          {item.complete ? "Ready" : "Needs attention"}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </DetailSurface>
 
-                  type: reward.type,
-                  rewardType: reward.rewardType,
-
-                  rarity: reward.rarity,
-
-                  cost: reward.cost,
-                  claimable: reward.claimable,
-                  visible: reward.visible,
-
-                  icon: reward.icon || "",
-                  imageUrl: reward.imageUrl || "",
-
-                  stock: reward.stock,
-                  unlimitedStock: reward.unlimitedStock,
-
-                  claimMethod: reward.claimMethod,
-                  deliveryConfig: reward.deliveryConfig || "",
-
-                  status: reward.status,
-                }}
-                submitLabel="Update Reward"
-                onSubmit={async (values) => {
-                  await updateReward(reward.id, values);
-                }}
-              />
+              <DetailSurface
+                eyebrow="Next Actions"
+                title="Keep the reward loop healthy"
+                description="Use these routes to manage demand, connect new quest pressure and tune scarcity."
+              >
+                <div className="mt-5 space-y-3">
+                  <DetailActionTile
+                    href="/claims"
+                    label="Review reward claims"
+                    description={`${relatedClaims.length} claim${relatedClaims.length === 1 ? "" : "s"} currently route through this reward.`}
+                  />
+                  <DetailActionTile
+                    href={relatedQuests.length > 0 ? "/quests" : "/quests/new"}
+                    label={relatedQuests.length > 0 ? "Connect to active quests" : "Create a quest"}
+                    description={
+                      relatedQuests.length > 0
+                        ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} exist in this project and can be used to drive reward demand.`
+                        : "Add a quest next so contributors have a clear path to unlock this reward."
+                    }
+                  />
+                  <DetailActionTile
+                    href="#edit-reward"
+                    label="Tune stock and delivery"
+                    description="Use the builder below to align scarcity, visibility and claim behavior with the intended campaign pressure."
+                  />
+                </div>
+              </DetailSurface>
             </div>
-          </DetailSurface>
+          </>
+        ) : null}
 
-          <div className="space-y-6">
-            <DetailSidebarSurface title="Reward Settings">
-              <div className="mt-4 space-y-4">
-                <DetailMetaRow label="Reward Type" value={reward.rewardType} />
-                <DetailMetaRow label="Rarity" value={reward.rarity} />
-                <DetailMetaRow label="Claim Method" value={reward.claimMethod} />
-                <DetailMetaRow label="Claimable" value={reward.claimable ? "Yes" : "No"} />
-                <DetailMetaRow label="Visible" value={reward.visible ? "Yes" : "No"} />
-                <DetailMetaRow
-                  label="Stock"
-                  value={reward.unlimitedStock ? "Unlimited" : reward.stock ?? "-"}
+        {rewardView === "configure" ? (
+          <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+            <DetailSurface
+              title="Edit Reward"
+              description="Update reward settings, fulfillment and visibility without leaving the detail workspace."
+            >
+              <div className="mt-6" id="edit-reward">
+                <RewardForm
+                  projects={projects}
+                  campaigns={campaigns}
+                  defaultProjectId={reward.projectId}
+                  initialValues={{
+                    projectId: reward.projectId,
+                    campaignId: reward.campaignId || "",
+
+                    title: reward.title,
+                    description: reward.description,
+
+                    type: reward.type,
+                    rewardType: reward.rewardType,
+
+                    rarity: reward.rarity,
+
+                    cost: reward.cost,
+                    claimable: reward.claimable,
+                    visible: reward.visible,
+
+                    icon: reward.icon || "",
+                    imageUrl: reward.imageUrl || "",
+
+                    stock: reward.stock,
+                    unlimitedStock: reward.unlimitedStock,
+
+                    claimMethod: reward.claimMethod,
+                    deliveryConfig: reward.deliveryConfig || "",
+
+                    status: reward.status,
+                  }}
+                  submitLabel="Update Reward"
+                  onSubmit={async (values) => {
+                    await updateReward(reward.id, values);
+                  }}
                 />
               </div>
-            </DetailSidebarSurface>
+            </DetailSurface>
 
-            <DetailSidebarSurface title="Assets">
-              <div className="mt-4 space-y-4">
-                <DetailMetaRow label="Icon URL" value={reward.icon || "-"} />
-                <DetailMetaRow label="Image URL" value={reward.imageUrl || "-"} />
-                <DetailMetaRow label="Claims" value={relatedClaims.length} />
-                <DetailMetaRow label="Pending Claims" value={pendingClaims.length} />
-              </div>
-            </DetailSidebarSurface>
+            <div className="space-y-6">
+              <DetailSidebarSurface title="Reward Settings">
+                <div className="mt-4 space-y-4">
+                  <DetailMetaRow label="Reward Type" value={reward.rewardType} />
+                  <DetailMetaRow label="Rarity" value={reward.rarity} />
+                  <DetailMetaRow label="Claim Method" value={reward.claimMethod} />
+                  <DetailMetaRow label="Claimable" value={reward.claimable ? "Yes" : "No"} />
+                  <DetailMetaRow label="Visible" value={reward.visible ? "Yes" : "No"} />
+                  <DetailMetaRow
+                    label="Stock"
+                    value={reward.unlimitedStock ? "Unlimited" : reward.stock ?? "-"}
+                  />
+                </div>
+              </DetailSidebarSurface>
+
+              <DetailSidebarSurface title="Assets">
+                <div className="mt-4 space-y-4">
+                  <DetailMetaRow label="Icon URL" value={reward.icon || "-"} />
+                  <DetailMetaRow label="Image URL" value={reward.imageUrl || "-"} />
+                  <DetailMetaRow label="Claims" value={relatedClaims.length} />
+                  <DetailMetaRow label="Pending Claims" value={pendingClaims.length} />
+                </div>
+              </DetailSidebarSurface>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </AdminShell>
   );

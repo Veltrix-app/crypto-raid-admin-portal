@@ -74,9 +74,11 @@ export default function AdminShell({ children }: Props) {
   return (
     <div className="flex min-h-screen bg-bg text-text">
       <AdminSidebar />
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <AdminHeader />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(186,255,59,0.04),transparent_18%),linear-gradient(180deg,rgba(7,10,15,0.72),rgba(7,10,15,0.32))]">
+          <div className="mx-auto w-full max-w-[1680px] px-6 py-6 pb-10">{children}</div>
+        </main>
       </div>
     </div>
   );

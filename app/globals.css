@@ -4,19 +4,39 @@
 
 :root {
   color-scheme: dark;
+  --portal-bg: #07090d;
+  --portal-bg-alt: #0a1119;
+  --portal-panel: #0d131d;
+  --portal-panel-alt: #111925;
+  --portal-line: rgba(255, 255, 255, 0.08);
+  --portal-text: #f8fafc;
+  --portal-sub: #9fb0c6;
+  --portal-primary: #baff3b;
 }
 
 html,
 body {
+  min-height: 100%;
   margin: 0;
   padding: 0;
-  background: #07090d;
-  color: #f8fafc;
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    radial-gradient(circle at top left, rgba(186, 255, 59, 0.06), transparent 24%),
+    linear-gradient(180deg, var(--portal-bg) 0%, var(--portal-bg-alt) 100%);
+  background-size: 80px 80px, 80px 80px, auto, auto;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  color: var(--portal-text);
+  font-family: "Inter", "Segoe UI", "SF Pro Display", Helvetica, Arial, sans-serif;
 }
 
 * {
   box-sizing: border-box;
+}
+
+*::selection {
+  background: rgba(186, 255, 59, 0.24);
+  color: var(--portal-text);
 }
 
 a {

@@ -32,10 +32,11 @@ export function StatePanel({
   actions?: ReactNode;
 }) {
   return (
-    <div className={`rounded-[30px] border p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_78px_rgba(0,0,0,0.26)] ${toneClasses(tone)}`}>
+    <div className={`relative overflow-hidden rounded-[32px] border p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_78px_rgba(0,0,0,0.26)] ${toneClasses(tone)}`}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.04),transparent_26%)]" />
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-current/15 bg-black/15">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-current/15 bg-black/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             {icon}
           </div>
           <div className="max-w-2xl">
@@ -139,7 +140,7 @@ export function InlineEmptyNotice({
   description: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] p-5 transition-all duration-300 hover:border-primary/18 hover:bg-white/[0.04]">
+    <div className="rounded-[24px] border border-dashed border-white/10 bg-[linear-gradient(180deg,rgba(18,26,38,0.82),rgba(13,19,29,0.88))] p-5 transition-all duration-300 hover:border-primary/18 hover:bg-white/[0.04]">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-[16px] border border-white/10 bg-black/15 text-sub">
           <AlertCircle size={16} />
