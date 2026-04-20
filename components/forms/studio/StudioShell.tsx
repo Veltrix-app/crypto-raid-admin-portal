@@ -61,8 +61,8 @@ export default function StudioShell<TStep extends string>({
         <div
           className={`grid gap-6 ${
             rightRail
-              ? "xl:grid-cols-[96px_minmax(0,1fr)_320px]"
-              : "xl:grid-cols-[96px_minmax(0,1fr)]"
+              ? "xl:grid-cols-[216px_minmax(0,1fr)_320px]"
+              : "xl:grid-cols-[216px_minmax(0,1fr)]"
           }`}
         >
           {leftRail ? <div>{leftRail}</div> : null}

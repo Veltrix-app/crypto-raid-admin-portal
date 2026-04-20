@@ -27,6 +27,15 @@ function getStatusLabel(status: CampaignStoryboardBlockStatus) {
   return "Draft";
 }
 
+function getStatusCopy(status: CampaignStoryboardBlockStatus) {
+  if (status === "ready") return "This block already has enough context to ship in the first wave.";
+  if (status === "needs_attention") {
+    return "A few missing inputs are still stopping this moment from feeling launch-grade.";
+  }
+
+  return "Direction is defined, but the execution details still need shaping.";
+}
+
 export default function CampaignStoryboardBlock({
   block,
   selected,
@@ -40,13 +49,21 @@ export default function CampaignStoryboardBlock({
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-[28px] border p-5 text-left transition ${getStatusClasses(
+      className={`relative overflow-hidden rounded-[30px] border p-5 text-left transition ${getStatusClasses(
         block.status,
         selected
       )}`}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)]" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-[42%] bg-[radial-gradient(circle_at_center,rgba(199,255,0,0.08),transparent_64%)]" />
+      <div
+        className={`pointer-events-none absolute inset-y-6 left-5 w-px bg-[linear-gradient(180deg,rgba(199,255,0,0.4),transparent_80%)] transition ${
+          selected ? "opacity-100" : "opacity-35"
+        }`}
+      />
+
+      <div className="flex items-start justify-between gap-4 pl-5">
+        <div className="max-w-xl">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
             {block.eyebrow}
           </p>
@@ -67,12 +84,40 @@ export default function CampaignStoryboardBlock({
         </span>
       </div>
 
-      <p className="mt-4 text-sm leading-6 text-sub">{block.summary}</p>
+      <p className="mt-4 min-h-[72px] pl-5 text-sm leading-6 text-sub/95">{block.summary}</p>
 
-      <div className="mt-5 rounded-[22px] border border-white/8 bg-black/20 px-4 py-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">Focus</p>
-        <p className="mt-2 text-sm font-semibold text-text">{block.metric}</p>
+      <div className="mt-6 grid gap-3 pl-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-4 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+                Primary lens
+              </p>
+              <p className="mt-2 text-base font-semibold text-text">{block.metric}</p>
+            </div>
+            <span className="rounded-full bg-black/30 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
+              {selected ? "Live focus" : "Storyboard block"}
+            </span>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-sub/90">{getStatusCopy(block.status)}</p>
+        </div>
+
+        {block.notes[0] ? (
+          <div className="rounded-[24px] border border-white/8 bg-black/20 px-4 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+              Guidance
+            </p>
+            <p className="mt-3 text-sm leading-6 text-sub/95">{block.notes[0]}</p>
+          </div>
+        ) : null}
       </div>
+
+      {selected ? (
+        <div className="mt-5 flex items-center gap-2 pl-5 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+          <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_14px_rgba(199,255,0,0.42)]" />
+          Focus block
+        </div>
+      ) : null}
     </button>
   );
 }

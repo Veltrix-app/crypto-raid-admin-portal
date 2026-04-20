@@ -8,18 +8,54 @@ export default function CampaignLaunchPreview({
 }: {
   preview: LaunchPreview;
 }) {
+  const readyCount = preview.readiness.filter((item) => item.complete).length;
+  const readinessPercent = Math.round(
+    (readyCount / Math.max(preview.readiness.length, 1)) * 100
+  );
+
   return (
     <div className="space-y-4">
-      <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-          Launch preview
-        </p>
-        <h3 className="mt-3 text-2xl font-black tracking-[-0.03em] text-text">
-          {preview.campaignTitle}
-        </h3>
-        <p className="mt-3 text-sm leading-6 text-sub">
-          First member moment: <span className="font-semibold text-text">{preview.firstMemberMoment}</span>
-        </p>
+      <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="max-w-2xl">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              Launch preview
+            </p>
+            <h3 className="mt-3 text-2xl font-black tracking-[-0.03em] text-text">
+              {preview.campaignTitle}
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-sub">
+              First member moment:{" "}
+              <span className="font-semibold text-text">{preview.firstMemberMoment}</span>
+            </p>
+          </div>
+
+          <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+              Launch posture
+            </p>
+            <p className="mt-2 text-lg font-extrabold text-text">
+              {readyCount}/{preview.readiness.length} ready
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-[22px] border border-white/8 bg-black/20 px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+              Launch pressure
+            </p>
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+              {readinessPercent}%
+            </span>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/6">
+            <div
+              className="h-full rounded-full bg-[linear-gradient(90deg,rgba(199,255,0,0.95),rgba(199,255,0,0.4))]"
+              style={{ width: `${readinessPercent}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
@@ -32,15 +68,22 @@ export default function CampaignLaunchPreview({
         {preview.readiness.map((item) => (
           <div
             key={item.label}
-            className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4"
+            className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4"
           >
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-bold text-text">{item.label}</p>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    item.complete
+                      ? "bg-primary shadow-[0_0_18px_rgba(199,255,0,0.32)]"
+                      : "bg-amber-300"
+                  }`}
+                />
+                <p className="text-sm font-bold text-text">{item.label}</p>
+              </div>
               <span
                 className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
-                  item.complete
-                    ? "bg-primary/15 text-primary"
-                    : "bg-amber-500/15 text-amber-300"
+                  item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
                 }`}
               >
                 {item.complete ? "Ready" : "Needs work"}
@@ -62,9 +105,9 @@ function PreviewStat({
   value: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+    <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-lg font-black tracking-[-0.02em] text-text">{value}</p>
+      <p className="mt-2 text-2xl font-black tracking-[-0.03em] text-text">{value}</p>
     </div>
   );
 }

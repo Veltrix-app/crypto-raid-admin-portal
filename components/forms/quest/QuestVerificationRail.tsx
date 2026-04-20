@@ -32,12 +32,17 @@ export default function QuestVerificationRail({
 
       <p className="text-sm leading-6 text-sub">{preview.routeDescription}</p>
 
+      <div className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4">
+        <div className="grid gap-3 md:grid-cols-2">
+          <InfoRow
+            label="Proof path"
+            value={proofRequired ? proofType.replace(/_/g, " ") : "No proof required"}
+          />
+          <InfoRow label="Expectation" value={preview.proofExpectation} />
+        </div>
+      </div>
+
       <div className="grid gap-3 md:grid-cols-2">
-        <InfoRow
-          label="Proof path"
-          value={proofRequired ? proofType.replace(/_/g, " ") : "No proof required"}
-        />
-        <InfoRow label="Expectation" value={preview.proofExpectation} />
         <InfoRow
           label="Required config"
           value={
@@ -69,7 +74,7 @@ function InfoRow({
   value: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
+    <div className="rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-4">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm leading-6 text-text">{value}</p>
     </div>

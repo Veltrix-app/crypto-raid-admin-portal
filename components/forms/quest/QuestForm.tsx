@@ -242,7 +242,7 @@ const questBuilderSteps: Array<{
   },
   {
     id: "verification",
-    label: "Wire verification",
+    label: "Verify",
     description: "Make the proof path and verification route feel intentional before launch.",
   },
   {
@@ -252,12 +252,12 @@ const questBuilderSteps: Array<{
   },
   {
     id: "preview",
-    label: "Member view",
+    label: "Preview",
     description: "Check how the quest feels in the app before you worry about final state.",
   },
   {
     id: "launch",
-    label: "Review and launch",
+    label: "Launch",
     description: "Set timing, status, and the final launch posture before saving the quest.",
   },
 ];

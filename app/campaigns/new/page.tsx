@@ -91,27 +91,27 @@ const baseBuilderSteps: Array<{
 }> = [
   {
     id: "template",
-    label: "Pick a playbook",
+    label: "Playbook",
     description: "Choose the full campaign template or a saved project variant that fits this workspace best.",
   },
   {
     id: "custom",
-    label: "Shape custom playbook",
+    label: "Custom path",
     description: "Define the direction for a custom campaign path before you continue into setup and launch.",
   },
   {
     id: "autofill",
-    label: "Wire project context",
+    label: "Context",
     description: "See what Veltrix can autofill already and patch the missing project context inline.",
   },
   {
     id: "flow",
-    label: "Tune generated flow",
+    label: "Storyboard",
     description: "Review the generated quests and rewards, then include, skip, or refine the drafts.",
   },
   {
     id: "launch",
-    label: "Review and launch",
+    label: "Launch",
     description: "Save this setup as a reusable template variant and generate the campaign when it feels right.",
   },
 ];
@@ -1514,12 +1514,6 @@ function NewCampaignPageContent() {
           {renderStudioCore()}
         </StudioShell>
 
-        {stepError ? (
-          <div className="rounded-[24px] border border-rose-500/30 bg-rose-500/10 px-4 py-4 text-sm text-rose-100">
-            {stepError}
-          </div>
-        ) : null}
-
         {generatedCampaign ? (
           <SuccessCampaignModal
             campaign={generatedCampaign}
@@ -1743,30 +1737,51 @@ function CampaignPreviewSurface({
 }) {
   return (
     <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="max-w-xl">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-            {templateLabel}
-          </p>
-          <h3 className="mt-3 text-2xl font-extrabold tracking-[-0.03em] text-text">
-            {title}
-          </h3>
-          <p className="mt-3 text-sm leading-7 text-sub">{summary}</p>
+      <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(6,8,12,0.82))] p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="max-w-xl">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              {templateLabel}
+            </p>
+            <h3 className="mt-3 text-2xl font-extrabold tracking-[-0.03em] text-text">
+              {title}
+            </h3>
+            <p className="mt-3 text-sm leading-7 text-sub">{summary}</p>
+          </div>
+          <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+              Template fit
+            </p>
+            <p className="mt-2 text-lg font-extrabold text-text">
+              {fitLabel} <span className="text-sub">({fitScore}/100)</span>
+            </p>
+          </div>
         </div>
-        <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
-            Template fit
-          </p>
-          <p className="mt-2 text-lg font-extrabold text-text">
-            {fitLabel} <span className="text-sub">({fitScore}/100)</span>
-          </p>
-        </div>
-      </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
-        <PreviewStat label="Quest flow" value={questCount} />
-        <PreviewStat label="Reward flow" value={rewardCount} />
-        <PreviewStat label="Missing context" value={missingContext} />
+        <div className="mt-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+          <div className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+              Member moment
+            </p>
+            <p className="mt-2 text-base font-semibold text-text">
+              Contributors enter a guided launch lane with quests, rewards and a clear reason to act now.
+            </p>
+          </div>
+          <div className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+              Context pressure
+            </p>
+            <p className="mt-2 text-base font-semibold text-text">
+              {missingContext === 0 ? "Fully routed" : `${missingContext} gaps to patch`}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <PreviewStat label="Quest flow" value={questCount} />
+          <PreviewStat label="Reward flow" value={rewardCount} />
+          <PreviewStat label="Missing context" value={missingContext} />
+        </div>
       </div>
     </div>
   );
