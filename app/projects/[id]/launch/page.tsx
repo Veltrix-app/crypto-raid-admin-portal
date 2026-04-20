@@ -286,6 +286,15 @@ export default function ProjectLaunchPage() {
             tone: "default" as const,
           }
         : null,
+      snapshot.facts.rewardCount === 0
+        ? {
+            title: "Open Reward Studio",
+            summary:
+              "Add the first reward so launch has a clear payout, unlock, or recognition layer.",
+            href: `/rewards/new?projectId=${snapshot.projectId}`,
+            tone: "default" as const,
+          }
+        : null,
       snapshot.facts.testedProviderCount === 0
         ? {
             title: "Run a community push test",
@@ -442,6 +451,12 @@ export default function ProjectLaunchPage() {
               <ProjectNextActions
                 actions={nextActions}
                 supportLinks={[
+                  {
+                    label: "Open Reward Studio",
+                    description:
+                      "Add a reward from the same project context so claims and recognition are wired before launch.",
+                    href: `/rewards/new?projectId=${project.id}`,
+                  },
                   {
                     label: "Open Community OS",
                     description:

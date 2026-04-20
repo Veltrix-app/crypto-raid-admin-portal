@@ -48,8 +48,8 @@ type RaidRow = {
 
 type RewardRow = {
   id: string;
-  status: string | null;
   visible: boolean | null;
+  claimable?: boolean | null;
 };
 
 export type ProjectLaunchIssueSeverity = "critical" | "warning";
@@ -476,7 +476,7 @@ export async function loadProjectLaunchWorkspaceSnapshot(
       .eq("project_id", access.projectId),
     supabase
       .from("rewards")
-      .select("id, status, visible")
+      .select("id, visible, claimable")
       .eq("project_id", access.projectId),
     listProjectOperationAudits(access.projectId),
     listProjectOperationIncidents(access.projectId),
@@ -556,7 +556,7 @@ export async function loadProjectLaunchWorkspaceSnapshot(
     liveRaidCount: raidRows.filter((row) => row.status === "active").length,
     rewardCount: rewardRows.length,
     liveRewardCount: rewardRows.filter(
-      (row) => row.status === "active" && row.visible !== false
+      (row) => row.visible !== false || row.claimable === true
     ).length,
     testedProviderCount: pushTestCount,
     openIncidentCount: openIncidents.length,
