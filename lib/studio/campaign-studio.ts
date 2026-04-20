@@ -33,6 +33,12 @@ export type CampaignMissionMapItem = {
   meta: string;
 };
 
+export type CampaignStudioReadinessItem = {
+  label: string;
+  value: string;
+  complete: boolean;
+};
+
 type CampaignStudioIntentOption = {
   id: CampaignStudioIntentId;
   label: string;
@@ -247,7 +253,7 @@ export function getCampaignStudioReadiness({
   templatePlan?: BuildTemplateResult | null;
   selectedQuestKeys: string[];
   selectedRewardKeys: string[];
-}) {
+}): CampaignStudioReadinessItem[] {
   const missingProjectFields = templatePlan?.missingProjectFields ?? [];
   const includedQuestCount = templatePlan?.questDrafts.filter((quest) =>
     selectedQuestKeys.includes(quest.key)
@@ -284,6 +290,15 @@ export function getCampaignStudioReadiness({
       complete: includedRewardCount > 0,
     },
   ];
+}
+
+export function getCampaignStudioCompactReadiness(args: {
+  project?: AdminProject | null;
+  templatePlan?: BuildTemplateResult | null;
+  selectedQuestKeys: string[];
+  selectedRewardKeys: string[];
+}) {
+  return getCampaignStudioReadiness(args).filter((item) => !item.complete);
 }
 
 export function getCampaignLaunchPreview({

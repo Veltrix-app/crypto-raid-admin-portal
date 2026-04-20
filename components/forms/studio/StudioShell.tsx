@@ -28,6 +28,10 @@ type Props<TStep extends string> = {
   onSelectStep: (step: TStep) => void;
   children: ReactNode;
   sideRail?: ReactNode;
+  topFrame?: ReactNode;
+  leftRail?: ReactNode;
+  rightRail?: ReactNode;
+  canvasClassName?: string;
 };
 
 export default function StudioShell<TStep extends string>({
@@ -42,7 +46,39 @@ export default function StudioShell<TStep extends string>({
   onSelectStep,
   children,
   sideRail,
+  topFrame,
+  leftRail,
+  rightRail,
+  canvasClassName,
 }: Props<TStep>) {
+  const useV3Layout = Boolean(topFrame || leftRail || rightRail);
+
+  if (useV3Layout) {
+    return (
+      <div className="space-y-6">
+        {topFrame}
+
+        <div
+          className={`grid gap-6 ${
+            rightRail
+              ? "xl:grid-cols-[96px_minmax(0,1fr)_320px]"
+              : "xl:grid-cols-[96px_minmax(0,1fr)]"
+          }`}
+        >
+          {leftRail ? <div>{leftRail}</div> : null}
+
+          <div
+            className={`rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)] ${canvasClassName ?? ""}`.trim()}
+          >
+            {children}
+          </div>
+
+          {rightRail ? <BuilderSidebarStack>{rightRail}</BuilderSidebarStack> : null}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <BuilderHero

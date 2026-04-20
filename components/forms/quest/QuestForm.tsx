@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   BuilderBottomNav,
-  BuilderContextPill,
   BuilderMetricCard,
   BuilderStepHeader,
 } from "@/components/layout/builder/BuilderPrimitives";
@@ -12,8 +11,10 @@ import QuestMemberPreview from "@/components/forms/quest/QuestMemberPreview";
 import QuestVerificationRail from "@/components/forms/quest/QuestVerificationRail";
 import StudioModeToggle from "@/components/forms/studio/StudioModeToggle";
 import StudioPreviewCard from "@/components/forms/studio/StudioPreviewCard";
-import StudioReadinessCard from "@/components/forms/studio/StudioReadinessCard";
 import StudioShell from "@/components/forms/studio/StudioShell";
+import StudioStepRail from "@/components/forms/studio/StudioStepRail";
+import StudioTopFrame from "@/components/forms/studio/StudioTopFrame";
+import StudioWarningRail from "@/components/forms/studio/StudioWarningRail";
 import { AdminQuest } from "@/types/entities/quest";
 import { AdminProject } from "@/types/entities/project";
 import { AdminCampaign } from "@/types/entities/campaign";
@@ -231,12 +232,12 @@ const questBuilderSteps: Array<{
 }> = [
   {
     id: "blueprint",
-    label: "Pick blueprint",
+    label: "Action",
     description: "Choose the mission family and concrete mechanic that best matches the contributor action.",
   },
   {
     id: "destination",
-    label: "Set destination",
+    label: "Placement",
     description: "Place the quest inside the right project and campaign, then shape the CTA and copy.",
   },
   {
@@ -246,12 +247,12 @@ const questBuilderSteps: Array<{
   },
   {
     id: "reward",
-    label: "Set reward posture",
+    label: "Reward",
     description: "Tune XP, repeatability, and mission pressure without drowning in advanced controls.",
   },
   {
     id: "preview",
-    label: "Preview member view",
+    label: "Member view",
     description: "Check how the quest feels in the app before you worry about final state.",
   },
   {
@@ -343,6 +344,44 @@ export default function QuestForm({
     preview: Boolean(values.shortDescription || values.description),
     launch: Boolean(values.status),
   };
+  const stepRailItems = useMemo(
+    () =>
+      questBuilderSteps.map((step, index) => ({
+        id: step.id,
+        label: step.label,
+        shortLabel: String(index + 1),
+        complete:
+          stepCompletion[step.id] &&
+          questBuilderSteps.findIndex((candidate) => candidate.id === step.id) < currentStepIndex,
+      })),
+    [currentStepIndex, stepCompletion]
+  );
+  const questWarningItems = useMemo(
+    () => [
+      ...readinessItems
+        .filter((item) => !item.complete)
+        .map((item) => ({
+          label: item.label,
+          description: item.value,
+          tone: "warning" as const,
+        })),
+      ...(verificationPreview.invalidConfig
+        ? [
+            {
+              label: "Verification config",
+              description: "The JSON config is invalid and needs to be fixed before launch.",
+              tone: "warning" as const,
+            },
+          ]
+        : []),
+      ...verificationPreview.missingConfigKeys.map((key) => ({
+        label: `Missing ${key}`,
+        description: "This verification setting is still required for confident automation.",
+        tone: "warning" as const,
+      })),
+    ],
+    [readinessItems, verificationPreview.invalidConfig, verificationPreview.missingConfigKeys]
+  );
 
   useEffect(() => {
     if (!values.projectId && defaultProjectId) {
@@ -482,38 +521,6 @@ export default function QuestForm({
         title="Build the member action before you tune the admin knobs"
         description="Pick the mission family, place the quest in the right campaign, wire verification clearly, and keep the member-facing preview in view the whole time."
         progressPercent={progressPercent}
-        metrics={
-          <>
-            <BuilderMetricCard label="Blueprint" value={QUEST_TYPE_PRESETS[selectedPreset].label} />
-            <BuilderMetricCard label="Verification route" value={verificationPreview.routeLabel} />
-            <BuilderMetricCard
-              label="Completion mode"
-              value={(values.completionMode || "manual").replace(/_/g, " ")}
-            />
-          </>
-        }
-        contextPills={
-          <>
-            <BuilderContextPill
-              label="Project"
-              value={selectedProject?.name || "No workspace"}
-              tone={selectedProject ? "accent" : "warning"}
-            />
-            <BuilderContextPill
-              label="Campaign"
-              value={
-                filteredCampaigns.find((campaign) => campaign.id === values.campaignId)?.title ||
-                "No campaign"
-              }
-              tone={values.campaignId ? "default" : "warning"}
-            />
-            <BuilderContextPill
-              label="Family"
-              value={getQuestStudioFamily(selectedPreset).label}
-              tone="default"
-            />
-          </>
-        }
         steps={questBuilderSteps.map((step, index) => ({
           ...step,
           eyebrow: `Step ${index + 1}`,
@@ -521,52 +528,102 @@ export default function QuestForm({
         }))}
         currentStep={currentStep}
         onSelectStep={attemptStepNavigation}
-        sideRail={
+        topFrame={
+          <StudioTopFrame
+            eyebrow="Quest Studio"
+            title="Build the member action before you tune the admin knobs"
+            description="Treat a quest like one precise contributor experience. Shape the action, lock the verification route, then check the member-facing card before you launch."
+            actions={
+              <StudioModeToggle
+                label="Builder mode"
+                value={builderMode}
+                onChange={setBuilderMode}
+                options={[
+                  {
+                    value: "basic",
+                    label: "Basic",
+                    eyebrow: "Launch-safe path",
+                  },
+                  {
+                    value: "advanced",
+                    label: "Advanced",
+                    eyebrow: "Operator controls",
+                  },
+                ]}
+              />
+            }
+            context={
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text">
+                  {selectedProject?.name || "No workspace"}
+                </span>
+                <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                  {filteredCampaigns.find((campaign) => campaign.id === values.campaignId)?.title ||
+                    "No campaign"}
+                </span>
+                <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                  {getQuestStudioFamily(selectedPreset).label}
+                </span>
+              </div>
+            }
+            supporting={
+              <div className="grid gap-3 md:grid-cols-3">
+                <BuilderMetricCard label="Blueprint" value={QUEST_TYPE_PRESETS[selectedPreset].label} />
+                <BuilderMetricCard label="Verification route" value={verificationPreview.routeLabel} />
+                <BuilderMetricCard
+                  label="Completion mode"
+                  value={(values.completionMode || "manual").replace(/_/g, " ")}
+                />
+              </div>
+            }
+          />
+        }
+        leftRail={
+          <StudioStepRail
+            steps={stepRailItems}
+            currentStep={currentStep}
+            onSelect={attemptStepNavigation}
+          />
+        }
+        rightRail={
           <>
             <StudioPreviewCard
               title="Member preview"
               eyebrow="Quest card"
-              description="Keep the member-facing quest card visible while you tune the builder."
+              description="The member card stays visible throughout the build so the quest never drifts into operator-only language."
             >
               <QuestMemberPreview preview={memberPreview} />
             </StudioPreviewCard>
 
-            <StudioReadinessCard title="Quest readiness" items={readinessItems} />
-
-            <StudioPreviewCard
-              title="Verification posture"
-              eyebrow="Proof and route"
-              description="This rail explains how the quest will be verified and what still blocks confident automation."
-            >
-              <QuestVerificationRail
-                preview={verificationPreview}
-                verificationProvider={values.verificationProvider}
-                proofRequired={values.proofRequired}
-                proofType={values.proofType}
-              />
-            </StudioPreviewCard>
+            <StudioWarningRail
+              title="Quest watchlist"
+              items={[
+                ...(stepError
+                  ? [
+                      {
+                        label: "Current blocker",
+                        description: stepError,
+                        tone: "warning" as const,
+                      },
+                    ]
+                  : []),
+                ...(submitError
+                  ? [
+                      {
+                        label: "Save failed",
+                        description: submitError,
+                        tone: "warning" as const,
+                      },
+                    ]
+                  : []),
+                ...questWarningItems,
+              ]}
+            />
           </>
         }
+        canvasClassName="space-y-6"
       >
         <div className="space-y-6">
-          <StudioModeToggle
-            label="Builder mode"
-            value={builderMode}
-            onChange={setBuilderMode}
-            options={[
-              {
-                value: "basic",
-                label: "Basic",
-                eyebrow: "Launch-safe path",
-              },
-              {
-                value: "advanced",
-                label: "Advanced",
-                eyebrow: "Operator controls",
-              },
-            ]}
-          />
-
           <BuilderStepHeader
             eyebrow={`Step ${currentStepIndex + 1}`}
             title={currentStepMeta.label}
@@ -1032,18 +1089,6 @@ export default function QuestForm({
               <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-sm leading-7 text-sub">
                 This save will route you into the quest detail surface, where you can still operate and configure the mission after the first launch pass.
               </div>
-            </div>
-          ) : null}
-
-          {stepError ? (
-            <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-              {stepError}
-            </div>
-          ) : null}
-
-          {submitError ? (
-            <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-              {submitError}
             </div>
           ) : null}
 

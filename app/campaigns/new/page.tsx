@@ -4,7 +4,6 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   BuilderBottomNav,
-  BuilderHero,
   BuilderMetricCard,
   BuilderSidebarCard,
   BuilderStepHeader,
@@ -12,9 +11,14 @@ import {
 import CampaignIntentStep from "@/components/forms/campaign/CampaignIntentStep";
 import CampaignLaunchPreview from "@/components/forms/campaign/CampaignLaunchPreview";
 import CampaignMissionMap from "@/components/forms/campaign/CampaignMissionMap";
+import CampaignStoryboardCanvas from "@/components/forms/campaign/CampaignStoryboardCanvas";
+import CampaignStoryboardInspector from "@/components/forms/campaign/CampaignStoryboardInspector";
 import StudioModeToggle from "@/components/forms/studio/StudioModeToggle";
 import StudioPreviewCard from "@/components/forms/studio/StudioPreviewCard";
-import StudioReadinessCard from "@/components/forms/studio/StudioReadinessCard";
+import StudioShell from "@/components/forms/studio/StudioShell";
+import StudioStepRail from "@/components/forms/studio/StudioStepRail";
+import StudioTopFrame from "@/components/forms/studio/StudioTopFrame";
+import StudioWarningRail from "@/components/forms/studio/StudioWarningRail";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -33,9 +37,15 @@ import {
   CampaignStudioIntentId,
   getCampaignLaunchPreview,
   getCampaignMissionMap,
+  getCampaignStudioCompactReadiness,
   getCampaignStudioIntentState,
-  getCampaignStudioReadiness,
 } from "@/lib/studio/campaign-studio";
+import {
+  type CampaignStoryboardBlockId,
+  getCampaignStoryboard,
+  getCampaignStoryboardBlock,
+  getCampaignStoryboardWarnings,
+} from "@/lib/studio/campaign-storyboard";
 import { AdminProject } from "@/types/entities/project";
 import { AdminQuest } from "@/types/entities/quest";
 import { AdminReward } from "@/types/entities/reward";
@@ -165,6 +175,8 @@ function NewCampaignPageContent() {
   const [studioLens, setStudioLens] = useState<"strategy" | "launch">("strategy");
   const [selectedIntent, setSelectedIntent] = useState<CampaignStudioIntentId>("hybrid_launch");
   const [selectedAudience, setSelectedAudience] = useState<CampaignStudioAudienceId>("mixed");
+  const [selectedStoryboardBlockId, setSelectedStoryboardBlockId] =
+    useState<CampaignStoryboardBlockId>("goal");
 
   const selectedProject = useMemo(
     () =>
@@ -233,6 +245,18 @@ function NewCampaignPageContent() {
   const previousStep = builderSteps[currentStepIndex - 1];
   const nextStep = builderSteps[currentStepIndex + 1];
   const progressPercent = Math.round(((currentStepIndex + 1) / builderSteps.length) * 100);
+  const storyboardStepItems = useMemo(
+    () =>
+      builderSteps.map((step, index) => ({
+        id: step.id,
+        label: step.label,
+        shortLabel: String(index + 1),
+        complete:
+          visitedSteps.includes(step.id) &&
+          builderSteps.findIndex((item) => item.id === step.id) < currentStepIndex,
+      })),
+    [builderSteps, currentStepIndex, visitedSteps]
+  );
 
   useEffect(() => {
     if (!requestedProjectId) return;
@@ -280,6 +304,27 @@ function NewCampaignPageContent() {
     setSelectedQuestKeys(templatePlan?.questDrafts.map((quest) => quest.key) ?? []);
     setSelectedRewardKeys(templatePlan?.rewardDrafts.map((reward) => reward.key) ?? []);
   }, [templatePlan]);
+
+  useEffect(() => {
+    if (currentStep === "template" || currentStep === "custom") {
+      setSelectedStoryboardBlockId("goal");
+      return;
+    }
+
+    if (currentStep === "autofill") {
+      setSelectedStoryboardBlockId("launch_posture");
+      return;
+    }
+
+    if (currentStep === "flow") {
+      setSelectedStoryboardBlockId("quest_lane");
+      return;
+    }
+
+    if (currentStep === "launch") {
+      setSelectedStoryboardBlockId("launch_posture");
+    }
+  }, [currentStep]);
 
   useEffect(() => {
     if (!pendingSavedTemplateConfig || !templatePlan) return;
@@ -385,16 +430,6 @@ function NewCampaignPageContent() {
       ])
     );
   }, [persistedMissingContextFields, projectContextDraft]);
-  const studioReadiness = useMemo(
-    () =>
-      getCampaignStudioReadiness({
-        project: effectiveProject,
-        templatePlan,
-        selectedQuestKeys,
-        selectedRewardKeys,
-      }),
-    [effectiveProject, selectedQuestKeys, selectedRewardKeys, templatePlan]
-  );
   const missionMap = useMemo(
     () =>
       getCampaignMissionMap({
@@ -415,6 +450,57 @@ function NewCampaignPageContent() {
       }),
     [effectiveProject, selectedQuestKeys, selectedRewardKeys, templatePlan]
   );
+  const compactReadiness = useMemo(
+    () =>
+      getCampaignStudioCompactReadiness({
+        project: effectiveProject,
+        templatePlan,
+        selectedQuestKeys,
+        selectedRewardKeys,
+      }),
+    [effectiveProject, selectedQuestKeys, selectedRewardKeys, templatePlan]
+  );
+  const storyboardBlocks = useMemo(
+    () =>
+      templatePlan && selectedTemplate
+        ? getCampaignStoryboard({
+            project: effectiveProject,
+            templatePlan,
+            templateId: selectedTemplate.id,
+            selectedQuestKeys,
+            selectedRewardKeys,
+            intentLabel: inferredIntentState.intent.label,
+            audienceLabel: inferredIntentState.audience.label,
+          })
+        : [],
+    [
+      effectiveProject,
+      inferredIntentState.audience.label,
+      inferredIntentState.intent.label,
+      selectedQuestKeys,
+      selectedRewardKeys,
+      selectedTemplate,
+      templatePlan,
+    ]
+  );
+  const selectedStoryboardBlock = useMemo(
+    () => getCampaignStoryboardBlock(storyboardBlocks, selectedStoryboardBlockId),
+    [selectedStoryboardBlockId, storyboardBlocks]
+  );
+  const storyboardWarnings = useMemo(() => {
+    const items = [
+      ...getCampaignStoryboardWarnings(storyboardBlocks),
+      ...compactReadiness.map((item) => ({
+        label: item.label,
+        description: item.value,
+        tone: "warning" as const,
+      })),
+    ];
+
+    return items.filter(
+      (item, index, list) => list.findIndex((candidate) => candidate.label === item.label) === index
+    );
+  }, [compactReadiness, storyboardBlocks]);
 
   function updateQuestDraftEdit(
     key: string,
@@ -606,104 +692,117 @@ function NewCampaignPageContent() {
     setCurrentStep(targetStep);
   }
 
-  return (
-    <AdminShell>
-      <div className="space-y-6">
-        <BuilderHero
-          eyebrow="Campaign Studio"
-          title="Design the mission lane before you launch it"
-          description="Start from intent, let Veltrix wire the workspace context you already captured, and shape a launch-ready campaign with visible quest, reward and readiness rails."
-          progressPercent={progressPercent}
-          metrics={
-            <>
-              <BuilderMetricCard label="Workspace" value={selectedProject?.name || "No project"} />
-              <BuilderMetricCard
-                label="Template fit"
-                value={
-                  selectedTemplate
-                    ? `${selectedTemplate.fitLabel} (${selectedTemplate.fitScore}/100)`
-                    : "Not selected"
-                }
-              />
-              <BuilderMetricCard
-                label="Missing context"
-                value={String(currentMissingContextFields.length)}
-              />
-            </>
-          }
-        />
+  function renderWorkspaceContextEditor() {
+    if (!selectedTemplate) {
+      return (
+        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+          <p className="text-sm leading-7 text-sub">
+            Pick a playbook first so Veltrix can show which workspace links and brand fields the
+            campaign needs.
+          </p>
+        </div>
+      );
+    }
 
-        <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
-          <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                Workspace
-              </p>
-              <h3 className="mt-2 text-xl font-extrabold tracking-[-0.02em] text-text">
-                Switch the project you are building for
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-sub">
-                Choose the active workspace first so the right links, branding and
-                project context flow into this campaign builder.
-              </p>
-            </div>
-            <label className="block">
-              <span className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-sub">
-                Active workspace
-              </span>
-              <select
-                value={selectedProject?.id ?? ""}
-                onChange={(event) => setActiveProjectId(event.target.value)}
-                className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-text outline-none"
+    return (
+      <div className="space-y-5">
+        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+            Workspace context usage
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {selectedTemplate.requiredProjectFields.map((field) => (
+              <span
+                key={field}
+                className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+                  currentMissingContextFields.includes(field)
+                    ? "bg-amber-500/15 text-amber-300"
+                    : "bg-primary/15 text-primary"
+                }`}
               >
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                {formatProjectFieldLabel(field)}
+              </span>
+            ))}
           </div>
+          <p className="mt-4 text-sm leading-7 text-sub">
+            Patch the missing workspace context here once, and future campaigns for this project
+            get a much cleaner autofill path.
+          </p>
         </div>
 
-        <StudioModeToggle
-          label="Studio lens"
-          value={studioLens}
-          onChange={setStudioLens}
-          options={[
-            {
-              value: "strategy",
-              label: "Strategy",
-              eyebrow: "Intent, audience, flow",
-            },
-            {
-              value: "launch",
-              label: "Launch",
-              eyebrow: "Readiness, output, next move",
-            },
-          ]}
-        />
+        {currentMissingContextFields.length > 0 ? (
+          <div className="rounded-[24px] border border-white/8 bg-black/20 p-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              {editableContextFields.map((field) => (
+                <label key={field} className="block">
+                  <span className="mb-2 block text-sm font-semibold text-text">
+                    {formatProjectFieldLabel(field)}
+                  </span>
+                  <input
+                    value={
+                      projectContextDraft[field as EditableProjectContextField] ??
+                      ((selectedProject?.[field as EditableProjectContextField] as string | undefined) ??
+                        "")
+                    }
+                    onChange={(event) =>
+                      setProjectContextDraft((current) => ({
+                        ...current,
+                        [field as EditableProjectContextField]: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                    placeholder={`Add ${formatProjectFieldLabel(field)}`}
+                  />
+                </label>
+              ))}
+            </div>
 
-        <CampaignStepNavigator
-          steps={builderSteps}
-          currentStep={currentStep}
-          currentStepIndex={currentStepIndex}
-          visitedSteps={visitedSteps}
-          onSelect={attemptStepNavigation}
-        />
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={saveProjectContextFields}
+                disabled={
+                  contextSaving ||
+                  !selectedProject ||
+                  Object.keys(projectContextDraft).length === 0
+                }
+                className="rounded-2xl bg-primary px-4 py-3 font-bold text-black shadow-[0_12px_28px_rgba(141,255,89,0.18)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {contextSaving ? "Saving workspace context..." : "Save workspace context"}
+              </button>
+              {contextMessage ? <p className="text-sm text-sub">{contextMessage}</p> : null}
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-[24px] border border-emerald-500/30 bg-emerald-500/10 p-5">
+            <p className="text-sm leading-7 text-emerald-100">
+              All required workspace fields are already present. This campaign can move into the
+              generated journey with a clean autofill posture.
+            </p>
+          </div>
+        )}
 
-        {currentStep !== "launch" ? (
-        <div className="grid gap-6 xl:grid-cols-[1.06fr_0.94fr]">
-          {currentStep === "template" ? (
-          <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
-            <BuilderStepHeader
-              eyebrow={`Step ${currentStepIndex + 1}`}
-              title="Start from a complete playbook"
-              description="Pick the campaign system that fits this workspace best. Veltrix scores templates against your project context so teams can move fast without building from scratch."
-              stepIndex={currentStepIndex + 1}
-              totalSteps={builderSteps.length}
-            />
+        {contextSections.length > 0 ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            {contextSections.map((section) => (
+              <TemplateMetaCard
+                key={section.title}
+                title={section.title}
+                description={section.description}
+                value={section.value}
+              />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
+  function renderFlowBlockWorkspace() {
+    switch (selectedStoryboardBlockId) {
+      case "goal":
+        return (
+          <div className="space-y-5">
             <CampaignIntentStep
               selectedIntent={selectedIntent}
               selectedAudience={selectedAudience}
@@ -711,151 +810,637 @@ function NewCampaignPageContent() {
               onAudienceChange={setSelectedAudience}
             />
 
-            <div className="mt-5 grid gap-3">
-              {savedProjectTemplates.length > 0 ? (
-                <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Saved Project Templates
-                  </p>
-                  <div className="mt-4 space-y-3">
-                    {savedProjectTemplates.map((template) => (
-                      <div
-                        key={template.id}
-                        className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4"
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-bold text-text">
-                              {template.name}
-                            </p>
-                            <p className="mt-2 text-sm leading-6 text-sub">
-                              {template.description || "Reusable project-specific template"}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() => applySavedTemplate(template.configuration)}
-                              className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
-                            >
-                              Load variant
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => deleteProjectCampaignTemplate(template.id)}
-                              className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-bold text-rose-300 transition hover:bg-rose-500/15"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              {featuredTemplate ? (
-                <TemplateOptionCard
-                  template={featuredTemplate}
-                  active={featuredTemplate.id === selectedTemplateId}
-                  featured
-                  onSelect={() => chooseTemplate(featuredTemplate.id)}
-                />
-              ) : null}
-
-              {secondaryTemplates.length > 0 ? (
-                <div className="grid gap-3 lg:grid-cols-2">
-                  {secondaryTemplates.map((template) => (
-                    <TemplateOptionCard
-                      key={template.id}
-                      template={template}
-                      active={template.id === selectedTemplateId}
-                      onSelect={() => chooseTemplate(template.id)}
-                    />
-                  ))}
-                </div>
-              ) : null}
+            <div className="grid gap-4 md:grid-cols-2">
+              <TemplateMeta
+                label="Campaign promise"
+                value={
+                  customPlaybookSummary ||
+                  templatePlan?.campaignDraft.shortDescription ||
+                  "Shape the promise this campaign should make to contributors."
+                }
+              />
+              <TemplateMeta
+                label="Audience posture"
+                value={`${inferredIntentState.intent.label} - ${inferredIntentState.audience.label}`}
+              />
             </div>
           </div>
+        );
+      case "quest_lane":
+        return (
+          <div className="space-y-5">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                Generated quest lane
+              </p>
+              <p className="mt-2 text-sm leading-7 text-sub">
+                Keep, skip or refine the generated quest drafts that should make up the first
+                member journey in this campaign.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {templatePlan?.questDrafts.map((quest, index) => (
+                <TemplateQuestCard
+                  key={quest.key}
+                  item={{
+                    ...quest,
+                    draft: {
+                      ...quest.draft,
+                      ...(questDraftEdits[quest.key] ?? {}),
+                    },
+                  }}
+                  index={index}
+                  included={selectedQuestKeys.includes(quest.key)}
+                  expanded={expandedQuestKeys.includes(quest.key)}
+                  onToggle={() =>
+                    setSelectedQuestKeys((current) =>
+                      current.includes(quest.key)
+                        ? current.filter((key) => key !== quest.key)
+                        : [...current, quest.key]
+                    )
+                  }
+                  onToggleExpand={() =>
+                    setExpandedQuestKeys((current) =>
+                      current.includes(quest.key)
+                        ? current.filter((key) => key !== quest.key)
+                        : [...current, quest.key]
+                    )
+                  }
+                  onEdit={updateQuestDraftEdit}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      case "reward_outcome":
+        return (
+          <div className="space-y-5">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                Generated reward outcome
+              </p>
+              <p className="mt-2 text-sm leading-7 text-sub">
+                Tighten the payoff layer here so the campaign ends with a clear reason to care.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {templatePlan?.rewardDrafts.map((reward) => (
+                <TemplateRewardCard
+                  key={reward.key}
+                  item={{
+                    ...reward,
+                    draft: {
+                      ...reward.draft,
+                      ...(rewardDraftEdits[reward.key] ?? {}),
+                    },
+                  }}
+                  included={selectedRewardKeys.includes(reward.key)}
+                  expanded={expandedRewardKeys.includes(reward.key)}
+                  onToggle={() =>
+                    setSelectedRewardKeys((current) =>
+                      current.includes(reward.key)
+                        ? current.filter((key) => key !== reward.key)
+                        : [...current, reward.key]
+                    )
+                  }
+                  onToggleExpand={() =>
+                    setExpandedRewardKeys((current) =>
+                      current.includes(reward.key)
+                        ? current.filter((key) => key !== reward.key)
+                        : [...current, reward.key]
+                    )
+                  }
+                  onEdit={updateRewardDraftEdit}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      case "raid_pressure":
+        return (
+          <div className="space-y-5">
+            <div className="rounded-[24px] border border-amber-400/20 bg-amber-500/[0.06] p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-300">
+                Raid layer
+              </p>
+              <p className="mt-3 text-sm leading-7 text-amber-100">
+                This campaign does not create the raid itself here. Instead, use this block to
+                decide whether the campaign needs a pressure wave and whether the launch timing is
+                strong enough to support it.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TemplateMeta
+                label="Current posture"
+                value={
+                  selectedTemplate?.id === "social_raid_push"
+                    ? "Raid-led launch pressure is expected."
+                    : "Raids stay optional until the campaign proves it needs urgency."
+                }
+              />
+              <TemplateMeta
+                label="Next move"
+                value="Generate the campaign first, then add a dedicated raid if you want live pressure on top of the quest lane."
+              />
+            </div>
+          </div>
+        );
+      case "launch_posture":
+        return (
+          <div className="space-y-5">
+            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                Launch watch
+              </p>
+              <p className="mt-3 text-sm leading-7 text-sub">
+                This block keeps the workspace context, mission map and launch posture visible
+                before you move into final generation.
+              </p>
+            </div>
+            <BuilderSidebarCard title="Mission map">
+              <CampaignMissionMap items={missionMap} />
+            </BuilderSidebarCard>
+            <BuilderSidebarCard title="Launch preview">
+              <CampaignLaunchPreview preview={launchPreview} />
+            </BuilderSidebarCard>
+          </div>
+        );
+      default:
+        return null;
+    }
+  }
+
+  function renderFlowInspectorChildren() {
+    if (!selectedStoryboardBlock) return null;
+
+    if (selectedStoryboardBlockId === "quest_lane") {
+      return (
+        <div className="space-y-3">
+          <TemplateMeta
+            label="Included quests"
+            value={`${includedQuestDrafts.length} of ${templatePlan?.questDrafts.length ?? 0} drafts are active in the first wave.`}
+          />
+          <TemplateMeta
+            label="First member moment"
+            value={includedQuestDrafts[0]?.draft.title || "No first-wave quest selected yet."}
+          />
+        </div>
+      );
+    }
+
+    if (selectedStoryboardBlockId === "reward_outcome") {
+      return (
+        <div className="space-y-3">
+          <TemplateMeta
+            label="Included rewards"
+            value={`${includedRewardDrafts.length} of ${templatePlan?.rewardDrafts.length ?? 0} drafts are active in the payoff layer.`}
+          />
+          <TemplateMeta
+            label="Primary payoff"
+            value={includedRewardDrafts[0]?.draft.title || "No reward outcome selected yet."}
+          />
+        </div>
+      );
+    }
+
+    if (selectedStoryboardBlockId === "launch_posture") {
+      return <CampaignLaunchPreview preview={launchPreview} />;
+    }
+
+    return (
+      <div className="space-y-3">
+        <TemplateMeta label="Intent" value={inferredIntentState.intent.label} />
+        <TemplateMeta label="Audience" value={inferredIntentState.audience.label} />
+      </div>
+    );
+  }
+
+  function renderStudioCore() {
+    if (currentStep === "template") {
+      return (
+        <div className="space-y-6">
+          <BuilderStepHeader
+            eyebrow={`Step ${currentStepIndex + 1}`}
+            title="Start from a complete playbook"
+            description="Pick the campaign system that fits this workspace best. Veltrix scores templates against your project context so teams can move fast without building from scratch."
+            stepIndex={currentStepIndex + 1}
+            totalSteps={builderSteps.length}
+          />
+
+          <CampaignIntentStep
+            selectedIntent={selectedIntent}
+            selectedAudience={selectedAudience}
+            onIntentChange={setSelectedIntent}
+            onAudienceChange={setSelectedAudience}
+          />
+
+          {savedProjectTemplates.length > 0 ? (
+            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                Saved project templates
+              </p>
+              <div className="mt-4 space-y-3">
+                {savedProjectTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-bold text-text">{template.name}</p>
+                        <p className="mt-2 text-sm leading-6 text-sub">
+                          {template.description || "Reusable project-specific template"}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => applySavedTemplate(template.configuration)}
+                          className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+                        >
+                          Load variant
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteProjectCampaignTemplate(template.id)}
+                          className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-bold text-rose-300 transition hover:bg-rose-500/15"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : null}
 
-          {currentStep === "custom" ? (
-          <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
-            <BuilderStepHeader
-              eyebrow={`Step ${currentStepIndex + 1}`}
-              title="Shape your custom playbook"
-              description="You are not using a prebuilt template here. Set the custom direction first, then continue into the workspace wiring and launch setup."
-              stepIndex={currentStepIndex + 1}
-              totalSteps={builderSteps.length}
-            />
+          <div className="space-y-3">
+            {featuredTemplate ? (
+              <TemplateOptionCard
+                template={featuredTemplate}
+                active={featuredTemplate.id === selectedTemplateId}
+                featured
+                onSelect={() => chooseTemplate(featuredTemplate.id)}
+              />
+            ) : null}
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-                <span className="mb-2 block text-sm font-semibold text-text">
-                  Campaign title
-                </span>
-                <input
-                  value={campaignTitleDraft}
-                  onChange={(event) => setCampaignTitleDraft(event.target.value)}
-                  className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
-                  placeholder="Chainwars Custom Sprint"
-                />
-                <p className="mt-3 text-sm leading-6 text-sub">
-                  This becomes the public campaign title and anchors the rest of the
-                  custom setup path.
-                </p>
-              </label>
+            {secondaryTemplates.length > 0 ? (
+              <div className="grid gap-3 lg:grid-cols-2">
+                {secondaryTemplates.map((template) => (
+                  <TemplateOptionCard
+                    key={template.id}
+                    template={template}
+                    active={template.id === selectedTemplateId}
+                    onSelect={() => chooseTemplate(template.id)}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      );
+    }
 
-              <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-                <span className="mb-2 block text-sm font-semibold text-text">
-                  Short campaign hook
-                </span>
-                <input
-                  value={customPlaybookSummary}
-                  onChange={(event) => setCustomPlaybookSummary(event.target.value)}
-                  className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
-                  placeholder="A custom campaign for holders, community and launch traffic"
-                />
-                <p className="mt-3 text-sm leading-6 text-sub">
-                  Use one sentence to frame what this custom campaign is trying to do.
-                </p>
-              </label>
-            </div>
+    if (currentStep === "custom") {
+      return (
+        <div className="space-y-6">
+          <BuilderStepHeader
+            eyebrow={`Step ${currentStepIndex + 1}`}
+            title="Shape your custom playbook"
+            description="You are not using a prebuilt template here. Set the custom direction first, then continue into the workspace wiring and launch setup."
+            stepIndex={currentStepIndex + 1}
+            totalSteps={builderSteps.length}
+          />
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+              <span className="mb-2 block text-sm font-semibold text-text">Campaign title</span>
+              <input
+                value={campaignTitleDraft}
+                onChange={(event) => setCampaignTitleDraft(event.target.value)}
+                className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                placeholder="Chainwars Custom Sprint"
+              />
+              <p className="mt-3 text-sm leading-6 text-sub">
+                This becomes the public campaign title and anchors the rest of the custom setup
+                path.
+              </p>
+            </label>
 
             <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
               <span className="mb-2 block text-sm font-semibold text-text">
-                Internal direction
+                Short campaign hook
               </span>
-              <textarea
-                value={customPlaybookGoal}
-                onChange={(event) => setCustomPlaybookGoal(event.target.value)}
-                rows={5}
+              <input
+                value={customPlaybookSummary}
+                onChange={(event) => setCustomPlaybookSummary(event.target.value)}
                 className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
-                placeholder="Describe the flow you want to build: what should users do first, what should this campaign unlock, and what kind of reward logic should it support?"
+                placeholder="A custom campaign for holders, community and launch traffic"
               />
               <p className="mt-3 text-sm leading-6 text-sub">
-                This is your own custom playbook note. It helps the launch step feel
-                intentional instead of blank.
+                Use one sentence to frame what this custom campaign is trying to do.
               </p>
             </label>
           </div>
-          ) : null}
 
-          <div className="space-y-5 xl:self-start">
-            {selectedTemplate && templatePlan ? (
-              <div className="space-y-5">
-                <StudioPreviewCard
-                  eyebrow={studioLens === "strategy" ? "Strategy view" : "Launch view"}
-                  title={
-                    currentStep === "custom"
-                      ? "Custom playbook preview"
-                      : currentStep === "flow"
-                        ? "Generated flow preview"
-                        : "Campaign preview"
-                  }
-                  description="This side rail keeps the campaign narrative, readiness, and generated mission posture visible while you keep editing."
+          <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+            <span className="mb-2 block text-sm font-semibold text-text">Internal direction</span>
+            <textarea
+              value={customPlaybookGoal}
+              onChange={(event) => setCustomPlaybookGoal(event.target.value)}
+              rows={5}
+              className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+              placeholder="Describe the flow you want to build: what should users do first, what should this campaign unlock, and what kind of reward logic should it support?"
+            />
+            <p className="mt-3 text-sm leading-6 text-sub">
+              This is your own custom playbook note. It helps the launch step feel intentional
+              instead of blank.
+            </p>
+          </label>
+        </div>
+      );
+    }
+
+    if (currentStep === "autofill") {
+      return (
+        <div className="space-y-6">
+          <BuilderStepHeader
+            eyebrow={`Step ${currentStepIndex + 1}`}
+            title="Patch the workspace before the campaign wires itself"
+            description="Use this stage to close the missing context gaps once, then move into the generated launch architecture."
+            stepIndex={currentStepIndex + 1}
+            totalSteps={builderSteps.length}
+          />
+          {renderWorkspaceContextEditor()}
+        </div>
+      );
+    }
+
+    if (currentStep === "flow") {
+      return (
+        <div className="space-y-6">
+          <BuilderStepHeader
+            eyebrow={`Step ${currentStepIndex + 1}`}
+            title="Tune the campaign storyboard"
+            description="This is the core architecture pass. Select a block in the storyboard, then refine the exact part of the campaign journey that block owns."
+            stepIndex={currentStepIndex + 1}
+            totalSteps={builderSteps.length}
+          />
+
+          <CampaignStoryboardCanvas
+            blocks={storyboardBlocks}
+            selectedBlockId={selectedStoryboardBlockId}
+            onSelect={setSelectedStoryboardBlockId}
+          />
+
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div>{renderFlowBlockWorkspace()}</div>
+            <CampaignStoryboardInspector block={selectedStoryboardBlock}>
+              {renderFlowInspectorChildren()}
+            </CampaignStoryboardInspector>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <BuilderStepHeader
+          eyebrow="Campaign Studio Launch"
+          title="Lock the launch posture and generate the campaign"
+          description="Keep the storyboard in view, focus one block at a time, and generate the campaign once the final posture feels right."
+          stepIndex={currentStepIndex + 1}
+          totalSteps={builderSteps.length}
+        />
+
+        <CampaignStoryboardCanvas
+          blocks={storyboardBlocks}
+          selectedBlockId={selectedStoryboardBlockId}
+          onSelect={setSelectedStoryboardBlockId}
+        />
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-5">
+            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                Save this variant
+              </p>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-text">Template name</span>
+                  <input
+                    value={savedTemplateName}
+                    onChange={(event) => setSavedTemplateName(event.target.value)}
+                    className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                    placeholder="Chainwars launch variant"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-text">Short note</span>
+                  <input
+                    value={savedTemplateDescription}
+                    onChange={(event) => setSavedTemplateDescription(event.target.value)}
+                    className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                    placeholder="For launch pushes with quote-post proof"
+                  />
+                </label>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={saveCurrentTemplateVariant}
+                  disabled={!selectedProject || !selectedTemplate || savingTemplate}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-60"
                 >
+                  {savingTemplate ? "Saving variant..." : "Save as project variant"}
+                </button>
+                {savedTemplateMessage ? <p className="text-sm text-sub">{savedTemplateMessage}</p> : null}
+              </div>
+            </div>
+
+            {generationMessage ? (
+              <div className="rounded-[22px] border border-primary/25 bg-primary/10 px-4 py-4 text-sm text-primary">
+                {generationMessage}
+              </div>
+            ) : null}
+
+            <CampaignForm
+              projects={projects}
+              defaultProjectId={selectedProject?.id}
+              resetKey={`${selectedProject?.id || "none"}:${selectedTemplateId}`}
+              studioLayout="storyboard"
+              focusBlockId={selectedStoryboardBlockId}
+              initialValues={
+                templatePlan
+                  ? {
+                      ...templatePlan.campaignDraft,
+                      title: campaignTitleDraft || templatePlan.campaignDraft.title,
+                      shortDescription:
+                        customPlaybookSummary || templatePlan.campaignDraft.shortDescription,
+                      longDescription:
+                        customPlaybookGoal || templatePlan.campaignDraft.longDescription,
+                      slug: (campaignTitleDraft || templatePlan.campaignDraft.title)
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^a-z0-9\s-]/g, "")
+                        .replace(/\s+/g, "-")
+                        .replace(/-+/g, "-"),
+                    }
+                  : undefined
+              }
+              onSubmit={async (values) => {
+                setIsGenerating(true);
+                setGenerationMessage("Generating campaign and drafting linked quests and rewards...");
+
+                try {
+                  const campaignId = await createCampaign(values);
+
+                  if (templatePlan) {
+                    for (const quest of includedQuestDrafts) {
+                      await createQuest({
+                        ...quest.draft,
+                        projectId: values.projectId,
+                        campaignId,
+                        startsAt: values.startsAt || quest.draft.startsAt,
+                        endsAt: values.endsAt || quest.draft.endsAt,
+                        status: values.status === "active" ? "active" : quest.draft.status,
+                      });
+                    }
+
+                    for (const reward of includedRewardDrafts) {
+                      await createReward({
+                        ...reward.draft,
+                        projectId: values.projectId,
+                        campaignId,
+                        status: values.status === "active" ? "active" : reward.draft.status,
+                      });
+                    }
+                  }
+
+                  setGenerationMessage("Campaign generated successfully. Review the next step below.");
+                  setGeneratedCampaign({
+                    id: campaignId,
+                    title: values.title,
+                  });
+                } catch (error: any) {
+                  setGenerationMessage(error?.message || "Failed to generate the campaign.");
+                  throw error;
+                } finally {
+                  setIsGenerating(false);
+                }
+              }}
+              submitLabel={isGenerating ? "Generating Campaign..." : "Generate Campaign"}
+            />
+          </div>
+
+          <CampaignStoryboardInspector block={selectedStoryboardBlock}>
+            <CampaignLaunchPreview preview={launchPreview} />
+          </CampaignStoryboardInspector>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <AdminShell>
+      <div className="space-y-6">
+        <StudioShell
+          eyebrow="Campaign Studio"
+          title="Design the mission lane before you launch it"
+          description="Move from project intent into a clean storyboard. Pick the block you want to shape, keep the member-facing preview visible, and only see the controls that matter for the current campaign decision."
+          progressPercent={progressPercent}
+          metrics={null}
+          contextPills={null}
+          steps={builderSteps.map((step) => ({
+            id: step.id,
+            eyebrow: "Step",
+            label: step.label,
+            description: step.description,
+            complete: visitedSteps.includes(step.id),
+          }))}
+          currentStep={currentStep}
+          onSelectStep={attemptStepNavigation}
+          topFrame={
+            <StudioTopFrame
+              eyebrow="Campaign Studio"
+              title="Design the mission lane before you launch it"
+              description="Start from project intent, patch the workspace only where it matters, then move into a storyboard that keeps goals, quests, rewards and launch posture aligned."
+              actions={
+                <StudioModeToggle
+                  label="Studio lens"
+                  value={studioLens}
+                  onChange={setStudioLens}
+                  options={[
+                    {
+                      value: "strategy",
+                      label: "Strategy",
+                      eyebrow: "Intent, audience, flow",
+                    },
+                    {
+                      value: "launch",
+                      label: "Launch",
+                      eyebrow: "Readiness, output, next move",
+                    },
+                  ]}
+                />
+              }
+              context={
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text">
+                    {selectedProject?.name || "No workspace"}
+                  </span>
+                  <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                    {selectedTemplate?.label || "Playbook not selected"}
+                  </span>
+                  <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                    {includedQuestDrafts.length} quests
+                  </span>
+                  <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                    {includedRewardDrafts.length} rewards
+                  </span>
+                </div>
+              }
+              supporting={
+                <div className="grid gap-3 md:grid-cols-3">
+                  <BuilderMetricCard label="Workspace" value={selectedProject?.name || "No project"} />
+                  <BuilderMetricCard
+                    label="Template fit"
+                    value={
+                      selectedTemplate
+                        ? `${selectedTemplate.fitLabel} (${selectedTemplate.fitScore}/100)`
+                        : "Not selected"
+                    }
+                  />
+                  <BuilderMetricCard
+                    label="Missing context"
+                    value={String(currentMissingContextFields.length)}
+                  />
+                </div>
+              }
+            />
+          }
+          leftRail={
+            <StudioStepRail
+              steps={storyboardStepItems}
+              currentStep={currentStep}
+              onSelect={attemptStepNavigation}
+            />
+          }
+          rightRail={
+            <>
+              <StudioPreviewCard
+                eyebrow={studioLens === "strategy" ? "Member view" : "Launch readout"}
+                title={
+                  currentStep === "launch"
+                    ? "Launch snapshot"
+                    : currentStep === "flow"
+                      ? "Storyboard preview"
+                      : "Campaign preview"
+                }
+                description="Keep the public campaign shape in view while you tune the underlying system."
+              >
+                {selectedTemplate && templatePlan ? (
                   <div className="space-y-5">
                     <CampaignPreviewSurface
                       templateLabel={
@@ -868,10 +1453,7 @@ function NewCampaignPageContent() {
                         customPlaybookSummary ||
                         templatePlan.campaignDraft.title
                       }
-                      summary={
-                        customPlaybookSummary ||
-                        templatePlan.campaignDraft.shortDescription
-                      }
+                      summary={customPlaybookSummary || templatePlan.campaignDraft.shortDescription}
                       fitLabel={selectedTemplate.fitLabel}
                       fitScore={selectedTemplate.fitScore}
                       questCount={`${includedQuestDrafts.length}/${templatePlan.questDrafts.length}`}
@@ -881,20 +1463,8 @@ function NewCampaignPageContent() {
 
                     <div className="grid gap-3 md:grid-cols-2">
                       <PreviewStat
-                        label="Campaign title"
-                        value={
-                          campaignTitleDraft ||
-                          customPlaybookSummary ||
-                          templatePlan.campaignDraft.title
-                        }
-                      />
-                      <PreviewStat
                         label="Edited drafts"
                         value={editedQuestCount + editedRewardCount}
-                      />
-                      <PreviewStat
-                        label="Intent"
-                        value={selectedIntent.replace(/_/g, " ")}
                       />
                       <PreviewStat
                         label="Audience"
@@ -902,389 +1472,47 @@ function NewCampaignPageContent() {
                       />
                     </div>
 
-                    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
-                      <label className="block">
-                        <span className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                          Campaign title
-                        </span>
-                        <input
-                          value={campaignTitleDraft}
-                          onChange={(event) => setCampaignTitleDraft(event.target.value)}
-                          className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
-                          placeholder="Give this campaign its public title"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </StudioPreviewCard>
-
-                <StudioReadinessCard title="Studio readiness" items={studioReadiness} />
-
-                <BuilderSidebarCard title="Mission Map">
-                  <CampaignMissionMap items={missionMap} />
-                </BuilderSidebarCard>
-
-                {studioLens === "launch" ? (
-                  <StudioPreviewCard
-                    eyebrow="Launch posture"
-                    title="What this save will generate"
-                    description="A fast read on the first member moment, included outputs, and whether the workspace is ready."
-                  >
-                    <CampaignLaunchPreview preview={launchPreview} />
-                  </StudioPreviewCard>
-                ) : null}
-
-                {currentStep === "custom" ? (
-                <BuilderSidebarCard title="Custom Route">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Custom path
-                  </p>
-                  <div className="mt-4 grid gap-3">
-                    <TemplateMeta
-                      label="Starting point"
-                      value="This route skips pre-generated quests and rewards so your team can build the campaign structure manually."
-                    />
-                    <TemplateMeta
-                      label="What happens next"
-                      value="Continue into workspace context, then generate the campaign shell and add quests or rewards with the dedicated builders."
-                    />
-                  </div>
-                </BuilderSidebarCard>
-                ) : null}
-
-                {currentStep === "autofill" ? (
-                <BuilderSidebarCard title="Project Context Usage">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Project context usage
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {selectedTemplate.requiredProjectFields.map((field) => (
-                      <span
-                        key={field}
-                        className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                          currentMissingContextFields.includes(field)
-                            ? "bg-amber-500/15 text-amber-300"
-                            : "bg-primary/15 text-primary"
-                        }`}
-                      >
-                        {formatProjectFieldLabel(field)}
-                      </span>
-                    ))}
-                  </div>
-                  {currentMissingContextFields.length > 0 ? (
-                    <div className="mt-4 space-y-4">
-                      <p className="text-sm leading-6 text-amber-200">
-                        Missing project fields:{" "}
-                        {currentMissingContextFields
-                          .map((field) => formatProjectFieldLabel(field))
-                          .join(", ")}
-                        . Fill them here once and this template will auto-wire itself.
-                      </p>
-
-                      <div className="grid gap-4 md:grid-cols-2">
-                        {editableContextFields.map((field) => (
-                          <label key={field} className="block">
-                            <span className="mb-2 block text-sm font-semibold text-text">
-                              {formatProjectFieldLabel(field)}
-                            </span>
-                            <input
-                              value={
-                                projectContextDraft[field as EditableProjectContextField] ??
-                                ((selectedProject?.[
-                                  field as EditableProjectContextField
-                                ] as string | undefined) ?? "")
-                              }
-                              onChange={(event) =>
-                                setProjectContextDraft((current) => ({
-                                  ...current,
-                                  [field as EditableProjectContextField]: event.target.value,
-                                }))
-                              }
-                              className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
-                              placeholder={`Add ${formatProjectFieldLabel(field)}`}
-                            />
-                          </label>
-                        ))}
+                    {studioLens === "launch" || currentStep === "launch" ? (
+                      <CampaignLaunchPreview preview={launchPreview} />
+                    ) : (
+                      <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                          Mission map
+                        </p>
+                        <div className="mt-4">
+                          <CampaignMissionMap items={missionMap} />
+                        </div>
                       </div>
-
-                      <div className="flex flex-wrap items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={saveProjectContextFields}
-                          disabled={
-                            contextSaving ||
-                            !selectedProject ||
-                            Object.keys(projectContextDraft).length === 0
-                          }
-                          className="rounded-2xl bg-primary px-4 py-3 font-bold text-black shadow-[0_12px_28px_rgba(141,255,89,0.18)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {contextSaving ? "Saving workspace context..." : "Save workspace context"}
-                        </button>
-                        {contextMessage ? (
-                          <p className="text-sm text-sub">{contextMessage}</p>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : Object.keys(projectContextDraft).length > 0 ? (
-                    <div className="mt-4 rounded-[22px] border border-emerald-500/30 bg-emerald-500/10 px-4 py-4">
-                      <p className="text-sm leading-6 text-emerald-100">
-                        Everything needed for this template is filled in. You can continue now, or save these values back to the workspace for future campaigns.
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm leading-6 text-sub">
-                      All required project links are present, so this template can
-                      auto-fill immediately.
-                    </p>
-                  )}
-                </BuilderSidebarCard>
-                ) : null}
-
-                {contextSections.length > 0 && currentStep === "autofill" ? (
-                  <BuilderSidebarCard title="Context Signals">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {contextSections.map((section) => (
-                        <TemplateMetaCard
-                          key={section.title}
-                          title={section.title}
-                          description={section.description}
-                          value={section.value}
-                        />
-                      ))}
-                    </div>
-                  </BuilderSidebarCard>
-                ) : null}
-
-                {currentStep === "flow" ? (
-                <BuilderSidebarCard title="Generated Quest Flow">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Generated quest flow
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
-                    Turn off anything you do not want, then refine the drafts that should ship with this campaign.
-                  </p>
-                  <div className="mt-4 space-y-3">
-                    {templatePlan.questDrafts.map((quest, index) => (
-                      <TemplateQuestCard
-                        key={quest.key}
-                        item={{
-                          ...quest,
-                          draft: {
-                            ...quest.draft,
-                            ...(questDraftEdits[quest.key] ?? {}),
-                          },
-                        }}
-                        index={index}
-                        included={selectedQuestKeys.includes(quest.key)}
-                        expanded={expandedQuestKeys.includes(quest.key)}
-                        onToggle={() =>
-                          setSelectedQuestKeys((current) =>
-                            current.includes(quest.key)
-                              ? current.filter((key) => key !== quest.key)
-                              : [...current, quest.key]
-                          )
-                        }
-                        onToggleExpand={() =>
-                          setExpandedQuestKeys((current) =>
-                            current.includes(quest.key)
-                              ? current.filter((key) => key !== quest.key)
-                              : [...current, quest.key]
-                          )
-                        }
-                        onEdit={updateQuestDraftEdit}
-                      />
-                    ))}
+                    )}
                   </div>
-                </BuilderSidebarCard>
-                ) : null}
-
-                {currentStep === "flow" ? (
-                <BuilderSidebarCard title="Generated Rewards">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Generated rewards
+                ) : (
+                  <p className="text-sm leading-6 text-sub">
+                    Pick a playbook to unlock the storyboard, preview and launch posture.
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
-                    Tighten the payoff layer here so the campaign launches with a clean, intentional reward ladder.
-                  </p>
-                  <div className="mt-4 space-y-3">
-                    {templatePlan.rewardDrafts.map((reward) => (
-                      <TemplateRewardCard
-                        key={reward.key}
-                        item={{
-                          ...reward,
-                          draft: {
-                            ...reward.draft,
-                            ...(rewardDraftEdits[reward.key] ?? {}),
-                          },
-                        }}
-                        included={selectedRewardKeys.includes(reward.key)}
-                        expanded={expandedRewardKeys.includes(reward.key)}
-                        onToggle={() =>
-                          setSelectedRewardKeys((current) =>
-                            current.includes(reward.key)
-                              ? current.filter((key) => key !== reward.key)
-                              : [...current, reward.key]
-                          )
-                        }
-                        onToggleExpand={() =>
-                          setExpandedRewardKeys((current) =>
-                            current.includes(reward.key)
-                              ? current.filter((key) => key !== reward.key)
-                              : [...current, reward.key]
-                          )
-                        }
-                        onEdit={updateRewardDraftEdit}
-                      />
-                    ))}
-                  </div>
-                </BuilderSidebarCard>
-                ) : null}
-              </div>
-            ) : (
-              <StudioPreviewCard
-                eyebrow="Campaign preview"
-                title="No playbook selected yet"
-                description="Pick a project workspace and a playbook to unlock the mission map, readiness rail, and launch preview."
-              >
-                <p className="text-sm leading-6 text-sub">
-                  The studio gets much more useful once it can score a template against your project context.
-                </p>
+                )}
               </StudioPreviewCard>
-            )}
-          </div>
-        </div>
-        ) : null}
 
-        {currentStep === "launch" ? (
-        <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
-          <BuilderStepHeader
-            eyebrow="Campaign Studio Launch"
-            title="Review the mission lane and lock in the launch posture"
-            description="Save the reusable project variant, confirm what gets generated, and launch the campaign with its selected quest and reward drafts."
-            stepIndex={currentStepIndex + 1}
-            totalSteps={builderSteps.length}
-          />
-
-          <CampaignLaunchPreview preview={launchPreview} />
-
-          <div className="mb-6 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-              Save this variant
-            </p>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-text">
-                  Template name
-                </span>
-                <input
-                  value={savedTemplateName}
-                  onChange={(event) => setSavedTemplateName(event.target.value)}
-                  className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
-                  placeholder="Chainwars launch variant"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-text">
-                  Short note
-                </span>
-                <input
-                  value={savedTemplateDescription}
-                  onChange={(event) =>
-                    setSavedTemplateDescription(event.target.value)
-                  }
-                  className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
-                  placeholder="For launch pushes with quote-post proof"
-                />
-              </label>
-            </div>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={saveCurrentTemplateVariant}
-                disabled={!selectedProject || !selectedTemplate || savingTemplate}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {savingTemplate ? "Saving variant..." : "Save as project variant"}
-              </button>
-              {savedTemplateMessage ? (
-                <p className="text-sm text-sub">{savedTemplateMessage}</p>
-              ) : null}
-            </div>
-          </div>
-
-          {generationMessage ? (
-            <div className="rounded-[22px] border border-primary/25 bg-primary/10 px-4 py-4 text-sm text-primary">
-              {generationMessage}
-            </div>
-          ) : null}
-
-          <CampaignForm
-            projects={projects}
-            defaultProjectId={selectedProject?.id}
-            resetKey={`${selectedProject?.id || "none"}:${selectedTemplateId}`}
-            initialValues={
-              templatePlan
-                ? {
-                    ...templatePlan.campaignDraft,
-                    title: campaignTitleDraft || templatePlan.campaignDraft.title,
-                    shortDescription:
-                      customPlaybookSummary || templatePlan.campaignDraft.shortDescription,
-                    longDescription:
-                      customPlaybookGoal || templatePlan.campaignDraft.longDescription,
-                    slug: (campaignTitleDraft || templatePlan.campaignDraft.title)
-                      .toLowerCase()
-                      .trim()
-                      .replace(/[^a-z0-9\s-]/g, "")
-                      .replace(/\s+/g, "-")
-                      .replace(/-+/g, "-"),
-                  }
-                : undefined
-            }
-            onSubmit={async (values) => {
-              setIsGenerating(true);
-              setGenerationMessage("Generating campaign and drafting linked quests and rewards...");
-
-              try {
-                const campaignId = await createCampaign(values);
-
-                if (templatePlan) {
-                  for (const quest of includedQuestDrafts) {
-                    await createQuest({
-                      ...quest.draft,
-                      projectId: values.projectId,
-                      campaignId,
-                      startsAt: values.startsAt || quest.draft.startsAt,
-                      endsAt: values.endsAt || quest.draft.endsAt,
-                      status: values.status === "active" ? "active" : quest.draft.status,
-                    });
-                  }
-
-                  for (const reward of includedRewardDrafts) {
-                    await createReward({
-                      ...reward.draft,
-                      projectId: values.projectId,
-                      campaignId,
-                      status: values.status === "active" ? "active" : reward.draft.status,
-                    });
-                  }
+              <StudioWarningRail
+                title="Launch watchlist"
+                items={
+                  stepError
+                    ? [
+                        {
+                          label: "Current blocker",
+                          description: stepError,
+                          tone: "warning" as const,
+                        },
+                        ...storyboardWarnings,
+                      ]
+                    : storyboardWarnings
                 }
-
-                setGenerationMessage("Campaign generated successfully. Review the next step below.");
-                setGeneratedCampaign({
-                  id: campaignId,
-                  title: values.title,
-                });
-              } catch (error: any) {
-                setGenerationMessage(error?.message || "Failed to generate the campaign.");
-                throw error;
-              } finally {
-                setIsGenerating(false);
-              }
-            }}
-            submitLabel={isGenerating ? "Generating Campaign..." : "Generate Campaign"}
-          />
-        </div>
-        ) : null}
+              />
+            </>
+          }
+          canvasClassName="space-y-6"
+        >
+          {renderStudioCore()}
+        </StudioShell>
 
         {stepError ? (
           <div className="rounded-[24px] border border-rose-500/30 bg-rose-500/10 px-4 py-4 text-sm text-rose-100">

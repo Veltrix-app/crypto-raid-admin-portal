@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import StudioModeToggle from "@/components/forms/studio/StudioModeToggle";
 import StudioReadinessCard from "@/components/forms/studio/StudioReadinessCard";
+import type { CampaignStoryboardBlockId } from "@/lib/studio/campaign-storyboard";
 import { AdminCampaign } from "@/types/entities/campaign";
 import { AdminProject } from "@/types/entities/project";
 
@@ -11,6 +12,8 @@ type Props = {
   initialValues?: Omit<AdminCampaign, "id">;
   defaultProjectId?: string;
   resetKey?: string;
+  studioLayout?: "default" | "storyboard";
+  focusBlockId?: CampaignStoryboardBlockId | null;
   onSubmit: (values: Omit<AdminCampaign, "id">) => void | Promise<void>;
   submitLabel?: string;
 };
@@ -167,6 +170,8 @@ export default function CampaignForm({
   initialValues,
   defaultProjectId,
   resetKey,
+  studioLayout = "default",
+  focusBlockId = null,
   onSubmit,
   submitLabel = "Save Campaign",
 }: Props) {
@@ -180,10 +185,101 @@ export default function CampaignForm({
   const [errors, setErrors] = useState<CampaignFormErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const activePreset = CAMPAIGN_TYPE_PRESETS[selectedPreset];
+  const isStoryboardLayout = studioLayout === "storyboard";
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === values.projectId),
     [projects, values.projectId]
   );
+  const visibleSections = useMemo(() => {
+    if (!isStoryboardLayout || !focusBlockId) {
+      return {
+        blueprint: true,
+        essentials: true,
+        reward: true,
+        copy: true,
+        timing: true,
+        media: true,
+        signals: true,
+        questGuidance: false,
+        raidGuidance: false,
+      };
+    }
+
+    switch (focusBlockId) {
+      case "goal":
+        return {
+          blueprint: true,
+          essentials: true,
+          reward: false,
+          copy: true,
+          timing: false,
+          media: false,
+          signals: false,
+          questGuidance: false,
+          raidGuidance: false,
+        };
+      case "quest_lane":
+        return {
+          blueprint: false,
+          essentials: true,
+          reward: false,
+          copy: true,
+          timing: false,
+          media: false,
+          signals: false,
+          questGuidance: true,
+          raidGuidance: false,
+        };
+      case "raid_pressure":
+        return {
+          blueprint: false,
+          essentials: false,
+          reward: false,
+          copy: false,
+          timing: true,
+          media: false,
+          signals: false,
+          questGuidance: false,
+          raidGuidance: true,
+        };
+      case "reward_outcome":
+        return {
+          blueprint: false,
+          essentials: false,
+          reward: true,
+          copy: false,
+          timing: false,
+          media: false,
+          signals: false,
+          questGuidance: false,
+          raidGuidance: false,
+        };
+      case "launch_posture":
+        return {
+          blueprint: false,
+          essentials: false,
+          reward: false,
+          copy: false,
+          timing: true,
+          media: true,
+          signals: true,
+          questGuidance: false,
+          raidGuidance: false,
+        };
+      default:
+        return {
+          blueprint: true,
+          essentials: true,
+          reward: true,
+          copy: true,
+          timing: true,
+          media: true,
+          signals: true,
+          questGuidance: false,
+          raidGuidance: false,
+        };
+    }
+  }, [focusBlockId, isStoryboardLayout]);
 
   useEffect(() => {
     if (!values.projectId && defaultProjectId) {
@@ -347,6 +443,26 @@ export default function CampaignForm({
         </div>
       ) : null}
 
+      {isStoryboardLayout ? (
+        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                Focused launch controls
+              </p>
+              <p className="mt-2 text-sm leading-6 text-sub">
+                This launch editor only shows the campaign controls that belong to the currently
+                selected storyboard block. Switch blocks in the storyboard when you want to tune
+                a different part of the journey.
+              </p>
+            </div>
+            <span className="rounded-full border border-white/8 bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-text">
+              {focusBlockId?.replace(/_/g, " ") ?? "full editor"}
+            </span>
+          </div>
+        </div>
+      ) : null}
+
       <StudioModeToggle
         label="Builder mode"
         value={builderMode}
@@ -365,8 +481,11 @@ export default function CampaignForm({
         ]}
       />
 
-      <StudioReadinessCard title="Campaign readiness" items={readinessItems} />
+      {!isStoryboardLayout ? (
+        <StudioReadinessCard title="Campaign readiness" items={readinessItems} />
+      ) : null}
 
+      {visibleSections.blueprint ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Campaign Blueprint
@@ -417,7 +536,22 @@ export default function CampaignForm({
           </div>
         </div>
       </div>
+      ) : null}
 
+      {visibleSections.questGuidance ? (
+        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4 text-sm leading-6 text-sub">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+            Quest lane handoff
+          </p>
+          <p className="mt-3">
+            The quest lane itself gets refined in the generated journey drafts. Use this launch
+            block to keep the campaign title, slug and member-facing hook aligned with the quest
+            path you already designed in the storyboard.
+          </p>
+        </div>
+      ) : null}
+
+      {visibleSections.essentials ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Campaign Essentials
@@ -501,7 +635,9 @@ export default function CampaignForm({
           </p>
         ) : null}
       </div>
+      ) : null}
 
+      {visibleSections.reward ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Reward And Access
@@ -604,7 +740,9 @@ export default function CampaignForm({
           <span className="font-semibold text-text">AESP hint:</span> reward pool, minimum active XP and lock window now drive the first staking and distribution tranche. Keep the values conservative until you see real campaign flow.
         </div>
       </div>
+      ) : null}
 
+      {visibleSections.copy ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Member Facing Copy
@@ -633,7 +771,22 @@ export default function CampaignForm({
           <span className="font-semibold text-text">Builder hint:</span> write the short description like the campaign hook contributors see first, and use the long description to explain the full loop, reward logic and what success looks like.
         </div>
       </div>
+      ) : null}
 
+      {visibleSections.raidGuidance ? (
+        <div className="rounded-[24px] border border-amber-400/20 bg-amber-500/[0.06] p-4 text-sm leading-6 text-amber-100">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-300">
+            Raid posture
+          </p>
+          <p className="mt-3">
+            Raids work best as a momentum spike layered on top of a stable quest lane. Use the
+            timing controls below to decide when this campaign becomes visible and whether it is
+            strong enough to support a live pressure wave.
+          </p>
+        </div>
+      ) : null}
+
+      {visibleSections.timing ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Timing And Launch
@@ -668,8 +821,9 @@ export default function CampaignForm({
           </div>
         </div>
       </div>
+      ) : null}
 
-      {builderMode === "advanced" ? (
+      {builderMode === "advanced" && visibleSections.media ? (
         <>
           <div className="space-y-3">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
@@ -697,6 +851,7 @@ export default function CampaignForm({
             </div>
           </div>
 
+          {visibleSections.signals ? (
           <div className="space-y-3">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
               Advanced Signals
@@ -725,6 +880,7 @@ export default function CampaignForm({
               </Field>
             </div>
           </div>
+          ) : null}
         </>
       ) : null}
 
