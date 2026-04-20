@@ -32,6 +32,7 @@ type Props = {
   initialValues?: Omit<AdminQuest, "id">;
   defaultProjectId?: string;
   defaultCampaignId?: string;
+  entrySourceLabel?: string;
   onSubmit: (values: Omit<AdminQuest, "id">) => void | Promise<void>;
   submitLabel?: string;
 };
@@ -268,6 +269,7 @@ export default function QuestForm({
   initialValues,
   defaultProjectId,
   defaultCampaignId,
+  entrySourceLabel,
   onSubmit,
   submitLabel = "Save Quest",
 }: Props) {
@@ -564,6 +566,11 @@ export default function QuestForm({
                 <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
                   {getQuestStudioFamily(selectedPreset).label}
                 </span>
+                {entrySourceLabel ? (
+                  <span className="rounded-full border border-primary/20 bg-primary/12 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                    {entrySourceLabel}
+                  </span>
+                ) : null}
               </div>
             }
             supporting={
@@ -791,6 +798,11 @@ export default function QuestForm({
               <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-sm text-sub">
                 <span className="font-semibold text-text">Studio hint:</span> this is the point where the quest becomes real for the member. Make the title, subcopy and CTA feel like one clean action, not three unrelated fields.
               </div>
+              {entrySourceLabel ? (
+                <div className="rounded-[22px] border border-primary/20 bg-primary/10 p-4 text-sm leading-6 text-primary">
+                  This quest came in through <span className="font-semibold text-white">{entrySourceLabel}</span>, so keep the launch lane and campaign fit visible while you tune the member action.
+                </div>
+              ) : null}
             </div>
           ) : null}
 

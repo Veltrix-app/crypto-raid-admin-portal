@@ -10,6 +10,8 @@ import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/
 import OpsTable, { type OpsTableColumn } from "@/components/layout/ops/OpsTable";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
+import ProjectTemplateLibrary from "@/components/projects/templates/ProjectTemplateLibrary";
+import { buildProjectBuilderLibrary } from "@/lib/templates/project-builder-library";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminCampaign } from "@/types/entities/campaign";
@@ -25,6 +27,7 @@ export default function ProjectCampaignsPage() {
   const quests = useAdminPortalStore((s) => s.quests);
   const raids = useAdminPortalStore((s) => s.raids);
   const rewards = useAdminPortalStore((s) => s.rewards);
+  const projectBuilderTemplates = useAdminPortalStore((s) => s.projectBuilderTemplates);
 
   const project = getProjectById(params.id);
 
@@ -65,6 +68,20 @@ export default function ProjectCampaignsPage() {
   const projectQuests = quests.filter((quest) => quest.projectId === project.id);
   const projectRaids = raids.filter((raid) => raid.projectId === project.id);
   const projectRewards = rewards.filter((reward) => reward.projectId === project.id);
+  const primaryCampaignId =
+    projectCampaigns.find((campaign) => campaign.status === "active")?.id ??
+    projectCampaigns[0]?.id ??
+    null;
+  const templateLibrarySections = buildProjectBuilderLibrary({
+    project: {
+      id: project.id,
+      name: project.name,
+    },
+    campaignId: primaryCampaignId,
+    savedTemplates: projectBuilderTemplates.filter(
+      (template) => template.projectId === project.id
+    ),
+  });
 
   const columns: OpsTableColumn<AdminCampaign>[] = [
     {
@@ -128,21 +145,21 @@ export default function ProjectCampaignsPage() {
           action={
             <div className="flex flex-wrap gap-2">
               <Link
-                href={`/campaigns/new?projectId=${project.id}`}
+                href={`/campaigns/new?projectId=${project.id}&source=campaign-board`}
                 className="inline-flex items-center gap-2 rounded-[18px] bg-primary px-4 py-3 font-bold text-black"
               >
                 <FolderPlus size={16} />
                 Open Campaign Studio
               </Link>
               <Link
-                href={`/quests/new?projectId=${project.id}`}
+                href={`/quests/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
                 className="inline-flex items-center gap-2 rounded-[18px] border border-line bg-card2 px-4 py-3 font-bold text-text transition hover:border-primary/35"
               >
                 <Target size={16} />
                 Open Quest Studio
               </Link>
               <Link
-                href={`/raids/new?projectId=${project.id}`}
+                href={`/raids/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
                 className="inline-flex items-center gap-2 rounded-[18px] border border-line bg-card2 px-4 py-3 font-bold text-text transition hover:border-primary/35"
               >
                 <Swords size={16} />
@@ -174,6 +191,14 @@ export default function ProjectCampaignsPage() {
             getRowKey={(campaign) => campaign.id}
             emptyState="No campaigns exist for this project yet."
           />
+        </OpsPanel>
+
+        <OpsPanel
+          eyebrow="Starter library"
+          title="Campaign packs, quest kits and raid starters"
+          description="Start from saved project variants or intent-first starters instead of jumping straight into blank creation flows."
+        >
+          <ProjectTemplateLibrary sections={templateLibrarySections} />
         </OpsPanel>
       </ProjectWorkspaceFrame>
     </AdminShell>

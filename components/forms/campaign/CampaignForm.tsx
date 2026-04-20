@@ -14,6 +14,7 @@ type Props = {
   resetKey?: string;
   studioLayout?: "default" | "storyboard";
   focusBlockId?: CampaignStoryboardBlockId | null;
+  entrySourceLabel?: string;
   onSubmit: (values: Omit<AdminCampaign, "id">) => void | Promise<void>;
   submitLabel?: string;
 };
@@ -172,6 +173,7 @@ export default function CampaignForm({
   resetKey,
   studioLayout = "default",
   focusBlockId = null,
+  entrySourceLabel,
   onSubmit,
   submitLabel = "Save Campaign",
 }: Props) {
@@ -443,10 +445,10 @@ export default function CampaignForm({
         </div>
       ) : null}
 
-      {isStoryboardLayout ? (
-        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
+        {isStoryboardLayout ? (
+          <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
                 Focused launch controls
               </p>
@@ -459,9 +461,27 @@ export default function CampaignForm({
             <span className="rounded-full border border-white/8 bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-text">
               {focusBlockId?.replace(/_/g, " ") ?? "full editor"}
             </span>
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+
+        {entrySourceLabel ? (
+          <div className="rounded-[24px] border border-primary/20 bg-primary/10 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                  Launch handoff
+                </p>
+                <p className="mt-2 text-sm leading-6 text-primary">
+                  This campaign entered through <span className="font-semibold text-white">{entrySourceLabel}</span>. Keep the launch posture, starter fit and downstream quest lane aligned while you shape the storyboard.
+                </p>
+              </div>
+              <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+                project-first
+              </span>
+            </div>
+          </div>
+        ) : null}
 
       <StudioModeToggle
         label="Builder mode"

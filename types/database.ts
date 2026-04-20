@@ -350,6 +350,20 @@ export type DbProjectCampaignTemplate = {
   updated_at?: string;
 };
 
+export type DbProjectBuilderTemplate = {
+  id: string;
+  project_id: string;
+  template_kind: string;
+  name: string;
+  description: string | null;
+  base_template_id: string | null;
+  legacy_campaign_template_id: string | null;
+  configuration: Record<string, any> | null;
+  created_by_auth_user_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type DbOnboardingRequest = {
   id: string;
   requested_by_auth_user_id: string | null;

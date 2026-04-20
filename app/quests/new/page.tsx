@@ -17,9 +17,26 @@ function NewQuestPageContent() {
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const requestedProjectId = searchParams.get("projectId") || undefined;
   const requestedCampaignId = searchParams.get("campaignId") || undefined;
+  const entrySource = searchParams.get("source") || "direct";
   const effectiveProjectId = requestedProjectId || activeProjectId || undefined;
 
   const activeProject = projects.find((project) => project.id === effectiveProjectId);
+  const entrySourceLabel =
+    entrySource === "launch"
+      ? "Launch Workspace"
+      : entrySource === "campaign-board"
+        ? "Campaign Board"
+        : entrySource === "project-overview"
+          ? "Project Overview"
+          : undefined;
+  const returnHref =
+    effectiveProjectId && entrySource === "launch"
+      ? `/projects/${effectiveProjectId}/launch`
+      : effectiveProjectId && entrySource === "campaign-board"
+        ? `/projects/${effectiveProjectId}/campaigns`
+        : effectiveProjectId && entrySource === "project-overview"
+          ? `/projects/${effectiveProjectId}`
+          : null;
 
   return (
     <AdminShell>
@@ -35,6 +52,21 @@ function NewQuestPageContent() {
         }
       >
         <div className="space-y-4">
+          {entrySourceLabel ? (
+            <div className="rounded-[24px] border border-primary/20 bg-primary/10 p-4 text-sm leading-7 text-primary">
+              <span className="font-semibold text-white">{entrySourceLabel}</span> handed this quest into the studio with project context already loaded.
+              {returnHref ? (
+                <>
+                  {" "}
+                  <a href={returnHref} className="font-semibold text-primary underline underline-offset-4">
+                    Go back to that workspace
+                  </a>
+                  {" "}if you need to recheck launch posture first.
+                </>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4 text-sm leading-7 text-sub">
             This studio now keeps the member-facing preview and quest watchlist inside the builder
             itself, so you can stay focused on one decision at a time instead of scanning side
@@ -46,6 +78,7 @@ function NewQuestPageContent() {
             campaigns={campaigns}
             defaultProjectId={effectiveProjectId}
             defaultCampaignId={requestedCampaignId}
+            entrySourceLabel={entrySourceLabel}
             onSubmit={async (values) => {
               const id = await createQuest(values);
               router.push(`/quests/${id}`);

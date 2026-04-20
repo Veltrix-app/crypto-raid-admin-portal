@@ -1,12 +1,10 @@
 import { CampaignTemplateId } from "@/lib/campaign-templates";
+import { AdminProjectBuilderTemplate } from "@/types/entities/project-builder-template";
 
-export type AdminProjectCampaignTemplate = {
-  id: string;
-  projectId: string;
-  name: string;
-  description?: string;
+export type AdminProjectCampaignTemplate = Omit<
+  AdminProjectBuilderTemplate,
+  "templateKind" | "baseTemplateId"
+> & {
+  templateKind?: "campaign";
   baseTemplateId: CampaignTemplateId;
-  configuration: string;
-  createdAt?: string;
-  updatedAt?: string;
 };

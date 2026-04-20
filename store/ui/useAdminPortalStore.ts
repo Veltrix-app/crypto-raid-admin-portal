@@ -13,17 +13,23 @@ import { AdminTeamMember } from "@/types/entities/team-member";
 import { AdminBillingPlan } from "@/types/entities/billing-plan";
 import { AdminClaim } from "@/types/entities/claim";
 import { AdminOnboardingRequest } from "@/types/entities/onboarding-request";
+import { AdminProjectBuilderTemplate } from "@/types/entities/project-builder-template";
 import { AdminProjectCampaignTemplate } from "@/types/entities/project-campaign-template";
 import { AdminReviewFlag } from "@/types/entities/review-flag";
 import { AdminUser } from "@/types/entities/user";
 import { AdminAuditLog } from "@/types/entities/audit-log";
 import { resolveQuestIntegration } from "@/lib/quest-integration";
 import {
+  type ProjectContentAction,
+  type ProjectContentType,
+} from "@/lib/projects/content-actions";
+import {
   DbAuditLog,
   DbBillingPlan,
   DbCampaign,
   DbClaim,
   DbOnboardingRequest,
+  DbProjectBuilderTemplate,
   DbProjectCampaignTemplate,
   DbProject,
   DbQuest,
@@ -54,6 +60,7 @@ type AdminPortalState = {
   onboardingRequests: AdminOnboardingRequest[];
   teamMembers: AdminTeamMember[];
   billingPlans: AdminBillingPlan[];
+  projectBuilderTemplates: AdminProjectBuilderTemplate[];
   projectCampaignTemplates: AdminProjectCampaignTemplate[];
 
   loadAll: () => Promise<void>;
@@ -82,6 +89,17 @@ type AdminPortalState = {
   updateReward: (id: string, input: Omit<AdminReward, "id">) => Promise<void>;
   deleteReward: (id: string) => Promise<void>;
   getRewardById: (id: string) => AdminReward | undefined;
+  runProjectContentAction: (input: {
+    projectId: string;
+    objectType: ProjectContentType;
+    objectId: string;
+    action: ProjectContentAction;
+  }) => Promise<{
+    objectType: ProjectContentType;
+    action: ProjectContentAction;
+    sourceId: string;
+    targetId: string;
+  }>;
 
   approveSubmission: (id: string) => Promise<void>;
   rejectSubmission: (id: string) => Promise<void>;
@@ -135,6 +153,15 @@ type DbUserProfileLite = {
   auth_user_id: string | null;
   username: string;
   avatar_url?: string;
+};
+
+type ProjectContentActionResponse = {
+  ok: true;
+  objectType: ProjectContentType;
+  action: ProjectContentAction;
+  sourceId: string;
+  targetId: string;
+  record: DbCampaign | DbQuest | DbRaid | DbReward;
 };
 
 async function dispatchCommunityPush(contentType: "campaign" | "quest" | "raid" | "reward", contentId: string) {
@@ -586,6 +613,62 @@ function mapProjectCampaignTemplate(
   };
 }
 
+function mapProjectBuilderTemplate(
+  row: DbProjectBuilderTemplate
+): AdminProjectBuilderTemplate {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    templateKind: row.template_kind as AdminProjectBuilderTemplate["templateKind"],
+    name: row.name,
+    description: row.description ?? "",
+    baseTemplateId: row.base_template_id ?? undefined,
+    legacyCampaignTemplateId: row.legacy_campaign_template_id ?? undefined,
+    configuration: row.configuration
+      ? JSON.stringify(row.configuration, null, 2)
+      : "{}",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function projectBuilderTemplateToCampaignTemplate(
+  template: AdminProjectBuilderTemplate
+): AdminProjectCampaignTemplate | null {
+  if (template.templateKind !== "campaign" || !template.baseTemplateId) {
+    return null;
+  }
+
+  return {
+    id: template.legacyCampaignTemplateId ?? template.id,
+    projectId: template.projectId,
+    name: template.name,
+    description: template.description ?? "",
+    baseTemplateId: template.baseTemplateId as AdminProjectCampaignTemplate["baseTemplateId"],
+    configuration: template.configuration,
+    legacyCampaignTemplateId: template.legacyCampaignTemplateId,
+    createdAt: template.createdAt,
+    updatedAt: template.updatedAt,
+  };
+}
+
+function projectCampaignTemplateToBuilderTemplate(
+  template: AdminProjectCampaignTemplate
+): AdminProjectBuilderTemplate {
+  return {
+    id: template.id,
+    projectId: template.projectId,
+    templateKind: "campaign",
+    name: template.name,
+    description: template.description ?? "",
+    baseTemplateId: template.baseTemplateId,
+    configuration: template.configuration,
+    legacyCampaignTemplateId: template.legacyCampaignTemplateId ?? template.id,
+    createdAt: template.createdAt,
+    updatedAt: template.updatedAt,
+  };
+}
+
 function mapOnboardingRequest(row: DbOnboardingRequest): AdminOnboardingRequest {
   return {
     id: row.id,
@@ -667,6 +750,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   onboardingRequests: [],
   teamMembers: [],
   billingPlans: [],
+  projectBuilderTemplates: [],
   projectCampaignTemplates: [],
 
   loadAll: async () => {
@@ -713,6 +797,17 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
             .from("project_campaign_templates")
             .select("*")
             .order("created_at", { ascending: false });
+    const scopedProjectBuilderTemplatesQuery =
+      !isSuperAdmin && activeProjectId
+        ? supabase
+            .from("project_builder_templates")
+            .select("*")
+            .eq("project_id", activeProjectId)
+            .order("created_at", { ascending: false })
+        : supabase
+            .from("project_builder_templates")
+            .select("*")
+            .order("created_at", { ascending: false });
     const scopedProjectReputationQuery =
       activeProjectId
         ? supabase
@@ -736,6 +831,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       globalReputationRes,
       projectReputationRes,
       reviewFlagsRes,
+      projectBuilderTemplatesRes,
       projectTemplatesRes,
     ] = await Promise.all([
       scopedProjectsQuery,
@@ -752,6 +848,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       supabase.from("user_global_reputation").select("*"),
       scopedProjectReputationQuery,
       scopedReviewFlagsQuery,
+      scopedProjectBuilderTemplatesQuery,
       scopedProjectTemplatesQuery,
     ]);
 
@@ -784,6 +881,30 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     const projectReputationByAuthUserId = new Map(
       projectReputationRows.map((row) => [row.auth_user_id, row])
     );
+    const legacyCampaignTemplates = projectTemplatesRes.error
+      ? []
+      : ((projectTemplatesRes.data ?? []) as DbProjectCampaignTemplate[]).map(
+          mapProjectCampaignTemplate
+        );
+    const builderTemplates = projectBuilderTemplatesRes.error
+      ? []
+      : ((projectBuilderTemplatesRes.data ?? []) as DbProjectBuilderTemplate[]).map(
+          mapProjectBuilderTemplate
+        );
+    const bridgedLegacyBuilderTemplates = legacyCampaignTemplates
+      .filter(
+        (template) =>
+          !builderTemplates.some(
+            (builder) =>
+              builder.id === template.id ||
+              builder.legacyCampaignTemplateId === template.id
+          )
+      )
+      .map(projectCampaignTemplateToBuilderTemplate);
+    const allBuilderTemplates = [...builderTemplates, ...bridgedLegacyBuilderTemplates];
+    const builderCampaignTemplates = allBuilderTemplates
+      .map(projectBuilderTemplateToCampaignTemplate)
+      .filter((template): template is AdminProjectCampaignTemplate => Boolean(template));
 
     const questIds = new Set(questRows.map((row) => row.id));
     const filteredSubmissionRows = ((submissionsRes.data ?? []) as DbSubmission[]).filter(
@@ -841,11 +962,9 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       ),
       teamMembers: (teamRes.data ?? []).map(mapTeamMember),
       billingPlans: (billingRes.data ?? []).map(mapBillingPlan),
-      projectCampaignTemplates: projectTemplatesRes.error
-        ? []
-        : ((projectTemplatesRes.data ?? []) as DbProjectCampaignTemplate[]).map(
-            mapProjectCampaignTemplate
-          ),
+      projectBuilderTemplates: allBuilderTemplates,
+      projectCampaignTemplates:
+        builderCampaignTemplates.length > 0 ? builderCampaignTemplates : legacyCampaignTemplates,
     });
   },
 
@@ -1585,6 +1704,141 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
 
   getRewardById: (id) => get().rewards.find((item) => item.id === id),
 
+  runProjectContentAction: async (input) => {
+    const previousCampaign =
+      input.objectType === "campaign"
+        ? get().campaigns.find((item) => item.id === input.objectId)
+        : undefined;
+    const previousQuest =
+      input.objectType === "quest"
+        ? get().quests.find((item) => item.id === input.objectId)
+        : undefined;
+    const previousRaid =
+      input.objectType === "raid"
+        ? get().raids.find((item) => item.id === input.objectId)
+        : undefined;
+    const previousReward =
+      input.objectType === "reward"
+        ? get().rewards.find((item) => item.id === input.objectId)
+        : undefined;
+
+    const response = await fetch(`/api/projects/${input.projectId}/content-actions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        objectType: input.objectType,
+        objectId: input.objectId,
+        action: input.action,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | ProjectContentActionResponse
+      | { ok?: false; error?: string }
+      | null;
+
+    if (!response.ok || !payload || payload.ok !== true) {
+      const errorMessage =
+        payload && "error" in payload && typeof payload.error === "string"
+          ? payload.error
+          : "Failed to run project content action.";
+      throw new Error(errorMessage);
+    }
+
+    if (payload.objectType === "campaign") {
+      const mapped = mapCampaign(payload.record as DbCampaign);
+      set((state) => ({
+        campaigns:
+          payload.action === "duplicate"
+            ? [mapped, ...state.campaigns]
+            : state.campaigns.map((item) =>
+                item.id === payload.sourceId ? mapped : item
+              ),
+      }));
+
+      if (
+        payload.action !== "duplicate" &&
+        isCampaignDispatchEligible(mapped) &&
+        !isCampaignDispatchEligible(
+          previousCampaign ?? { status: "draft", visibility: "private" }
+        )
+      ) {
+        await dispatchCommunityPush("campaign", mapped.id);
+      }
+    }
+
+    if (payload.objectType === "quest") {
+      const mapped = mapQuest(payload.record as DbQuest);
+      set((state) => ({
+        quests:
+          payload.action === "duplicate"
+            ? [mapped, ...state.quests]
+            : state.quests.map((item) =>
+                item.id === payload.sourceId ? mapped : item
+              ),
+      }));
+
+      if (
+        payload.action !== "duplicate" &&
+        isQuestDispatchEligible(mapped) &&
+        !isQuestDispatchEligible(previousQuest ?? { status: "draft" })
+      ) {
+        await dispatchCommunityPush("quest", mapped.id);
+      }
+    }
+
+    if (payload.objectType === "raid") {
+      const mapped = mapRaid(payload.record as DbRaid);
+      set((state) => ({
+        raids:
+          payload.action === "duplicate"
+            ? [mapped, ...state.raids]
+            : state.raids.map((item) =>
+                item.id === payload.sourceId ? mapped : item
+              ),
+      }));
+
+      if (
+        payload.action !== "duplicate" &&
+        isRaidDispatchEligible(mapped) &&
+        !isRaidDispatchEligible(previousRaid ?? { status: "draft" })
+      ) {
+        await dispatchCommunityPush("raid", mapped.id);
+      }
+    }
+
+    if (payload.objectType === "reward") {
+      const mapped = mapReward(payload.record as DbReward);
+      set((state) => ({
+        rewards:
+          payload.action === "duplicate"
+            ? [mapped, ...state.rewards]
+            : state.rewards.map((item) =>
+                item.id === payload.sourceId ? mapped : item
+              ),
+      }));
+
+      if (
+        payload.action !== "duplicate" &&
+        isRewardDispatchEligible(mapped) &&
+        !isRewardDispatchEligible(
+          previousReward ?? { status: "draft", visible: false }
+        )
+      ) {
+        await dispatchCommunityPush("reward", mapped.id);
+      }
+    }
+
+    return {
+      objectType: payload.objectType,
+      action: payload.action,
+      sourceId: payload.sourceId,
+      targetId: payload.targetId,
+    };
+  },
+
   reviewSubmission: async (id, status, reviewNotes = "") => {
     const supabase = createClient();
     const authUserId = useAdminAuthStore.getState().authUserId;
@@ -2180,14 +2434,65 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     if (error) throw error;
 
     const mapped = mapProjectCampaignTemplate(data as DbProjectCampaignTemplate);
+    let mappedBuilderTemplate = projectCampaignTemplateToBuilderTemplate(mapped);
+
+    const builderInsert = await supabase
+      .from("project_builder_templates")
+      .upsert(
+        {
+          project_id: input.projectId,
+          template_kind: "campaign",
+          name: input.name,
+          description: input.description || null,
+          base_template_id: input.baseTemplateId,
+          legacy_campaign_template_id: mapped.id,
+          configuration: parsedConfiguration,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "legacy_campaign_template_id" }
+      )
+      .select()
+      .single();
+
+    if (!builderInsert.error && builderInsert.data) {
+      mappedBuilderTemplate = mapProjectBuilderTemplate(
+        builderInsert.data as DbProjectBuilderTemplate
+      );
+    } else if (builderInsert.error) {
+      console.warn(
+        "Project builder template sync skipped:",
+        builderInsert.error.message
+      );
+    }
+
     set((state) => ({
-      projectCampaignTemplates: [mapped, ...state.projectCampaignTemplates],
+      projectBuilderTemplates: [
+        mappedBuilderTemplate,
+        ...state.projectBuilderTemplates.filter(
+          (template) =>
+            template.id !== mappedBuilderTemplate.id &&
+            template.legacyCampaignTemplateId !== mapped.id
+        ),
+      ],
+      projectCampaignTemplates: [
+        mapped,
+        ...state.projectCampaignTemplates.filter((template) => template.id !== mapped.id),
+      ],
     }));
     return mapped.id;
   },
 
   deleteProjectCampaignTemplate: async (id) => {
     const supabase = createClient();
+    const builderDelete = await supabase
+      .from("project_builder_templates")
+      .delete()
+      .or(`id.eq.${id},legacy_campaign_template_id.eq.${id}`);
+
+    if (builderDelete.error) {
+      console.warn("Project builder template delete skipped:", builderDelete.error.message);
+    }
+
     const { error } = await supabase
       .from("project_campaign_templates")
       .delete()
@@ -2196,6 +2501,10 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     if (error) throw error;
 
     set((state) => ({
+      projectBuilderTemplates: state.projectBuilderTemplates.filter(
+        (template) =>
+          template.id !== id && template.legacyCampaignTemplateId !== id
+      ),
       projectCampaignTemplates: state.projectCampaignTemplates.filter(
         (template) => template.id !== id
       ),

@@ -19,6 +19,11 @@ import {
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { deriveLifecycleState } from "@/lib/platform/core-lifecycle";
+import {
+  canArchiveProjectContent,
+  getPrimaryProjectContentAction,
+  type ProjectContentAction,
+} from "@/lib/projects/content-actions";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -30,10 +35,16 @@ export default function RewardDetailPage() {
   const getRewardById = useAdminPortalStore((s) => s.getRewardById);
   const updateReward = useAdminPortalStore((s) => s.updateReward);
   const deleteReward = useAdminPortalStore((s) => s.deleteReward);
+  const runProjectContentAction = useAdminPortalStore((s) => s.runProjectContentAction);
   const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const claims = useAdminPortalStore((s) => s.claims);
   const quests = useAdminPortalStore((s) => s.quests);
+  const [runningAction, setRunningAction] = useState<ProjectContentAction | null>(null);
+  const [actionMessage, setActionMessage] = useState<{
+    tone: "error" | "success";
+    text: string;
+  } | null>(null);
 
   const reward = useMemo(
     () => getRewardById(params.id),
@@ -55,13 +66,16 @@ export default function RewardDetailPage() {
     );
   }
 
+  const currentReward = reward;
   const project = projects.find((p) => p.id === reward.projectId);
-  const lifecycleState = deriveLifecycleState(reward.status, "draft");
-  const campaign = campaigns.find((c) => c.id === reward.campaignId);
-  const relatedClaims = claims.filter((claim) => claim.rewardId === reward.id);
+  const lifecycleState = deriveLifecycleState(currentReward.status, "draft");
+  const primaryLifecycleAction = getPrimaryProjectContentAction("reward", currentReward.status);
+  const canArchiveLifecycleAction = canArchiveProjectContent("reward", currentReward.status);
+  const campaign = campaigns.find((c) => c.id === currentReward.campaignId);
+  const relatedClaims = claims.filter((claim) => claim.rewardId === currentReward.id);
   const pendingClaims = relatedClaims.filter((claim) => claim.status === "pending");
-  const relatedQuests = quests.filter((quest) => quest.projectId === reward.projectId);
-  const rewardSummary = getRewardBlueprintSummary(reward.rewardType);
+  const relatedQuests = quests.filter((quest) => quest.projectId === currentReward.projectId);
+  const rewardSummary = getRewardBlueprintSummary(currentReward.rewardType);
   const rewardReadinessItems = [
     {
       label: "Fulfillment",
@@ -105,6 +119,46 @@ export default function RewardDetailPage() {
     },
   ];
 
+  async function handleLifecycleAction(action: ProjectContentAction) {
+    setActionMessage(null);
+    setRunningAction(action);
+
+    try {
+      const result = await runProjectContentAction({
+        projectId: currentReward.projectId,
+        objectType: "reward",
+        objectId: currentReward.id,
+        action,
+      });
+
+      if (action === "duplicate") {
+        router.push(`/rewards/${result.targetId}`);
+        return;
+      }
+
+      const successLabel =
+        action === "publish"
+          ? "Reward published."
+          : action === "pause"
+            ? "Reward paused."
+            : action === "resume"
+              ? "Reward resumed."
+              : "Reward archived.";
+
+      setActionMessage({ tone: "success", text: successLabel });
+    } catch (error) {
+      setActionMessage({
+        tone: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to update reward lifecycle.",
+      });
+    } finally {
+      setRunningAction(null);
+    }
+  }
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -123,15 +177,44 @@ export default function RewardDetailPage() {
             </>
           }
           actions={
-            <button
-              onClick={async () => {
-                await deleteReward(reward.id);
-                router.push("/rewards");
-              }}
-              className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
-            >
-              Delete Reward
-            </button>
+            <>
+              <button
+                onClick={() => void handleLifecycleAction("duplicate")}
+                disabled={runningAction !== null}
+                className="rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-text transition hover:border-primary/30 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {runningAction === "duplicate" ? "Duplicating..." : "Duplicate"}
+              </button>
+              {primaryLifecycleAction ? (
+                <button
+                  onClick={() => void handleLifecycleAction(primaryLifecycleAction.action)}
+                  disabled={runningAction !== null}
+                  className="rounded-[18px] border border-primary/30 bg-primary/10 px-4 py-3 font-bold text-primary transition hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {runningAction === primaryLifecycleAction.action
+                    ? `${primaryLifecycleAction.label}...`
+                    : primaryLifecycleAction.label}
+                </button>
+              ) : null}
+              {canArchiveLifecycleAction ? (
+                <button
+                  onClick={() => void handleLifecycleAction("archive")}
+                  disabled={runningAction !== null}
+                  className="rounded-[18px] border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-bold text-amber-200 transition hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {runningAction === "archive" ? "Archiving..." : "Archive"}
+                </button>
+              ) : null}
+              <button
+                onClick={async () => {
+                  await deleteReward(reward.id);
+                  router.push("/rewards");
+                }}
+                className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
+              >
+                Delete Reward
+              </button>
+            </>
           }
           metrics={
             <>
@@ -142,6 +225,18 @@ export default function RewardDetailPage() {
             </>
           }
         />
+
+        {actionMessage ? (
+          <div
+            className={`rounded-[24px] border px-5 py-4 text-sm font-semibold ${
+              actionMessage.tone === "success"
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+            }`}
+          >
+            {actionMessage.text}
+          </div>
+        ) : null}
 
         <div className="rounded-[28px] border border-line bg-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">

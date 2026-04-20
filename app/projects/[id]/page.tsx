@@ -914,7 +914,7 @@ export default function ProjectDetailPage() {
       description: relatedCampaigns.length > 0
         ? `${relatedCampaigns.length} campaign workspace${relatedCampaigns.length > 1 ? "s are" : " is"} already live. Use Campaign Studio to shape the next lane from this project context.`
         : "Spin up the first campaign in Campaign Studio so this workspace can start collecting quests, raids and participants.",
-      href: `/campaigns/new?projectId=${project.id}`,
+        href: `/campaigns/new?projectId=${project.id}&source=project-overview`,
       cta: "Open Campaign Studio",
       status: relatedCampaigns.length > 0 ? "ready" : "next",
     },
@@ -923,7 +923,7 @@ export default function ProjectDetailPage() {
       description: relatedQuests.length > 0 || relatedRewards.length > 0
         ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} and ${relatedRewards.length} reward${relatedRewards.length === 1 ? "" : "s"} are configured. Add the next mission in Quest Studio without leaving this workspace.`
         : "Define the first contributor action in Quest Studio so members know what to do and what they earn.",
-      href: `/quests/new?projectId=${project.id}`,
+        href: `/quests/new?projectId=${project.id}&source=project-overview`,
       cta: "Open Quest Studio",
       status: relatedQuests.length > 0 || relatedRewards.length > 0 ? "ready" : "next",
     },
@@ -994,6 +994,12 @@ export default function ProjectDetailPage() {
   ];
   const overviewQuickActions = [
     {
+      label: "Open Launch Workspace",
+      description:
+        "Move this project through onboarding, readiness and launch posture from one calm operating surface.",
+      href: `/projects/${project.id}/launch`,
+    },
+    {
       label: "Open Community OS",
       description:
         "Run commands, ranks, captains, playbooks and delivery rails from the project community workspace.",
@@ -1003,7 +1009,7 @@ export default function ProjectDetailPage() {
       label: "Open Campaign Studio",
       description:
         "Start the next campaign with this project already loaded, so mission architecture and launch pressure begin in the right workspace.",
-      href: `/campaigns/new?projectId=${project.id}`,
+        href: `/campaigns/new?projectId=${project.id}&source=project-overview`,
     },
     {
       label: "Campaign board",
@@ -1015,13 +1021,13 @@ export default function ProjectDetailPage() {
       label: "Open Quest Studio",
       description:
         "Create the next quest directly in this project so member action, verification and reward logic start where the team is already working.",
-      href: `/quests/new?projectId=${project.id}`,
+        href: `/quests/new?projectId=${project.id}&source=project-overview`,
     },
     {
       label: "Open Raid Builder",
       description:
         "Create a raid directly in this project so social pressure flows from the same workspace.",
-      href: `/raids/new?projectId=${project.id}`,
+        href: `/raids/new?projectId=${project.id}&source=project-overview`,
     },
     {
       label: "Claims queue",
@@ -3231,7 +3237,11 @@ export default function ProjectDetailPage() {
                       Start with a campaign so this workspace has a home for quests, raids and rewards.
                     </p>
                     <button
-                      onClick={() => router.push("/campaigns/new")}
+                      onClick={() =>
+                        router.push(
+                          `/campaigns/new?projectId=${project.id}&source=project-overview`
+                        )
+                      }
                       className="mt-4 rounded-xl bg-primary px-4 py-2 font-bold text-black"
                     >
                       Create first campaign

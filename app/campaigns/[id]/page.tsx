@@ -19,6 +19,11 @@ import {
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { deriveLifecycleState } from "@/lib/platform/core-lifecycle";
+import {
+  canArchiveProjectContent,
+  getPrimaryProjectContentAction,
+  type ProjectContentAction,
+} from "@/lib/projects/content-actions";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
@@ -31,6 +36,7 @@ export default function CampaignDetailPage() {
   const getCampaignById = useAdminPortalStore((s) => s.getCampaignById);
   const updateCampaign = useAdminPortalStore((s) => s.updateCampaign);
   const deleteCampaign = useAdminPortalStore((s) => s.deleteCampaign);
+  const runProjectContentAction = useAdminPortalStore((s) => s.runProjectContentAction);
   const projects = useAdminPortalStore((s) => s.projects);
   const raids = useAdminPortalStore((s) => s.raids);
   const quests = useAdminPortalStore((s) => s.quests);
@@ -59,6 +65,11 @@ export default function CampaignDetailPage() {
     tone: "default" | "error" | "success";
     text: string;
   } | null>(null);
+  const [runningAction, setRunningAction] = useState<ProjectContentAction | null>(null);
+  const [actionMessage, setActionMessage] = useState<{
+    tone: "error" | "success";
+    text: string;
+  } | null>(null);
 
   const campaign = useMemo(
     () => getCampaignById(params.id),
@@ -82,6 +93,14 @@ export default function CampaignDetailPage() {
 
   const currentCampaign = campaign;
   const lifecycleState = deriveLifecycleState(currentCampaign.status, "draft");
+  const primaryLifecycleAction = getPrimaryProjectContentAction(
+    "campaign",
+    currentCampaign.status
+  );
+  const canArchiveLifecycleAction = canArchiveProjectContent(
+    "campaign",
+    currentCampaign.status
+  );
   const project = projects.find((p) => p.id === campaign.projectId);
   const relatedRaids = raids.filter((r) => r.campaignId === campaign.id);
   const relatedQuests = quests.filter((q) => q.campaignId === campaign.id);
@@ -288,6 +307,49 @@ export default function CampaignDetailPage() {
     };
   }, [relatedQuestIdList]);
 
+  async function handleLifecycleAction(action: ProjectContentAction) {
+    setActionMessage(null);
+    setRunningAction(action);
+
+    try {
+      const result = await runProjectContentAction({
+        projectId: currentCampaign.projectId,
+        objectType: "campaign",
+        objectId: currentCampaign.id,
+        action,
+      });
+
+      if (action === "duplicate") {
+        router.push(`/campaigns/${result.targetId}`);
+        return;
+      }
+
+      const successLabel =
+        action === "publish"
+          ? "Campaign published."
+          : action === "pause"
+            ? "Campaign paused."
+            : action === "resume"
+              ? "Campaign resumed."
+              : "Campaign archived.";
+
+      setActionMessage({
+        tone: "success",
+        text: successLabel,
+      });
+    } catch (error) {
+      setActionMessage({
+        tone: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to update campaign lifecycle.",
+      });
+    } finally {
+      setRunningAction(null);
+    }
+  }
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -312,6 +374,33 @@ export default function CampaignDetailPage() {
               >
                 Open Analytics
               </Link>
+              <button
+                onClick={() => void handleLifecycleAction("duplicate")}
+                disabled={runningAction !== null}
+                className="rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-text transition hover:border-primary/30 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {runningAction === "duplicate" ? "Duplicating..." : "Duplicate"}
+              </button>
+              {primaryLifecycleAction ? (
+                <button
+                  onClick={() => void handleLifecycleAction(primaryLifecycleAction.action)}
+                  disabled={runningAction !== null}
+                  className="rounded-[18px] border border-primary/30 bg-primary/10 px-4 py-3 font-bold text-primary transition hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {runningAction === primaryLifecycleAction.action
+                    ? `${primaryLifecycleAction.label}...`
+                    : primaryLifecycleAction.label}
+                </button>
+              ) : null}
+              {canArchiveLifecycleAction ? (
+                <button
+                  onClick={() => void handleLifecycleAction("archive")}
+                  disabled={runningAction !== null}
+                  className="rounded-[18px] border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-bold text-amber-200 transition hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {runningAction === "archive" ? "Archiving..." : "Archive"}
+                </button>
+              ) : null}
               <button
                 onClick={async () => {
                   await deleteCampaign(campaign.id);
@@ -341,6 +430,18 @@ export default function CampaignDetailPage() {
             </>
           }
         />
+
+        {actionMessage ? (
+          <div
+            className={`rounded-[24px] border px-5 py-4 text-sm font-semibold ${
+              actionMessage.tone === "success"
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+            }`}
+          >
+            {actionMessage.text}
+          </div>
+        ) : null}
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <DetailSurface

@@ -3,11 +3,6 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import RaidForm from "@/components/forms/raid/RaidForm";
-import {
-  OpsMetricCard,
-  OpsPanel,
-  OpsSnapshotRow,
-} from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -22,85 +17,71 @@ function NewRaidPageContent() {
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const requestedProjectId = searchParams.get("projectId") || undefined;
   const requestedCampaignId = searchParams.get("campaignId") || undefined;
+  const entrySource = searchParams.get("source") || "direct";
   const effectiveProjectId = requestedProjectId || activeProjectId || undefined;
   const activeProject = projects.find((project) => project.id === effectiveProjectId);
-  const liveCampaigns = campaigns.filter((campaign) => campaign.status === "active");
+  const entrySourceLabel =
+    entrySource === "launch"
+      ? "Launch Workspace"
+      : entrySource === "campaign-board"
+        ? "Campaign Board"
+        : entrySource === "project-overview"
+          ? "Project Overview"
+          : undefined;
+  const returnHref =
+    effectiveProjectId && entrySource === "launch"
+      ? `/projects/${effectiveProjectId}/launch`
+      : effectiveProjectId && entrySource === "campaign-board"
+        ? `/projects/${effectiveProjectId}/campaigns`
+        : effectiveProjectId && entrySource === "project-overview"
+          ? `/projects/${effectiveProjectId}`
+          : null;
 
   return (
     <AdminShell>
       <PortalPageFrame
-        eyebrow="Raid builder"
-        title="New Raid"
-        description="A cleaner launch rail for pressure-based missions, with live campaign context visible before the raid goes out."
+        eyebrow="Raid Studio"
+        title="Design the pressure wave before you launch it"
+        description="Create a raid from the new studio surface, where placement, verification and urgency live inside one guided builder instead of a long ops form."
         actions={
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Default workspace</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Studio context</p>
             <p className="text-lg font-extrabold text-text">{activeProject?.name || "No active project"}</p>
           </div>
         }
-        statusBand={
-          <div className="grid gap-4 md:grid-cols-3">
-            <OpsMetricCard label="Projects" value={projects.length} />
-            <OpsMetricCard label="Campaigns" value={campaigns.length} />
-            <OpsMetricCard
-              label="Live campaigns"
-              value={liveCampaigns.length}
-              emphasis={liveCampaigns.length > 0 ? "primary" : "warning"}
-            />
-          </div>
-        }
       >
-        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-          <OpsPanel
-            eyebrow="Raid setup"
-            title="Pressure mission configuration"
-            description="Shape the raid, attach it to the right campaign and make sure it lands as an intentional pressure moment rather than a loose alert."
-          >
-            <RaidForm
-              projects={projects}
-              campaigns={campaigns}
-              defaultProjectId={effectiveProjectId}
-              defaultCampaignId={requestedCampaignId}
-              onSubmit={async (values) => {
-                const id = await createRaid(values);
-                router.push(`/raids/${id}`);
-              }}
-            />
-          </OpsPanel>
+        <div className="space-y-4">
+          {entrySourceLabel ? (
+            <div className="rounded-[24px] border border-primary/20 bg-primary/10 p-4 text-sm leading-7 text-primary">
+              <span className="font-semibold text-white">{entrySourceLabel}</span> handed this raid into the studio with project context already loaded.
+              {returnHref ? (
+                <>
+                  {" "}
+                  <a href={returnHref} className="font-semibold text-primary underline underline-offset-4">
+                    Go back to that workspace
+                  </a>
+                  {" "}if you want to recheck launch posture first.
+                </>
+              ) : null}
+            </div>
+          ) : null}
 
-          <div className="space-y-6">
-            <OpsPanel
-              eyebrow="Builder checklist"
-              title="What makes a clean raid"
-              description="A short guide so raids ship with the right pressure shape and timing."
-              tone="accent"
-            >
-              <div className="space-y-3">
-                <OpsSnapshotRow label="Timing" value="Live window and urgency feel intentional" />
-                <OpsSnapshotRow label="Destination" value="Attached to the right active campaign" />
-                <OpsSnapshotRow label="Pressure" value="Objective and CTA are crystal clear" />
-                <OpsSnapshotRow label="Aftercare" value="Result and reminder flows are easy to add next" />
-              </div>
-            </OpsPanel>
-
-            <OpsPanel
-              eyebrow="Campaign context"
-              title="Current launch posture"
-              description="A quick read on whether the raid is being created into a live operating lane."
-            >
-              <div className="space-y-3">
-                <OpsSnapshotRow
-                  label="Live campaign inventory"
-                  value={
-                    liveCampaigns.length > 0
-                      ? `${liveCampaigns.length} active campaigns available`
-                      : "No active campaigns right now"
-                  }
-                />
-                <OpsSnapshotRow label="After submit" value="Redirects into raid detail for operate/configure tuning" />
-              </div>
-            </OpsPanel>
+          <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4 text-sm leading-7 text-sub">
+            The studio now keeps the member preview, watchlist and verification posture inside the
+            builder itself, so you can shape one pressure mission at a time instead of scanning a
+            separate checklist column.
           </div>
+
+          <RaidForm
+            projects={projects}
+            campaigns={campaigns}
+            defaultProjectId={effectiveProjectId}
+            defaultCampaignId={requestedCampaignId}
+            onSubmit={async (values) => {
+              const id = await createRaid(values);
+              router.push(`/raids/${id}`);
+            }}
+          />
         </div>
       </PortalPageFrame>
     </AdminShell>

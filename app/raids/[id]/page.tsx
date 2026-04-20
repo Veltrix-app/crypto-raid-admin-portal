@@ -19,6 +19,11 @@ import {
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import { deriveLifecycleState } from "@/lib/platform/core-lifecycle";
+import {
+  canArchiveProjectContent,
+  getPrimaryProjectContentAction,
+  type ProjectContentAction,
+} from "@/lib/projects/content-actions";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -30,8 +35,14 @@ export default function RaidDetailPage() {
   const getRaidById = useAdminPortalStore((s) => s.getRaidById);
   const updateRaid = useAdminPortalStore((s) => s.updateRaid);
   const deleteRaid = useAdminPortalStore((s) => s.deleteRaid);
+  const runProjectContentAction = useAdminPortalStore((s) => s.runProjectContentAction);
   const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
+  const [runningAction, setRunningAction] = useState<ProjectContentAction | null>(null);
+  const [actionMessage, setActionMessage] = useState<{
+    tone: "error" | "success";
+    text: string;
+  } | null>(null);
 
   const raid = useMemo(() => getRaidById(params.id), [getRaidById, params.id]);
   const raidOps = useProjectOps(raid?.projectId, {
@@ -50,9 +61,12 @@ export default function RaidDetailPage() {
     );
   }
 
+  const currentRaid = raid;
   const project = projects.find((p) => p.id === raid.projectId);
-  const lifecycleState = deriveLifecycleState(raid.status, "draft");
-  const campaign = campaigns.find((c) => c.id === raid.campaignId);
+  const lifecycleState = deriveLifecycleState(currentRaid.status, "draft");
+  const primaryLifecycleAction = getPrimaryProjectContentAction("raid", currentRaid.status);
+  const canArchiveLifecycleAction = canArchiveProjectContent("raid", currentRaid.status);
+  const campaign = campaigns.find((c) => c.id === currentRaid.campaignId);
   const readinessItems = [
     {
       label: "Target",
@@ -96,6 +110,46 @@ export default function RaidDetailPage() {
     },
   ];
 
+  async function handleLifecycleAction(action: ProjectContentAction) {
+    setActionMessage(null);
+    setRunningAction(action);
+
+    try {
+      const result = await runProjectContentAction({
+        projectId: currentRaid.projectId,
+        objectType: "raid",
+        objectId: currentRaid.id,
+        action,
+      });
+
+      if (action === "duplicate") {
+        router.push(`/raids/${result.targetId}`);
+        return;
+      }
+
+      const successLabel =
+        action === "publish"
+          ? "Raid published."
+          : action === "pause"
+            ? "Raid paused."
+            : action === "resume"
+              ? "Raid resumed."
+              : "Raid archived.";
+
+      setActionMessage({ tone: "success", text: successLabel });
+    } catch (error) {
+      setActionMessage({
+        tone: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to update raid lifecycle.",
+      });
+    } finally {
+      setRunningAction(null);
+    }
+  }
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -113,15 +167,44 @@ export default function RaidDetailPage() {
             </>
           }
           actions={
-            <button
-              onClick={async () => {
-                await deleteRaid(raid.id);
-                router.push("/raids");
-              }}
-              className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
-            >
-              Delete Raid
-            </button>
+            <>
+              <button
+                onClick={() => void handleLifecycleAction("duplicate")}
+                disabled={runningAction !== null}
+                className="rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-text transition hover:border-primary/30 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {runningAction === "duplicate" ? "Duplicating..." : "Duplicate"}
+              </button>
+              {primaryLifecycleAction ? (
+                <button
+                  onClick={() => void handleLifecycleAction(primaryLifecycleAction.action)}
+                  disabled={runningAction !== null}
+                  className="rounded-[18px] border border-primary/30 bg-primary/10 px-4 py-3 font-bold text-primary transition hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {runningAction === primaryLifecycleAction.action
+                    ? `${primaryLifecycleAction.label}...`
+                    : primaryLifecycleAction.label}
+                </button>
+              ) : null}
+              {canArchiveLifecycleAction ? (
+                <button
+                  onClick={() => void handleLifecycleAction("archive")}
+                  disabled={runningAction !== null}
+                  className="rounded-[18px] border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-bold text-amber-200 transition hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {runningAction === "archive" ? "Archiving..." : "Archive"}
+                </button>
+              ) : null}
+              <button
+                onClick={async () => {
+                  await deleteRaid(raid.id);
+                  router.push("/raids");
+                }}
+                className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
+              >
+                Delete Raid
+              </button>
+            </>
           }
           metrics={
             <>
@@ -132,6 +215,18 @@ export default function RaidDetailPage() {
             </>
           }
         />
+
+        {actionMessage ? (
+          <div
+            className={`rounded-[24px] border px-5 py-4 text-sm font-semibold ${
+              actionMessage.tone === "success"
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+            }`}
+          >
+            {actionMessage.text}
+          </div>
+        ) : null}
 
         <div className="rounded-[28px] border border-line bg-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">

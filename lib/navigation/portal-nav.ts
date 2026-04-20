@@ -17,7 +17,15 @@ export type GlobalNavItem = {
 };
 
 export type ProjectWorkspaceTab = {
-  slug: "" | "campaigns" | "community" | "rewards" | "onchain" | "trust" | "settings";
+  slug:
+    | ""
+    | "launch"
+    | "campaigns"
+    | "community"
+    | "rewards"
+    | "onchain"
+    | "trust"
+    | "settings";
   label: string;
   description: string;
 };
@@ -78,6 +86,11 @@ export const PROJECT_WORKSPACE_TABS: readonly ProjectWorkspaceTab[] = [
     slug: "",
     label: "Overview",
     description: "Project health, posture and fast entry into dedicated rails.",
+  },
+  {
+    slug: "launch",
+    label: "Launch",
+    description: "Project onboarding, readiness, next actions and launch posture.",
   },
   {
     slug: "campaigns",

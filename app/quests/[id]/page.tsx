@@ -20,6 +20,11 @@ import {
 import { getQuestVerificationPreview } from "@/lib/quest-verification";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { deriveLifecycleState } from "@/lib/platform/core-lifecycle";
+import {
+  canArchiveProjectContent,
+  getPrimaryProjectContentAction,
+  type ProjectContentAction,
+} from "@/lib/projects/content-actions";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -31,10 +36,16 @@ export default function QuestDetailPage() {
   const getQuestById = useAdminPortalStore((s) => s.getQuestById);
   const updateQuest = useAdminPortalStore((s) => s.updateQuest);
   const deleteQuest = useAdminPortalStore((s) => s.deleteQuest);
+  const runProjectContentAction = useAdminPortalStore((s) => s.runProjectContentAction);
   const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const rewards = useAdminPortalStore((s) => s.rewards);
   const submissions = useAdminPortalStore((s) => s.submissions);
+  const [runningAction, setRunningAction] = useState<ProjectContentAction | null>(null);
+  const [actionMessage, setActionMessage] = useState<{
+    tone: "error" | "success";
+    text: string;
+  } | null>(null);
 
   const quest = useMemo(
     () => getQuestById(params.id),
@@ -56,11 +67,14 @@ export default function QuestDetailPage() {
     );
   }
 
+  const currentQuest = quest;
   const project = projects.find((p) => p.id === quest.projectId);
-  const lifecycleState = deriveLifecycleState(quest.status, "draft");
-  const campaign = campaigns.find((c) => c.id === quest.campaignId);
-  const relatedRewards = rewards.filter((reward) => reward.projectId === quest.projectId);
-  const relatedSubmissions = submissions.filter((submission) => submission.questId === quest.id);
+  const lifecycleState = deriveLifecycleState(currentQuest.status, "draft");
+  const primaryLifecycleAction = getPrimaryProjectContentAction("quest", currentQuest.status);
+  const canArchiveLifecycleAction = canArchiveProjectContent("quest", currentQuest.status);
+  const campaign = campaigns.find((c) => c.id === currentQuest.campaignId);
+  const relatedRewards = rewards.filter((reward) => reward.projectId === currentQuest.projectId);
+  const relatedSubmissions = submissions.filter((submission) => submission.questId === currentQuest.id);
   const pendingSubmissions = relatedSubmissions.filter(
     (submission) => submission.status === "pending"
   );
@@ -122,6 +136,46 @@ export default function QuestDetailPage() {
     },
   ];
 
+  async function handleLifecycleAction(action: ProjectContentAction) {
+    setActionMessage(null);
+    setRunningAction(action);
+
+    try {
+      const result = await runProjectContentAction({
+        projectId: currentQuest.projectId,
+        objectType: "quest",
+        objectId: currentQuest.id,
+        action,
+      });
+
+      if (action === "duplicate") {
+        router.push(`/quests/${result.targetId}`);
+        return;
+      }
+
+      const successLabel =
+        action === "publish"
+          ? "Quest published."
+          : action === "pause"
+            ? "Quest paused."
+            : action === "resume"
+              ? "Quest resumed."
+              : "Quest archived.";
+
+      setActionMessage({ tone: "success", text: successLabel });
+    } catch (error) {
+      setActionMessage({
+        tone: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to update quest lifecycle.",
+      });
+    } finally {
+      setRunningAction(null);
+    }
+  }
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -139,15 +193,44 @@ export default function QuestDetailPage() {
             </>
           }
           actions={
-            <button
-              onClick={async () => {
-                await deleteQuest(quest.id);
-                router.push("/quests");
-              }}
-              className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
-            >
-              Delete Quest
-            </button>
+            <>
+              <button
+                onClick={() => void handleLifecycleAction("duplicate")}
+                disabled={runningAction !== null}
+                className="rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-text transition hover:border-primary/30 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {runningAction === "duplicate" ? "Duplicating..." : "Duplicate"}
+              </button>
+              {primaryLifecycleAction ? (
+                <button
+                  onClick={() => void handleLifecycleAction(primaryLifecycleAction.action)}
+                  disabled={runningAction !== null}
+                  className="rounded-[18px] border border-primary/30 bg-primary/10 px-4 py-3 font-bold text-primary transition hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {runningAction === primaryLifecycleAction.action
+                    ? `${primaryLifecycleAction.label}...`
+                    : primaryLifecycleAction.label}
+                </button>
+              ) : null}
+              {canArchiveLifecycleAction ? (
+                <button
+                  onClick={() => void handleLifecycleAction("archive")}
+                  disabled={runningAction !== null}
+                  className="rounded-[18px] border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-bold text-amber-200 transition hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {runningAction === "archive" ? "Archiving..." : "Archive"}
+                </button>
+              ) : null}
+              <button
+                onClick={async () => {
+                  await deleteQuest(quest.id);
+                  router.push("/quests");
+                }}
+                className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
+              >
+                Delete Quest
+              </button>
+            </>
           }
           metrics={
             <>
@@ -158,6 +241,18 @@ export default function QuestDetailPage() {
             </>
           }
         />
+
+        {actionMessage ? (
+          <div
+            className={`rounded-[24px] border px-5 py-4 text-sm font-semibold ${
+              actionMessage.tone === "success"
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+            }`}
+          >
+            {actionMessage.text}
+          </div>
+        ) : null}
 
         <div className="rounded-[28px] border border-line bg-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">

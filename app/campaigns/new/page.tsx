@@ -136,6 +136,9 @@ function NewCampaignPageContent() {
   );
   const projects = useAdminPortalStore((s) => s.projects);
   const requestedProjectId = searchParams.get("projectId") || undefined;
+  const requestedTemplateId = searchParams.get("templateId") || undefined;
+  const requestedSavedTemplateId = searchParams.get("savedTemplateId") || undefined;
+  const entrySource = searchParams.get("source") || "direct";
 
   const [selectedTemplateId, setSelectedTemplateId] =
     useState<SelectedTemplateId>(null);
@@ -177,6 +180,7 @@ function NewCampaignPageContent() {
   const [selectedAudience, setSelectedAudience] = useState<CampaignStudioAudienceId>("mixed");
   const [selectedStoryboardBlockId, setSelectedStoryboardBlockId] =
     useState<CampaignStoryboardBlockId>("goal");
+  const [searchSeedApplied, setSearchSeedApplied] = useState(false);
 
   const selectedProject = useMemo(
     () =>
@@ -195,6 +199,22 @@ function NewCampaignPageContent() {
         : null,
     [projectContextDraft, selectedProject]
   );
+  const entrySourceLabel =
+    entrySource === "launch"
+      ? "Launch Workspace"
+      : entrySource === "campaign-board"
+        ? "Campaign Board"
+        : entrySource === "project-overview"
+          ? "Project Overview"
+          : undefined;
+  const returnHref =
+    selectedProject?.id && entrySource === "launch"
+      ? `/projects/${selectedProject.id}/launch`
+      : selectedProject?.id && entrySource === "campaign-board"
+        ? `/projects/${selectedProject.id}/campaigns`
+        : selectedProject?.id && entrySource === "project-overview"
+          ? `/projects/${selectedProject.id}`
+          : null;
 
   const templateOptions = useMemo(
     () => getRecommendedCampaignTemplateOptions(effectiveProject),
@@ -272,6 +292,47 @@ function NewCampaignPageContent() {
     );
     setStepError(null);
   }, [currentStep]);
+
+  useEffect(() => {
+    if (searchSeedApplied) {
+      return;
+    }
+
+    if (requestedSavedTemplateId) {
+      const savedTemplate = savedProjectTemplates.find(
+        (template) => template.id === requestedSavedTemplateId
+      );
+      if (!savedTemplate) {
+        return;
+      }
+
+      applySavedTemplate(savedTemplate.configuration);
+      setCurrentStep("autofill");
+      setSearchSeedApplied(true);
+      return;
+    }
+
+    if (requestedTemplateId) {
+      const hasTemplate = templateOptions.some(
+        (template) => template.id === requestedTemplateId
+      );
+      if (!hasTemplate) {
+        return;
+      }
+
+      chooseTemplate(requestedTemplateId as CampaignTemplateId);
+      setSearchSeedApplied(true);
+      return;
+    }
+
+    setSearchSeedApplied(true);
+  }, [
+    requestedSavedTemplateId,
+    requestedTemplateId,
+    savedProjectTemplates,
+    searchSeedApplied,
+    templateOptions,
+  ]);
 
   useEffect(() => {
     if (!builderSteps.some((step) => step.id === currentStep)) {
@@ -1271,6 +1332,7 @@ function NewCampaignPageContent() {
               resetKey={`${selectedProject?.id || "none"}:${selectedTemplateId}`}
               studioLayout="storyboard"
               focusBlockId={selectedStoryboardBlockId}
+              entrySourceLabel={entrySourceLabel}
               initialValues={
                 templatePlan
                   ? {
@@ -1345,6 +1407,21 @@ function NewCampaignPageContent() {
   return (
     <AdminShell>
       <div className="space-y-6">
+        {entrySourceLabel ? (
+          <div className="rounded-[24px] border border-primary/20 bg-primary/10 p-4 text-sm leading-7 text-primary">
+            <span className="font-semibold text-white">{entrySourceLabel}</span> handed this campaign into the studio with project context already loaded.
+            {returnHref ? (
+              <>
+                {" "}
+                <a href={returnHref} className="font-semibold text-primary underline underline-offset-4">
+                  Go back to that workspace
+                </a>
+                {" "}if you want to recheck launch posture or starter selection first.
+              </>
+            ) : null}
+          </div>
+        ) : null}
+
         <StudioShell
           eyebrow="Campaign Studio"
           title="Design the mission lane before you launch it"
