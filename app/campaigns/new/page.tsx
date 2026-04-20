@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   BuilderBottomNav,
   BuilderHero,
@@ -9,6 +9,12 @@ import {
   BuilderSidebarCard,
   BuilderStepHeader,
 } from "@/components/layout/builder/BuilderPrimitives";
+import CampaignIntentStep from "@/components/forms/campaign/CampaignIntentStep";
+import CampaignLaunchPreview from "@/components/forms/campaign/CampaignLaunchPreview";
+import CampaignMissionMap from "@/components/forms/campaign/CampaignMissionMap";
+import StudioModeToggle from "@/components/forms/studio/StudioModeToggle";
+import StudioPreviewCard from "@/components/forms/studio/StudioPreviewCard";
+import StudioReadinessCard from "@/components/forms/studio/StudioReadinessCard";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -22,6 +28,14 @@ import {
   ResolvedQuestDraft,
   ResolvedRewardDraft,
 } from "@/lib/campaign-templates";
+import {
+  CampaignStudioAudienceId,
+  CampaignStudioIntentId,
+  getCampaignLaunchPreview,
+  getCampaignMissionMap,
+  getCampaignStudioIntentState,
+  getCampaignStudioReadiness,
+} from "@/lib/studio/campaign-studio";
 import { AdminProject } from "@/types/entities/project";
 import { AdminQuest } from "@/types/entities/quest";
 import { AdminReward } from "@/types/entities/reward";
@@ -92,8 +106,9 @@ const baseBuilderSteps: Array<{
   },
 ];
 
-export default function NewCampaignPage() {
+function NewCampaignPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const setActiveProjectId = useAdminAuthStore((s) => s.setActiveProjectId);
   const createCampaign = useAdminPortalStore((s) => s.createCampaign);
@@ -110,6 +125,7 @@ export default function NewCampaignPage() {
     (s) => s.projectCampaignTemplates
   );
   const projects = useAdminPortalStore((s) => s.projects);
+  const requestedProjectId = searchParams.get("projectId") || undefined;
 
   const [selectedTemplateId, setSelectedTemplateId] =
     useState<SelectedTemplateId>(null);
@@ -146,13 +162,16 @@ export default function NewCampaignPage() {
   const [customPlaybookGoal, setCustomPlaybookGoal] = useState("");
   const [expandedQuestKeys, setExpandedQuestKeys] = useState<string[]>([]);
   const [expandedRewardKeys, setExpandedRewardKeys] = useState<string[]>([]);
+  const [studioLens, setStudioLens] = useState<"strategy" | "launch">("strategy");
+  const [selectedIntent, setSelectedIntent] = useState<CampaignStudioIntentId>("hybrid_launch");
+  const [selectedAudience, setSelectedAudience] = useState<CampaignStudioAudienceId>("mixed");
 
   const selectedProject = useMemo(
     () =>
-      projects.find((project) => project.id === activeProjectId) ??
+      projects.find((project) => project.id === (requestedProjectId || activeProjectId)) ??
       projects[0] ??
       null,
-    [activeProjectId, projects]
+    [activeProjectId, projects, requestedProjectId]
   );
   const effectiveProject = useMemo(
     () =>
@@ -194,6 +213,10 @@ export default function NewCampaignPage() {
   const selectedTemplate = templateOptions.find(
     (template) => template.id === selectedTemplateId
   );
+  const inferredIntentState = useMemo(
+    () => getCampaignStudioIntentState({ selectedTemplate }),
+    [selectedTemplate]
+  );
   const featuredTemplate = templateOptions[0] ?? null;
   const secondaryTemplates = templateOptions.filter(
     (template) => template.id !== featuredTemplate?.id
@@ -210,6 +233,14 @@ export default function NewCampaignPage() {
   const previousStep = builderSteps[currentStepIndex - 1];
   const nextStep = builderSteps[currentStepIndex + 1];
   const progressPercent = Math.round(((currentStepIndex + 1) / builderSteps.length) * 100);
+
+  useEffect(() => {
+    if (!requestedProjectId) return;
+    const projectExists = projects.some((project) => project.id === requestedProjectId);
+    if (projectExists && activeProjectId !== requestedProjectId) {
+      setActiveProjectId(requestedProjectId);
+    }
+  }, [activeProjectId, projects, requestedProjectId, setActiveProjectId]);
 
   useEffect(() => {
     setVisitedSteps((current) =>
@@ -235,6 +266,11 @@ export default function NewCampaignPage() {
     setExpandedQuestKeys([]);
     setExpandedRewardKeys([]);
   }, [selectedProject?.id, selectedTemplateId]);
+
+  useEffect(() => {
+    setSelectedIntent(inferredIntentState.intentId);
+    setSelectedAudience(inferredIntentState.audienceId);
+  }, [inferredIntentState.audienceId, inferredIntentState.intentId]);
 
   useEffect(() => {
     setCampaignTitleDraft(templatePlan?.campaignDraft.title ?? "");
@@ -349,6 +385,36 @@ export default function NewCampaignPage() {
       ])
     );
   }, [persistedMissingContextFields, projectContextDraft]);
+  const studioReadiness = useMemo(
+    () =>
+      getCampaignStudioReadiness({
+        project: effectiveProject,
+        templatePlan,
+        selectedQuestKeys,
+        selectedRewardKeys,
+      }),
+    [effectiveProject, selectedQuestKeys, selectedRewardKeys, templatePlan]
+  );
+  const missionMap = useMemo(
+    () =>
+      getCampaignMissionMap({
+        project: effectiveProject,
+        templatePlan,
+        selectedQuestKeys,
+        selectedRewardKeys,
+      }),
+    [effectiveProject, selectedQuestKeys, selectedRewardKeys, templatePlan]
+  );
+  const launchPreview = useMemo(
+    () =>
+      getCampaignLaunchPreview({
+        project: effectiveProject,
+        templatePlan,
+        selectedQuestKeys,
+        selectedRewardKeys,
+      }),
+    [effectiveProject, selectedQuestKeys, selectedRewardKeys, templatePlan]
+  );
 
   function updateQuestDraftEdit(
     key: string,
@@ -544,9 +610,9 @@ export default function NewCampaignPage() {
     <AdminShell>
       <div className="space-y-6">
         <BuilderHero
-          eyebrow="Campaign Builder Wizard"
-          title="New Campaign"
-          description="Pick a complete playbook, let Veltrix wire in the workspace context you already captured, and launch a campaign with generated quest and reward drafts."
+          eyebrow="Campaign Studio"
+          title="Design the mission lane before you launch it"
+          description="Start from intent, let Veltrix wire the workspace context you already captured, and shape a launch-ready campaign with visible quest, reward and readiness rails."
           progressPercent={progressPercent}
           metrics={
             <>
@@ -600,6 +666,24 @@ export default function NewCampaignPage() {
           </div>
         </div>
 
+        <StudioModeToggle
+          label="Studio lens"
+          value={studioLens}
+          onChange={setStudioLens}
+          options={[
+            {
+              value: "strategy",
+              label: "Strategy",
+              eyebrow: "Intent, audience, flow",
+            },
+            {
+              value: "launch",
+              label: "Launch",
+              eyebrow: "Readiness, output, next move",
+            },
+          ]}
+        />
+
         <CampaignStepNavigator
           steps={builderSteps}
           currentStep={currentStep}
@@ -618,6 +702,13 @@ export default function NewCampaignPage() {
               description="Pick the campaign system that fits this workspace best. Veltrix scores templates against your project context so teams can move fast without building from scratch."
               stepIndex={currentStepIndex + 1}
               totalSteps={builderSteps.length}
+            />
+
+            <CampaignIntentStep
+              selectedIntent={selectedIntent}
+              selectedAudience={selectedAudience}
+              onIntentChange={setSelectedIntent}
+              onAudienceChange={setSelectedAudience}
             />
 
             <div className="mt-5 grid gap-3">
@@ -754,17 +845,16 @@ export default function NewCampaignPage() {
           <div className="space-y-5 xl:self-start">
             {selectedTemplate && templatePlan ? (
               <div className="space-y-5">
-                <BuilderSidebarCard
-                    title={
-                      currentStep === "custom"
-                        ? "Custom Playbook Preview"
-                        : 
-                      currentStep === "autofill"
-                        ? "Autofill Preview"
-                        : currentStep === "flow"
-                        ? "Generated Flow"
-                        : "Campaign Preview"
+                <StudioPreviewCard
+                  eyebrow={studioLens === "strategy" ? "Strategy view" : "Launch view"}
+                  title={
+                    currentStep === "custom"
+                      ? "Custom playbook preview"
+                      : currentStep === "flow"
+                        ? "Generated flow preview"
+                        : "Campaign preview"
                   }
+                  description="This side rail keeps the campaign narrative, readiness, and generated mission posture visible while you keep editing."
                 >
                   <div className="space-y-5">
                     <CampaignPreviewSurface
@@ -789,24 +879,6 @@ export default function NewCampaignPage() {
                       missingContext={currentMissingContextFields.length}
                     />
 
-                    {contextSections.length > 0 && currentStep === "autofill" ? (
-                      <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                          Context Signals
-                        </p>
-                        <div className="mt-4 grid gap-3 md:grid-cols-2">
-                          {contextSections.map((section) => (
-                            <TemplateMetaCard
-                              key={section.title}
-                              title={section.title}
-                              description={section.description}
-                              value={section.value}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
                     <div className="grid gap-3 md:grid-cols-2">
                       <PreviewStat
                         label="Campaign title"
@@ -821,8 +893,12 @@ export default function NewCampaignPage() {
                         value={editedQuestCount + editedRewardCount}
                       />
                       <PreviewStat
-                        label="Launch route"
-                        value={currentStep === "flow" ? "Tune before generate" : "Review before generate"}
+                        label="Intent"
+                        value={selectedIntent.replace(/_/g, " ")}
+                      />
+                      <PreviewStat
+                        label="Audience"
+                        value={selectedAudience.replace(/_/g, " ")}
                       />
                     </div>
 
@@ -840,28 +916,22 @@ export default function NewCampaignPage() {
                       </label>
                     </div>
                   </div>
+                </StudioPreviewCard>
+
+                <StudioReadinessCard title="Studio readiness" items={studioReadiness} />
+
+                <BuilderSidebarCard title="Mission Map">
+                  <CampaignMissionMap items={missionMap} />
                 </BuilderSidebarCard>
 
-                {currentStep !== "flow" ? (
-                <BuilderSidebarCard title="Generation Route">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Generation route
-                  </p>
-                  <div className="mt-4 grid gap-3 md:grid-cols-3">
-                    <TemplateMeta
-                      label="Campaign output"
-                      value="Editable before save via the builder form below."
-                    />
-                    <TemplateMeta
-                      label="Quest output"
-                      value="Selected quests generate as drafts by default, or go active if the campaign is saved as active."
-                    />
-                    <TemplateMeta
-                      label="Reward output"
-                      value="Selected rewards follow the same route, so launch-ready campaigns can publish in one pass."
-                    />
-                  </div>
-                </BuilderSidebarCard>
+                {studioLens === "launch" ? (
+                  <StudioPreviewCard
+                    eyebrow="Launch posture"
+                    title="What this save will generate"
+                    description="A fast read on the first member moment, included outputs, and whether the workspace is ready."
+                  >
+                    <CampaignLaunchPreview preview={launchPreview} />
+                  </StudioPreviewCard>
                 ) : null}
 
                 {currentStep === "custom" ? (
@@ -970,6 +1040,21 @@ export default function NewCampaignPage() {
                 </BuilderSidebarCard>
                 ) : null}
 
+                {contextSections.length > 0 && currentStep === "autofill" ? (
+                  <BuilderSidebarCard title="Context Signals">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {contextSections.map((section) => (
+                        <TemplateMetaCard
+                          key={section.title}
+                          title={section.title}
+                          description={section.description}
+                          value={section.value}
+                        />
+                      ))}
+                    </div>
+                  </BuilderSidebarCard>
+                ) : null}
+
                 {currentStep === "flow" ? (
                 <BuilderSidebarCard title="Generated Quest Flow">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
@@ -1056,11 +1141,15 @@ export default function NewCampaignPage() {
                 ) : null}
               </div>
             ) : (
-              <BuilderSidebarCard title="Campaign Preview">
-                <p className="text-sm text-sub">
-                  Pick a project workspace and a template to see the generated plan.
+              <StudioPreviewCard
+                eyebrow="Campaign preview"
+                title="No playbook selected yet"
+                description="Pick a project workspace and a playbook to unlock the mission map, readiness rail, and launch preview."
+              >
+                <p className="text-sm leading-6 text-sub">
+                  The studio gets much more useful once it can score a template against your project context.
                 </p>
-              </BuilderSidebarCard>
+              </StudioPreviewCard>
             )}
           </div>
         </div>
@@ -1069,12 +1158,15 @@ export default function NewCampaignPage() {
         {currentStep === "launch" ? (
         <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
           <BuilderStepHeader
-            eyebrow="Launch Studio"
-            title="Review the campaign and save the variant"
-            description="Lock in the reusable project variant, then generate the campaign with its selected quest and reward drafts."
+            eyebrow="Campaign Studio Launch"
+            title="Review the mission lane and lock in the launch posture"
+            description="Save the reusable project variant, confirm what gets generated, and launch the campaign with its selected quest and reward drafts."
             stepIndex={currentStepIndex + 1}
             totalSteps={builderSteps.length}
           />
+
+          <CampaignLaunchPreview preview={launchPreview} />
+
           <div className="mb-6 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
               Save this variant
@@ -1235,6 +1327,14 @@ export default function NewCampaignPage() {
         />
       </div>
     </AdminShell>
+  );
+}
+
+export default function NewCampaignPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewCampaignPageContent />
+    </Suspense>
   );
 }
 

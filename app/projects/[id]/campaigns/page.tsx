@@ -124,29 +124,29 @@ export default function ProjectCampaignsPage() {
         <OpsPanel
           eyebrow="Campaign board"
           title="Project campaigns"
-          description="A focused read on the campaigns that belong to this workspace, with fast links into deeper campaign operations."
+          description="Scan the campaign roster, then jump straight into Campaign Studio, Quest Studio or the next raid builder without losing project context."
           action={
             <div className="flex flex-wrap gap-2">
               <Link
-                href="/campaigns/new"
+                href={`/campaigns/new?projectId=${project.id}`}
                 className="inline-flex items-center gap-2 rounded-[18px] bg-primary px-4 py-3 font-bold text-black"
               >
                 <FolderPlus size={16} />
-                New campaign
+                Open Campaign Studio
               </Link>
               <Link
                 href={`/quests/new?projectId=${project.id}`}
                 className="inline-flex items-center gap-2 rounded-[18px] border border-line bg-card2 px-4 py-3 font-bold text-text transition hover:border-primary/35"
               >
                 <Target size={16} />
-                New quest
+                Open Quest Studio
               </Link>
               <Link
                 href={`/raids/new?projectId=${project.id}`}
                 className="inline-flex items-center gap-2 rounded-[18px] border border-line bg-card2 px-4 py-3 font-bold text-text transition hover:border-primary/35"
               >
                 <Swords size={16} />
-                New raid
+                Open Raid Builder
               </Link>
             </div>
           }
@@ -166,7 +166,7 @@ export default function ProjectCampaignsPage() {
         <OpsPanel
           eyebrow="Campaign roster"
           title="Current campaign lanes"
-          description="Use this route to scan project momentum first, then jump into the deeper campaign detail pages."
+          description="Use this route to scan project momentum first, then move into campaign detail or open the next studio from the same workspace."
         >
           <OpsTable
             columns={columns}

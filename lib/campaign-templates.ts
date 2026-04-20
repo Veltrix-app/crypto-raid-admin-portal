@@ -38,7 +38,7 @@ type CampaignTemplateDefinition = {
   rewards: Array<Omit<AdminReward, "id" | "projectId" | "campaignId">>;
 };
 
-type BuildTemplateResult = {
+export type BuildTemplateResult = {
   campaignDraft: Omit<AdminCampaign, "id">;
   questDrafts: ResolvedQuestDraft[];
   rewardDrafts: ResolvedRewardDraft[];

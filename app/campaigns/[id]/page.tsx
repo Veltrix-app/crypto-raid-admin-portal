@@ -345,35 +345,27 @@ export default function CampaignDetailPage() {
             </div>
           </DetailSurface>
 
-          <DetailSurface
-            eyebrow="Next Actions"
-            title="Build out the campaign loop"
-            description="Keep the campaign moving by filling the weakest part of the contributor journey next."
-          >
-            <div className="mt-5 space-y-3">
-              <DetailActionTile
-                href={
-                  relatedQuests.length > 0
-                    ? "/quests"
-                    : `/quests/new?projectId=${campaign.projectId}&campaignId=${campaign.id}`
-                }
-                label={relatedQuests.length > 0 ? "Review quests" : "Create first quest"}
+        <DetailSurface
+          eyebrow="Next Actions"
+          title="Studios and next actions"
+          description="Keep the campaign moving by opening the right builder with this campaign already wired in."
+        >
+          <div className="mt-5 space-y-3">
+            <DetailActionTile
+                href={`/quests/new?projectId=${campaign.projectId}&campaignId=${campaign.id}`}
+                label="Open Quest Studio"
                 description={
                   relatedQuests.length > 0
-                    ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} already shape this campaign.`
-                    : "Quests are the backbone of the contributor journey, so add one next."
+                    ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} already shape this campaign. Add the next one in Quest Studio with this campaign prefilled.`
+                    : "Start the contributor journey in Quest Studio with this campaign already attached."
                 }
               />
               <DetailActionTile
-                href={
-                  relatedRaids.length > 0
-                    ? "/raids"
-                    : `/raids/new?projectId=${campaign.projectId}&campaignId=${campaign.id}`
-                }
-                label={relatedRaids.length > 0 ? "Review raids" : "Add a raid"}
+                href={`/raids/new?projectId=${campaign.projectId}&campaignId=${campaign.id}`}
+                label="Open Raid Builder"
                 description={
                   relatedRaids.length > 0
-                    ? `${relatedRaids.length} raid${relatedRaids.length === 1 ? "" : "s"} are linked to this campaign.`
+                    ? `${relatedRaids.length} raid${relatedRaids.length === 1 ? "" : "s"} are linked already. Open the builder to layer in the next pressure wave from this campaign context.`
                     : "Raids help layer in time-sensitive social momentum on top of the quest structure."
                 }
               />

@@ -18,8 +18,8 @@ export default function ProjectOverviewQuickActions({
   return (
     <OpsPanel
       eyebrow="Quick actions"
-      title="Jump into the dedicated rails"
-      description="Use the project workspace to open the exact surface you need, instead of digging through one long stacked page."
+      title="Open the next studio or workspace"
+      description="Jump straight into Campaign Studio, Quest Studio, Community OS, or the exact operating rail this project needs next."
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {actions.map((action) => (

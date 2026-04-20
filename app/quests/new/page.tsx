@@ -30,12 +30,12 @@ function NewQuestPageContent() {
   return (
     <AdminShell>
       <PortalPageFrame
-        eyebrow="Quest builder"
-        title="New Quest"
-        description="Create a quest from a calmer builder surface, with the project and verification context visible before you submit."
+        eyebrow="Quest Studio"
+        title="Design the member action before you launch it"
+        description="Create a quest from a mission-first studio surface, with project context, verification posture and member-facing clarity visible before you submit."
         actions={
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Default workspace</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Studio context</p>
             <p className="text-lg font-extrabold text-text">{activeProject?.name || "No active project"}</p>
           </div>
         }
@@ -53,7 +53,7 @@ function NewQuestPageContent() {
       >
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <OpsPanel
-            eyebrow="Quest setup"
+            eyebrow="Quest Studio"
             title="Mission configuration"
             description="Define the quest, wire it into the right project and campaign, and keep the verification path clean from the start."
           >
@@ -85,7 +85,7 @@ function NewQuestPageContent() {
             </OpsPanel>
 
             <OpsPanel
-              eyebrow="Workspace context"
+              eyebrow="Studio context"
               title="Current routing context"
               description="The active project posture so the operator knows whether this quest is landing in a healthy lane."
             >

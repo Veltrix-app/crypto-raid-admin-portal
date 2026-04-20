@@ -910,21 +910,21 @@ export default function ProjectDetailPage() {
       status: project.website || project.contactEmail ? "ready" : "next",
     },
     {
-      title: "Create your first campaign",
+      title: "Open Campaign Studio",
       description: relatedCampaigns.length > 0
-        ? `${relatedCampaigns.length} campaign workspace${relatedCampaigns.length > 1 ? "s are" : " is"} already available.`
-        : "Spin up the first campaign so this workspace can start collecting quests, raids and participants.",
-      href: "/campaigns/new",
-      cta: relatedCampaigns.length > 0 ? "Open campaign builder" : "Create campaign",
+        ? `${relatedCampaigns.length} campaign workspace${relatedCampaigns.length > 1 ? "s are" : " is"} already live. Use Campaign Studio to shape the next lane from this project context.`
+        : "Spin up the first campaign in Campaign Studio so this workspace can start collecting quests, raids and participants.",
+      href: `/campaigns/new?projectId=${project.id}`,
+      cta: "Open Campaign Studio",
       status: relatedCampaigns.length > 0 ? "ready" : "next",
     },
     {
-      title: "Add engagement mechanics",
+      title: "Open Quest Studio",
       description: relatedQuests.length > 0 || relatedRewards.length > 0
-        ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} and ${relatedRewards.length} reward${relatedRewards.length === 1 ? "" : "s"} are configured.`
-        : "Define quests and rewards next so contributors know what to do and what they earn.",
-      href: relatedQuests.length > 0 ? "/quests" : "/quests/new",
-      cta: relatedQuests.length > 0 ? "Review quests" : "Create first quest",
+        ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} and ${relatedRewards.length} reward${relatedRewards.length === 1 ? "" : "s"} are configured. Add the next mission in Quest Studio without leaving this workspace.`
+        : "Define the first contributor action in Quest Studio so members know what to do and what they earn.",
+      href: `/quests/new?projectId=${project.id}`,
+      cta: "Open Quest Studio",
       status: relatedQuests.length > 0 || relatedRewards.length > 0 ? "ready" : "next",
     },
     {
@@ -1000,19 +1000,25 @@ export default function ProjectDetailPage() {
       href: `/projects/${project.id}/community`,
     },
     {
+      label: "Open Campaign Studio",
+      description:
+        "Start the next campaign with this project already loaded, so mission architecture and launch pressure begin in the right workspace.",
+      href: `/campaigns/new?projectId=${project.id}`,
+    },
+    {
       label: "Campaign board",
       description:
         "Open the campaign layer to manage activation work without digging through setup details.",
       href: `/projects/${project.id}/campaigns`,
     },
     {
-      label: "New quest",
+      label: "Open Quest Studio",
       description:
-        "Create a quest directly in this project so mission logic starts where the team is already working.",
+        "Create the next quest directly in this project so member action, verification and reward logic start where the team is already working.",
       href: `/quests/new?projectId=${project.id}`,
     },
     {
-      label: "New raid",
+      label: "Open Raid Builder",
       description:
         "Create a raid directly in this project so social pressure flows from the same workspace.",
       href: `/raids/new?projectId=${project.id}`,

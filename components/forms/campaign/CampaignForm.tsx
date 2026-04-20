@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import StudioModeToggle from "@/components/forms/studio/StudioModeToggle";
+import StudioReadinessCard from "@/components/forms/studio/StudioReadinessCard";
 import { AdminCampaign } from "@/types/entities/campaign";
 import { AdminProject } from "@/types/entities/project";
 
@@ -21,16 +23,12 @@ function getDefaultCampaignValues(
 ): Omit<AdminCampaign, "id"> {
   return {
     projectId: defaultProjectId || projects[0]?.id || "",
-
     title: "",
     slug: "",
-
     shortDescription: "",
     longDescription: "",
-
     bannerUrl: "",
     thumbnailUrl: "",
-
     campaignType: "hybrid",
     campaignMode: "hybrid",
     rewardType: "campaign_pool",
@@ -38,17 +36,13 @@ function getDefaultCampaignValues(
     minXpRequired: 0,
     activityThreshold: 0,
     lockDays: 0,
-
     xpBudget: 0,
     participants: 0,
     completionRate: 0,
-
     visibility: "public",
     featured: false,
-
     startsAt: "",
     endsAt: "",
-
     status: "draft",
   };
 }
@@ -72,7 +66,8 @@ const CAMPAIGN_TYPE_PRESETS: Record<
 > = {
   social_growth: {
     label: "Social Growth Push",
-    summary: "Use this when the campaign’s main job is reach: follows, reposts, comments and traffic into key moments.",
+    summary:
+      "Use this when the campaign's main job is reach: follows, reposts, comments and traffic into key moments.",
     visibility: "public",
     campaignMode: "offchain",
     rewardType: "campaign_pool",
@@ -82,11 +77,13 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     lockDays: 7,
     xpBudget: 2500,
     featured: true,
-    shortDescription: "A high-energy campaign designed to turn attention into measurable social reach.",
+    shortDescription:
+      "A high-energy campaign designed to turn attention into measurable social reach.",
   },
   community_growth: {
     label: "Community Expansion",
-    summary: "Best for campaigns focused on Discord, Telegram and deeper contributor activation.",
+    summary:
+      "Best for campaigns focused on Discord, Telegram and deeper contributor activation.",
     visibility: "public",
     campaignMode: "offchain",
     rewardType: "campaign_pool",
@@ -96,11 +93,13 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     lockDays: 10,
     xpBudget: 2000,
     featured: false,
-    shortDescription: "Bring new members into the community and guide them toward their first meaningful actions.",
+    shortDescription:
+      "Bring new members into the community and guide them toward their first meaningful actions.",
   },
   onchain: {
     label: "Onchain Activation",
-    summary: "Built for swaps, mints, wallet connection and asset-based participation loops.",
+    summary:
+      "Built for swaps, mints, wallet connection and asset-based participation loops.",
     visibility: "gated",
     campaignMode: "onchain",
     rewardType: "project_token",
@@ -110,11 +109,13 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     lockDays: 14,
     xpBudget: 4000,
     featured: true,
-    shortDescription: "Drive meaningful onchain participation with wallet-aware tasks and claimable incentives.",
+    shortDescription:
+      "Drive meaningful onchain participation with wallet-aware tasks and claimable incentives.",
   },
   referral: {
     label: "Referral Loop",
-    summary: "Use this to turn contributors into acquisition channels with referral quests and invite mechanics.",
+    summary:
+      "Use this to turn contributors into acquisition channels with referral quests and invite mechanics.",
     visibility: "public",
     campaignMode: "offchain",
     rewardType: "perk",
@@ -124,11 +125,13 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     lockDays: 7,
     xpBudget: 3000,
     featured: false,
-    shortDescription: "Reward contributors for bringing high-intent users into the project ecosystem.",
+    shortDescription:
+      "Reward contributors for bringing high-intent users into the project ecosystem.",
   },
   content: {
     label: "Content Campaign",
-    summary: "Great for UGC, writing, design submissions and manual proof-based content loops.",
+    summary:
+      "Great for UGC, writing, design submissions and manual proof-based content loops.",
     visibility: "public",
     campaignMode: "offchain",
     rewardType: "campaign_pool",
@@ -138,11 +141,13 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     lockDays: 7,
     xpBudget: 1800,
     featured: false,
-    shortDescription: "Collect quality content and proof-driven contributions around a clear campaign narrative.",
+    shortDescription:
+      "Collect quality content and proof-driven contributions around a clear campaign narrative.",
   },
   hybrid: {
     label: "Hybrid Launch",
-    summary: "Mix social, community and onchain mechanics when you want one central campaign hub.",
+    summary:
+      "Mix social, community and onchain mechanics when you want one central campaign hub.",
     visibility: "public",
     campaignMode: "hybrid",
     rewardType: "mixed",
@@ -152,7 +157,8 @@ const CAMPAIGN_TYPE_PRESETS: Record<
     lockDays: 14,
     xpBudget: 3500,
     featured: true,
-    shortDescription: "A blended campaign structure that combines multiple mechanics into one launch-ready flow.",
+    shortDescription:
+      "A blended campaign structure that combines multiple mechanics into one launch-ready flow.",
   },
 };
 
@@ -170,6 +176,7 @@ export default function CampaignForm({
   const [selectedPreset, setSelectedPreset] = useState<AdminCampaign["campaignType"]>(
     initialValues?.campaignType || "hybrid"
   );
+  const [builderMode, setBuilderMode] = useState<"basic" | "advanced">("basic");
   const [errors, setErrors] = useState<CampaignFormErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const activePreset = CAMPAIGN_TYPE_PRESETS[selectedPreset];
@@ -188,8 +195,9 @@ export default function CampaignForm({
     if (!resetKey) return;
     setValues(initialValues || getDefaultCampaignValues(projects, defaultProjectId));
     setSelectedPreset(initialValues?.campaignType || "hybrid");
+    setBuilderMode("basic");
     setErrors({});
-  }, [defaultProjectId, projects, resetKey]);
+  }, [defaultProjectId, initialValues, projects, resetKey]);
 
   useEffect(() => {
     if (!initialValues?.slug && values.title) {
@@ -235,7 +243,10 @@ export default function CampaignForm({
           ? current.lockDays
           : preset.lockDays,
       visibility: preset.visibility,
-      xpBudget: current.xpBudget > 0 && current.campaignType === campaignType ? current.xpBudget : preset.xpBudget,
+      xpBudget:
+        current.xpBudget > 0 && current.campaignType === campaignType
+          ? current.xpBudget
+          : preset.xpBudget,
       featured: preset.featured,
       shortDescription:
         current.shortDescription.trim() && current.campaignType === campaignType
@@ -284,6 +295,29 @@ export default function CampaignForm({
     });
   }
 
+  const readinessItems = [
+    {
+      label: "Workspace",
+      value: selectedProject ? `${selectedProject.name} is selected` : "Select a project workspace",
+      complete: Boolean(selectedProject),
+    },
+    {
+      label: "Campaign hook",
+      value: values.shortDescription.trim()
+        ? "Short description is ready for launch surfaces"
+        : "Add a short campaign hook for contributors",
+      complete: Boolean(values.shortDescription.trim()),
+    },
+    {
+      label: "Reward posture",
+      value:
+        (values.rewardPoolAmount ?? 0) > 0 || (values.xpBudget ?? 0) > 0
+          ? "Reward budget is defined"
+          : "Set reward pool or XP budget before launch",
+      complete: (values.rewardPoolAmount ?? 0) > 0 || (values.xpBudget ?? 0) > 0,
+    },
+  ];
+
   return (
     <form
       className="space-y-8"
@@ -312,6 +346,26 @@ export default function CampaignForm({
           </div>
         </div>
       ) : null}
+
+      <StudioModeToggle
+        label="Builder mode"
+        value={builderMode}
+        onChange={setBuilderMode}
+        options={[
+          {
+            value: "basic",
+            label: "Basic",
+            eyebrow: "Launch-safe path",
+          },
+          {
+            value: "advanced",
+            label: "Advanced",
+            eyebrow: "Operator controls",
+          },
+        ]}
+      />
+
+      <StudioReadinessCard title="Campaign readiness" items={readinessItems} />
 
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
@@ -350,9 +404,15 @@ export default function CampaignForm({
               <p className="mt-2 text-sm leading-6 text-sub">{activePreset.summary}</p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
-              <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">{values.campaignType.replace(/_/g, " ")}</span>
-              <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.visibility}</span>
-              <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.xpBudget} xp</span>
+              <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">
+                {values.campaignType.replace(/_/g, " ")}
+              </span>
+              <span className="rounded-full bg-white/5 px-3 py-1 text-text">
+                {activePreset.visibility}
+              </span>
+              <span className="rounded-full bg-white/5 px-3 py-1 text-text">
+                {activePreset.xpBudget} xp
+              </span>
             </div>
           </div>
         </div>
@@ -360,7 +420,7 @@ export default function CampaignForm({
 
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          General
+          Campaign Essentials
         </p>
 
         <div className="grid gap-5 md:grid-cols-2">
@@ -399,23 +459,6 @@ export default function CampaignForm({
             />
           </Field>
 
-          <Field label="Campaign Type">
-            <select
-              value={values.campaignType}
-              onChange={(e) =>
-                applyPreset(e.target.value as AdminCampaign["campaignType"])
-              }
-              className={getInputClassName(false)}
-            >
-              <option value="social_growth">social_growth</option>
-              <option value="community_growth">community_growth</option>
-              <option value="onchain">onchain</option>
-              <option value="referral">referral</option>
-              <option value="content">content</option>
-              <option value="hybrid">hybrid</option>
-            </select>
-          </Field>
-
           <Field label="Visibility">
             <select
               value={values.visibility}
@@ -450,7 +493,8 @@ export default function CampaignForm({
 
         {selectedProject ? (
           <p className="text-sm text-sub">
-            This campaign will launch inside <span className="font-semibold text-text">{selectedProject.name}</span>
+            This campaign will launch inside{" "}
+            <span className="font-semibold text-text">{selectedProject.name}</span>
             {values.visibility === "gated"
               ? " with gated visibility, which is a good fit for wallet-aware or staged rollout flows."
               : " and will be visible as a standard discoverable campaign unless you change visibility."}
@@ -460,41 +504,10 @@ export default function CampaignForm({
 
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          AESP Mechanics
+          Reward And Access
         </p>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <Field label="Campaign Mode">
-            <select
-              value={values.campaignMode ?? "offchain"}
-              onChange={(e) =>
-                updateField("campaignMode", e.target.value as NonNullable<AdminCampaign["campaignMode"]>)
-              }
-              className={getInputClassName(false)}
-            >
-              <option value="offchain">offchain</option>
-              <option value="onchain">onchain</option>
-              <option value="hybrid">hybrid</option>
-            </select>
-          </Field>
-
-          <Field label="Reward Type">
-            <select
-              value={values.rewardType ?? "campaign_pool"}
-              onChange={(e) =>
-                updateField("rewardType", e.target.value as NonNullable<AdminCampaign["rewardType"]>)
-              }
-              className={getInputClassName(false)}
-            >
-              <option value="campaign_pool">campaign_pool</option>
-              <option value="usdc">usdc</option>
-              <option value="project_token">project_token</option>
-              <option value="nft">nft</option>
-              <option value="perk">perk</option>
-              <option value="mixed">mixed</option>
-            </select>
-          </Field>
-
           <Field label="Reward Pool Amount">
             <input
               type="number"
@@ -515,25 +528,76 @@ export default function CampaignForm({
             />
           </Field>
 
-          <Field label="Activity Threshold">
+          <Field label="XP Budget">
             <input
               type="number"
               min={0}
-              value={values.activityThreshold ?? 0}
-              onChange={(e) => updateField("activityThreshold", Number(e.target.value))}
+              value={values.xpBudget}
+              onChange={(e) => updateField("xpBudget", Number(e.target.value))}
               className={getInputClassName(false)}
             />
           </Field>
 
-          <Field label="Lock Days">
-            <input
-              type="number"
-              min={0}
-              value={values.lockDays ?? 0}
-              onChange={(e) => updateField("lockDays", Number(e.target.value))}
-              className={getInputClassName(false)}
-            />
-          </Field>
+          {builderMode === "advanced" ? (
+            <>
+              <Field label="Campaign Mode">
+                <select
+                  value={values.campaignMode ?? "offchain"}
+                  onChange={(e) =>
+                    updateField(
+                      "campaignMode",
+                      e.target.value as NonNullable<AdminCampaign["campaignMode"]>
+                    )
+                  }
+                  className={getInputClassName(false)}
+                >
+                  <option value="offchain">offchain</option>
+                  <option value="onchain">onchain</option>
+                  <option value="hybrid">hybrid</option>
+                </select>
+              </Field>
+
+              <Field label="Reward Type">
+                <select
+                  value={values.rewardType ?? "campaign_pool"}
+                  onChange={(e) =>
+                    updateField(
+                      "rewardType",
+                      e.target.value as NonNullable<AdminCampaign["rewardType"]>
+                    )
+                  }
+                  className={getInputClassName(false)}
+                >
+                  <option value="campaign_pool">campaign_pool</option>
+                  <option value="usdc">usdc</option>
+                  <option value="project_token">project_token</option>
+                  <option value="nft">nft</option>
+                  <option value="perk">perk</option>
+                  <option value="mixed">mixed</option>
+                </select>
+              </Field>
+
+              <Field label="Activity Threshold">
+                <input
+                  type="number"
+                  min={0}
+                  value={values.activityThreshold ?? 0}
+                  onChange={(e) => updateField("activityThreshold", Number(e.target.value))}
+                  className={getInputClassName(false)}
+                />
+              </Field>
+
+              <Field label="Lock Days">
+                <input
+                  type="number"
+                  min={0}
+                  value={values.lockDays ?? 0}
+                  onChange={(e) => updateField("lockDays", Number(e.target.value))}
+                  className={getInputClassName(false)}
+                />
+              </Field>
+            </>
+          ) : null}
         </div>
 
         <div className="rounded-2xl border border-line bg-card2 p-4 text-sm text-sub">
@@ -543,7 +607,7 @@ export default function CampaignForm({
 
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Content
+          Member Facing Copy
         </p>
 
         <Field label="Short Description" required error={errors.shortDescription}>
@@ -566,81 +630,16 @@ export default function CampaignForm({
         </Field>
 
         <div className="rounded-2xl border border-line bg-card2 p-4 text-sm text-sub">
-          <span className="font-semibold text-text">Builder hint:</span> write the short description like the campaign hook contributors see first, and use the long description to explain the full loop, reward logic and what “success” looks like.
+          <span className="font-semibold text-text">Builder hint:</span> write the short description like the campaign hook contributors see first, and use the long description to explain the full loop, reward logic and what success looks like.
         </div>
       </div>
 
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Media
+          Timing And Launch
         </p>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Banner URL">
-            <input
-              value={values.bannerUrl || ""}
-              onChange={(e) => updateField("bannerUrl", e.target.value)}
-              className={getInputClassName(false)}
-              placeholder="https://..."
-            />
-          </Field>
-
-          <Field label="Thumbnail URL">
-            <input
-              value={values.thumbnailUrl || ""}
-              onChange={(e) => updateField("thumbnailUrl", e.target.value)}
-              className={getInputClassName(false)}
-              placeholder="https://..."
-            />
-          </Field>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Campaign Settings
-        </p>
-
-        <div className="grid gap-5 md:grid-cols-3">
-          <Field label="XP Budget">
-            <input
-              type="number"
-              min={0}
-              value={values.xpBudget}
-              onChange={(e) => updateField("xpBudget", Number(e.target.value))}
-              className={getInputClassName(false)}
-            />
-          </Field>
-
-          <Field label="Participants">
-            <input
-              type="number"
-              min={0}
-              value={values.participants}
-              onChange={(e) => updateField("participants", Number(e.target.value))}
-              className={getInputClassName(false)}
-            />
-          </Field>
-
-          <Field label="Completion Rate">
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={values.completionRate}
-              onChange={(e) => updateField("completionRate", Number(e.target.value))}
-              className={getInputClassName(false)}
-            />
-          </Field>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Timing
-        </p>
-
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           <Field label="Starts At" error={errors.dateRange}>
             <input
               type="datetime-local"
@@ -658,24 +657,76 @@ export default function CampaignForm({
               className={getInputClassName(Boolean(errors.dateRange))}
             />
           </Field>
+
+          <div className="space-y-2">
+            <span className="block text-sm font-semibold text-text">Featured Campaign</span>
+            <ToggleField
+              label="Show this campaign more prominently"
+              checked={values.featured}
+              onChange={(checked) => setValues({ ...values, featured: checked })}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Visibility
-        </p>
+      {builderMode === "advanced" ? (
+        <>
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+              Media
+            </p>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <ToggleField
-            label="Featured Campaign"
-            checked={values.featured}
-            onChange={(checked) =>
-              setValues({ ...values, featured: checked })
-            }
-          />
-        </div>
-      </div>
+            <div className="grid gap-5 md:grid-cols-2">
+              <Field label="Banner URL">
+                <input
+                  value={values.bannerUrl || ""}
+                  onChange={(e) => updateField("bannerUrl", e.target.value)}
+                  className={getInputClassName(false)}
+                  placeholder="https://..."
+                />
+              </Field>
+
+              <Field label="Thumbnail URL">
+                <input
+                  value={values.thumbnailUrl || ""}
+                  onChange={(e) => updateField("thumbnailUrl", e.target.value)}
+                  className={getInputClassName(false)}
+                  placeholder="https://..."
+                />
+              </Field>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+              Advanced Signals
+            </p>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <Field label="Participants">
+                <input
+                  type="number"
+                  min={0}
+                  value={values.participants}
+                  onChange={(e) => updateField("participants", Number(e.target.value))}
+                  className={getInputClassName(false)}
+                />
+              </Field>
+
+              <Field label="Completion Rate">
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={values.completionRate}
+                  onChange={(e) => updateField("completionRate", Number(e.target.value))}
+                  className={getInputClassName(false)}
+                />
+              </Field>
+            </div>
+          </div>
+        </>
+      ) : null}
 
       <button
         disabled={submitting}
@@ -729,7 +780,7 @@ function ToggleField({
 }) {
   return (
     <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-4">
-      <span className="text-sm font-semibold text-text">{label}</span>
+      <span className="pr-4 text-sm font-semibold text-text">{label}</span>
       <input
         type="checkbox"
         checked={checked}

@@ -46,6 +46,38 @@ export function BuilderHero({
   );
 }
 
+export function BuilderContextPillGroup({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {children}
+    </div>
+  );
+}
+
+export function BuilderContextPill({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "accent" | "warning";
+}) {
+  const toneClass =
+    tone === "accent"
+      ? "border-primary/20 bg-primary/12 text-primary"
+      : tone === "warning"
+        ? "border-amber-400/20 bg-amber-500/10 text-amber-300"
+        : "border-white/8 bg-white/[0.04] text-text";
+
+  return (
+    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 ${toneClass}`}>
+      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">{label}</span>
+      <span className="text-sm font-semibold">{value}</span>
+    </div>
+  );
+}
+
 export function BuilderStepRail<TStep extends string>({
   title = "Progress",
   steps,
