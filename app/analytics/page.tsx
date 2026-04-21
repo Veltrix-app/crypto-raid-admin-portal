@@ -455,17 +455,17 @@ export default function AnalyticsPage() {
                   <LinkRow
                     href="/claims"
                     title="Open Claims"
-                    body="Use the payout rail when conversion drops because claim handling or delivery is dragging."
+                body="Use the payout workspace when conversion drops because claim handling or delivery is dragging."
                   />
                   <LinkRow
                     href="/moderation"
                     title="Open Moderation"
-                    body="Use the trust rail when risk posture or verification review load is the blocker."
+                body="Use the trust workspace when risk posture or verification review load is the blocker."
                   />
                   <LinkRow
                     href="/onchain"
                     title="Open On-chain"
-                    body="Use the on-chain rail when reliability drops because ingest, enrichment or sync is drifting."
+                body="Use the on-chain workspace when reliability drops because ingest, enrichment or sync is drifting."
                   />
                 </div>
               </OpsPanel>

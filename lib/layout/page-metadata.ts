@@ -27,7 +27,7 @@ export function getPortalPageMetadata(
     return {
       eyebrow: "Control center",
       title: "Overview",
-      description: "Cross-project executive view for queue pressure, launch health and operator momentum.",
+      description: "Cross-project command center for launch posture, queue pressure and live health.",
     };
   }
 
@@ -37,15 +37,15 @@ export function getPortalPageMetadata(
 
   if (globalMatch) {
     return {
-      eyebrow: globalMatch.label === "Projects" ? "Workspace board" : "Global operations",
+      eyebrow: globalMatch.label === "Projects" ? "Workspace board" : "Platform operations",
       title: globalMatch.label,
       description: globalMatch.description,
     };
   }
 
   return {
-    eyebrow: "Veltrix OS",
+    eyebrow: "Veltrix platform",
     title: "Portal",
-    description: "Project-first operator workspace for campaigns, community, trust and rewards.",
+    description: "Project-first control system for launches, community operations, safety and support.",
   };
 }

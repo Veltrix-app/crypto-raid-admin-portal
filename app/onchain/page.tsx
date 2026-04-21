@@ -60,7 +60,7 @@ export default function OnchainPage() {
     {
       label: "Queue manual retry",
       description:
-        "Mark the active project's on-chain rail for a manual retry and enrichment pass after case review.",
+      "Mark the active project's on-chain workflow for a manual retry and enrichment pass after case review.",
       objectType: "provider_sync" as const,
       objectId: "onchain-provider-rail",
       overrideType: "manual_retry" as const,
@@ -314,7 +314,7 @@ export default function OnchainPage() {
 
         <OpsPanel
           eyebrow="Work modes"
-          title="Internal on-chain lanes"
+          title="Internal on-chain workflows"
           description="Split the workspace by what the operator is trying to do right now: clear the active queue, stabilize failures, inspect signals, or audit finished outcomes."
           action={
             <SegmentToggle
@@ -418,7 +418,7 @@ export default function OnchainPage() {
         <OpsPanel
           eyebrow="Platform Core"
           title={`Incidents and overrides for ${activeProjectName}`}
-          description="Keep the active project's provider rail and incident response visible while on-chain ops work the higher-risk ingest and enrichment cases."
+          description="Keep the active project's provider workflow and incident response visible while on-chain ops work the higher-risk ingest and enrichment cases."
         >
           <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-4">
@@ -450,7 +450,7 @@ export default function OnchainPage() {
                   Project overrides
                 </p>
                 <p className="mt-2 text-sm leading-6 text-sub">
-                  Override provider noise or pause the sync rail when the active project needs a
+              Override provider noise or pause the sync workflow when the active project needs a
                   calmer on-chain recovery window.
                 </p>
               </div>
@@ -479,13 +479,13 @@ export default function OnchainPage() {
         >
           <SupportEscalationPanel
             title="On-chain support escalations"
-            description="Use this rail when on-chain issues cross queue, provider and deploy boundaries and need stronger operator follow-through."
+          description="Use this workspace when on-chain issues cross queue, provider and deploy boundaries and need stronger operator follow-through."
             projectId={activeProjectId}
             requireProjectContext
             emptyTitle={activeProjectId ? "No on-chain escalations" : "Select an active project"}
             emptyDescription={
               activeProjectId
-                ? "No support escalations are currently open for this project's on-chain rail."
+                  ? "No support escalations are currently open for this project's on-chain workspace."
                 : "Pick an active project to inspect on-chain escalations."
             }
           />

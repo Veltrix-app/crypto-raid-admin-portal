@@ -81,7 +81,7 @@ export function CommunityAutomationCenterPanel({
     <OpsPanel
       eyebrow="Automation Center"
       title="Scheduled community execution"
-      description="These are the durable Community OS rails. Owners should be able to see what is armed, what is ready, what is degraded and where execution is currently stalling."
+      description="These are the durable Community OS workflows. Owners should be able to see what is armed, what is ready, what is degraded and where execution is currently stalling."
       action={
         <button
           type="button"
@@ -96,7 +96,7 @@ export function CommunityAutomationCenterPanel({
       <div className="space-y-5">
         <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
           <OpsMetricCard
-            label="Automation rails"
+            label="Automations"
             value={automations.length}
             sub="Project-owned automations tracked in Community OS."
             emphasis={automations.length > 0 ? "primary" : "default"}
@@ -104,7 +104,7 @@ export function CommunityAutomationCenterPanel({
           <OpsMetricCard
             label="Armed"
             value={activeCount}
-            sub="Rails currently active and allowed to run."
+            sub="Automations currently active and allowed to run."
             emphasis={activeCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
@@ -116,7 +116,7 @@ export function CommunityAutomationCenterPanel({
           <OpsMetricCard
             label="Blocked"
             value={blockedCount + degradedCount}
-            sub="Execution rails that are stalled or drifting."
+            sub="Execution workflows that are stalled or drifting."
             emphasis={blockedCount + degradedCount > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
@@ -272,7 +272,7 @@ export function CommunityAutomationCenterPanel({
                       Latest result: {automation.lastResultSummary || automation.lastResult || "No runs yet"}
                     </p>
                     <p>
-                      Confidence rail:{" "}
+                      Execution confidence:{" "}
                       <span className="font-semibold text-text">
                         {automation.executionPosture === "ready" || automation.executionPosture === "running"
                           ? "Execution looks healthy"
@@ -299,13 +299,13 @@ export function CommunityAutomationCenterPanel({
             <div className="rounded-[24px] border border-line bg-card2 p-5">
               <p className="text-sm font-bold text-text">Execution posture</p>
               <p className="mt-2 text-sm text-sub">
-                Keep the owner rail focused on confidence, not just on/off settings.
+                Keep the owner view focused on confidence, not just on/off settings.
               </p>
 
               <div className="mt-4 grid gap-3">
                 <div className="rounded-[20px] border border-line bg-card px-4 py-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
-                    Journey-linked rails
+                    Journey-linked automations
                   </p>
                   <p className="mt-2 text-lg font-bold text-text">{journeyAutomationCount}</p>
                   <p className="mt-2 text-sm leading-6 text-sub">
@@ -323,11 +323,11 @@ export function CommunityAutomationCenterPanel({
                 </div>
                 <div className="rounded-[20px] border border-line bg-card px-4 py-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
-                    Blocked or degraded rails
+                    Blocked or degraded automations
                   </p>
                   <p className="mt-2 text-lg font-bold text-text">{blockedCount + degradedCount}</p>
                   <p className="mt-2 text-sm leading-6 text-sub">
-                    These rails need a config fix, operator action or captain follow-through.
+                    These automations need a config fix, operator action or captain follow-through.
                   </p>
                 </div>
               </div>
@@ -336,7 +336,7 @@ export function CommunityAutomationCenterPanel({
             <div className="rounded-[24px] border border-line bg-card2 p-5">
               <p className="text-sm font-bold text-text">Recent automation history</p>
               <p className="mt-2 text-sm text-sub">
-                The latest scheduled or manual execution records for this project's automation rails.
+                The latest scheduled or manual execution records for this project's automations.
               </p>
 
               <div className="mt-4 space-y-3">

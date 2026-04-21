@@ -51,18 +51,18 @@ export default function ClaimsPage() {
 
   const claimOverrideActions = [
     {
-      label: "Pause claim rail",
+    label: "Pause claim workflow",
       description:
         "Freeze claim processing for the active project while the team works through payout blockers or delivery issues.",
       objectType: "claim" as const,
       objectId: "fulfillment-queue",
       overrideType: "pause" as const,
-      reason: "Claim rail paused from internal payout ops.",
+    reason: "Claim workflow paused from internal payout ops.",
     },
     {
       label: "Queue manual retry",
       description:
-        "Mark the active project's payout rail for a manual retry pass after blocked claims or finalization failures are reviewed.",
+      "Mark the active project's payout workflow for a manual retry pass after blocked claims or finalization failures are reviewed.",
       objectType: "claim" as const,
       objectId: "fulfillment-queue",
       overrideType: "manual_retry" as const,
@@ -305,7 +305,7 @@ export default function ClaimsPage() {
 
         <OpsPanel
           eyebrow="Work modes"
-          title="Internal payout lanes"
+          title="Internal payout workflows"
           description="Split the workspace by what the operator is trying to do right now: clear the review queue, resolve live incidents, coordinate disputes, or audit finished outcomes."
           action={
             <SegmentToggle
@@ -410,7 +410,7 @@ export default function ClaimsPage() {
         <OpsPanel
           eyebrow="Platform Core"
           title={`Incidents and overrides for ${activeProjectName}`}
-          description="Keep the active project's claim rail and payout overrides visible while internal ops work the higher-risk payout cases."
+          description="Keep the active project's claim workflow and payout overrides visible while internal ops work the higher-risk payout cases."
         >
           <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-4">
@@ -444,7 +444,7 @@ export default function ClaimsPage() {
                   Project overrides
                 </p>
                 <p className="mt-2 text-sm leading-6 text-sub">
-                  Override payout noise or pause the claim rail when the active project needs a
+              Override payout noise or pause the claim workflow when the active project needs a
                   calmer resolution window.
                 </p>
               </div>
@@ -481,7 +481,7 @@ export default function ClaimsPage() {
             emptyTitle={activeProjectId ? "No payout escalations" : "Select an active project"}
             emptyDescription={
               activeProjectId
-                ? "No support escalations are currently open for this project's payout rail."
+                  ? "No support escalations are currently open for this project's payout workspace."
                 : "Pick an active project to inspect payout escalations."
             }
           />

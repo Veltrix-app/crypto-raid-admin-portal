@@ -429,12 +429,12 @@ export default function ProjectLaunchPage() {
                 eyebrow={view === "setup" ? "Setup checklist" : "Launch checklist"}
                 title={
                   view === "setup"
-                    ? "Finish the setup rails in the right order"
+                    ? "Finish the setup steps in the right order"
                     : "Read the launch blockers before going live"
                 }
                 description={
                   view === "setup"
-                    ? "Use the rail to focus one setup decision at a time and keep the project moving."
+                    ? "Use this board to focus one setup decision at a time and keep the project moving."
                     : "This is the launch-facing view of the same project state, grouped into blockers and readiness groups."
                 }
               >
@@ -460,7 +460,7 @@ export default function ProjectLaunchPage() {
                   {
                     label: "Open Community OS",
                     description:
-                      "Configure channels, commands, test pushes and community rails in one place.",
+                      "Configure channels, commands, test pushes and community workflows in one place.",
                     href: `/projects/${project.id}/community`,
                   },
                   {
@@ -478,7 +478,7 @@ export default function ProjectLaunchPage() {
                   {
                     label: "Open Raid Builder",
                     description:
-                      "Add live pressure missions that tie directly into the campaign and community rails.",
+                      "Add live pressure missions that tie directly into the campaign and community workflows.",
                       href: `/raids/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=launch`,
                   },
                 ]}
@@ -529,7 +529,7 @@ export default function ProjectLaunchPage() {
 
             <div className="grid gap-6 2xl:grid-cols-2">
               <OpsPanel
-                eyebrow="Incident rail"
+                eyebrow="Incident board"
                 title="Open launch incidents"
                 description="Phase 1 operator incidents stay visible here so launch readiness is never blind."
               >
@@ -543,7 +543,7 @@ export default function ProjectLaunchPage() {
               </OpsPanel>
 
               <OpsPanel
-                eyebrow="Override rail"
+                eyebrow="Override board"
                 title="Active launch overrides"
                 description="Pause, mute, skip and manual-complete overrides are part of launch posture now."
               >

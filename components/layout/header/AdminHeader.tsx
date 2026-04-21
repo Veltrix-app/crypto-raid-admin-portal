@@ -13,7 +13,7 @@ export default function AdminHeader() {
     useAdminAuthStore();
   const toggleSidebar = useAdminUIStore((s) => s.toggleSidebar);
   const activeProject = memberships.find((item) => item.projectId === activeProjectId);
-  const identityLabel = email ? email.split("@")[0] : "portal-operator";
+  const identityLabel = email ? email.split("@")[0] : "operator";
   const statusLabel =
     role === "super_admin" ? "Super admin" : activeProject?.role || role || "Project operator";
   const pageMeta = getPortalPageMetadata(pathname, activeProject?.projectName);
@@ -51,7 +51,7 @@ export default function AdminHeader() {
                 Global search
               </p>
               <input
-                placeholder="Search projects, campaigns, alerts and operators..."
+                placeholder="Search projects, launches, cases and operators..."
                 className="mt-1 w-full bg-transparent text-sm font-medium text-text outline-none placeholder:text-sub"
                 aria-label="Search portal"
               />

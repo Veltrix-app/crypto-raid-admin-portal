@@ -2435,7 +2435,7 @@ export default function ProjectCommunityManagementPage() {
       <AdminShell>
         <LoadingState
           title="Loading community control room"
-          description="Veltrix is pulling this project's provider rails, bot settings, contributor readiness, captain lanes, trust posture and recent operator activity into the Community OS view."
+          description="Veltrix is pulling this project's provider workflows, bot settings, contributor readiness, captain assignments, trust posture and recent operator activity into the Community OS view."
         />
       </AdminShell>
     );
@@ -2457,7 +2457,7 @@ export default function ProjectCommunityManagementPage() {
       <AdminShell>
         <NotFoundState
           title="Community access is project-scoped"
-          description="Only team members from this project can view or manage this community rail."
+          description="Only team members from this project can view or manage this community workspace."
         />
       </AdminShell>
     );
@@ -2474,7 +2474,7 @@ export default function ProjectCommunityManagementPage() {
         <OpsPanel
           eyebrow="Community OS"
           title="Community control room"
-          description="This project-private rail is now split by operating intent. Stay in one mode at a time instead of scanning one giant mixed page."
+          description="This project-private workspace is split by operating intent. Stay in one mode at a time instead of scanning one giant mixed page."
         >
           <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-5">
@@ -2528,7 +2528,7 @@ export default function ProjectCommunityManagementPage() {
                 }
               />
               <OpsSnapshotRow
-                label="Automation rail"
+                label="Automations"
                 value={`${activeAutomationCount.toString()} active · ${dueAutomationCount.toString()} due`}
               />
               <OpsSnapshotRow
@@ -2649,15 +2649,15 @@ export default function ProjectCommunityManagementPage() {
           <OpsPanel
             eyebrow="Support posture"
             title="Project support escalations"
-            description="When community execution issues cross automation, provider and deploy boundaries, keep the named owner and recovery path visible from the same project rail."
+            description="When community execution issues cross automation, provider and deploy boundaries, keep the named owner and recovery path visible from the same project workspace."
           >
             <SupportEscalationPanel
               title="Community support escalations"
-              description="This rail keeps community-side pressure accountable when the issue is bigger than one automation run, one captain task or one provider incident."
+              description="This panel keeps community-side pressure accountable when the issue is bigger than one automation run, one captain task or one provider incident."
               projectId={project.id}
               requireProjectContext
               emptyTitle="No community escalations"
-              emptyDescription="No support escalations are currently open for this project's community execution rail."
+              emptyDescription="No support escalations are currently open for this project's community execution workspace."
             />
           </OpsPanel>
         ) : null}

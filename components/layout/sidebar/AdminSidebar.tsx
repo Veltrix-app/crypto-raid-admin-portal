@@ -36,13 +36,13 @@ export default function AdminSidebar() {
           {!sidebarCollapsed ? (
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
-                Veltrix OS
+                Veltrix Platform
               </p>
               <h2 className="mt-2 text-lg font-extrabold tracking-tight text-text">
-                Admin Portal
+                Launch Control
               </h2>
               <p className="mt-1 text-sm text-sub">
-                Project-first operations, trust rails and launch control.
+                Project-first launch operations, community control and safety workflows.
               </p>
             </div>
           ) : null}
@@ -146,7 +146,7 @@ export default function AdminSidebar() {
               System mode
             </p>
             <div className="mt-3 flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold text-text">Portal surface</span>
+              <span className="text-sm font-semibold text-text">Public launch mode</span>
               <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-300">
                 Stable
               </span>

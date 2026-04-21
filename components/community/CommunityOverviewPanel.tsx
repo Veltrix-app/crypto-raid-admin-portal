@@ -150,7 +150,7 @@ export function CommunityOverviewPanel({
     <OpsPanel
       eyebrow="Overview"
       title={`${projectName} community control center`}
-      description="This control room is scoped to this project only. It should tell an owner what needs attention, what is healthy, and which rails are ready to push without drifting into member-level management."
+      description="This control room is scoped to this project only. It should tell an owner what needs attention, what is healthy, and which workflows are ready to push without drifting into member-level management."
       tone="accent"
       action={
         <div className="flex flex-wrap gap-3">
@@ -178,19 +178,19 @@ export function CommunityOverviewPanel({
             emphasis="primary"
           />
           <OpsMetricCard
-            label="Campaign lanes"
+            label="Campaigns"
             value={campaignCount}
             sub="Campaigns currently feeding community pressure, rankings and launch sequencing."
             emphasis={campaignCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Quest lanes"
+            label="Quests"
             value={questCount}
             sub="Mission surfaces that can feed automations, leaderboards and funnels."
             emphasis={questCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Raid lanes"
+            label="Raids"
             value={raidCount}
             sub="Raid pressure that can be coordinated through playbooks and alerts."
             emphasis={raidCount > 0 ? "primary" : "default"}
@@ -198,13 +198,13 @@ export function CommunityOverviewPanel({
           <OpsMetricCard
             label="Linked contributors"
             value={linkedContributorCount}
-            sub="Community members already reachable through command and push rails."
+            sub="Community members already reachable through commands and delivery workflows."
             emphasis={linkedContributorCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
             label="Wallet verified"
             value={walletVerifiedCount}
-            sub="Contributors ready for deeper trust, reward and on-chain rails."
+            sub="Contributors ready for deeper trust, reward and on-chain workflows."
           />
           <OpsMetricCard
             label="Captains assigned"
@@ -231,9 +231,9 @@ export function CommunityOverviewPanel({
             emphasis={overdueCaptainCount > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
-            label="Automation rails"
+            label="Automations"
             value={automationRailCount}
-            sub="Durable community execution rails stored in Community OS."
+            sub="Durable community execution workflows stored in Community OS."
             emphasis={automationRailCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
@@ -243,7 +243,7 @@ export function CommunityOverviewPanel({
             emphasis={activeAutomationCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Ready rails"
+            label="Ready now"
             value={readyAutomationCount}
             sub="Automations already in a ready posture for the next community move."
             emphasis={readyAutomationCount > 0 ? "primary" : "default"}
@@ -251,7 +251,7 @@ export function CommunityOverviewPanel({
           <OpsMetricCard
             label="Degraded or blocked"
             value={blockedAutomationCount + degradedAutomationCount}
-            sub="Execution rails that are stalled or drifting and need owner attention."
+            sub="Execution workflows that are stalled or drifting and need owner attention."
             emphasis={blockedAutomationCount + degradedAutomationCount > 0 ? "warning" : "default"}
           />
           <OpsMetricCard
@@ -269,7 +269,7 @@ export function CommunityOverviewPanel({
           <OpsMetricCard
             label="Newcomer pressure"
             value={newcomerCount}
-            sub="Fresh contributors waiting for a first mission lane."
+            sub="Fresh contributors waiting for a first mission."
             emphasis={newcomerCount > 0 ? "primary" : "default"}
           />
           <OpsMetricCard
@@ -294,11 +294,11 @@ export function CommunityOverviewPanel({
                   Recommended next play
                 </p>
                 <p className="mt-2 text-lg font-extrabold text-text">
-                  {recommendedPlayTitle || "Current rails look stable"}
+                  {recommendedPlayTitle || "Current workflows look stable"}
                 </p>
                 <p className="mt-3 text-sm leading-7 text-sub">
                   {recommendedPlaySummary ||
-                    "No urgent owner intervention is currently required on this project rail."}
+                    "No urgent owner intervention is currently required in this project workspace."}
                 </p>
               </div>
               {recommendedPlayActionLabel ? (
@@ -337,7 +337,7 @@ export function CommunityOverviewPanel({
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">
-                  Provider rail
+                  Provider workflows
                 </p>
                 <p className="mt-1 text-sm font-semibold text-text">
                   Discord, Telegram and X are managed from one project-private workspace.
@@ -421,7 +421,7 @@ export function CommunityOverviewPanel({
 
           <div className="rounded-[24px] border border-line bg-card2 p-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">
-              Current issue rail
+              Current issue
             </p>
             <p className="mt-3 rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm leading-6 text-sub">
               {latestIssue}

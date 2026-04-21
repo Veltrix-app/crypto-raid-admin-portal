@@ -136,7 +136,7 @@ export async function GET(
         authUserId: row.auth_user_id,
         username:
           displayNameByAuthUserId.get(row.auth_user_id) ??
-          `pilot-${row.auth_user_id.slice(0, 6)}`,
+          `member-${row.auth_user_id.slice(0, 6)}`,
         xp: Number(row.xp ?? 0),
         level: Number(row.level ?? 1),
         trust: Number(row.trust_score ?? 50),

@@ -61,11 +61,11 @@ export function CommunityCommandsPanel({
           <OpsMetricCard
             label="Telegram"
             value={settings.telegramCommandsEnabled ? "Enabled" : "Disabled"}
-            sub="Whether the Telegram command rail is armed."
+            sub="Whether the Telegram command surface is armed."
             emphasis={settings.telegramCommandsEnabled ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Mission rail"
+            label="Mission commands"
             value={settings.missionCommandsEnabled ? "Enabled" : "Parked"}
             sub="Whether mission commands stay visible in chat."
             emphasis={settings.missionCommandsEnabled ? "primary" : "default"}
@@ -73,11 +73,11 @@ export function CommunityCommandsPanel({
           <OpsMetricCard
             label="Raid ops"
             value={settings.raidOpsEnabled ? "Armed" : "Parked"}
-            sub="The v1 raid rail switch for the future command surface."
+            sub="The raid-ops switch for the command surface."
             emphasis={settings.raidOpsEnabled ? "primary" : "default"}
           />
           <OpsMetricCard
-            label="Captain rail"
+            label="Captain commands"
             value={settings.captainCommandsEnabled ? "Enabled" : "Parked"}
             sub="Whether captain-specific command entry stays visible."
             emphasis={settings.captainCommandsEnabled ? "primary" : "default"}
@@ -85,7 +85,7 @@ export function CommunityCommandsPanel({
           <OpsMetricCard
             label="Deep links"
             value={settings.commandDeepLinksEnabled ? "Enabled" : "Parked"}
-            sub="Whether replies should push back into web and portal rails."
+            sub="Whether replies should push back into the right web or portal surface."
             emphasis={settings.commandDeepLinksEnabled ? "primary" : "default"}
           />
           <OpsMetricCard
@@ -168,7 +168,7 @@ export function CommunityCommandsPanel({
             </label>
 
             <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
-              <span>Arm raid ops rail</span>
+              <span>Enable raid ops</span>
               <input
                 type="checkbox"
                 checked={settings.raidOpsEnabled}
@@ -202,7 +202,7 @@ export function CommunityCommandsPanel({
               ))}
             </div>
             <p className="mt-4 text-sm leading-6 text-sub">
-              Discord stays the richer rail, Telegram stays the fast-access rail, and deep links push members back into the exact webapp or captain surface they should land on next.
+              Discord stays the richer command surface, Telegram stays the fast-access surface, and deep links push members back into the exact webapp or captain workspace they should land on next.
             </p>
           </div>
 

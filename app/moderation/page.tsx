@@ -49,13 +49,13 @@ export default function ModerationPage() {
 
   const moderationOverrideActions = [
     {
-      label: "Pause provider rail",
+    label: "Pause provider workflow",
       description:
         "Freeze provider-side moderation inputs for the active project while the team stabilizes callbacks or suspicious ingestion noise.",
       objectType: "provider_sync" as const,
       objectId: "moderation-provider-rail",
       overrideType: "pause" as const,
-      reason: "Provider rail paused from internal trust ops.",
+    reason: "Provider workflow paused from internal trust ops.",
     },
     {
       label: "Mute incident noise",
@@ -64,7 +64,7 @@ export default function ModerationPage() {
       objectType: "provider_sync" as const,
       objectId: "moderation-provider-rail",
       overrideType: "mute" as const,
-      reason: "Provider rail muted from internal trust ops.",
+    reason: "Provider workflow muted from internal trust ops.",
     },
   ];
 
@@ -283,7 +283,7 @@ export default function ModerationPage() {
 
         <OpsPanel
           eyebrow="Work modes"
-          title="Internal trust lanes"
+          title="Internal trust workflows"
           description="Split the workspace by what the operator is trying to do right now: clear the queue, push active investigations, coordinate escalations, or audit finished outcomes."
           action={
             <SegmentToggle
@@ -375,7 +375,7 @@ export default function ModerationPage() {
         <OpsPanel
           eyebrow="Platform Core"
           title={`Incidents and overrides for ${activeProjectName}`}
-          description="Keep the active project's provider rail and incident response visible while trust ops work the higher-risk trust cases."
+          description="Keep the active project's provider workflow and incident response visible while trust ops work the higher-risk trust cases."
         >
           <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-4">
@@ -409,7 +409,7 @@ export default function ModerationPage() {
                   Project overrides
                 </p>
                 <p className="mt-2 text-sm leading-6 text-sub">
-                  Override provider noise or pause the rail when the active project needs a calmer
+              Override provider noise or pause the workflow when the active project needs a calmer
                   investigation window.
                 </p>
               </div>
@@ -440,13 +440,13 @@ export default function ModerationPage() {
         >
           <SupportEscalationPanel
             title="Trust support escalations"
-            description="Use this rail when moderation pressure can no longer be explained by one trust case or one provider incident alone."
+          description="Use this workspace when moderation pressure can no longer be explained by one trust case or one provider incident alone."
             projectId={activeProjectId}
             requireProjectContext
             emptyTitle={activeProjectId ? "No trust escalations" : "Select an active project"}
             emptyDescription={
               activeProjectId
-                ? "No support escalations are currently open for this project's trust rail."
+                  ? "No support escalations are currently open for this project's trust workspace."
                 : "Pick an active project to inspect trust escalations."
             }
           />

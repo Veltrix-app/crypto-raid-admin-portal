@@ -80,15 +80,15 @@ export function CommunityMissionsPanel({
   return (
     <OpsPanel
       eyebrow="Missions"
-      title="Mission rail and featured digests"
-      description="Control the public mission board this project pushes into its own communities and decide how aggressive the daily mission rail should be."
+      title="Mission publishing and featured digests"
+      description="Control the public mission board this project publishes into its own communities and decide how aggressive the daily mission digest should be."
     >
       <div className="space-y-5">
         <div className="grid gap-3 md:grid-cols-4">
           <OpsMetricCard label="Live campaigns" value={campaigns.length} sub="Campaigns available for a community push right now." emphasis={campaigns.length > 0 ? "primary" : "default"} />
-          <OpsMetricCard label="Live quests" value={quests.length} sub="Mission lanes currently available to contributors." emphasis={quests.length > 0 ? "primary" : "default"} />
+          <OpsMetricCard label="Live quests" value={quests.length} sub="Missions currently available to contributors." emphasis={quests.length > 0 ? "primary" : "default"} />
           <OpsMetricCard label="Live rewards" value={rewards.length} sub="Visible rewards the community can be nudged toward." />
-          <OpsMetricCard label="Mission digest" value={settings.missionDigestEnabled ? "Armed" : "Parked"} sub="Whether the daily mission summary rail is enabled." emphasis={settings.missionDigestEnabled ? "primary" : "default"} />
+          <OpsMetricCard label="Mission digest" value={settings.missionDigestEnabled ? "Armed" : "Parked"} sub="Whether the daily mission summary is enabled." emphasis={settings.missionDigestEnabled ? "primary" : "default"} />
         </div>
 
         <div className="rounded-[24px] border border-line bg-card2 p-5">

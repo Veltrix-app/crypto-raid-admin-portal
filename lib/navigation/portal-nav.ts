@@ -42,49 +42,49 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
   {
     href: "/overview",
     label: "Overview",
-    description: "Cross-project launch health, queue pressure and executive signal.",
+    description: "Cross-project launch posture, live health and the next operator priorities.",
     icon: Home,
   },
   {
     href: "/projects",
     label: "Projects",
-    description: "Project workspaces, onboarding flow and workspace entry.",
+    description: "Project workspaces, onboarding, launch setup and day-to-day ownership.",
     icon: FolderKanban,
   },
   {
     href: "/moderation",
     label: "Moderation",
-    description: "Trust review, suspicious patterns and contributor actions.",
+    description: "Trust review, suspicious patterns and contributor case handling.",
     icon: ClipboardCheck,
   },
   {
     href: "/claims",
     label: "Claims",
-    description: "Reward fulfillment queue, incidents and payout operations.",
+    description: "Payout queue, blocked claims, incidents and resolution history.",
     icon: WalletCards,
   },
   {
     href: "/onchain",
     label: "On-chain",
-    description: "Ingest failures, enrichment cases and project-safe recovery rails.",
+    description: "On-chain cases, ingest failures, enrichment issues and safe recovery workflows.",
     icon: Workflow,
   },
   {
     href: "/analytics",
     label: "Analytics",
-    description: "Cross-project growth, activation and performance insights.",
+    description: "Outcomes, activation trends, reliability pressure and performance signals.",
     icon: BarChart3,
   },
   {
     href: "/submissions",
     label: "Submissions",
-    description: "Review queue for quest proof and manual submission flows.",
+    description: "Quest proof review, manual submissions and verification backlog.",
     icon: Shield,
   },
   {
     href: "/settings",
     label: "Settings",
-    description: "Operator, team and platform-level control surfaces.",
+    description: "Workspace identity, team access, billing and platform controls.",
     icon: Settings,
   },
 ] as const;
@@ -93,7 +93,7 @@ export const PROJECT_WORKSPACE_TABS: readonly ProjectWorkspaceTab[] = [
   {
     slug: "",
     label: "Overview",
-    description: "Project health, posture and fast entry into dedicated rails.",
+    description: "Project health, launch posture and fast entry into the main operating workflows.",
   },
   {
     slug: "launch",
@@ -103,7 +103,7 @@ export const PROJECT_WORKSPACE_TABS: readonly ProjectWorkspaceTab[] = [
   {
     slug: "campaigns",
     label: "Campaigns",
-    description: "Project-scoped campaigns and activation context.",
+    description: "Campaign systems, quest and raid handoffs, and project activation context.",
   },
   {
     slug: "community",
@@ -113,22 +113,22 @@ export const PROJECT_WORKSPACE_TABS: readonly ProjectWorkspaceTab[] = [
   {
     slug: "rewards",
     label: "Rewards",
-    description: "Reward catalog, distributions and claim pressure.",
+    description: "Reward catalog, distributions, stock posture and claim pressure.",
   },
   {
     slug: "payouts",
     label: "Payouts",
-    description: "Payout health, blocked claims, incidents and resolution rails.",
+    description: "Payout health, blocked claims, incidents and resolution workflows.",
   },
   {
     slug: "onchain",
     label: "On-chain",
-    description: "Assets, wallets, pipeline health and ingestion operations.",
+    description: "Assets, wallets, case history and project-safe on-chain operations.",
   },
   {
     slug: "trust",
     label: "Trust",
-    description: "Project-specific trust posture, watch states and review actions.",
+    description: "Project trust posture, watch states, permissions and review actions.",
   },
   {
     slug: "settings",
@@ -141,7 +141,7 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
   {
     slug: "",
     label: "Overview",
-    description: "Workspace-level settings posture, priorities and module entry.",
+    description: "Workspace settings posture, priorities and entry into the main control modules.",
   },
   {
     slug: "profile",

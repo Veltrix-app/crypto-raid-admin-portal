@@ -215,7 +215,7 @@ export default function OverviewPage() {
               <OpsPriorityLink
                 href="/onchain"
                 title="Open on-chain ops"
-                body="If this feels like runtime drift, start with the execution rails and confirm cases are still landing."
+                    body="If this feels like runtime drift, start with the execution workflows and confirm cases are still landing."
                 cta="Open on-chain"
               />
             </div>
@@ -245,7 +245,7 @@ export default function OverviewPage() {
               />
 
               <OpsPanel
-                eyebrow="Workspace launch rail"
+                eyebrow="Workspace launch board"
                 title="Active workspace posture"
                 description="Keep the current workspace visible while Overview stays platform-first."
               >
@@ -260,7 +260,7 @@ export default function OverviewPage() {
                   <OpsPriorityLink
                     href={activeProjectId ? `/projects/${activeProjectId}/community` : "/projects"}
                     title="Open community workspace"
-                    body="If launch is moving, confirm captains, automations and command rails are ready too."
+                    body="If launch is moving, confirm captains, automations and command surfaces are ready too."
                     cta="Open community"
                   />
                   <OpsPriorityLink
@@ -332,34 +332,34 @@ export default function OverviewPage() {
               <OpsPanel
                 eyebrow="Escalation routing"
                 title="What needs named ownership"
-                description="Route platform pressure into the exact rail that should own the next action."
+                description="Route platform pressure into the exact workspace that should own the next action."
               >
                 <div className="grid gap-4">
                   <OpsPriorityLink
                     href="/claims"
                     title="Claims and payout incidents"
-                    body={`${openPayoutCaseCount} payout cases plus ${highPriorityClaims} claims in motion. Use this rail when delivery, finalization or reward pressure drifts.`}
+                    body={`${openPayoutCaseCount} payout cases plus ${highPriorityClaims} claims in motion. Use this workspace when delivery, finalization or reward pressure drifts.`}
                     cta="Open claims"
                     emphasis={openPayoutCaseCount > 0 || highPriorityClaims > 0}
                   />
                   <OpsPriorityLink
                     href="/moderation"
                     title="Trust and moderation queue"
-                    body={`${openTrustCaseCount} trust cases and ${pendingSubmissions} pending submissions. Use this rail when fraud, proof review or pipeline uncertainty is the blocker.`}
+                    body={`${openTrustCaseCount} trust cases and ${pendingSubmissions} pending submissions. Use this workspace when fraud, proof review or pipeline uncertainty is the blocker.`}
                     cta="Open moderation"
                     emphasis={openTrustCaseCount > 0 || pendingSubmissions > 0}
                   />
                   <OpsPriorityLink
                     href="/onchain"
                     title="On-chain failures and recovery"
-                    body={`${openOnchainCaseCount} on-chain cases and ${providerFailureCount} provider failures. Use this rail when ingress, enrichment or sync recovery is needed.`}
+                    body={`${openOnchainCaseCount} on-chain cases and ${providerFailureCount} provider failures. Use this workspace when ingress, enrichment or sync recovery is needed.`}
                     cta="Open on-chain"
                     emphasis={openOnchainCaseCount > 0 || providerFailureCount > 0}
                   />
                   <OpsPriorityLink
                     href={activeProjectId ? `/projects/${activeProjectId}/community` : "/projects"}
                     title="Community and captain operations"
-                    body={`${supportEscalationCount} active escalations across the platform. Use this rail when the pressure is in automations, commands or community execution.`}
+                    body={`${supportEscalationCount} active escalations across the platform. Use this workspace when the pressure is in automations, commands or community execution.`}
                     cta="Open community"
                     emphasis={supportEscalationCount > 0}
                   />
@@ -406,7 +406,7 @@ export default function OverviewPage() {
 
         <OpsPanel
           eyebrow="Operator next actions"
-          title="Priority rail"
+          title="Priority board"
           description="The boards most likely to drag delivery or launch quality if ignored."
         >
           <div className="grid gap-4 md:grid-cols-3">
