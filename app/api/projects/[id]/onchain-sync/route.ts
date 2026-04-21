@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  assertProjectOnchainAccess,
+  createOnchainAccessErrorResponse,
+  hasOnchainActionPermission,
+  OnchainAccessError,
+} from "@/lib/onchain/project-onchain-auth";
 
 const communityBotUrl = process.env.COMMUNITY_BOT_URL;
 const communityJobSecret =
@@ -8,19 +14,24 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  if (!communityBotUrl) {
-    return NextResponse.json(
-      { ok: false, error: "COMMUNITY_BOT_URL is missing for project on-chain sync." },
-      { status: 500 }
-    );
-  }
-
   try {
+    if (!communityBotUrl) {
+      throw new Error("COMMUNITY_BOT_URL is missing for project on-chain sync.");
+    }
+
     const { id } = await context.params;
     const projectId = id?.trim();
+    const access = await assertProjectOnchainAccess(projectId ?? "");
 
     if (!projectId) {
-      return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
+      throw new OnchainAccessError(400, "Missing project id.");
+    }
+
+    if (!hasOnchainActionPermission(access, "rescan_project_assets")) {
+      throw new OnchainAccessError(
+        403,
+        "You do not have permission to run project-safe on-chain sync."
+      );
     }
 
     const body = await request.json().catch(() => ({}));
@@ -57,12 +68,6 @@ export async function POST(
 
     return NextResponse.json(payload);
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Project on-chain sync failed.",
-      },
-      { status: 500 }
-    );
+    return createOnchainAccessErrorResponse(error, "Project on-chain sync failed.");
   }
 }

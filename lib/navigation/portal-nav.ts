@@ -7,6 +7,7 @@ import {
   Settings,
   Shield,
   WalletCards,
+  Workflow,
 } from "lucide-react";
 
 export type GlobalNavItem = {
@@ -61,6 +62,12 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Claims",
     description: "Reward fulfillment queue, incidents and payout operations.",
     icon: WalletCards,
+  },
+  {
+    href: "/onchain",
+    label: "On-chain",
+    description: "Ingest failures, enrichment cases and project-safe recovery rails.",
+    icon: Workflow,
   },
   {
     href: "/analytics",
