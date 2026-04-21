@@ -13,6 +13,7 @@ import OnchainCaseDetailPanel from "@/components/onchain/OnchainCaseDetailPanel"
 import OnchainCaseTimeline from "@/components/onchain/OnchainCaseTimeline";
 import OnchainHealthPanel from "@/components/onchain/OnchainHealthPanel";
 import OnchainQueuePanel from "@/components/onchain/OnchainQueuePanel";
+import SupportEscalationPanel from "@/components/observability/SupportEscalationPanel";
 import type {
   OnchainCaseDetailRecord,
   OnchainCaseListRow,
@@ -469,6 +470,25 @@ export default function OnchainPage() {
               />
             </div>
           </div>
+        </OpsPanel>
+
+        <OpsPanel
+          eyebrow="Support posture"
+          title={`Escalations for ${activeProjectName}`}
+          description="When sync, enrichment or provider drift starts repeating, keep one accountable owner and one next recovery move visible here."
+        >
+          <SupportEscalationPanel
+            title="On-chain support escalations"
+            description="Use this rail when on-chain issues cross queue, provider and deploy boundaries and need stronger operator follow-through."
+            projectId={activeProjectId}
+            requireProjectContext
+            emptyTitle={activeProjectId ? "No on-chain escalations" : "Select an active project"}
+            emptyDescription={
+              activeProjectId
+                ? "No support escalations are currently open for this project's on-chain rail."
+                : "Pick an active project to inspect on-chain escalations."
+            }
+          />
         </OpsPanel>
       </PortalPageFrame>
     </AdminShell>

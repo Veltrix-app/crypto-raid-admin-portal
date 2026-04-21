@@ -51,6 +51,7 @@ import { CommunityOutcomesPanel } from "@/components/community/CommunityOutcomes
 import { CommunityPlaybooksPanel } from "@/components/community/CommunityPlaybooksPanel";
 import { CommunityRaidOpsPanel } from "@/components/community/CommunityRaidOpsPanel";
 import { CommunityRanksPanel } from "@/components/community/CommunityRanksPanel";
+import SupportEscalationPanel from "@/components/observability/SupportEscalationPanel";
 import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
@@ -2643,6 +2644,23 @@ export default function ProjectCommunityManagementPage() {
             />
           </div>
         </OpsPanel>
+
+        {authRole === "super_admin" ? (
+          <OpsPanel
+            eyebrow="Support posture"
+            title="Project support escalations"
+            description="When community execution issues cross automation, provider and deploy boundaries, keep the named owner and recovery path visible from the same project rail."
+          >
+            <SupportEscalationPanel
+              title="Community support escalations"
+              description="This rail keeps community-side pressure accountable when the issue is bigger than one automation run, one captain task or one provider incident."
+              projectId={project.id}
+              requireProjectContext
+              emptyTitle="No community escalations"
+              emptyDescription="No support escalations are currently open for this project's community execution rail."
+            />
+          </OpsPanel>
+        ) : null}
 
         {communitySurfaceMode === "operate" ? (
           <>

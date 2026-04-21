@@ -696,6 +696,66 @@ export type DbProjectOnchainPermission = {
   updated_at: string;
 };
 
+export type DbPlatformMetricSnapshot = {
+  id: string;
+  metric_key: string;
+  metric_section: string;
+  metric_scope: string;
+  snapshot_date: string;
+  window_start: string | null;
+  window_end: string | null;
+  metric_value: number;
+  previous_value: number | null;
+  unit: string;
+  health_state: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbProjectMetricSnapshot = {
+  id: string;
+  project_id: string;
+  metric_key: string;
+  metric_section: string;
+  metric_scope: string;
+  snapshot_date: string;
+  window_start: string | null;
+  window_end: string | null;
+  metric_value: number;
+  previous_value: number | null;
+  unit: string;
+  health_state: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbSupportEscalation = {
+  id: string;
+  project_id: string | null;
+  source_surface: string;
+  source_type: string;
+  source_id: string;
+  dedupe_key: string;
+  title: string;
+  summary: string | null;
+  severity: string;
+  status: string;
+  waiting_on: string;
+  owner_auth_user_id: string | null;
+  opened_by_auth_user_id: string | null;
+  resolved_by_auth_user_id: string | null;
+  next_action_summary: string | null;
+  resolution_notes: string | null;
+  metadata: Record<string, any> | null;
+  opened_at: string;
+  resolved_at: string | null;
+  dismissed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type DbVerificationResult = {
   id: string;
   auth_user_id: string | null;

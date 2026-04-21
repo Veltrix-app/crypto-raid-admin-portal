@@ -9,6 +9,7 @@ import {
 } from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
+import SupportEscalationPanel from "@/components/observability/SupportEscalationPanel";
 import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import PayoutCaseDetailPanel from "@/components/payout/PayoutCaseDetailPanel";
@@ -465,6 +466,25 @@ export default function ClaimsPage() {
               />
             </div>
           </div>
+        </OpsPanel>
+
+        <OpsPanel
+          eyebrow="Support posture"
+          title={`Escalations for ${activeProjectName}`}
+          description="When payout pressure repeats or starts waiting on provider or project input, keep the named owner and next action visible here."
+        >
+          <SupportEscalationPanel
+            title="Payout support escalations"
+            description="Claims operators can keep cross-surface payout issues accountable here instead of losing them in ad hoc queue notes."
+            projectId={activeProjectId}
+            requireProjectContext
+            emptyTitle={activeProjectId ? "No payout escalations" : "Select an active project"}
+            emptyDescription={
+              activeProjectId
+                ? "No support escalations are currently open for this project's payout rail."
+                : "Pick an active project to inspect payout escalations."
+            }
+          />
         </OpsPanel>
       </PortalPageFrame>
     </AdminShell>

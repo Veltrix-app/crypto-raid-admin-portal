@@ -18,8 +18,20 @@ import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { DbVerificationResult } from "@/types/database";
 import { AdminVerificationResult } from "@/types/entities/verification-result";
 
+type MetricSummary = {
+  latestSnapshotDate: string | null;
+  metrics: Array<{
+    key: string;
+    label: string;
+    section: string;
+    unit: string;
+    value: number;
+    healthState: string;
+    points: Array<{ date: string; value: number; healthState: string }>;
+  }>;
+};
+
 export default function AnalyticsPage() {
-  const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const quests = useAdminPortalStore((s) => s.quests);
   const rewards = useAdminPortalStore((s) => s.rewards);
@@ -29,8 +41,11 @@ export default function AnalyticsPage() {
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const role = useAdminAuthStore((s) => s.role);
   const [verificationResults, setVerificationResults] = useState<AdminVerificationResult[]>([]);
-  const [analyticsView, setAnalyticsView] = useState<"summary" | "campaigns" | "verification">(
-    "summary"
+  const [platformSummary, setPlatformSummary] = useState<MetricSummary | null>(null);
+  const [projectSummary, setProjectSummary] = useState<MetricSummary | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [analyticsView, setAnalyticsView] = useState<"outcomes" | "campaigns" | "verification">(
+    "outcomes"
   );
 
   useEffect(() => {
@@ -79,14 +94,57 @@ export default function AnalyticsPage() {
       );
     }
 
+    async function loadMetricSummaries() {
+      try {
+        const [platformResponse, projectResponse] = await Promise.all([
+          fetch("/api/analytics/platform-summary", { cache: "no-store" }),
+          activeProjectId
+            ? fetch(`/api/analytics/project-summary?projectId=${activeProjectId}`, {
+                cache: "no-store",
+              })
+            : Promise.resolve(null),
+        ]);
+
+        const platformPayload = (await platformResponse.json().catch(() => null)) as
+          | { ok?: boolean; summary?: MetricSummary; error?: string }
+          | null;
+
+        if (!platformResponse.ok || !platformPayload?.ok || !platformPayload.summary) {
+          throw new Error(
+            platformPayload && typeof platformPayload.error === "string"
+              ? platformPayload.error
+              : "Failed to load platform analytics summary."
+          );
+        }
+
+        const projectPayload =
+          projectResponse &&
+          ((await projectResponse.json().catch(() => null)) as
+            | { ok?: boolean; summary?: MetricSummary; error?: string }
+            | null);
+
+        if (!active) return;
+        setPlatformSummary(platformPayload.summary);
+        setProjectSummary(projectPayload?.ok ? projectPayload.summary ?? null : null);
+        setSummaryError(null);
+      } catch (error) {
+        if (!active) return;
+        setPlatformSummary(null);
+        setProjectSummary(null);
+        setSummaryError(
+          error instanceof Error ? error.message : "Failed to load analytics summaries."
+        );
+      }
+    }
+
     void loadVerificationResults();
+    void loadMetricSummaries();
 
     return () => {
       active = false;
     };
   }, [activeProjectId, role]);
 
-  const totalUsers = projects.reduce((sum, project) => sum + project.members, 0);
   const autoApprovedCount = verificationResults.filter(
     (item) => item.route === "rule_auto_approved" || item.decisionStatus === "approved"
   ).length;
@@ -99,16 +157,6 @@ export default function AnalyticsPage() {
   const duplicateSignalCount = verificationResults.filter(
     (item) => item.duplicateSignalTypes.length > 0
   ).length;
-  const averageConfidence = verificationResults.length
-    ? Math.round(
-        verificationResults.reduce((sum, item) => sum + item.confidenceScore, 0) /
-          verificationResults.length
-      )
-    : 0;
-  const autoApproveRate = verificationResults.length
-    ? Math.round((autoApprovedCount / verificationResults.length) * 100)
-    : 0;
-
   const questsById = useMemo(() => new Map(quests.map((quest) => [quest.id, quest])), [quests]);
 
   const campaignHealth = useMemo(() => {
@@ -184,16 +232,56 @@ export default function AnalyticsPage() {
   const verificationRoutes = summarizeByLabel(
     verificationResults.map((item) => humanize(item.route))
   );
-  const reviewFlagCount = reviewFlags.filter((flag) => flag.status === "open").length;
+
+  const platformMetricMap = useMemo(
+    () => new Map((platformSummary?.metrics ?? []).map((metric) => [metric.key, metric])),
+    [platformSummary]
+  );
+  const projectMetricMap = useMemo(
+    () => new Map((projectSummary?.metrics ?? []).map((metric) => [metric.key, metric])),
+    [projectSummary]
+  );
+
+  type OutcomeCard = {
+    key: string;
+    emphasis: "default" | "primary" | "warning";
+  };
+
+  const outcomeCards: OutcomeCard[] = [
+    { key: "member_activation_rate", emphasis: "primary" },
+    { key: "linked_readiness_rate", emphasis: "default" },
+    { key: "reward_claim_conversion_rate", emphasis: "default" },
+    { key: "automation_health_score", emphasis: "default" },
+    {
+      key: "open_trust_case_count",
+      emphasis:
+        (platformMetricMap.get("open_trust_case_count")?.value ?? 0) > 0
+          ? ("warning" as OutcomeCard["emphasis"])
+          : ("default" as OutcomeCard["emphasis"]),
+    },
+    {
+      key: "open_onchain_case_count",
+      emphasis:
+        (platformMetricMap.get("open_onchain_case_count")?.value ?? 0) > 0
+          ? ("warning" as OutcomeCard["emphasis"])
+          : ("default" as OutcomeCard["emphasis"]),
+    },
+  ];
 
   return (
     <AdminShell>
       <PortalPageFrame
-        eyebrow="Intelligence board"
+        eyebrow="Outcome board"
         title="Analytics"
-        description="Use a cleaner intelligence layer: executive summary when you need the top line, campaign analytics for throughput, and verification analytics for review drag."
+        description="Use Analytics for outcomes and trends, not live triage: launch and health pressure lives in Overview, while campaign and verification intelligence stay available here."
         actions={
           <div className="flex flex-wrap gap-3">
+            <Link
+              href="/overview"
+              className="rounded-2xl border border-line bg-card px-4 py-3 font-semibold"
+            >
+              Overview
+            </Link>
             <Link
               href="/analytics/engagement"
               className="rounded-2xl border border-line bg-card px-4 py-3 font-semibold"
@@ -206,46 +294,34 @@ export default function AnalyticsPage() {
             >
               Rewards
             </Link>
-            <Link
-              href="/analytics/users"
-              className="rounded-2xl border border-line bg-card px-4 py-3 font-semibold"
-            >
-              Users
-            </Link>
           </div>
         }
         statusBand={
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-              <OpsMetricCard label="Tracked users" value={totalUsers.toLocaleString()} />
-              <OpsMetricCard label="Campaigns" value={campaigns.length} />
-              <OpsMetricCard label="Claims" value={claims.length} />
-              <OpsMetricCard
-                label="Auto approved"
-                value={autoApprovedCount}
-                emphasis="primary"
-              />
-              <OpsMetricCard
-                label="Needs review"
-                value={pendingVerificationCount}
-                emphasis={pendingVerificationCount > 0 ? "warning" : "default"}
-              />
-              <OpsMetricCard
-                label="Rejected"
-                value={rejectedVerificationCount}
-                emphasis={rejectedVerificationCount > 0 ? "warning" : "default"}
-              />
+              {outcomeCards.map((card) => {
+                const metric = platformMetricMap.get(card.key);
+                return (
+                  <OpsMetricCard
+                    key={card.key}
+                    label={metric?.label ?? humanize(card.key)}
+                    value={formatMetricValue(metric?.value ?? 0, metric?.unit ?? "count")}
+                    emphasis={card.emphasis}
+                    sub={metric?.healthState ? humanize(metric.healthState) : undefined}
+                  />
+                );
+              })}
             </div>
 
             <OpsPanel
               title="Analytics work modes"
-              description="Split the top-line executive read from campaign throughput and verification operations so teams can move faster."
+              description="Keep outcomes and trends separate from campaign throughput and verification review load."
               action={
                 <SegmentToggle
                   value={analyticsView}
                   onChange={setAnalyticsView}
                   options={[
-                    { value: "summary", label: "Summary" },
+                    { value: "outcomes", label: "Outcomes" },
                     { value: "campaigns", label: "Campaigns" },
                     { value: "verification", label: "Verification" },
                   ]}
@@ -253,121 +329,182 @@ export default function AnalyticsPage() {
               }
             >
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Summary
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
-                    Executive intelligence for overall health, conversion and risk.
-                  </p>
-                </div>
-                <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Campaigns
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
-                    Focus on campaign throughput, completion and confidence by campaign.
-                  </p>
-                </div>
-                <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Verification
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
-                    Watch route mix, manual review pressure and proof bottlenecks.
-                  </p>
-                </div>
+                <ModeCard
+                  label="Outcomes"
+                  body="Activation, readiness, trust, claims and on-chain reliability trends."
+                />
+                <ModeCard
+                  label="Campaigns"
+                  body="Throughput, completion and confidence by campaign."
+                />
+                <ModeCard
+                  label="Verification"
+                  body="Route mix, manual review pressure and proof bottlenecks."
+                />
               </div>
             </OpsPanel>
           </div>
         }
       >
-        {analyticsView === "summary" ? (
+        {summaryError ? (
+          <OpsPanel eyebrow="Summary error" title="Analytics summaries could not load" description={summaryError}>
+            <p className="text-sm leading-6 text-sub">
+              Verification and campaign intelligence still render from live portal data, but the new snapshot-backed outcome board needs the Phase 7 metric job to be healthy.
+            </p>
+          </OpsPanel>
+        ) : null}
+
+        {analyticsView === "outcomes" ? (
           <>
             <div className="grid gap-6 xl:grid-cols-2">
               <OpsPanel
-                eyebrow="Conversion board"
-                title="Campaign health"
-                description="Completion trend versus actual submission volume for the campaigns doing the most work."
+                eyebrow="Platform outcomes"
+                title="Core trend posture"
+                description={`Latest platform snapshot: ${platformSummary?.latestSnapshotDate ?? "missing"}.`}
                 tone="accent"
               >
-                <div className="mt-5">
-                  <EngagementChart
-                    items={campaignHealth.slice(0, 6).map((campaign) => ({
-                      label: campaign.title,
-                      value: campaign.submissions || campaign.completionRate,
-                    }))}
-                  />
-                </div>
+                <EngagementChart
+                  items={[
+                    metricToChartItem(platformMetricMap.get("member_activation_rate")),
+                    metricToChartItem(platformMetricMap.get("linked_readiness_rate")),
+                    metricToChartItem(platformMetricMap.get("campaign_completion_rate")),
+                    metricToChartItem(platformMetricMap.get("reward_claim_conversion_rate")),
+                    metricToChartItem(platformMetricMap.get("automation_health_score")),
+                  ].filter((item): item is { label: string; value: number } => Boolean(item))}
+                />
               </OpsPanel>
 
               <OpsPanel
-                eyebrow="Verification board"
-                title="Decision funnel"
-                description="How much of the current quest volume Veltrix is routing without project-owner review."
+                eyebrow="Risk posture"
+                title="Reliability and case pressure"
+                description="Keep the case-driven systems legible without turning Analytics into a live queue page."
               >
-                <div className="mt-5">
-                  <RewardsChart
-                    items={[
-                      { label: "Auto approved", value: autoApprovedCount },
-                      { label: "Needs review", value: pendingVerificationCount },
-                      { label: "Rejected", value: rejectedVerificationCount },
-                    ]}
-                  />
-                </div>
+                <RewardsChart
+                  items={[
+                    metricToChartItem(platformMetricMap.get("open_trust_case_count")),
+                    metricToChartItem(platformMetricMap.get("open_payout_case_count")),
+                    metricToChartItem(platformMetricMap.get("open_onchain_case_count")),
+                    metricToChartItem(platformMetricMap.get("support_escalation_count")),
+                  ].filter((item): item is { label: string; value: number } => Boolean(item))}
+                />
               </OpsPanel>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
-              <IntelStrip
-                label="Duplicate signals"
-                value={duplicateSignalCount}
-                tone={duplicateSignalCount > 0 ? "danger" : "success"}
-              />
-              <IntelStrip
-                label="Open review flags"
-                value={reviewFlagCount}
-                tone={reviewFlagCount > 0 ? "warning" : "success"}
-              />
-              <IntelStrip label="Reward inventory" value={rewards.length} tone="default" />
+            <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+              <OpsPanel
+                eyebrow="Workspace lens"
+                title="Active project outcome read"
+                description={
+                  activeProjectId
+                    ? `Latest project snapshot: ${projectSummary?.latestSnapshotDate ?? "missing"}.`
+                    : "Pick an active project to see the project-level lens."
+                }
+              >
+                {projectSummary ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {[
+                      "project_launch_readiness_score",
+                      "project_activation_rate",
+                      "project_linked_readiness_rate",
+                      "project_reward_claim_conversion_rate",
+                      "project_provider_failure_count",
+                      "project_support_escalation_count",
+                    ].map((key) => {
+                      const metric = projectMetricMap.get(key);
+                      return (
+                        <div key={key} className="rounded-[22px] border border-line bg-card2 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-bold text-text">{metric?.label ?? humanize(key)}</p>
+                            <OpsStatusPill
+                              tone={
+                                metric?.healthState === "critical"
+                                  ? "danger"
+                                  : metric?.healthState === "warning" || metric?.healthState === "watch"
+                                    ? "warning"
+                                    : "success"
+                              }
+                            >
+                              {metric?.healthState ? humanize(metric.healthState) : "stable"}
+                            </OpsStatusPill>
+                          </div>
+                          <p className="mt-3 text-2xl font-extrabold tracking-tight text-text">
+                            {formatMetricValue(metric?.value ?? 0, metric?.unit ?? "count")}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm leading-6 text-sub">
+                    No project snapshot is available yet for the active workspace.
+                  </p>
+                )}
+              </OpsPanel>
+
+              <OpsPanel
+                eyebrow="Execution links"
+                title="When a metric needs action"
+                description="Keep the handoff from trend board back to execution explicit."
+              >
+                <div className="grid gap-4">
+                  <LinkRow
+                    href="/overview"
+                    title="Open Overview"
+                    body="Use the launch and health command center when the issue is live right now."
+                  />
+                  <LinkRow
+                    href="/claims"
+                    title="Open Claims"
+                    body="Use the payout rail when conversion drops because claim handling or delivery is dragging."
+                  />
+                  <LinkRow
+                    href="/moderation"
+                    title="Open Moderation"
+                    body="Use the trust rail when risk posture or verification review load is the blocker."
+                  />
+                  <LinkRow
+                    href="/onchain"
+                    title="Open On-chain"
+                    body="Use the on-chain rail when reliability drops because ingest, enrichment or sync is drifting."
+                  />
+                </div>
+              </OpsPanel>
             </div>
           </>
         ) : null}
 
         {analyticsView === "campaigns" ? (
-          <>
-            <OpsPanel
-              eyebrow="Campaign intel"
-              title="Campaign operations snapshot"
-              description="A denser owner-facing read on throughput, approvals and confidence by campaign."
-            >
-              <div className="grid gap-4 xl:grid-cols-3">
-                {campaignHealth.slice(0, 6).map((campaign) => (
-                  <div key={campaign.id} className="rounded-[24px] border border-line bg-card2 p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-bold text-text">{campaign.title}</p>
-                        <p className="mt-2 text-xs uppercase tracking-[0.14em] text-sub">
-                          {campaign.submissions} submissions
-                        </p>
-                      </div>
-                      <OpsStatusPill
-                        tone={campaign.averageConfidence >= 70 ? "success" : "warning"}
-                      >
-                        {campaign.averageConfidence}% confidence
-                      </OpsStatusPill>
+          <OpsPanel
+            eyebrow="Campaign intel"
+            title="Campaign operations snapshot"
+            description="A denser owner-facing read on throughput, approvals and confidence by campaign."
+          >
+            <div className="grid gap-4 xl:grid-cols-3">
+              {campaignHealth.slice(0, 6).map((campaign) => (
+                <div key={campaign.id} className="rounded-[24px] border border-line bg-card2 p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-text">{campaign.title}</p>
+                      <p className="mt-2 text-xs uppercase tracking-[0.14em] text-sub">
+                        {campaign.submissions} submissions
+                      </p>
                     </div>
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                      <SnapshotStat label="Approved" value={campaign.approved} />
-                      <SnapshotStat label="Pending" value={campaign.pending} />
-                      <SnapshotStat label="Rejected" value={campaign.rejected} />
-                      <SnapshotStat label="Auto" value={campaign.autoApproved} />
-                    </div>
+                    <OpsStatusPill
+                      tone={campaign.averageConfidence >= 70 ? "success" : "warning"}
+                    >
+                      {campaign.averageConfidence}% confidence
+                    </OpsStatusPill>
                   </div>
-                ))}
-              </div>
-            </OpsPanel>
-          </>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <SnapshotStat label="Approved" value={campaign.approved} />
+                    <SnapshotStat label="Pending" value={campaign.pending} />
+                    <SnapshotStat label="Rejected" value={campaign.rejected} />
+                    <SnapshotStat label="Auto" value={campaign.autoApproved} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </OpsPanel>
         ) : null}
 
         {analyticsView === "verification" ? (
@@ -444,37 +581,44 @@ export default function AnalyticsPage() {
   );
 }
 
-function IntelStrip({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: number;
-  tone?: "default" | "warning" | "danger" | "success";
-}) {
-  const barClass =
-    tone === "warning"
-      ? "bg-amber-300"
-      : tone === "danger"
-        ? "bg-rose-300"
-        : tone === "success"
-          ? "bg-emerald-300"
-          : "bg-cyan-300";
+function metricToChartItem(metric?: MetricSummary["metrics"][number]) {
+  if (!metric) return null;
+  return {
+    label: metric.label,
+    value: Math.round(metric.value),
+  };
+}
 
+function formatMetricValue(value: number, unit: string) {
+  if (unit === "percent" || unit === "score") {
+    return `${Math.round(value)}%`;
+  }
+  return Math.round(value).toLocaleString();
+}
+
+function ModeCard({ label, body }: { label: string; body: string }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
-        <p className="text-lg font-extrabold text-text">{value}</p>
-      </div>
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-        <div
-          className={`h-full rounded-full ${barClass}`}
-          style={{ width: `${Math.min(100, Math.max(12, value * 8))}%` }}
-        />
-      </div>
+    <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">{label}</p>
+      <p className="mt-2 text-sm leading-6 text-sub">{body}</p>
     </div>
+  );
+}
+
+function LinkRow({
+  href,
+  title,
+  body,
+}: {
+  href: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <Link href={href} className="rounded-[24px] border border-line bg-card2 p-5 transition hover:border-primary/40">
+      <p className="font-bold text-text">{title}</p>
+      <p className="mt-3 text-sm leading-6 text-sub">{body}</p>
+    </Link>
   );
 }
 

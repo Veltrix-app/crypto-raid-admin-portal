@@ -9,6 +9,7 @@ import {
 } from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
+import SupportEscalationPanel from "@/components/observability/SupportEscalationPanel";
 import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import TrustCaseDetailPanel from "@/components/trust/TrustCaseDetailPanel";
@@ -430,6 +431,25 @@ export default function ModerationPage() {
               />
             </div>
           </div>
+        </OpsPanel>
+
+        <OpsPanel
+          eyebrow="Support posture"
+          title={`Escalations for ${activeProjectName}`}
+          description="When trust work starts crossing queue, project-input and provider boundaries, keep one explicit owner and next action visible here."
+        >
+          <SupportEscalationPanel
+            title="Trust support escalations"
+            description="Use this rail when moderation pressure can no longer be explained by one trust case or one provider incident alone."
+            projectId={activeProjectId}
+            requireProjectContext
+            emptyTitle={activeProjectId ? "No trust escalations" : "Select an active project"}
+            emptyDescription={
+              activeProjectId
+                ? "No support escalations are currently open for this project's trust rail."
+                : "Pick an active project to inspect trust escalations."
+            }
+          />
         </OpsPanel>
       </PortalPageFrame>
     </AdminShell>
