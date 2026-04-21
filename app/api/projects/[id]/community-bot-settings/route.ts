@@ -24,6 +24,9 @@ type RankRuleInput = {
 };
 
 type CommunitySettingsMetadata = {
+  missionCommandsEnabled?: boolean;
+  captainCommandsEnabled?: boolean;
+  commandDeepLinksEnabled?: boolean;
   missionDigestEnabled?: boolean;
   missionDigestCadence?: CommunityAutomationCadence;
   missionDigestTarget?: CommunityDeliveryTarget;
@@ -66,6 +69,9 @@ function getDefaultSettings() {
   return {
     commandsEnabled: true,
     telegramCommandsEnabled: false,
+    missionCommandsEnabled: true,
+    captainCommandsEnabled: true,
+    commandDeepLinksEnabled: true,
     rankSyncEnabled: false,
     rankSource: "project_xp" as RankSource,
     leaderboardEnabled: true,
@@ -169,6 +175,9 @@ function readMetadata(
       : {};
 
   return {
+    missionCommandsEnabled: metadata.missionCommandsEnabled !== false,
+    captainCommandsEnabled: metadata.captainCommandsEnabled !== false,
+    commandDeepLinksEnabled: metadata.commandDeepLinksEnabled !== false,
     missionDigestEnabled: metadata.missionDigestEnabled === true,
     missionDigestCadence: sanitizeAutomationCadence(metadata.missionDigestCadence),
     missionDigestTarget: sanitizeDeliveryTarget(metadata.missionDigestTarget),
@@ -192,6 +201,57 @@ function readMetadata(
       typeof metadata.lastReactivationPushAt === "string" ? metadata.lastReactivationPushAt : "",
     lastActivationBoardAt:
       typeof metadata.lastActivationBoardAt === "string" ? metadata.lastActivationBoardAt : "",
+  };
+}
+
+function buildSharedMetadata(
+  rawSettings: Record<string, unknown>,
+  currentMetadata: CommunitySettingsMetadata
+): CommunitySettingsMetadata {
+  return {
+    ...currentMetadata,
+    missionCommandsEnabled: rawSettings.missionCommandsEnabled !== false,
+    captainCommandsEnabled: rawSettings.captainCommandsEnabled !== false,
+    commandDeepLinksEnabled: rawSettings.commandDeepLinksEnabled !== false,
+    missionDigestEnabled: rawSettings.missionDigestEnabled === true,
+    missionDigestCadence: sanitizeAutomationCadence(rawSettings.missionDigestCadence),
+    missionDigestTarget: sanitizeDeliveryTarget(rawSettings.missionDigestTarget),
+    raidAlertsEnabled: rawSettings.raidAlertsEnabled === true,
+    raidRemindersEnabled: rawSettings.raidRemindersEnabled === true,
+    raidResultsEnabled: rawSettings.raidResultsEnabled === true,
+    raidCadence: sanitizeAutomationCadence(rawSettings.raidCadence),
+    captainsEnabled: rawSettings.captainsEnabled === true,
+    newcomerFunnelEnabled: rawSettings.newcomerFunnelEnabled === true,
+    reactivationFunnelEnabled: rawSettings.reactivationFunnelEnabled === true,
+    activationBoardsEnabled: rawSettings.activationBoardsEnabled === true,
+    activationBoardCadence: sanitizeAutomationCadence(rawSettings.activationBoardCadence),
+    captainAssignments: Array.isArray(currentMetadata.captainAssignments)
+      ? currentMetadata.captainAssignments
+      : [],
+    lastMissionDigestAt:
+      typeof currentMetadata.lastMissionDigestAt === "string"
+        ? currentMetadata.lastMissionDigestAt
+        : "",
+    lastRaidAlertAt:
+      typeof currentMetadata.lastRaidAlertAt === "string"
+        ? currentMetadata.lastRaidAlertAt
+        : "",
+    lastAutomationRunAt:
+      typeof currentMetadata.lastAutomationRunAt === "string"
+        ? currentMetadata.lastAutomationRunAt
+        : "",
+    lastNewcomerPushAt:
+      typeof currentMetadata.lastNewcomerPushAt === "string"
+        ? currentMetadata.lastNewcomerPushAt
+        : "",
+    lastReactivationPushAt:
+      typeof currentMetadata.lastReactivationPushAt === "string"
+        ? currentMetadata.lastReactivationPushAt
+        : "",
+    lastActivationBoardAt:
+      typeof currentMetadata.lastActivationBoardAt === "string"
+        ? currentMetadata.lastActivationBoardAt
+        : "",
   };
 }
 
@@ -442,6 +502,7 @@ export async function POST(
         metadataByIntegrationId.get(discordIntegration.id) && typeof metadataByIntegrationId.get(discordIntegration.id) === "object"
           ? (metadataByIntegrationId.get(discordIntegration.id) as CommunitySettingsMetadata)
           : {};
+      const sharedMetadata = buildSharedMetadata(rawSettings, currentMetadata);
 
       const { error: settingsSaveError } = await supabase.from("community_bot_settings").upsert(
         {
@@ -461,50 +522,7 @@ export async function POST(
           leaderboard_top_n: sanitizedTopN,
           leaderboard_cadence: sanitizeLeaderboardCadence(rawSettings.leaderboardCadence),
           raid_ops_enabled: rawSettings.raidOpsEnabled === true,
-          metadata: {
-            ...currentMetadata,
-            missionDigestEnabled: rawSettings.missionDigestEnabled === true,
-            missionDigestCadence: sanitizeAutomationCadence(rawSettings.missionDigestCadence),
-            missionDigestTarget: sanitizeDeliveryTarget(rawSettings.missionDigestTarget),
-            raidAlertsEnabled: rawSettings.raidAlertsEnabled === true,
-            raidRemindersEnabled: rawSettings.raidRemindersEnabled === true,
-            raidResultsEnabled: rawSettings.raidResultsEnabled === true,
-            raidCadence: sanitizeAutomationCadence(rawSettings.raidCadence),
-            captainsEnabled: rawSettings.captainsEnabled === true,
-            newcomerFunnelEnabled: rawSettings.newcomerFunnelEnabled === true,
-            reactivationFunnelEnabled: rawSettings.reactivationFunnelEnabled === true,
-            activationBoardsEnabled: rawSettings.activationBoardsEnabled === true,
-            activationBoardCadence: sanitizeAutomationCadence(
-              rawSettings.activationBoardCadence
-            ),
-            captainAssignments: Array.isArray(currentMetadata.captainAssignments)
-              ? currentMetadata.captainAssignments
-              : [],
-            lastMissionDigestAt:
-              typeof currentMetadata.lastMissionDigestAt === "string"
-                ? currentMetadata.lastMissionDigestAt
-                : "",
-            lastRaidAlertAt:
-              typeof currentMetadata.lastRaidAlertAt === "string"
-                ? currentMetadata.lastRaidAlertAt
-                : "",
-            lastAutomationRunAt:
-              typeof currentMetadata.lastAutomationRunAt === "string"
-                ? currentMetadata.lastAutomationRunAt
-                : "",
-            lastNewcomerPushAt:
-              typeof currentMetadata.lastNewcomerPushAt === "string"
-                ? currentMetadata.lastNewcomerPushAt
-                : "",
-            lastReactivationPushAt:
-              typeof currentMetadata.lastReactivationPushAt === "string"
-                ? currentMetadata.lastReactivationPushAt
-                : "",
-            lastActivationBoardAt:
-              typeof currentMetadata.lastActivationBoardAt === "string"
-                ? currentMetadata.lastActivationBoardAt
-                : "",
-          },
+          metadata: sharedMetadata,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "integration_id" }
@@ -545,6 +563,7 @@ export async function POST(
         metadataByIntegrationId.get(telegramIntegration.id) && typeof metadataByIntegrationId.get(telegramIntegration.id) === "object"
           ? (metadataByIntegrationId.get(telegramIntegration.id) as CommunitySettingsMetadata)
           : {};
+      const sharedMetadata = buildSharedMetadata(rawSettings, currentMetadata);
 
       const { error: telegramSaveError } = await supabase.from("community_bot_settings").upsert(
         {
@@ -552,7 +571,7 @@ export async function POST(
           provider: "telegram",
           project_id: telegramIntegration.project_id,
           commands_enabled: rawSettings.telegramCommandsEnabled === true,
-          metadata: currentMetadata,
+          metadata: sharedMetadata,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "integration_id" }
@@ -573,6 +592,9 @@ export async function POST(
       metadata: {
         commandsEnabled: rawSettings.commandsEnabled !== false,
         telegramCommandsEnabled: rawSettings.telegramCommandsEnabled === true,
+        missionCommandsEnabled: rawSettings.missionCommandsEnabled !== false,
+        captainCommandsEnabled: rawSettings.captainCommandsEnabled !== false,
+        commandDeepLinksEnabled: rawSettings.commandDeepLinksEnabled !== false,
         rankSyncEnabled: rawSettings.rankSyncEnabled === true,
         leaderboardEnabled: rawSettings.leaderboardEnabled !== false,
         raidOpsEnabled: rawSettings.raidOpsEnabled === true,

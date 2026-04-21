@@ -845,6 +845,9 @@ export default function ProjectCommunityManagementPage() {
       setDiscordBotSettings({
         commandsEnabled: payload.settings?.commandsEnabled !== false,
         telegramCommandsEnabled: payload.settings?.telegramCommandsEnabled === true,
+        missionCommandsEnabled: payload.settings?.missionCommandsEnabled !== false,
+        captainCommandsEnabled: payload.settings?.captainCommandsEnabled !== false,
+        commandDeepLinksEnabled: payload.settings?.commandDeepLinksEnabled !== false,
         rankSyncEnabled: payload.settings?.rankSyncEnabled === true,
         rankSource:
           payload.settings?.rankSource === "global_xp" ||

@@ -18,6 +18,9 @@ const liveCommands = [
   "/profile",
   "/rank",
   "/leaderboard",
+  "/missions",
+  "/raid",
+  "/captain",
 ];
 
 const telegramCommands = ["/link", "/profile", "/missions", "/leaderboard", "/raid"];
@@ -62,15 +65,33 @@ export function CommunityCommandsPanel({
             emphasis={settings.telegramCommandsEnabled ? "primary" : "default"}
           />
           <OpsMetricCard
+            label="Mission rail"
+            value={settings.missionCommandsEnabled ? "Enabled" : "Parked"}
+            sub="Whether mission commands stay visible in chat."
+            emphasis={settings.missionCommandsEnabled ? "primary" : "default"}
+          />
+          <OpsMetricCard
             label="Raid ops"
             value={settings.raidOpsEnabled ? "Armed" : "Parked"}
             sub="The v1 raid rail switch for the future command surface."
             emphasis={settings.raidOpsEnabled ? "primary" : "default"}
           />
           <OpsMetricCard
+            label="Captain rail"
+            value={settings.captainCommandsEnabled ? "Enabled" : "Parked"}
+            sub="Whether captain-specific command entry stays visible."
+            emphasis={settings.captainCommandsEnabled ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Deep links"
+            value={settings.commandDeepLinksEnabled ? "Enabled" : "Parked"}
+            sub="Whether replies should push back into web and portal rails."
+            emphasis={settings.commandDeepLinksEnabled ? "primary" : "default"}
+          />
+          <OpsMetricCard
             label="Live commands"
             value={liveCommands.length}
-            sub="The first command rail already registered with the Discord bot."
+            sub="The current Discord command surface registered with the bot."
           />
         </div>
 
@@ -99,6 +120,48 @@ export function CommunityCommandsPanel({
                   setSettings((current) => ({
                     ...current,
                     telegramCommandsEnabled: event.target.checked,
+                  }))
+                }
+              />
+            </label>
+
+            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+              <span>Enable mission commands</span>
+              <input
+                type="checkbox"
+                checked={settings.missionCommandsEnabled}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    missionCommandsEnabled: event.target.checked,
+                  }))
+                }
+              />
+            </label>
+
+            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+              <span>Enable captain commands</span>
+              <input
+                type="checkbox"
+                checked={settings.captainCommandsEnabled}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    captainCommandsEnabled: event.target.checked,
+                  }))
+                }
+              />
+            </label>
+
+            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+              <span>Keep deep links in replies</span>
+              <input
+                type="checkbox"
+                checked={settings.commandDeepLinksEnabled}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    commandDeepLinksEnabled: event.target.checked,
                   }))
                 }
               />
@@ -139,7 +202,7 @@ export function CommunityCommandsPanel({
               ))}
             </div>
             <p className="mt-4 text-sm leading-6 text-sub">
-              Discord stays sync-driven, while Telegram now has its own command layer. Together they let the community call into profile, rank, mission and leaderboard flows without touching the portal.
+              Discord stays the richer rail, Telegram stays the fast-access rail, and deep links push members back into the exact webapp or captain surface they should land on next.
             </p>
           </div>
 

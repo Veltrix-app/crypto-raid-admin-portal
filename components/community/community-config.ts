@@ -371,6 +371,9 @@ export const COMMUNITY_PLAYBOOK_DEFAULTS: CommunityPlaybookConfig[] = [
 export type DiscordCommunityBotSettings = {
   commandsEnabled: boolean;
   telegramCommandsEnabled: boolean;
+  missionCommandsEnabled: boolean;
+  captainCommandsEnabled: boolean;
+  commandDeepLinksEnabled: boolean;
   rankSyncEnabled: boolean;
   rankSource: DiscordRankSource;
   leaderboardEnabled: boolean;
@@ -447,6 +450,9 @@ export function createDefaultDiscordBotSettings(): DiscordCommunityBotSettings {
   return {
     commandsEnabled: true,
     telegramCommandsEnabled: false,
+    missionCommandsEnabled: true,
+    captainCommandsEnabled: true,
+    commandDeepLinksEnabled: true,
     rankSyncEnabled: false,
     rankSource: "project_xp",
     leaderboardEnabled: true,
