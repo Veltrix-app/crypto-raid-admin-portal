@@ -23,6 +23,7 @@ export type ProjectWorkspaceTab = {
     | "campaigns"
     | "community"
     | "rewards"
+    | "payouts"
     | "onchain"
     | "trust"
     | "settings";
@@ -106,6 +107,11 @@ export const PROJECT_WORKSPACE_TABS: readonly ProjectWorkspaceTab[] = [
     slug: "rewards",
     label: "Rewards",
     description: "Reward catalog, distributions and claim pressure.",
+  },
+  {
+    slug: "payouts",
+    label: "Payouts",
+    description: "Payout health, blocked claims, incidents and resolution rails.",
   },
   {
     slug: "onchain",

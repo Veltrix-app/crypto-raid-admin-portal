@@ -582,6 +582,64 @@ export type DbProjectTrustPermission = {
   updated_at: string;
 };
 
+export type DbPayoutCase = {
+  id: string;
+  project_id: string;
+  campaign_id: string | null;
+  reward_id: string | null;
+  claim_id: string | null;
+  auth_user_id: string | null;
+  wallet_address: string | null;
+  case_type: string;
+  severity: string;
+  status: string;
+  source_type: string;
+  source_id: string | null;
+  dedupe_key: string;
+  summary: string;
+  evidence_summary: string | null;
+  raw_payload: Record<string, any> | null;
+  internal_owner_auth_user_id: string | null;
+  project_owner_auth_user_id: string | null;
+  resolution_notes: string | null;
+  escalation_state: string;
+  metadata: Record<string, any> | null;
+  opened_at: string;
+  resolved_at: string | null;
+  dismissed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbPayoutCaseEvent = {
+  id: string;
+  payout_case_id: string;
+  project_id: string;
+  event_type: string;
+  visibility_scope: string;
+  actor_auth_user_id: string | null;
+  actor_role: string | null;
+  summary: string | null;
+  event_payload: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbProjectPayoutPermission = {
+  id: string;
+  project_id: string;
+  subject_auth_user_id: string;
+  visibility_permissions: string[];
+  action_permissions: string[];
+  preset_key: string | null;
+  status: string;
+  notes: string | null;
+  granted_by_auth_user_id: string | null;
+  updated_by_auth_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type DbVerificationResult = {
   id: string;
   auth_user_id: string | null;
