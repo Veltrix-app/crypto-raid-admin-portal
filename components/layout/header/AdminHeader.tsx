@@ -9,7 +9,7 @@ import { useAdminUIStore } from "@/store/ui/useAdminUIStore";
 
 export default function AdminHeader() {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const { email, role, logout, memberships, activeProjectId, setActiveProjectId } =
     useAdminAuthStore();
   const { accessState } = useAccountEntryGuard();

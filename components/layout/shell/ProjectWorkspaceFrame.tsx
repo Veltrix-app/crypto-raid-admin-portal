@@ -36,7 +36,7 @@ export default function ProjectWorkspaceFrame({
   healthPills,
   children,
 }: ProjectWorkspaceFrameProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
 
   return (
     <div className="space-y-6">

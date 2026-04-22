@@ -15,7 +15,7 @@ type Props = {
 
 export default function AdminShell({ children }: Props) {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
 
   const isAuthenticated = useAdminAuthStore((s) => s.isAuthenticated);
   const authLoading = useAdminAuthStore((s) => s.loading);
@@ -29,7 +29,18 @@ export default function AdminShell({ children }: Props) {
   const loadAll = useAdminPortalStore((s) => s.loadAll);
 
   useEffect(() => {
-    initialize();
+    void initialize().catch((error) => {
+      console.error("Failed to initialize admin auth state:", error);
+      useAdminAuthStore.setState({
+        isAuthenticated: false,
+        authUserId: null,
+        email: null,
+        role: null,
+        memberships: [],
+        activeProjectId: null,
+        loading: false,
+      });
+    });
   }, [initialize]);
 
   useEffect(() => {
@@ -44,7 +55,14 @@ export default function AdminShell({ children }: Props) {
     const scopeChanged = hydrated && scopedProjectId !== activeProjectId;
 
     if (canLoad && (!hydrated || scopeChanged) && !dataLoading) {
-      loadAll();
+      void loadAll().catch((error) => {
+        console.error("Failed to hydrate admin portal store:", error);
+        useAdminPortalStore.setState({
+          hydrated: true,
+          loading: false,
+          scopedProjectId: activeProjectId,
+        });
+      });
     }
   }, [isAuthenticated, hydrated, dataLoading, loadAll, activeProjectId, scopedProjectId, role, pathname]);
 

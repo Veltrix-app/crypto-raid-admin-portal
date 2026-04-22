@@ -7,11 +7,13 @@ type PortalPageMetadata = {
 };
 
 export function getPortalPageMetadata(
-  pathname: string,
+  pathname: string | null | undefined,
   activeProjectName?: string | null
 ): PortalPageMetadata {
-  if (pathname.startsWith("/projects/")) {
-    const parts = pathname.split("/").filter(Boolean);
+  const safePathname = pathname ?? "";
+
+  if (safePathname.startsWith("/projects/")) {
+    const parts = safePathname.split("/").filter(Boolean);
     const slug = parts[2] ?? "";
     const workspaceTab =
       PROJECT_WORKSPACE_TABS.find((item) => item.slug === slug) ?? PROJECT_WORKSPACE_TABS[0];
@@ -23,7 +25,7 @@ export function getPortalPageMetadata(
     };
   }
 
-  if (pathname === "/dashboard") {
+  if (safePathname === "/dashboard") {
     return {
       eyebrow: "Control center",
       title: "Overview",
@@ -32,7 +34,7 @@ export function getPortalPageMetadata(
   }
 
   const globalMatch = GLOBAL_NAV_ITEMS.find(
-    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
+    (item) => safePathname === item.href || safePathname.startsWith(`${item.href}/`)
   );
 
   if (globalMatch) {

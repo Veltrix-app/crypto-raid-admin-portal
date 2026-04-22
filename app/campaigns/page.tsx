@@ -20,7 +20,7 @@ export default function CampaignsPage() {
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const projects = useAdminPortalStore((s) => s.projects);
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/campaigns";
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");

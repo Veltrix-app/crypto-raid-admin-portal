@@ -190,8 +190,11 @@ export function getProjectWorkspaceHref(projectId: string, slug: ProjectWorkspac
   return `/projects/${projectId}/${slug}`;
 }
 
-export function isLegacySecondaryRoute(pathname: string) {
-  return LEGACY_SECONDARY_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+export function isLegacySecondaryRoute(pathname: string | null | undefined) {
+  const safePathname = pathname ?? "";
+  return LEGACY_SECONDARY_ROUTES.some(
+    (route) => safePathname === route || safePathname.startsWith(`${route}/`)
+  );
 }
 
 export function getSettingsHref(slug: SettingsTab["slug"]) {

@@ -50,7 +50,7 @@ export function useAccountEntryGuard() {
 }
 
 export default function AccountEntryGuard({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const router = useRouter();
   const role = useAdminAuthStore((s) => s.role);
   const isAuthenticated = useAdminAuthStore((s) => s.isAuthenticated);

@@ -10,7 +10,7 @@ import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminUIStore } from "@/store/ui/useAdminUIStore";
 
 export default function AdminSidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const sidebarCollapsed = useAdminUIStore((s) => s.sidebarCollapsed);
   const { memberships, activeProjectId, role } = useAdminAuthStore();
   const { accessState } = useAccountEntryGuard();

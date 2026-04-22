@@ -21,7 +21,7 @@ export default function SubmissionsPage() {
   const users = useAdminPortalStore((s) => s.users);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/submissions";
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [submissionsView, setSubmissionsView] = useState<"queue" | "signals">("queue");

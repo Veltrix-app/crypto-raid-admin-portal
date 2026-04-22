@@ -21,7 +21,7 @@ export default function UsersPage() {
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const memberships = useAdminAuthStore((s) => s.memberships);
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/users";
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [usersView, setUsersView] = useState<"roster" | "risk">("roster");
