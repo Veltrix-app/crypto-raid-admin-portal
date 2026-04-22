@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, Shield } from "lucide-react";
+import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import { cn } from "@/lib/utils/cn";
 import { GLOBAL_NAV_ITEMS, isLegacySecondaryRoute } from "@/lib/navigation/portal-nav";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -12,8 +13,16 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const sidebarCollapsed = useAdminUIStore((s) => s.sidebarCollapsed);
   const { memberships, activeProjectId, role } = useAdminAuthStore();
+  const { accessState } = useAccountEntryGuard();
   const activeWorkspace = memberships.find((item) => item.projectId === activeProjectId);
   const showLegacyNotice = isLegacySecondaryRoute(pathname);
+  const navItems = accessState?.limitedNav
+    ? GLOBAL_NAV_ITEMS.filter(
+        (item) =>
+          item.href === "/getting-started" ||
+          (item.href === "/account" && Boolean(accessState.primaryAccount))
+      )
+    : GLOBAL_NAV_ITEMS;
 
   return (
     <aside
@@ -54,10 +63,12 @@ export default function AdminSidebar() {
               Live workspace
             </p>
             <p className="mt-2 truncate text-sm font-bold text-text">
-              {activeWorkspace?.projectName || "Workspace not selected"}
+              {activeWorkspace?.projectName || accessState?.primaryAccount?.name || "Workspace not selected"}
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-primary">
-              {role === "super_admin" ? "Super admin" : activeWorkspace?.role || "Project operator"}
+              {role === "super_admin"
+                ? "Super admin"
+                : accessState?.primaryAccount?.role || activeWorkspace?.role || "Project operator"}
             </p>
           </div>
         ) : null}
@@ -71,7 +82,7 @@ export default function AdminSidebar() {
         ) : null}
 
         <nav className="space-y-1.5">
-          {GLOBAL_NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -116,6 +127,20 @@ export default function AdminSidebar() {
             );
           })}
         </nav>
+
+        {accessState?.limitedNav && !sidebarCollapsed ? (
+          <div className="rounded-[24px] border border-primary/20 bg-primary/8 px-4 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              First-run mode
+            </p>
+            <p className="mt-2 text-sm font-semibold text-text">
+              Complete the account setup rail before the full portal navigation opens.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-sub">
+              This keeps new workspaces focused on the next safe move instead of dropping them into every operator surface at once.
+            </p>
+          </div>
+        ) : null}
 
         {showLegacyNotice && !sidebarCollapsed ? (
           <div className="rounded-[24px] border border-line bg-[linear-gradient(180deg,rgba(18,26,38,0.84),rgba(13,19,29,0.92))] px-4 py-4">

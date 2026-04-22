@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
@@ -20,6 +21,7 @@ import ProjectNextActions from "@/components/projects/launch/ProjectNextActions"
 import ProjectTemplateLibrary from "@/components/projects/templates/ProjectTemplateLibrary";
 import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
+import { createClient } from "@/lib/supabase/client";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { buildProjectBuilderLibrary } from "@/lib/templates/project-builder-library";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
@@ -112,8 +114,9 @@ const VIEW_OPTIONS = [
   { value: "launch", label: "Launch" },
 ] as const;
 
-export default function ProjectLaunchPage() {
+function ProjectLaunchContent() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const getProjectById = useAdminPortalStore((state) => state.getProjectById);
   const campaigns = useAdminPortalStore((state) => state.campaigns);
   const quests = useAdminPortalStore((state) => state.quests);
@@ -128,8 +131,14 @@ export default function ProjectLaunchPage() {
   const [error, setError] = useState("");
   const [snapshot, setSnapshot] = useState<LaunchSnapshot | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
+  const [handoffNotice, setHandoffNotice] = useState(false);
+  const accountEntry = useAccountEntryGuard();
 
   const projectOps = useProjectOps(project?.id);
+  const source = searchParams.get("source");
+  const onboardingAccountId = accountEntry.accessState?.primaryAccount?.id ?? null;
+  const onboardingCurrentStep = accountEntry.accessState?.primaryAccount?.currentStep ?? null;
+  const completedSteps = accountEntry.accessState?.primaryAccount?.completedSteps ?? [];
 
   useEffect(() => {
     let cancelled = false;
@@ -182,6 +191,59 @@ export default function ProjectLaunchPage() {
       cancelled = true;
     };
   }, [params.id]);
+
+  useEffect(() => {
+    if (
+      source !== "account_onboarding" ||
+      !onboardingAccountId ||
+      onboardingCurrentStep !== "open_launch_workspace"
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function markLaunchOpened() {
+      try {
+        const supabase = createClient();
+        await supabase
+          .from("customer_account_onboarding")
+          .update({
+            current_step: "completed",
+            completed_steps: Array.from(
+              new Set([...completedSteps, "open_launch_workspace"])
+            ),
+            launch_workspace_opened_at: new Date().toISOString(),
+            completed_at: new Date().toISOString(),
+            status: "completed",
+          })
+          .eq("customer_account_id", onboardingAccountId);
+
+        await supabase.from("customer_account_events").insert({
+          customer_account_id: onboardingAccountId,
+          event_type: "launch_workspace_opened",
+          metadata: {
+            projectId: params.id,
+          },
+        });
+
+        if (!cancelled) {
+          setHandoffNotice(true);
+          await accountEntry.refresh();
+        }
+      } catch {
+        if (!cancelled) {
+          setHandoffNotice(true);
+        }
+      }
+    }
+
+    void markLaunchOpened();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accountEntry.refresh, completedSteps, onboardingAccountId, onboardingCurrentStep, params.id, source]);
 
   const projectCampaignCount = useMemo(
     () => campaigns.filter((campaign) => campaign.projectId === project?.id).length,
@@ -379,13 +441,26 @@ export default function ProjectLaunchPage() {
   }
 
   return (
-    <AdminShell>
-      <ProjectWorkspaceFrame
+    <ProjectWorkspaceFrame
         projectId={project.id}
         projectName={project.name}
         projectChain={project.chain}
         healthPills={healthPills}
       >
+        {handoffNotice ? (
+          <OpsPanel
+            eyebrow="Account handoff"
+            title="The first project is now inside Launch"
+            description="This project was created from the new account setup rail, and Veltrix has handed the owner into the launch workspace so the next setup moves stay on one spine."
+            tone="accent"
+          >
+            <div className="flex flex-wrap gap-3">
+              <OpsStatusPill tone="success">Launch workspace opened</OpsStatusPill>
+              <OpsStatusPill tone="warning">First-run handoff complete</OpsStatusPill>
+            </div>
+          </OpsPanel>
+        ) : null}
+
         <OpsHero
           eyebrow="Project launch workspace"
           title={`Bring ${project.name} from setup into launch posture`}
@@ -559,6 +634,13 @@ export default function ProjectLaunchPage() {
           </div>
         </div>
       </ProjectWorkspaceFrame>
+  );
+}
+
+export default function ProjectLaunchPage() {
+  return (
+    <AdminShell>
+      <ProjectLaunchContent />
     </AdminShell>
   );
 }

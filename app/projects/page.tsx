@@ -1,12 +1,17 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   OpsFilterBar,
+  OpsMetricCard,
   OpsPanel,
   OpsSearchInput,
+  OpsSnapshotRow,
   OpsSelect,
+  OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
 import ProjectsBoardHeader from "@/components/projects/ProjectsBoardHeader";
 import ProjectsOnboardingQueue from "@/components/projects/ProjectsOnboardingQueue";
@@ -15,16 +20,26 @@ import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminFiltersStore } from "@/store/filters/useAdminFiltersStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
-export default function ProjectsPage() {
+function ProjectsPageContent() {
+  const router = useRouter();
   const projects = useAdminPortalStore((s) => s.projects);
+  const loadAll = useAdminPortalStore((s) => s.loadAll);
   const onboardingRequests = useAdminPortalStore((s) => s.onboardingRequests);
   const approveOnboardingRequest = useAdminPortalStore((s) => s.approveOnboardingRequest);
   const rejectOnboardingRequest = useAdminPortalStore((s) => s.rejectOnboardingRequest);
   const role = useAdminAuthStore((s) => s.role);
+  const refreshMemberships = useAdminAuthStore((s) => s.refreshMemberships);
+  const { accessState, refresh } = useAccountEntryGuard();
   const isSuperAdmin = role === "super_admin";
   const { search, status, setSearch, setStatus, resetFilters } = useAdminFiltersStore();
   const [boardView, setBoardView] = useState<"portfolio" | "onboarding">("portfolio");
   const [runningRequestId, setRunningRequestId] = useState<string | null>(null);
+  const [bootstrapName, setBootstrapName] = useState("");
+  const [bootstrapChain, setBootstrapChain] = useState("Base");
+  const [bootstrapCategory, setBootstrapCategory] = useState("community");
+  const [bootstrapDescription, setBootstrapDescription] = useState("");
+  const [bootstrappingProject, setBootstrappingProject] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState("");
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
@@ -57,10 +72,51 @@ export default function ProjectsPage() {
       project.status === "draft" ||
       project.status === "paused"
   );
+  const primaryAccount = accessState?.primaryAccount ?? null;
+  const primaryAccountProjectCount = primaryAccount?.projectCount ?? 0;
+  const showBootstrapEmptyState =
+    !isSuperAdmin &&
+    primaryAccountProjectCount === 0 &&
+    Boolean(primaryAccount) &&
+    accessState?.limitedNav;
+
+  async function handleBootstrapProject() {
+    if (!primaryAccount?.id || !bootstrapName.trim()) {
+      return;
+    }
+
+    try {
+      setBootstrappingProject(true);
+      setBootstrapError("");
+      const response = await fetch(`/api/accounts/${primaryAccount.id}/projects/bootstrap`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: bootstrapName.trim(),
+          chain: bootstrapChain,
+          category: bootstrapCategory.trim(),
+          description: bootstrapDescription.trim(),
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? "First project bootstrap failed.");
+      }
+
+      await Promise.all([refreshMemberships(), loadAll(), refresh()]);
+      router.push(`/projects/${payload.projectId}/launch?source=account_onboarding`);
+    } catch (error) {
+      setBootstrapError(error instanceof Error ? error.message : "First project bootstrap failed.");
+    } finally {
+      setBootstrappingProject(false);
+    }
+  }
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <ProjectsBoardHeader
           isSuperAdmin={isSuperAdmin}
           projectCount={projects.length}
@@ -75,6 +131,113 @@ export default function ProjectsPage() {
           view={boardView}
           onViewChange={setBoardView}
         />
+
+        {showBootstrapEmptyState ? (
+          <OpsPanel
+            eyebrow="First project bootstrap"
+            title="Create the first project from the account workspace"
+            description="A workspace can exist without projects, but the operator product really starts once the first project is created. Keep this payload intentionally small and move into Launch immediately after."
+            tone="accent"
+          >
+            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <OpsMetricCard label="Workspace" value={primaryAccount?.name ?? "Workspace"} emphasis="primary" />
+                  <OpsMetricCard label="Projects" value={0} emphasis="warning" />
+                  <OpsMetricCard label="Next step" value="Launch setup" />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="space-y-2">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Project name</span>
+                    <input
+                      value={bootstrapName}
+                      onChange={(event) => setBootstrapName(event.target.value)}
+                      placeholder="Veltrix Founding Campaign"
+                      className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+                    />
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Chain</span>
+                    <select
+                      value={bootstrapChain}
+                      onChange={(event) => setBootstrapChain(event.target.value)}
+                      className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+                    >
+                      <option value="Base">Base</option>
+                      <option value="Ethereum">Ethereum</option>
+                      <option value="Solana">Solana</option>
+                      <option value="Polygon">Polygon</option>
+                      <option value="Arbitrum">Arbitrum</option>
+                    </select>
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Category</span>
+                    <input
+                      value={bootstrapCategory}
+                      onChange={(event) => setBootstrapCategory(event.target.value)}
+                      placeholder="community"
+                      className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+                    />
+                  </label>
+
+                  <label className="space-y-2 md:col-span-2">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Short context</span>
+                    <textarea
+                      value={bootstrapDescription}
+                      onChange={(event) => setBootstrapDescription(event.target.value)}
+                      placeholder="What is this project launching and what kind of community is it building?"
+                      rows={4}
+                      className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+                    />
+                  </label>
+                </div>
+
+                {bootstrapError ? (
+                  <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                    {bootstrapError}
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void handleBootstrapProject()}
+                    disabled={bootstrappingProject || !bootstrapName.trim()}
+                    className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {bootstrappingProject ? "Creating project..." : "Create first project"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/getting-started")}
+                    className="rounded-full border border-line bg-card2 px-5 py-3 text-sm font-semibold text-text"
+                  >
+                    Back to Getting Started
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <OpsPanel
+                  eyebrow="Why this matters"
+                  title="Projects are the operational unit"
+                  description="Campaigns, quests, raids, rewards and launch readiness all hang off a project workspace. That is why the first project is the point where the portal starts to become operational software."
+                >
+                  <div className="space-y-3">
+                    <OpsSnapshotRow label="What gets created" value="Project workspace, owner linkage and initial team membership." />
+                    <OpsSnapshotRow label="What happens next" value="You land directly in Launch so the setup spine stays obvious." />
+                    <div className="pt-1">
+                      <OpsStatusPill tone="warning">Small bootstrap payload only</OpsStatusPill>
+                    </div>
+                  </div>
+                </OpsPanel>
+              </div>
+            </div>
+          </OpsPanel>
+        ) : null}
 
         {boardView === "onboarding" ? (
           <OpsPanel
@@ -178,13 +341,22 @@ export default function ProjectsPage() {
           <ProjectsRosterTable
             projects={boardView === "onboarding" ? onboardingProjects : filteredProjects}
             emptyState={
-              boardView === "onboarding"
+              showBootstrapEmptyState
+                ? "Create the first project to turn this workspace into a real operator surface."
+                : boardView === "onboarding"
                 ? "No draft, paused or pending workspaces match your filters."
                 : "No projects match your filters."
             }
           />
         </OpsPanel>
       </div>
+  );
+}
+
+export default function ProjectsPage() {
+  return (
+    <AdminShell>
+      <ProjectsPageContent />
     </AdminShell>
   );
 }

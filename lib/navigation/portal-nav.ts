@@ -1,11 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  Building2,
   ClipboardCheck,
   FolderKanban,
   Home,
   Settings,
   Shield,
+  Sparkles,
   WalletCards,
   Workflow,
 } from "lucide-react";
@@ -39,6 +41,18 @@ export type SettingsTab = {
 };
 
 export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
+  {
+    href: "/getting-started",
+    label: "Getting Started",
+    description: "First-run account setup, project bootstrap and the clean handoff into launch operations.",
+    icon: Sparkles,
+  },
+  {
+    href: "/account",
+    label: "Account",
+    description: "Workspace identity, onboarding posture, team entry and the layer that sits above projects.",
+    icon: Building2,
+  },
   {
     href: "/overview",
     label: "Overview",

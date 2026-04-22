@@ -37,7 +37,14 @@ export function getPortalPageMetadata(
 
   if (globalMatch) {
     return {
-      eyebrow: globalMatch.label === "Projects" ? "Workspace board" : "Platform operations",
+      eyebrow:
+        globalMatch.label === "Projects"
+          ? "Workspace board"
+          : globalMatch.label === "Getting Started"
+          ? "Account onboarding"
+          : globalMatch.label === "Account"
+          ? "Workspace account"
+          : "Platform operations",
       title: globalMatch.label,
       description: globalMatch.description,
     };

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
 import ProjectForm from "@/components/forms/project/ProjectForm";
@@ -16,6 +16,7 @@ import {
   DetailSidebarSurface,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
+import { OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import {
   buildProjectOverviewStats,
   buildProjectWorkspaceHealthPills,
@@ -460,6 +461,7 @@ function readAssetSyncState(asset: OnchainProjectAsset) {
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const memberships = useAdminAuthStore((s) => s.memberships);
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
@@ -537,6 +539,7 @@ export default function ProjectDetailPage() {
     () => getProjectById(params.id),
     [getProjectById, params.id]
   );
+  const onboardingSource = searchParams.get("source") === "account_onboarding";
 
   useEffect(() => {
     if (!project) return;
@@ -1541,6 +1544,25 @@ export default function ProjectDetailPage() {
         projectChain={project.chain}
         healthPills={workspaceHealthPills}
       >
+        {onboardingSource ? (
+          <OpsPanel
+            eyebrow="Account onboarding"
+            title="This project came from the first-run workspace rail"
+            description="The project shell is now live. The clean next move is Launch, where the initial campaign, mission, reward and community setup can happen on one spine."
+            tone="accent"
+          >
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={`/projects/${project.id}/launch?source=account_onboarding`}
+                className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black transition hover:brightness-105"
+              >
+                Open Launch Workspace
+              </Link>
+              <OpsStatusPill tone="warning">First-run project</OpsStatusPill>
+            </div>
+          </OpsPanel>
+        ) : null}
+
         <div className="space-y-6">
           <ProjectOverviewSummary
             title={`${project.logo} ${project.name}`}

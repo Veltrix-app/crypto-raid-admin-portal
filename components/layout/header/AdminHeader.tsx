@@ -2,6 +2,7 @@
 
 import { Bell, ChevronDown, LogOut, Menu, Search, ShieldCheck, Zap } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import { getPortalPageMetadata } from "@/lib/layout/page-metadata";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminUIStore } from "@/store/ui/useAdminUIStore";
@@ -11,8 +12,10 @@ export default function AdminHeader() {
   const pathname = usePathname();
   const { email, role, logout, memberships, activeProjectId, setActiveProjectId } =
     useAdminAuthStore();
+  const { accessState } = useAccountEntryGuard();
   const toggleSidebar = useAdminUIStore((s) => s.toggleSidebar);
   const activeProject = memberships.find((item) => item.projectId === activeProjectId);
+  const primaryAccount = accessState?.primaryAccount ?? null;
   const identityLabel = email ? email.split("@")[0] : "operator";
   const statusLabel =
     role === "super_admin" ? "Super admin" : activeProject?.role || role || "Project operator";
@@ -60,6 +63,18 @@ export default function AdminHeader() {
         </div>
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          {primaryAccount ? (
+            <div className="rounded-[22px] border border-line bg-[linear-gradient(180deg,rgba(18,26,38,0.84),rgba(13,19,29,0.9))] px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.16)]">
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sub">
+                Account
+              </p>
+              <p className="mt-2 text-sm font-bold text-text">{primaryAccount.name}</p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-primary">
+                {primaryAccount.role} · {primaryAccount.status}
+              </p>
+            </div>
+          ) : null}
+
           {memberships.length > 0 ? (
             <div className="rounded-[22px] border border-line bg-[linear-gradient(180deg,rgba(18,26,38,0.84),rgba(13,19,29,0.9))] px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.16)]">
               <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sub">
