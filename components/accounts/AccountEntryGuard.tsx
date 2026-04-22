@@ -28,11 +28,22 @@ type AccountEntryGuardContextValue = {
 };
 
 const AccountEntryGuardContext = createContext<AccountEntryGuardContextValue | null>(null);
+const fallbackAccountEntryGuardContext: AccountEntryGuardContextValue = {
+  loading: false,
+  error: null,
+  overview: null,
+  accessState: null,
+  refresh: async () => {},
+};
 
 export function useAccountEntryGuard() {
   const context = useContext(AccountEntryGuardContext);
   if (!context) {
-    throw new Error("useAccountEntryGuard must be used within AccountEntryGuard.");
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("useAccountEntryGuard resolved without provider; returning fallback state.");
+    }
+
+    return fallbackAccountEntryGuardContext;
   }
 
   return context;
