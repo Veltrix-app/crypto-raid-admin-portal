@@ -32,34 +32,25 @@ export default function UserDetailPage() {
     () => users.find((item) => item.authUserId === params.id || item.id === params.id),
     [users, params.id]
   );
+  const currentUser = user ?? null;
+  const currentAuthUserId = currentUser?.authUserId ?? "";
 
-  if (!user) {
-    return (
-      <AdminShell>
-        <NotFoundState
-          title="Contributor not found"
-          description="This contributor could not be resolved from the active portal state. They may not belong to the current workspace scope or their profile has not loaded yet."
-        />
-      </AdminShell>
-    );
-  }
-
-  const currentUser = user;
-
-  const userSubmissions = submissions.filter((submission) => submission.userId === currentUser.authUserId);
-  const userClaims = claims.filter((claim) => claim.authUserId === currentUser.authUserId);
+  const userSubmissions = submissions.filter((submission) => submission.userId === currentAuthUserId);
+  const userClaims = claims.filter((claim) => claim.authUserId === currentAuthUserId);
   const approvedSubmissions = userSubmissions.filter((submission) => submission.status === "approved").length;
   const pendingSubmissions = userSubmissions.filter((submission) => submission.status === "pending").length;
   const pendingClaims = userClaims.filter((claim) => claim.status === "pending").length;
+  const trustScore = currentUser?.trustScore ?? 50;
+  const userStatus = currentUser?.status ?? "active";
   const trustPosture =
-    currentUser.status === "flagged"
+    userStatus === "flagged"
       ? "Heightened review posture"
-      : currentUser.trustScore >= 70
+      : trustScore >= 70
         ? "Healthy contributor posture"
         : "Monitor contribution quality";
   const latestTrustSnapshot = trustSnapshots[0] ?? null;
   const userReviewFlags = reviewFlags
-    .filter((flag) => flag.authUserId === currentUser.authUserId)
+    .filter((flag) => flag.authUserId === currentAuthUserId)
     .slice(0, 8);
   const openUserReviewFlags = userReviewFlags.filter((flag) => flag.status === "open");
   const claimableDistributions = rewardDistributions.filter(
@@ -71,7 +62,10 @@ export default function UserDetailPage() {
   );
 
   useEffect(() => {
-    if (!currentUser.authUserId) {
+    if (!currentAuthUserId) {
+      setTrustSnapshots([]);
+      setRewardDistributions([]);
+      setOnchainEvents([]);
       return;
     }
 
@@ -84,19 +78,19 @@ export default function UserDetailPage() {
           supabase
             .from("trust_snapshots")
             .select("*")
-            .eq("auth_user_id", currentUser.authUserId)
+            .eq("auth_user_id", currentAuthUserId)
             .order("created_at", { ascending: false })
             .limit(6),
           supabase
             .from("reward_distributions")
             .select("*")
-            .eq("auth_user_id", currentUser.authUserId)
+            .eq("auth_user_id", currentAuthUserId)
             .order("updated_at", { ascending: false })
             .limit(12),
           supabase
             .from("onchain_events")
             .select("*")
-            .eq("auth_user_id", currentUser.authUserId)
+            .eq("auth_user_id", currentAuthUserId)
             .order("created_at", { ascending: false })
             .limit(12),
         ]);
@@ -115,13 +109,24 @@ export default function UserDetailPage() {
     return () => {
       active = false;
     };
-  }, [currentUser.authUserId]);
+  }, [currentAuthUserId]);
+
+  if (!currentUser) {
+    return (
+      <AdminShell>
+        <NotFoundState
+          title="Contributor not found"
+          description="This contributor could not be resolved from the active portal state. They may not belong to the current workspace scope or their profile has not loaded yet."
+        />
+      </AdminShell>
+    );
+  }
 
   async function handleTrustAction(
     action: "watch_wallet" | "flag_user" | "clear_watch" | "restore_user",
     reason: string
   ) {
-    if (!currentUser.authUserId) {
+    if (!currentAuthUserId) {
       return;
     }
 
@@ -137,7 +142,7 @@ export default function UserDetailPage() {
     try {
       setActiveTrustAction(nextState);
       await applyTrustAction({
-        authUserId: currentUser.authUserId,
+        authUserId: currentAuthUserId,
         action,
         reason,
       });
@@ -194,7 +199,7 @@ export default function UserDetailPage() {
             eyebrow="Operator Read"
             title="Recommended next move"
             description={
-              user.status === "flagged"
+              userStatus === "flagged"
                 ? "Keep this contributor in a tighter review lane and inspect recent proofs before trusting automated approvals."
                 : pendingSubmissions > 0 || pendingClaims > 0
                   ? "Clear the pending queue to avoid unnecessary trust drag while the user is still active."

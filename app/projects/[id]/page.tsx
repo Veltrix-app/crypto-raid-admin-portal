@@ -824,7 +824,15 @@ export default function ProjectDetailPage() {
       cancelled = true;
     };
   }, [project?.id]);
-
+  const relatedCampaigns = campaigns.filter((c) => c.projectId === project?.id);
+  const projectNameById = useMemo(
+    () => new Map(projects.map((item) => [item.id, item.name])),
+    [projects]
+  );
+  const selectableProjects = useMemo(
+    () => projects.filter((item) => item.id !== project?.id),
+    [project?.id, projects]
+  );
   if (!project) {
     return (
       <AdminShell>
@@ -835,16 +843,6 @@ export default function ProjectDetailPage() {
       </AdminShell>
     );
   }
-
-  const relatedCampaigns = campaigns.filter((c) => c.projectId === project.id);
-  const projectNameById = useMemo(
-    () => new Map(projects.map((item) => [item.id, item.name])),
-    [projects]
-  );
-  const selectableProjects = useMemo(
-    () => projects.filter((item) => item.id !== project.id),
-    [project.id, projects]
-  );
   const relatedQuests = quests.filter((quest) => quest.projectId === project.id);
   const relatedRewards = rewards.filter((reward) => reward.projectId === project.id);
   const relatedTeamMembers = teamMembers.filter((member) => member.projectId === project.id);

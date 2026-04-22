@@ -37,55 +37,50 @@ export default function SubmissionDetailPage() {
   const [reviewNotes, setReviewNotes] = useState("");
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
   const [verificationResult, setVerificationResult] = useState<AdminVerificationResult | null>(null);
-
-  if (!submission) {
-    return (
-      <AdminShell>
-        <NotFoundState
-          title="Submission not found"
-          description="This submission could not be resolved from the active portal state. It may have been moderated away, fallen out of workspace scope or not loaded yet."
-        />
-      </AdminShell>
-    );
-  }
-
-  const currentSubmission = submission;
-  const user = users.find((item) => item.authUserId === currentSubmission.userId);
+  const currentSubmission = submission ?? null;
+  const currentSubmissionId = currentSubmission?.id ?? "";
+  const user = users.find((item) => item.authUserId === currentSubmission?.userId);
   const linkedFlags = reviewFlags.filter(
-    (flag) => flag.sourceTable === "quest_submissions" && flag.sourceId === currentSubmission.id
+    (flag) => flag.sourceTable === "quest_submissions" && flag.sourceId === currentSubmissionId
   );
   const primaryFlag = linkedFlags[0];
+  const submissionStatus = currentSubmission?.status ?? "pending";
   const riskLabel =
     user?.status === "flagged"
       ? `Watch • Sybil ${user.sybilScore}`
       : `Trust ${user?.trustScore ?? 50}`;
   const decisionLabel =
     primaryFlag?.flagType.replace(/_/g, " ") ??
-    (currentSubmission.status === "approved"
+    (submissionStatus === "approved"
       ? "Auto-approved"
-      : currentSubmission.status === "pending"
+      : submissionStatus === "pending"
         ? "Manual review"
         : "Validation failed");
   const decisionReason =
     primaryFlag?.reason ??
-    (currentSubmission.status === "approved"
+    (submissionStatus === "approved"
       ? "Veltrix approved this submission automatically because it matched the current low-risk verification rules."
-      : currentSubmission.status === "pending"
+      : submissionStatus === "pending"
         ? "This submission is waiting for a reviewer because it could not be fully auto-verified."
         : "This submission did not satisfy the current verification requirements.");
   const proofLooksLikeUrl =
-    currentSubmission.proof.startsWith("http://") ||
-    currentSubmission.proof.startsWith("https://");
+    currentSubmission?.proof.startsWith("http://") ||
+    currentSubmission?.proof.startsWith("https://");
 
   useEffect(() => {
-    setReviewNotes(currentSubmission.reviewNotes || "");
-  }, [currentSubmission.id, currentSubmission.reviewNotes]);
+    setReviewNotes(currentSubmission?.reviewNotes || "");
+  }, [currentSubmission?.reviewNotes, currentSubmissionId]);
 
   useEffect(() => {
+    if (!currentSubmission) {
+      setAuditLogs([]);
+      return;
+    }
+
     let active = true;
 
     async function loadAuditTrail() {
-      const logs = await fetchAuditTrail("quest_submissions", currentSubmission.id);
+      const logs = await fetchAuditTrail("quest_submissions", currentSubmissionId);
       if (active) {
         setAuditLogs(logs);
       }
@@ -96,9 +91,14 @@ export default function SubmissionDetailPage() {
     return () => {
       active = false;
     };
-  }, [currentSubmission.id, fetchAuditTrail]);
+  }, [currentSubmission, currentSubmissionId, fetchAuditTrail]);
 
   useEffect(() => {
+    if (!currentSubmission) {
+      setVerificationResult(null);
+      return;
+    }
+
     let active = true;
     const supabase = createClient();
 
@@ -107,7 +107,7 @@ export default function SubmissionDetailPage() {
         .from("verification_results")
         .select("*")
         .eq("source_table", "quest_submissions")
-        .eq("source_id", currentSubmission.id)
+        .eq("source_id", currentSubmissionId)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -153,9 +153,24 @@ export default function SubmissionDetailPage() {
     return () => {
       active = false;
     };
-  }, [currentSubmission.id]);
+  }, [currentSubmission, currentSubmissionId]);
+
+  if (!currentSubmission) {
+    return (
+      <AdminShell>
+        <NotFoundState
+          title="Submission not found"
+          description="This submission could not be resolved from the active portal state. It may have been moderated away, fallen out of workspace scope or not loaded yet."
+        />
+      </AdminShell>
+    );
+  }
 
   async function handleApprove() {
+    if (!currentSubmission) {
+      return;
+    }
+
     try {
       setWorking(true);
       await reviewSubmission(currentSubmission.id, "approved", reviewNotes);
@@ -167,6 +182,10 @@ export default function SubmissionDetailPage() {
   }
 
   async function handleReject() {
+    if (!currentSubmission) {
+      return;
+    }
+
     try {
       setWorking(true);
       await reviewSubmission(currentSubmission.id, "rejected", reviewNotes);

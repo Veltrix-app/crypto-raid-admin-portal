@@ -101,6 +101,17 @@ export default function AccountEntryGuard({ children }: { children: ReactNode })
     router.replace("/getting-started");
   }, [accessState?.shouldRedirectToGettingStarted, loading, router]);
 
+  const contextValue = useMemo(
+    () => ({
+      loading,
+      error,
+      overview,
+      accessState,
+      refresh: loadOverview,
+    }),
+    [accessState, error, loading, loadOverview, overview]
+  );
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg px-6 text-text">
@@ -113,17 +124,6 @@ export default function AccountEntryGuard({ children }: { children: ReactNode })
       </div>
     );
   }
-
-  const contextValue = useMemo(
-    () => ({
-      loading,
-      error,
-      overview,
-      accessState,
-      refresh: loadOverview,
-    }),
-    [accessState, error, loading, loadOverview, overview]
-  );
 
   return (
     <AccountEntryGuardContext.Provider value={contextValue}>

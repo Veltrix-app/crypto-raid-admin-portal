@@ -35,21 +35,13 @@ export default function ClaimDetailPage() {
   const [reviewNotes, setReviewNotes] = useState("");
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
 
-  if (!claim) {
-    return (
-      <AdminShell>
-        <NotFoundState
-          title="Claim not found"
-          description="This reward claim could not be resolved from the active portal state. It may have moved out of scope or not have loaded into the current workspace."
-        />
-      </AdminShell>
-    );
-  }
-
-  const currentClaim = claim;
-  const user = users.find((item) => item.authUserId === currentClaim.authUserId);
+  const currentClaim = claim ?? null;
+  const currentClaimId = currentClaim?.id ?? "";
+  const rewardCost = currentClaim?.rewardCost ?? 0;
+  const claimMethod = currentClaim?.claimMethod ?? "manual_fulfillment";
+  const user = users.find((item) => item.authUserId === currentClaim?.authUserId);
   const linkedFlags = reviewFlags.filter(
-    (flag) => flag.sourceTable === "reward_claims" && flag.sourceId === currentClaim.id
+    (flag) => flag.sourceTable === "reward_claims" && flag.sourceId === currentClaimId
   );
   const primaryFlag = linkedFlags[0];
   const riskLabel =
@@ -58,28 +50,33 @@ export default function ClaimDetailPage() {
       : `Trust ${user?.trustScore ?? 50}`;
   const decisionLabel =
     primaryFlag?.flagType.replace(/_/g, " ") ??
-    ((currentClaim.rewardCost ?? 0) >= 500
+    (rewardCost >= 500
       ? "High value checkpoint"
-      : currentClaim.claimMethod === "manual_fulfillment"
+      : claimMethod === "manual_fulfillment"
         ? "Manual fulfillment"
         : "Standard flow");
   const decisionReason =
     primaryFlag?.reason ??
-    ((currentClaim.rewardCost ?? 0) >= 500
+    (rewardCost >= 500
       ? "This reward is valuable enough to deserve an additional fulfillment checkpoint before payout."
-      : currentClaim.claimMethod === "manual_fulfillment"
+      : claimMethod === "manual_fulfillment"
         ? "This claim depends on manual delivery by the project team."
         : "This claim can move through the standard fulfillment flow unless other risk signals appear.");
 
   useEffect(() => {
-    setReviewNotes(currentClaim.fulfillmentNotes || "");
-  }, [currentClaim.id, currentClaim.fulfillmentNotes]);
+    setReviewNotes(currentClaim?.fulfillmentNotes || "");
+  }, [currentClaim?.fulfillmentNotes, currentClaimId]);
 
   useEffect(() => {
+    if (!currentClaim) {
+      setAuditLogs([]);
+      return;
+    }
+
     let active = true;
 
     async function loadAuditTrail() {
-      const logs = await fetchAuditTrail("reward_claims", currentClaim.id);
+      const logs = await fetchAuditTrail("reward_claims", currentClaimId);
       if (active) {
         setAuditLogs(logs);
       }
@@ -90,11 +87,26 @@ export default function ClaimDetailPage() {
     return () => {
       active = false;
     };
-  }, [currentClaim.id, fetchAuditTrail]);
+  }, [currentClaim, currentClaimId, fetchAuditTrail]);
+
+  if (!currentClaim) {
+    return (
+      <AdminShell>
+        <NotFoundState
+          title="Claim not found"
+          description="This reward claim could not be resolved from the active portal state. It may have moved out of scope or not have loaded into the current workspace."
+        />
+      </AdminShell>
+    );
+  }
 
   async function handleSetStatus(
     nextStatus: "processing" | "fulfilled" | "rejected"
   ) {
+    if (!currentClaim) {
+      return;
+    }
+
     try {
       setWorking(true);
       await reviewClaim(currentClaim.id, nextStatus, reviewNotes);

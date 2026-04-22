@@ -71,40 +71,30 @@ export default function CampaignDetailPage() {
     text: string;
   } | null>(null);
 
-  const campaign = useMemo(
+  const campaignEntry = useMemo(
     () => getCampaignById(params.id),
     [getCampaignById, params.id]
   );
-  const campaignOps = useProjectOps(campaign?.projectId, {
+  const campaignOps = useProjectOps(campaignEntry?.projectId, {
     objectType: "campaign",
     objectId: params.id,
   });
-
-  if (!campaign) {
-    return (
-      <AdminShell>
-        <NotFoundState
-          title="Campaign not found"
-          description="This campaign could not be resolved from the current admin portal store state. It may have been deleted, moved out of scope or never loaded into the active workspace."
-        />
-      </AdminShell>
-    );
-  }
-
-  const currentCampaign = campaign;
-  const lifecycleState = deriveLifecycleState(currentCampaign.status, "draft");
+  const currentCampaign = campaignEntry ?? null;
+  const currentCampaignId = currentCampaign?.id ?? "";
+  const currentCampaignProjectId = currentCampaign?.projectId ?? "";
+  const lifecycleState = deriveLifecycleState(currentCampaign?.status ?? "draft", "draft");
   const primaryLifecycleAction = getPrimaryProjectContentAction(
     "campaign",
-    currentCampaign.status
+    currentCampaign?.status ?? "draft"
   );
   const canArchiveLifecycleAction = canArchiveProjectContent(
     "campaign",
-    currentCampaign.status
+    currentCampaign?.status ?? "draft"
   );
-  const project = projects.find((p) => p.id === campaign.projectId);
-  const relatedRaids = raids.filter((r) => r.campaignId === campaign.id);
-  const relatedQuests = quests.filter((q) => q.campaignId === campaign.id);
-  const relatedRewards = rewards.filter((reward) => reward.campaignId === campaign.id);
+  const project = projects.find((p) => p.id === currentCampaignProjectId);
+  const relatedRaids = raids.filter((r) => r.campaignId === currentCampaignId);
+  const relatedQuests = quests.filter((q) => q.campaignId === currentCampaignId);
+  const relatedRewards = rewards.filter((reward) => reward.campaignId === currentCampaignId);
   const relatedQuestIdList = useMemo(
     () => relatedQuests.map((quest) => quest.id),
     [relatedQuests]
@@ -121,13 +111,13 @@ export default function CampaignDetailPage() {
   const readinessItems = [
     {
       label: "Messaging",
-      value: campaign.shortDescription ? "Hook defined" : "Needs hook",
-      complete: !!campaign.shortDescription,
+      value: currentCampaign?.shortDescription ? "Hook defined" : "Needs hook",
+      complete: !!currentCampaign?.shortDescription,
     },
     {
       label: "Timing",
-      value: campaign.startsAt && campaign.endsAt ? "Scheduled window" : "No full window",
-      complete: !!campaign.startsAt && !!campaign.endsAt,
+      value: currentCampaign?.startsAt && currentCampaign?.endsAt ? "Scheduled window" : "No full window",
+      complete: !!currentCampaign?.startsAt && !!currentCampaign?.endsAt,
     },
     {
       label: "Mechanics",
@@ -146,7 +136,7 @@ export default function CampaignDetailPage() {
       description:
         "Freeze new traffic while you stabilize messaging, rewards or moderation pressure.",
       objectType: "campaign" as const,
-      objectId: currentCampaign.id,
+      objectId: currentCampaignId,
       overrideType: "pause" as const,
       reason: "Campaign rail paused from detail workspace.",
     },
@@ -155,13 +145,18 @@ export default function CampaignDetailPage() {
       description:
         "Mark this campaign for a manual retry pass when the next move is operator recovery.",
       objectType: "campaign" as const,
-      objectId: currentCampaign.id,
+      objectId: currentCampaignId,
       overrideType: "manual_retry" as const,
       reason: "Manual retry queued from campaign detail.",
     },
   ];
 
   useEffect(() => {
+    if (!currentCampaign) {
+      setSnapshot(null);
+      return;
+    }
+
     let active = true;
     const supabase = createClient();
 
@@ -169,7 +164,7 @@ export default function CampaignDetailPage() {
       const { data: dailyRow } = await supabase
         .from("campaign_analytics_daily")
         .select("*")
-        .eq("campaign_id", currentCampaign.id)
+        .eq("campaign_id", currentCampaignId)
         .order("snapshot_date", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -226,9 +221,14 @@ export default function CampaignDetailPage() {
     return () => {
       active = false;
     };
-  }, [currentCampaign.id, relatedQuests, relatedSubmissions, relatedFlags]);
+  }, [currentCampaign, currentCampaignId, relatedFlags, relatedQuests, relatedSubmissions]);
 
   useEffect(() => {
+    if (!currentCampaign) {
+      setDistributionSummary(null);
+      return;
+    }
+
     let active = true;
     const supabase = createClient();
 
@@ -236,7 +236,7 @@ export default function CampaignDetailPage() {
       const { data, error } = await supabase
         .from("reward_distributions")
         .select("reward_amount, reward_asset, status")
-        .eq("campaign_id", currentCampaign.id);
+        .eq("campaign_id", currentCampaignId);
 
       if (!active || error) {
         if (error && active) {
@@ -258,7 +258,7 @@ export default function CampaignDetailPage() {
         rewardAsset:
           (rows.find((row) => typeof row.reward_asset === "string" && row.reward_asset.trim())
             ?.reward_asset as string | undefined) ??
-          currentCampaign.rewardType ??
+          currentCampaign?.rewardType ??
           "campaign_pool",
       });
     }
@@ -268,9 +268,14 @@ export default function CampaignDetailPage() {
     return () => {
       active = false;
     };
-  }, [currentCampaign.id, currentCampaign.rewardType]);
+  }, [currentCampaign, currentCampaignId, currentCampaign?.rewardType]);
 
   useEffect(() => {
+    if (!currentCampaign) {
+      setCallbackFailures([]);
+      return;
+    }
+
     let active = true;
     const supabase = createClient();
 
@@ -305,9 +310,26 @@ export default function CampaignDetailPage() {
     return () => {
       active = false;
     };
-  }, [relatedQuestIdList]);
+  }, [currentCampaign, relatedQuestIdList]);
+
+  if (!currentCampaign) {
+    return (
+      <AdminShell>
+        <NotFoundState
+          title="Campaign not found"
+          description="This campaign could not be resolved from the current admin portal store state. It may have been deleted, moved out of scope or never loaded into the active workspace."
+        />
+      </AdminShell>
+    );
+  }
+
+  const campaign = currentCampaign;
 
   async function handleLifecycleAction(action: ProjectContentAction) {
+    if (!currentCampaign) {
+      return;
+    }
+
     setActionMessage(null);
     setRunningAction(action);
 
@@ -698,7 +720,7 @@ export default function CampaignDetailPage() {
                       const { data } = await supabase
                         .from("reward_distributions")
                         .select("reward_amount, reward_asset, status")
-                        .eq("campaign_id", currentCampaign.id);
+                        .eq("campaign_id", campaign.id);
 
                       const rows = data ?? [];
                       setDistributionSummary({
@@ -713,7 +735,7 @@ export default function CampaignDetailPage() {
                             (row) =>
                               typeof row.reward_asset === "string" && row.reward_asset.trim()
                           )?.reward_asset as string | undefined) ??
-                          currentCampaign.rewardType ??
+                          campaign.rewardType ??
                           "campaign_pool",
                       });
                       setFinalizeMessage({
