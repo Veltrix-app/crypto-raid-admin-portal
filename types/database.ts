@@ -79,6 +79,93 @@ export type BillingEventType =
   | "billing_synced"
   | "business_note_added";
 
+export type SupportTicketType =
+  | "product_question"
+  | "technical_issue"
+  | "billing_issue"
+  | "account_access"
+  | "reward_or_claim_issue"
+  | "trust_or_abuse_report"
+  | "provider_or_integration_issue"
+  | "general_request";
+
+export type SupportTicketPriority = "low" | "normal" | "high" | "urgent";
+
+export type SupportTicketStatus =
+  | "new"
+  | "triaging"
+  | "waiting_on_customer"
+  | "waiting_on_internal"
+  | "escalated"
+  | "resolved"
+  | "closed";
+
+export type SupportTicketWaitingState =
+  | "none"
+  | "customer"
+  | "internal"
+  | "provider";
+
+export type SupportTicketEscalationState =
+  | "none"
+  | "watching"
+  | "escalated"
+  | "handoff_open";
+
+export type SupportEventVisibilityScope = "internal" | "customer" | "both";
+
+export type SupportTicketEventType =
+  | "ticket_created"
+  | "status_changed"
+  | "claimed"
+  | "internal_note"
+  | "customer_update"
+  | "handoff_created"
+  | "incident_linked"
+  | "resolved"
+  | "closed"
+  | "reopened";
+
+export type SupportHandoffType =
+  | "billing"
+  | "trust"
+  | "payout"
+  | "onchain"
+  | "product_ops"
+  | "general_support";
+
+export type SupportHandoffStatus = "open" | "accepted" | "resolved" | "canceled";
+
+export type ServiceIncidentSeverity = "minor" | "major" | "critical";
+
+export type ServiceIncidentImpactScope =
+  | "degraded"
+  | "partial_outage"
+  | "major_outage"
+  | "maintenance";
+
+export type ServiceIncidentState =
+  | "investigating"
+  | "identified"
+  | "monitoring"
+  | "resolved";
+
+export type ServiceIncidentUpdateType =
+  | "state_change"
+  | "public_update"
+  | "internal_note";
+
+export type ServiceIncidentVisibilityScope = "internal" | "public" | "both";
+
+export type ServiceStatusLevel =
+  | "operational"
+  | "degraded"
+  | "partial_outage"
+  | "major_outage"
+  | "maintenance";
+
+export type ServiceStatusSnapshotSource = "system" | "incident_command" | "manual";
+
 export type DbBillingPlan = {
   id: string;
   name: string;
@@ -289,6 +376,115 @@ export type DbCustomerAccountBusinessNote = {
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
+};
+
+export type DbSupportTicket = {
+  id: string;
+  ticket_ref: string;
+  auth_user_id: string | null;
+  customer_account_id: string | null;
+  project_id: string | null;
+  linked_incident_id: string | null;
+  source_origin: "web_public" | "web_authenticated" | "portal_internal" | "system";
+  ticket_type: SupportTicketType;
+  priority: SupportTicketPriority;
+  status: SupportTicketStatus;
+  waiting_state: SupportTicketWaitingState;
+  escalation_state: SupportTicketEscalationState;
+  subject: string;
+  message: string;
+  requester_name: string;
+  requester_email: string;
+  assigned_admin_auth_user_id: string | null;
+  latest_customer_update_at: string | null;
+  latest_internal_update_at: string | null;
+  first_response_at: string | null;
+  resolved_at: string | null;
+  closed_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbSupportTicketEvent = {
+  id: string;
+  support_ticket_id: string;
+  event_type: SupportTicketEventType;
+  visibility_scope: SupportEventVisibilityScope;
+  actor_auth_user_id: string | null;
+  title: string | null;
+  body: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbSupportTicketHandoff = {
+  id: string;
+  support_ticket_id: string;
+  customer_account_id: string | null;
+  target_project_id: string | null;
+  handoff_type: SupportHandoffType;
+  status: SupportHandoffStatus;
+  target_record_id: string | null;
+  target_route: string | null;
+  summary: string;
+  owner_auth_user_id: string | null;
+  created_by_auth_user_id: string | null;
+  accepted_at: string | null;
+  resolved_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbServiceIncident = {
+  id: string;
+  incident_ref: string;
+  title: string;
+  component_key: string;
+  severity: ServiceIncidentSeverity;
+  impact_scope: ServiceIncidentImpactScope;
+  state: ServiceIncidentState;
+  public_summary: string;
+  internal_summary: string;
+  public_visible: boolean;
+  declared_by_auth_user_id: string | null;
+  owner_auth_user_id: string | null;
+  opened_at: string;
+  resolved_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbServiceIncidentUpdate = {
+  id: string;
+  service_incident_id: string;
+  update_type: ServiceIncidentUpdateType;
+  visibility_scope: ServiceIncidentVisibilityScope;
+  incident_state: ServiceIncidentState | null;
+  component_status: ServiceStatusLevel | null;
+  title: string | null;
+  message: string;
+  actor_auth_user_id: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbServiceStatusSnapshot = {
+  id: string;
+  component_key: string;
+  component_label: string;
+  status: ServiceStatusLevel;
+  summary: string;
+  public_message: string;
+  service_incident_id: string | null;
+  snapshot_source: ServiceStatusSnapshotSource;
+  is_public: boolean;
+  created_by_auth_user_id: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type DbProject = {

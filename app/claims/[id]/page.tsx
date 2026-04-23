@@ -12,6 +12,7 @@ import {
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { InlineEmptyNotice, NotFoundState } from "@/components/layout/state/StatePrimitives";
+import { SupportSurfaceContextPanel } from "@/components/support/SupportSurfaceContextPanel";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { AdminAuditLog } from "@/types/entities/audit-log";
 
@@ -307,6 +308,14 @@ export default function ClaimDetailPage() {
                 ) : null}
               </div>
             </DetailSidebarSurface>
+
+            <SupportSurfaceContextPanel
+              title="Support handoffs into claims"
+              description="Support tickets that turn into payout or claim investigations stay visible here so operator work and customer communication do not drift apart."
+              handoffType="payout"
+              targetProjectId={currentClaim.projectId ?? undefined}
+              targetRecordId={currentClaim.id}
+            />
           </div>
         </div>
       </div>

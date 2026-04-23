@@ -6,6 +6,7 @@ import {
   FolderKanban,
   Home,
   Landmark,
+  LifeBuoy,
   Settings,
   Shield,
   Sparkles,
@@ -96,6 +97,13 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Business",
     description: "Internal revenue cockpit for plan mix, billing ops, collections and account health.",
     icon: Landmark,
+    superAdminOnly: true,
+  },
+  {
+    href: "/support",
+    label: "Support",
+    description: "Internal support queue, incident command, public status posture and bounded handoffs.",
+    icon: LifeBuoy,
     superAdminOnly: true,
   },
   {

@@ -14,6 +14,7 @@ import OnchainCaseTimeline from "@/components/onchain/OnchainCaseTimeline";
 import OnchainHealthPanel from "@/components/onchain/OnchainHealthPanel";
 import OnchainQueuePanel from "@/components/onchain/OnchainQueuePanel";
 import SupportEscalationPanel from "@/components/observability/SupportEscalationPanel";
+import { SupportSurfaceContextPanel } from "@/components/support/SupportSurfaceContextPanel";
 import type {
   OnchainCaseDetailRecord,
   OnchainCaseListRow,
@@ -477,18 +478,26 @@ export default function OnchainPage() {
           title={`Escalations for ${activeProjectName}`}
           description="When sync, enrichment or provider drift starts repeating, keep one accountable owner and one next recovery move visible here."
         >
-          <SupportEscalationPanel
-            title="On-chain support escalations"
-          description="Use this workspace when on-chain issues cross queue, provider and deploy boundaries and need stronger operator follow-through."
-            projectId={activeProjectId}
-            requireProjectContext
-            emptyTitle={activeProjectId ? "No on-chain escalations" : "Select an active project"}
-            emptyDescription={
-              activeProjectId
+          <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+            <SupportEscalationPanel
+              title="On-chain support escalations"
+              description="Use this workspace when on-chain issues cross queue, provider and deploy boundaries and need stronger operator follow-through."
+              projectId={activeProjectId}
+              requireProjectContext
+              emptyTitle={activeProjectId ? "No on-chain escalations" : "Select an active project"}
+              emptyDescription={
+                activeProjectId
                   ? "No support escalations are currently open for this project's on-chain workspace."
-                : "Pick an active project to inspect on-chain escalations."
-            }
-          />
+                  : "Pick an active project to inspect on-chain escalations."
+              }
+            />
+            <SupportSurfaceContextPanel
+              title="Support handoffs into on-chain"
+              description="Tickets that start in support but require sync, ingest or recovery work stay visible here with the original handoff reason."
+              handoffType="onchain"
+              targetProjectId={activeProjectId}
+            />
+          </div>
         </OpsPanel>
       </PortalPageFrame>
     </AdminShell>

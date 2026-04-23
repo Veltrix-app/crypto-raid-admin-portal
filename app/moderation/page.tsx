@@ -10,6 +10,7 @@ import {
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
 import SupportEscalationPanel from "@/components/observability/SupportEscalationPanel";
+import { SupportSurfaceContextPanel } from "@/components/support/SupportSurfaceContextPanel";
 import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import TrustCaseDetailPanel from "@/components/trust/TrustCaseDetailPanel";
@@ -438,18 +439,26 @@ export default function ModerationPage() {
           title={`Escalations for ${activeProjectName}`}
           description="When trust work starts crossing queue, project-input and provider boundaries, keep one explicit owner and next action visible here."
         >
-          <SupportEscalationPanel
-            title="Trust support escalations"
-          description="Use this workspace when moderation pressure can no longer be explained by one trust case or one provider incident alone."
-            projectId={activeProjectId}
-            requireProjectContext
-            emptyTitle={activeProjectId ? "No trust escalations" : "Select an active project"}
-            emptyDescription={
-              activeProjectId
+          <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+            <SupportEscalationPanel
+              title="Trust support escalations"
+              description="Use this workspace when moderation pressure can no longer be explained by one trust case or one provider incident alone."
+              projectId={activeProjectId}
+              requireProjectContext
+              emptyTitle={activeProjectId ? "No trust escalations" : "Select an active project"}
+              emptyDescription={
+                activeProjectId
                   ? "No support escalations are currently open for this project's trust workspace."
-                : "Pick an active project to inspect trust escalations."
-            }
-          />
+                  : "Pick an active project to inspect trust escalations."
+              }
+            />
+            <SupportSurfaceContextPanel
+              title="Support handoffs into trust"
+              description="Generic support tickets that become trust or abuse investigations stay connected to this workspace with their original operator context."
+              handoffType="trust"
+              targetProjectId={activeProjectId}
+            />
+          </div>
         </OpsPanel>
       </PortalPageFrame>
     </AdminShell>

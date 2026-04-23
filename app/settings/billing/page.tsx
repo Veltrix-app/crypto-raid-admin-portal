@@ -20,6 +20,7 @@ import {
 import {
   fetchPortalCustomerBillingWorkspace,
 } from "@/lib/billing/portal-billing";
+import { SupportSurfaceContextPanel } from "@/components/support/SupportSurfaceContextPanel";
 import type {
   PortalBillingUsageItem,
   PortalCustomerBillingWorkspace,
@@ -442,6 +443,13 @@ function SettingsBillingContent() {
               />
             </div>
           </OpsPanel>
+
+          <SupportSurfaceContextPanel
+            title="Billing-linked support handoffs"
+            description="Tickets land here once generic support becomes invoice follow-up, payment method recovery or commercial account work."
+            handoffType="billing"
+            customerAccountId={workspace.accountId}
+          />
         </div>
       </div>
 

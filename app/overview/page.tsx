@@ -16,8 +16,10 @@ import QueueBacklogPanel from "@/components/observability/QueueBacklogPanel";
 import SupportEscalationPanel from "@/components/observability/SupportEscalationPanel";
 import DeployCheckPanel from "@/components/observability/DeployCheckPanel";
 import RunbookRail from "@/components/observability/RunbookRail";
+import { SupportOverviewPanel } from "@/components/support/SupportOverviewPanel";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
+import type { AdminSupportOverview } from "@/types/entities/support";
 
 type OpsHealthSummary = {
   latestMetricValues?: Record<string, number>;
@@ -46,6 +48,9 @@ export default function OverviewPage() {
   const [overviewMode, setOverviewMode] = useState<"launch" | "health" | "escalations">("launch");
   const [healthSummary, setHealthSummary] = useState<OpsHealthSummary | null>(null);
   const [healthError, setHealthError] = useState<string | null>(null);
+  const [supportOverview, setSupportOverview] = useState<AdminSupportOverview | null>(null);
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [supportError, setSupportError] = useState<string | null>(null);
 
   const activeProject = projects.find((project) => project.id === activeProjectId);
   const workspaceCampaigns = campaigns.filter((campaign) => campaign.projectId === activeProjectId);
@@ -93,6 +98,49 @@ export default function OverviewPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (role !== "super_admin") {
+      setSupportOverview(null);
+      setSupportLoading(false);
+      setSupportError(null);
+      return;
+    }
+
+    let active = true;
+
+    async function loadSupportOverview() {
+      try {
+        setSupportLoading(true);
+        const response = await fetch("/api/support/overview", { cache: "no-store" });
+        const payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; overview?: AdminSupportOverview; error?: string }
+          | null;
+
+        if (!response.ok || !payload?.ok || !payload.overview) {
+          throw new Error(payload?.error ?? "Failed to load support overview.");
+        }
+
+        if (!active) return;
+        setSupportOverview(payload.overview);
+        setSupportError(null);
+      } catch (error) {
+        if (!active) return;
+        setSupportOverview(null);
+        setSupportError(error instanceof Error ? error.message : "Failed to load support overview.");
+      } finally {
+        if (active) {
+          setSupportLoading(false);
+        }
+      }
+    }
+
+    void loadSupportOverview();
+
+    return () => {
+      active = false;
+    };
+  }, [role]);
 
   const controlPriorities = useMemo(
     () => [
@@ -325,6 +373,14 @@ export default function OverviewPage() {
                 description="Keep deploy hygiene and launch-day recovery steps one click away while health pressure is active."
               />
             </div>
+
+            {role === "super_admin" ? (
+              <SupportOverviewPanel
+                overview={supportOverview}
+                loading={supportLoading}
+                error={supportError}
+              />
+            ) : null}
           </>
         ) : (
           <div className="space-y-6">
@@ -401,6 +457,14 @@ export default function OverviewPage() {
                 description="Jump into the exact recovery playbook that matches the surface currently carrying the pressure."
               />
             </div>
+
+            {role === "super_admin" ? (
+              <SupportOverviewPanel
+                overview={supportOverview}
+                loading={supportLoading}
+                error={supportError}
+              />
+            ) : null}
           </div>
         )}
 
