@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
       emailConfirmed: Boolean(
         authenticatedUser.user.email_confirmed_at ?? authenticatedUser.user.confirmed_at
       ),
+      analyticsContext: body?.analyticsContext ?? null,
     });
 
     return NextResponse.json(

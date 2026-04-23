@@ -3,6 +3,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { getAccountsServiceClient } from "@/lib/accounts/account-auth";
 import { isBillingLimitError } from "@/lib/billing/entitlement-blocks";
 import { requireAccountGrowthCapacity } from "@/lib/billing/entitlement-guard";
+import { writeGrowthAnalyticsEvent } from "@/lib/analytics/growth-events";
 
 function slugifyProjectName(name: string, accountId: string) {
   const base = name
@@ -265,6 +266,23 @@ export async function POST(
       { ok: false, error: eventWriteResult.error.message || "Failed to write account event." },
       { status: 500 }
     );
+  }
+
+  try {
+    await writeGrowthAnalyticsEvent({
+      eventType: "first_project_created",
+      eventSource: "portal",
+      authUserId: user.id,
+      customerAccountId: accountId,
+      projectId: createdProject.id,
+      eventPayload: {
+        projectName: createdProject.name,
+        chain,
+        category,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to write first_project_created growth event.", error);
   }
 
   return NextResponse.json({

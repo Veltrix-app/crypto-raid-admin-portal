@@ -6,6 +6,10 @@ import type {
   AdminCustomerAccountStatus,
 } from "@/types/entities/account";
 import { getAccountsServiceClient } from "@/lib/accounts/account-auth";
+import {
+  writeGrowthAnalyticsEvent,
+  type GrowthAnalyticsContext,
+} from "@/lib/analytics/growth-events";
 
 type CustomerAccountRow = {
   id: string;
@@ -107,6 +111,7 @@ type BootstrapParams = {
   displayName: string;
   requestedName?: string | null;
   emailConfirmed: boolean;
+  analyticsContext?: GrowthAnalyticsContext | null;
 };
 
 const roleRank: Record<AdminCustomerAccountRole, number> = {
@@ -432,6 +437,23 @@ export async function bootstrapCustomerAccountForUser(params: BootstrapParams) {
 
   if (eventsError.error) {
     throw new Error(eventsError.error.message || "Failed to write account events.");
+  }
+
+  try {
+    await writeGrowthAnalyticsEvent({
+      eventType: "workspace_created",
+      eventSource: "portal",
+      authUserId: params.authUserId,
+      customerAccountId: accountId,
+      analyticsContext: params.analyticsContext ?? null,
+      eventPayload: {
+        accountName,
+        source: "self_serve",
+        emailConfirmed: params.emailConfirmed,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to write workspace_created growth event.", error);
   }
 
   const overview = await loadCustomerAccountOverviewForUser({

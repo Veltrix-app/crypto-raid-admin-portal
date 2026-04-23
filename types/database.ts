@@ -255,6 +255,58 @@ export type ActivationNudgeStatus =
   | "dismissed"
   | "completed";
 
+export type GrowthAnalyticsEventType =
+  | "anonymous_visit"
+  | "pricing_view"
+  | "signup_started"
+  | "signup_completed"
+  | "workspace_created"
+  | "first_project_created"
+  | "provider_connected"
+  | "first_campaign_live"
+  | "checkout_started"
+  | "paid_converted"
+  | "renewal_succeeded"
+  | "renewal_failed"
+  | "expanded"
+  | "downgraded"
+  | "churned"
+  | "member_joined"
+  | "member_completed_first_quest"
+  | "member_returned"
+  | "reward_claimed";
+
+export type GrowthEventSource =
+  | "webapp"
+  | "portal"
+  | "billing"
+  | "customer"
+  | "system"
+  | "support"
+  | "success";
+
+export type GrowthFunnelStage =
+  | "anonymous_visit"
+  | "pricing_view"
+  | "signup_started"
+  | "signup_completed"
+  | "workspace_created"
+  | "first_project_created"
+  | "first_provider_connected"
+  | "first_campaign_live"
+  | "checkout_started"
+  | "paid_converted"
+  | "retained_30d"
+  | "expanded"
+  | "downgraded"
+  | "churned";
+
+export type BenchmarkLabel =
+  | "below_peer_range"
+  | "within_peer_range"
+  | "above_peer_range"
+  | "top_cohort";
+
 export type DbBillingPlan = {
   id: string;
   name: string;
@@ -588,6 +640,132 @@ export type DbActivationNudge = {
   created_at: string;
   updated_at: string;
   completed_at: string | null;
+};
+
+export type DbGrowthAnalyticsEvent = {
+  id: string;
+  event_type: GrowthAnalyticsEventType;
+  event_source: GrowthEventSource;
+  occurred_at: string;
+  auth_user_id: string | null;
+  customer_account_id: string | null;
+  project_id: string | null;
+  campaign_id: string | null;
+  session_id: string | null;
+  anonymous_id: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_term: string | null;
+  utm_content: string | null;
+  referrer: string | null;
+  landing_path: string | null;
+  first_touch_source: string | null;
+  first_touch_medium: string | null;
+  first_touch_campaign: string | null;
+  first_touch_term: string | null;
+  first_touch_content: string | null;
+  first_touch_referrer: string | null;
+  first_touch_landing_path: string | null;
+  first_touch_captured_at: string | null;
+  latest_touch_source: string | null;
+  latest_touch_medium: string | null;
+  latest_touch_campaign: string | null;
+  latest_touch_term: string | null;
+  latest_touch_content: string | null;
+  latest_touch_referrer: string | null;
+  latest_touch_landing_path: string | null;
+  latest_touch_captured_at: string | null;
+  event_payload: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbGrowthFunnelSnapshot = {
+  id: string;
+  snapshot_date: string;
+  funnel_stage: GrowthFunnelStage;
+  metric_value: number;
+  conversion_rate: number | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountGrowthSnapshot = {
+  id: string;
+  customer_account_id: string;
+  snapshot_date: string;
+  billing_plan_id: string | null;
+  billing_status: string;
+  activation_stage: string;
+  workspace_health_state: string;
+  success_health_state: string;
+  project_count: number;
+  active_campaign_count: number;
+  provider_count: number;
+  billable_seat_count: number;
+  current_mrr: number;
+  is_paid_account: boolean;
+  is_retained_30d: boolean;
+  is_expansion_ready: boolean;
+  is_churn_risk: boolean;
+  first_touch_source: string | null;
+  latest_touch_source: string | null;
+  conversion_touch_source: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbProjectGrowthSnapshot = {
+  id: string;
+  project_id: string;
+  customer_account_id: string | null;
+  snapshot_date: string;
+  project_status: string;
+  campaign_count: number;
+  active_campaign_count: number;
+  live_quest_count: number;
+  live_raid_count: number;
+  visible_reward_count: number;
+  provider_count: number;
+  team_member_count: number;
+  member_count: number;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbRetentionCohortSnapshot = {
+  id: string;
+  snapshot_date: string;
+  cohort_type: "signup" | "paid";
+  cohort_key: string;
+  cohort_start: string;
+  period_day: number;
+  account_count: number;
+  retained_count: number;
+  retained_rate: number;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbBenchmarkCohortSnapshot = {
+  id: string;
+  snapshot_date: string;
+  cohort_key: string;
+  benchmark_key: string;
+  minimum_cohort_size: number;
+  cohort_size: number;
+  lower_bound: number | null;
+  median_value: number | null;
+  upper_bound: number | null;
+  top_band_threshold: number | null;
+  unit: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type DbSupportTicket = {
