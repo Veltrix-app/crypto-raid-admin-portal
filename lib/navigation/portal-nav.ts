@@ -3,6 +3,7 @@ import {
   BarChart3,
   Building2,
   ClipboardCheck,
+  FlaskConical,
   Fingerprint,
   FolderKanban,
   Home,
@@ -12,6 +13,7 @@ import {
   Settings,
   Shield,
   Sparkles,
+  Rocket,
   WalletCards,
   Workflow,
 } from "lucide-react";
@@ -113,6 +115,20 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Security",
     description: "Internal trust, compliance, enterprise identity and security lifecycle control.",
     icon: Fingerprint,
+    superAdminOnly: true,
+  },
+  {
+    href: "/releases",
+    label: "Releases",
+    description: "Internal release control for scope, migrations, smoke posture, rollback and go or no-go state.",
+    icon: Rocket,
+    superAdminOnly: true,
+  },
+  {
+    href: "/qa",
+    label: "QA",
+    description: "Internal readiness board for release verification, smoke completion and environment warnings.",
+    icon: FlaskConical,
     superAdminOnly: true,
   },
   {

@@ -388,6 +388,60 @@ export type SsoDomainVerificationStatus = "unverified" | "verified" | "blocked";
 
 export type SubprocessorStatus = "active" | "planned" | "retired";
 
+export type ReleaseTargetEnvironment = "local" | "preview" | "production";
+
+export type ReleaseRunState =
+  | "draft"
+  | "ready_for_review"
+  | "approved"
+  | "deploying"
+  | "smoke_pending"
+  | "verified"
+  | "degraded"
+  | "rolled_back";
+
+export type ReleaseDecision = "undecided" | "go" | "no_go" | "watch";
+
+export type ReleaseServiceKey = "webapp" | "portal" | "docs" | "community_bot";
+
+export type ReleaseServiceInclusionStatus = "included" | "not_in_scope";
+
+export type ReleaseGateMode = "hard" | "light";
+
+export type ReleaseServiceDeployStatus =
+  | "pending"
+  | "ready"
+  | "deployed"
+  | "degraded"
+  | "rolled_back";
+
+export type ReleaseCheckBlock =
+  | "scope"
+  | "environment"
+  | "database"
+  | "deploy"
+  | "smoke"
+  | "rollback";
+
+export type ReleaseCheckResult = "not_run" | "passed" | "warning" | "failed";
+
+export type ReleaseBlockerSeverity = "P0" | "P1" | "P2" | "P3";
+
+export type ReleaseSmokeCategory =
+  | "auth_and_entry"
+  | "billing_and_account"
+  | "support_and_status"
+  | "security_and_trust"
+  | "success_and_analytics"
+  | "docs_and_public_surfaces"
+  | "community_bot_readiness";
+
+export type EnvironmentAuditStatus = "not_reviewed" | "ready" | "warning" | "critical";
+
+export type MigrationReviewState = "not_reviewed" | "reviewed" | "approved";
+
+export type MigrationRunState = "not_needed" | "pending" | "run" | "blocked";
+
 export type DbBillingPlan = {
   id: string;
   name: string;
@@ -1900,6 +1954,107 @@ export type DbSubprocessor = {
   website_url: string;
   status: SubprocessorStatus;
   sort_order: number;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbReleaseRun = {
+  id: string;
+  release_ref: string;
+  title: string;
+  summary: string;
+  target_environment: ReleaseTargetEnvironment;
+  state: ReleaseRunState;
+  decision: ReleaseDecision;
+  decision_notes: string;
+  blocker_summary: string;
+  rollback_notes: string;
+  owner_auth_user_id: string | null;
+  approved_at: string | null;
+  deploying_at: string | null;
+  verified_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbReleaseRunService = {
+  id: string;
+  release_run_id: string;
+  service_key: ReleaseServiceKey;
+  inclusion_status: ReleaseServiceInclusionStatus;
+  gate_mode: ReleaseGateMode;
+  deploy_status: ReleaseServiceDeployStatus;
+  version_label: string | null;
+  notes: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbReleaseRunCheck = {
+  id: string;
+  release_run_id: string;
+  service_key: ReleaseServiceKey | null;
+  check_block: ReleaseCheckBlock;
+  check_key: string;
+  label: string;
+  result: ReleaseCheckResult;
+  severity: ReleaseBlockerSeverity;
+  is_blocking: boolean;
+  summary: string;
+  next_action: string;
+  verified_by_auth_user_id: string | null;
+  verified_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbReleaseRunSmokeResult = {
+  id: string;
+  release_run_id: string;
+  service_key: ReleaseServiceKey | null;
+  smoke_category: ReleaseSmokeCategory;
+  scenario_key: string;
+  scenario_label: string;
+  result: ReleaseCheckResult;
+  notes: string;
+  verified_by_auth_user_id: string | null;
+  verified_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbEnvironmentAudit = {
+  id: string;
+  release_run_id: string;
+  service_key: ReleaseServiceKey;
+  target_environment: ReleaseTargetEnvironment;
+  status: EnvironmentAuditStatus;
+  summary: string;
+  required_keys: string[];
+  missing_keys: string[];
+  mismatch_notes: string[];
+  verified_by_auth_user_id: string | null;
+  verified_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbMigrationReleaseLink = {
+  id: string;
+  release_run_id: string;
+  migration_filename: string;
+  review_state: MigrationReviewState;
+  run_state: MigrationRunState;
+  mitigation_notes: string;
+  reviewed_by_auth_user_id: string | null;
+  reviewed_at: string | null;
+  executed_at: string | null;
   metadata: Record<string, any> | null;
   created_at: string;
   updated_at: string;

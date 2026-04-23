@@ -127,6 +127,12 @@ export default function SecurityPage() {
                 {overview.counts.openDataRequests} open requests
               </OpsStatusPill>
             </div>
+            <Link
+              href="/releases"
+              className="inline-flex items-center rounded-full border border-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/30 hover:text-primary"
+            >
+              Open releases
+            </Link>
           </div>
         }
       >
