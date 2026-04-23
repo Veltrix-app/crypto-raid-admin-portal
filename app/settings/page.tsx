@@ -45,6 +45,13 @@ export default function SettingsPage() {
       metric: currentPlan ? currentPlan.name : "No active plan",
       tone: currentPlan ? "default" : "warning",
     },
+    {
+      href: "/settings/security",
+      title: "Security",
+      description: "2FA, sessions, export/delete requests and enterprise identity controls.",
+      metric: "Security workspace",
+      tone: "default",
+    },
   ] as const;
 
   return (
@@ -68,7 +75,7 @@ export default function SettingsPage() {
           },
         ]}
       >
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <OpsMetricCard
             label="Workspace profile"
             value={activeProject?.description ? "Ready" : "Needs work"}
@@ -80,6 +87,7 @@ export default function SettingsPage() {
             emphasis={workspaceTeam.length > 1 ? "primary" : "warning"}
           />
           <OpsMetricCard label="Current plan" value={currentPlan?.name || "None"} />
+          <OpsMetricCard label="Security" value="Manage access" />
         </div>
 
         <OpsPanel
@@ -87,7 +95,7 @@ export default function SettingsPage() {
           title="Choose the rail you want to tune"
           description="Each surface now owns one clear concern, so identity, team and billing no longer blur into each other."
         >
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {settingsCards.map((item) => (
               <Link
                 key={item.title}

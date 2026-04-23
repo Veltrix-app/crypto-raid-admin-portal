@@ -2,12 +2,30 @@
 
 import { create } from "zustand";
 import { createClient } from "@/lib/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type AdminProjectMembership = {
   projectId: string;
   projectName: string;
   role: "owner" | "admin" | "reviewer" | "analyst";
   status: "active" | "invited";
+};
+
+type AdminAuthMethod = "password" | "sso" | "unknown";
+
+type AdminAuthSnapshot = {
+  isAuthenticated: boolean;
+  authUserId: string | null;
+  email: string | null;
+  role: "project_admin" | "super_admin" | null;
+  memberships: AdminProjectMembership[];
+  activeProjectId: string | null;
+  currentAal: "aal1" | "aal2" | null;
+  nextAal: "aal1" | "aal2" | null;
+  authMethod: AdminAuthMethod;
+  verifiedFactorCount: number;
+  mfaPending: boolean;
+  loading: boolean;
 };
 
 type AdminAuthState = {
@@ -17,10 +35,20 @@ type AdminAuthState = {
   role: "project_admin" | "super_admin" | null;
   memberships: AdminProjectMembership[];
   activeProjectId: string | null;
+  currentAal: "aal1" | "aal2" | null;
+  nextAal: "aal1" | "aal2" | null;
+  authMethod: AdminAuthMethod;
+  verifiedFactorCount: number;
+  mfaPending: boolean;
   loading: boolean;
   initialize: () => Promise<void>;
   refreshMemberships: () => Promise<void>;
-  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ ok: boolean; error?: string; requiresMfa?: boolean }>;
+  loginWithSso: (email: string) => Promise<{ ok: boolean; error?: string }>;
+  verifyTotp: (code: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   setActiveProjectId: (projectId: string) => void;
 };
@@ -174,6 +202,138 @@ async function loadMemberships(authUserId: string) {
   return Array.from(membershipMap.values());
 }
 
+function clearAuthState(): AdminAuthSnapshot {
+  return {
+    isAuthenticated: false,
+    authUserId: null,
+    email: null,
+    role: null,
+    memberships: [],
+    activeProjectId: null,
+    currentAal: null,
+    nextAal: null,
+    authMethod: "unknown",
+    verifiedFactorCount: 0,
+    mfaPending: false,
+    loading: false,
+  };
+}
+
+function deriveAuthMethod(methods: unknown[]) {
+  for (const entry of methods) {
+    if (typeof entry === "string") {
+      const normalized = entry.trim().toLowerCase();
+      if (["sso", "saml", "oidc"].includes(normalized)) {
+        return "sso" as const;
+      }
+
+      if (["password", "otp", "magiclink"].includes(normalized)) {
+        return "password" as const;
+      }
+    }
+
+    if (
+      entry &&
+      typeof entry === "object" &&
+      "method" in entry &&
+      typeof (entry as { method?: unknown }).method === "string"
+    ) {
+      const normalized = (entry as { method: string }).method.trim().toLowerCase();
+      if (["sso", "saml", "oidc"].includes(normalized)) {
+        return "sso" as const;
+      }
+
+      if (["password", "otp", "magiclink"].includes(normalized)) {
+        return "password" as const;
+      }
+    }
+  }
+
+  return "unknown" as const;
+}
+
+async function loadSecurityState(supabase: SupabaseClient) {
+  const [{ data: factors }, { data: assurance }] = await Promise.all([
+    supabase.auth.mfa.listFactors(),
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+  ]);
+
+  const verifiedFactorCount = Array.isArray((factors as { totp?: unknown[] } | null)?.totp)
+    ? ((factors as { totp?: unknown[] }).totp ?? []).length
+    : 0;
+  const currentAal: "aal1" | "aal2" = assurance?.currentLevel === "aal2" ? "aal2" : "aal1";
+  const nextAal: "aal1" | "aal2" = assurance?.nextLevel === "aal2" ? "aal2" : "aal1";
+  const currentAuthenticationMethods = Array.isArray(assurance?.currentAuthenticationMethods)
+    ? assurance.currentAuthenticationMethods
+    : [];
+  const authMethod = deriveAuthMethod(currentAuthenticationMethods);
+  const mfaPending = verifiedFactorCount > 0 && currentAal !== "aal2" && nextAal === "aal2";
+
+  return {
+    currentAal,
+    nextAal,
+    authMethod,
+    verifiedFactorCount,
+    mfaPending,
+  };
+}
+
+async function buildAuthSnapshot(activeProjectId: string | null): Promise<AdminAuthSnapshot> {
+  const supabase = createClient();
+  const { data } = await supabase.auth.getSession();
+  const session = data.session;
+  const authUserId = session?.user?.id ?? null;
+  const email = session?.user?.email ?? null;
+
+  if (!session || !authUserId) {
+    return clearAuthState();
+  }
+
+  if (email) {
+    await bootstrapMembershipsByEmail(authUserId, email);
+  }
+
+  const [role, memberships, security] = await Promise.all([
+    resolvePortalRole(authUserId, email),
+    loadMemberships(authUserId),
+    loadSecurityState(supabase),
+  ]);
+
+  const nextActiveProjectId =
+    memberships.find((item) => item.projectId === activeProjectId)?.projectId ??
+    memberships[0]?.projectId ??
+    null;
+
+  return {
+    isAuthenticated: !security.mfaPending,
+    authUserId,
+    email,
+    role,
+    memberships,
+    activeProjectId: nextActiveProjectId,
+    currentAal: security.currentAal,
+    nextAal: security.nextAal,
+    authMethod: security.authMethod,
+    verifiedFactorCount: security.verifiedFactorCount,
+    mfaPending: security.mfaPending,
+    loading: false,
+  };
+}
+
+async function resolvePrimaryTotpFactorId(supabase: SupabaseClient) {
+  const { data, error } = await supabase.auth.mfa.listFactors();
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const totpFactor = (data?.totp ?? [])[0];
+  if (!totpFactor?.id) {
+    throw new Error("No TOTP factor is available for this account.");
+  }
+
+  return totpFactor.id;
+}
+
 export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
   isAuthenticated: false,
   authUserId: null,
@@ -181,6 +341,11 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
   role: null,
   memberships: [],
   activeProjectId: null,
+  currentAal: null,
+  nextAal: null,
+  authMethod: "unknown",
+  verifiedFactorCount: 0,
+  mfaPending: false,
   loading: true,
 
   setActiveProjectId: (projectId) => {
@@ -209,30 +374,8 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
   },
 
   initialize: async () => {
-    const supabase = createClient();
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
-    const authUserId = session?.user?.id ?? null;
-    const email = session?.user?.email ?? null;
-    if (authUserId && session?.user?.email) {
-      await bootstrapMembershipsByEmail(authUserId, session.user.email);
-    }
-    const role = await resolvePortalRole(authUserId, email);
-    const memberships = authUserId ? await loadMemberships(authUserId) : [];
-    const nextActiveProjectId =
-      memberships.find((item) => item.projectId === get().activeProjectId)?.projectId ??
-      memberships[0]?.projectId ??
-      null;
-
-    set({
-      isAuthenticated: !!session,
-      authUserId,
-      email,
-      role: session ? role : null,
-      memberships,
-      activeProjectId: nextActiveProjectId,
-      loading: false,
-    });
+    const snapshot = await buildAuthSnapshot(get().activeProjectId);
+    set(snapshot);
   },
 
   login: async (email: string, password: string) => {
@@ -247,39 +390,83 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
       return { ok: false, error: error.message };
     }
 
-    const authUserId = data.user?.id ?? null;
-    const resolvedEmail = data.user?.email ?? email;
-    if (authUserId && resolvedEmail) {
-      await bootstrapMembershipsByEmail(authUserId, resolvedEmail);
-    }
-    const role = await resolvePortalRole(authUserId, resolvedEmail);
-    const memberships = authUserId ? await loadMemberships(authUserId) : [];
+    const snapshot = await buildAuthSnapshot(get().activeProjectId);
+    set(snapshot);
 
-    set({
-      isAuthenticated: true,
-      authUserId,
-      email: resolvedEmail,
-      role,
-      memberships,
-      activeProjectId: memberships[0]?.projectId ?? null,
-      loading: false,
+    if (snapshot.mfaPending) {
+      return { ok: true, requiresMfa: true };
+    }
+
+    return { ok: true, requiresMfa: false };
+  },
+
+  loginWithSso: async (email: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const domain = normalizedEmail.includes("@") ? normalizedEmail.split("@")[1] ?? "" : "";
+    if (!domain) {
+      return {
+        ok: false,
+        error: "Enter your workspace email first so Veltrix can route you into the right SSO domain.",
+      };
+    }
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithSSO({
+      domain,
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
     });
 
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
     return { ok: true };
+  },
+
+  verifyTotp: async (code: string) => {
+    const supabase = createClient();
+    const normalizedCode = code.trim();
+    if (!normalizedCode) {
+      return { ok: false, error: "Enter the authenticator code first." };
+    }
+
+    try {
+      const factorId = await resolvePrimaryTotpFactorId(supabase);
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId,
+      });
+
+      if (challengeError || !challenge?.id) {
+        throw new Error(challengeError?.message || "Two-factor challenge could not be created.");
+      }
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: challenge.id,
+        code: normalizedCode,
+      });
+
+      if (verifyError) {
+        throw new Error(verifyError.message);
+      }
+
+      const snapshot = await buildAuthSnapshot(get().activeProjectId);
+      set(snapshot);
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : "Two-factor verification failed.",
+      };
+    }
   },
 
   logout: async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
 
-    set({
-      isAuthenticated: false,
-      authUserId: null,
-      email: null,
-      role: null,
-      memberships: [],
-      activeProjectId: null,
-      loading: false,
-    });
+    set(clearAuthState());
   },
 }));

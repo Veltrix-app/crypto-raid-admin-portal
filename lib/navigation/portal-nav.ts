@@ -3,6 +3,7 @@ import {
   BarChart3,
   Building2,
   ClipboardCheck,
+  Fingerprint,
   FolderKanban,
   Home,
   HeartHandshake,
@@ -39,7 +40,7 @@ export type ProjectWorkspaceTab = {
 };
 
 export type SettingsTab = {
-  slug: "" | "profile" | "team" | "billing";
+  slug: "" | "profile" | "team" | "billing" | "security";
   label: string;
   description: string;
 };
@@ -105,6 +106,13 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Success",
     description: "Internal activation cockpit for workspace health, expansion pressure, member drift and customer follow-up.",
     icon: HeartHandshake,
+    superAdminOnly: true,
+  },
+  {
+    href: "/security",
+    label: "Security",
+    description: "Internal trust, compliance, enterprise identity and security lifecycle control.",
+    icon: Fingerprint,
     superAdminOnly: true,
   },
   {
@@ -196,6 +204,11 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
     slug: "billing",
     label: "Billing",
     description: "Plan posture, usage, capacity and expansion readiness.",
+  },
+  {
+    slug: "security",
+    label: "Security",
+    description: "Sessions, 2FA, SSO posture, data requests and enterprise policy controls.",
   },
 ] as const;
 

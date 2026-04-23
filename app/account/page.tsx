@@ -14,14 +14,17 @@ import {
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
 import { fetchCurrentPortalAccountActivation } from "@/lib/success/account-activation";
+import { fetchCurrentPortalSecurityAccount } from "@/lib/security/security-actions";
 import type { AdminCustomerGrowthSummary } from "@/types/entities/growth-analytics";
 import type { AdminSuccessAccountSummary } from "@/types/entities/success";
+import type { PortalSecurityCurrentAccount } from "@/types/entities/security";
 
 function AccountOverviewContent() {
   const { accessState } = useAccountEntryGuard();
   const primaryAccount = accessState?.primaryAccount ?? null;
   const [activationSummary, setActivationSummary] = useState<AdminSuccessAccountSummary | null>(null);
   const [growthSummary, setGrowthSummary] = useState<AdminCustomerGrowthSummary | null>(null);
+  const [securitySummary, setSecuritySummary] = useState<PortalSecurityCurrentAccount | null>(null);
   const nextHref =
     primaryAccount?.firstProjectId && primaryAccount.currentStep === "open_launch_workspace"
       ? `/projects/${primaryAccount.firstProjectId}/launch`
@@ -80,8 +83,26 @@ function AccountOverviewContent() {
       }
     }
 
+    async function loadSecurity() {
+      try {
+        const payload = await fetchCurrentPortalSecurityAccount();
+        if (!active) {
+          return;
+        }
+
+        setSecuritySummary(payload);
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setSecuritySummary(null);
+      }
+    }
+
     void loadActivation();
     void loadGrowth();
+    void loadSecurity();
 
     return () => {
       active = false;
@@ -164,6 +185,41 @@ function AccountOverviewContent() {
             title="How this account is actually progressing"
             description="The account layer should explain both current health and the next real move, not only list identity fields."
           />
+        </div>
+      ) : null}
+
+      {securitySummary ? (
+        <div className="mt-6">
+          <OpsPanel
+            eyebrow="Security posture"
+            title="Workspace access trust"
+            description="Account security now lives alongside onboarding and growth, so the owner can see whether session, SSO and 2FA posture are actually healthy."
+          >
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard
+                label="2FA"
+                value={securitySummary.userPosture?.twoFactorEnabled ? "Enabled" : "Pending"}
+                emphasis={securitySummary.userPosture?.twoFactorEnabled ? "primary" : "warning"}
+              />
+              <OpsMetricCard label="Current AAL" value={securitySummary.userPosture?.currentAal ?? "aal1"} />
+              <OpsMetricCard label="Sessions" value={securitySummary.sessions.length} />
+              <OpsMetricCard
+                label="SSO"
+                value={securitySummary.requiresSso ? "Required" : "Optional"}
+                emphasis={securitySummary.requiresSso ? "warning" : "default"}
+              />
+            </div>
+
+            <div className="mt-6">
+              <OpsPriorityLink
+                href="/settings/security"
+                title="Open security controls"
+                body="Review current sessions, enable 2FA, configure enterprise SSO posture and manage export/delete requests from one settings module."
+                cta="Open security"
+                emphasis
+              />
+            </div>
+          </OpsPanel>
         </div>
       ) : null}
 

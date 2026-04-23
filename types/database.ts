@@ -307,6 +307,87 @@ export type BenchmarkLabel =
   | "above_peer_range"
   | "top_cohort";
 
+export type SecurityPolicyStatus = "standard" | "enterprise_hardened";
+
+export type SecurityAuthMethod = "password" | "sso";
+
+export type AuthenticatorAssuranceLevel = "aal1" | "aal2";
+
+export type SecurityRecoveryReviewState = "clear" | "watching" | "review_required";
+
+export type SecurityRiskPosture = "standard" | "watching" | "high_risk";
+
+export type SecurityEnforcementState =
+  | "none"
+  | "two_factor_required"
+  | "sso_required"
+  | "blocked";
+
+export type SecuritySessionStatus = "active" | "revoked" | "expired" | "challenged";
+
+export type SecuritySessionRiskLabel = "normal" | "watching" | "challenged";
+
+export type DataAccessRequestType = "export" | "delete";
+
+export type DataAccessRequestStatus =
+  | "submitted"
+  | "in_review"
+  | "awaiting_verification"
+  | "approved"
+  | "rejected"
+  | "completed";
+
+export type DataAccessRequestVerificationState =
+  | "pending"
+  | "verified"
+  | "rejected"
+  | "not_needed";
+
+export type ComplianceControlArea =
+  | "identity"
+  | "session_security"
+  | "data_lifecycle"
+  | "vendor_management"
+  | "incident_response"
+  | "backup_recovery"
+  | "policy";
+
+export type ComplianceControlState =
+  | "implemented"
+  | "monitoring"
+  | "needs_work"
+  | "planned";
+
+export type ComplianceReviewState = "reviewed" | "attention_needed" | "scheduled";
+
+export type ComplianceCadence = "monthly" | "quarterly" | "annual" | "ad_hoc";
+
+export type ComplianceEvidenceType =
+  | "note"
+  | "document"
+  | "link"
+  | "drill"
+  | "audit_log"
+  | "screenshot";
+
+export type SecurityIncidentSeverity = "low" | "medium" | "high" | "critical";
+
+export type SecurityIncidentState =
+  | "open"
+  | "triaging"
+  | "contained"
+  | "monitoring"
+  | "resolved"
+  | "postmortem_due";
+
+export type SecurityIncidentEventVisibilityScope = "internal" | "public" | "both";
+
+export type SsoConnectionStatus = "draft" | "active" | "disabled";
+
+export type SsoDomainVerificationStatus = "unverified" | "verified" | "blocked";
+
+export type SubprocessorStatus = "active" | "planned" | "retired";
+
 export type DbBillingPlan = {
   id: string;
   name: string;
@@ -1605,4 +1686,221 @@ export type DbVerificationResult = {
   duplicate_signal_types: string[] | null;
   metadata: Record<string, any> | null;
   created_at: string;
+};
+
+export type DbCustomerAccountSecurityPolicy = {
+  customer_account_id: string;
+  policy_status: SecurityPolicyStatus;
+  sso_required: boolean;
+  two_factor_required_for_admins: boolean;
+  allowed_auth_methods: SecurityAuthMethod[];
+  session_review_required: boolean;
+  high_risk_reauth_required: boolean;
+  security_contact_email: string;
+  notes: string;
+  reviewed_by_auth_user_id: string | null;
+  last_reviewed_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountSecurityEvent = {
+  id: string;
+  customer_account_id: string;
+  event_type: string;
+  actor_auth_user_id: string | null;
+  summary: string;
+  event_payload: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbUserSecurityPosture = {
+  auth_user_id: string;
+  primary_customer_account_id: string | null;
+  two_factor_enabled: boolean;
+  verified_factor_count: number;
+  current_aal: AuthenticatorAssuranceLevel;
+  current_auth_method: SecurityAuthMethod | "unknown";
+  sso_managed: boolean;
+  recovery_review_state: SecurityRecoveryReviewState;
+  risk_posture: SecurityRiskPosture;
+  enforcement_state: SecurityEnforcementState;
+  last_password_recovery_at: string | null;
+  last_reauthentication_at: string | null;
+  last_security_review_at: string | null;
+  last_seen_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbAuthSession = {
+  id: string;
+  session_id: string;
+  auth_user_id: string;
+  customer_account_id: string | null;
+  email: string | null;
+  current_aal: AuthenticatorAssuranceLevel;
+  primary_auth_method: SecurityAuthMethod | "unknown";
+  amr_methods: string[];
+  user_agent: string | null;
+  ip_summary: string | null;
+  location_summary: string | null;
+  status: SecuritySessionStatus;
+  risk_label: SecuritySessionRiskLabel;
+  last_seen_at: string;
+  revoked_at: string | null;
+  revoked_by_auth_user_id: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbAuthSessionEvent = {
+  id: string;
+  auth_session_id: string;
+  event_type: string;
+  actor_auth_user_id: string | null;
+  summary: string;
+  event_payload: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbDataAccessRequest = {
+  id: string;
+  customer_account_id: string | null;
+  auth_user_id: string | null;
+  request_type: DataAccessRequestType;
+  status: DataAccessRequestStatus;
+  verification_state: DataAccessRequestVerificationState;
+  requester_email: string;
+  summary: string;
+  review_notes: string;
+  reviewed_by_auth_user_id: string | null;
+  approved_by_auth_user_id: string | null;
+  completed_by_auth_user_id: string | null;
+  requested_at: string;
+  reviewed_at: string | null;
+  completed_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbDataAccessRequestEvent = {
+  id: string;
+  data_access_request_id: string;
+  event_type: string;
+  actor_auth_user_id: string | null;
+  summary: string;
+  event_payload: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbComplianceControl = {
+  id: string;
+  control_key: string;
+  title: string;
+  summary: string;
+  control_area: ComplianceControlArea;
+  control_state: ComplianceControlState;
+  review_state: ComplianceReviewState;
+  owner_label: string;
+  cadence: ComplianceCadence;
+  evidence_summary: string;
+  last_reviewed_at: string | null;
+  next_review_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbComplianceEvidenceItem = {
+  id: string;
+  compliance_control_id: string;
+  evidence_type: ComplianceEvidenceType;
+  title: string;
+  summary: string;
+  evidence_url: string | null;
+  created_by_auth_user_id: string | null;
+  verified_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbSecurityIncident = {
+  id: string;
+  incident_ref: string;
+  customer_account_id: string | null;
+  title: string;
+  severity: SecurityIncidentSeverity;
+  state: SecurityIncidentState;
+  scope_summary: string;
+  public_summary: string;
+  internal_summary: string;
+  owner_auth_user_id: string | null;
+  declared_by_auth_user_id: string | null;
+  opened_at: string;
+  resolved_at: string | null;
+  postmortem_due_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbSecurityIncidentEvent = {
+  id: string;
+  security_incident_id: string;
+  event_type: string;
+  visibility_scope: SecurityIncidentEventVisibilityScope;
+  actor_auth_user_id: string | null;
+  title: string | null;
+  message: string;
+  event_payload: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbCustomerAccountSsoConnection = {
+  id: string;
+  customer_account_id: string;
+  provider_label: string;
+  provider_type: "saml";
+  supabase_provider_id: string | null;
+  status: SsoConnectionStatus;
+  configured_by_auth_user_id: string | null;
+  enabled_at: string | null;
+  disabled_at: string | null;
+  last_tested_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountSsoDomain = {
+  id: string;
+  customer_account_id: string;
+  customer_account_sso_connection_id: string;
+  domain: string;
+  is_primary: boolean;
+  verification_status: SsoDomainVerificationStatus;
+  verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbSubprocessor = {
+  id: string;
+  name: string;
+  category: string;
+  purpose: string;
+  data_scope: string[];
+  region_scope: string[];
+  website_url: string;
+  status: SubprocessorStatus;
+  sort_order: number;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
 };
