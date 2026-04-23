@@ -17,12 +17,17 @@ import {
   OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
-import { fetchBusinessControlAccountDetail } from "@/lib/billing/business-dashboard";
+import {
+  createPortalBusinessNote,
+  extendPortalBusinessGrace,
+  fetchBusinessControlAccountDetail,
+} from "@/lib/billing/business-dashboard";
 import type {
   BusinessControlAccountDetail,
   BusinessControlAccountSummary,
 } from "@/lib/billing/business-control";
 import type { PortalBillingUsageItem } from "@/lib/billing/account-billing";
+import type { AdminCustomerAccountBusinessNote } from "@/types/entities/billing-subscription";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 
 function formatCurrency(value: number) {
@@ -113,6 +118,21 @@ function UsageRow({ item }: { item: PortalBillingUsageItem }) {
   );
 }
 
+const noteTypeOptions: Array<{
+  value: AdminCustomerAccountBusinessNote["noteType"];
+  label: string;
+}> = [
+  { value: "general", label: "General" },
+  { value: "upgrade_candidate", label: "Upgrade candidate" },
+  { value: "churn_risk", label: "Churn risk" },
+  { value: "follow_up", label: "Follow-up" },
+  { value: "billing_exception", label: "Billing exception" },
+];
+
+function formatBillingEventLabel(value: string) {
+  return value.replaceAll("_", " ");
+}
+
 export default function BusinessAccountDetailPage() {
   const params = useParams<{ id: string }>();
   const role = useAdminAuthStore((s) => s.role);
@@ -120,6 +140,13 @@ export default function BusinessAccountDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [noteType, setNoteType] = useState<AdminCustomerAccountBusinessNote["noteType"]>("general");
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteBody, setNoteBody] = useState("");
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [graceSaving, setGraceSaving] = useState<3 | 7 | null>(null);
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -157,6 +184,71 @@ export default function BusinessAccountDetailPage() {
       cancelled = true;
     };
   }, [params?.id, refreshNonce, role]);
+
+  async function handleCreateNote() {
+    if (!params?.id || noteSaving) {
+      return;
+    }
+
+    try {
+      setNoteSaving(true);
+      setActionError(null);
+      setActionFeedback(null);
+
+      const note = await createPortalBusinessNote({
+        accountId: params.id,
+        noteType,
+        title: noteTitle,
+        body: noteBody,
+      });
+
+      setDetail((current) =>
+        current
+          ? {
+              ...current,
+              businessNotes: [note, ...current.businessNotes],
+            }
+          : current
+      );
+      setRefreshNonce((value) => value + 1);
+      setNoteTitle("");
+      setNoteBody("");
+      setNoteType("general");
+      setActionFeedback("Internal business note added.");
+    } catch (noteError) {
+      setActionError(
+        noteError instanceof Error ? noteError.message : "The business note could not be saved."
+      );
+    } finally {
+      setNoteSaving(false);
+    }
+  }
+
+  async function handleExtendGrace(days: 3 | 7) {
+    if (!params?.id || graceSaving) {
+      return;
+    }
+
+    try {
+      setGraceSaving(days);
+      setActionError(null);
+      setActionFeedback(null);
+      const result = await extendPortalBusinessGrace({
+        accountId: params.id,
+        days,
+      });
+      setActionFeedback(
+        `Grace extended by ${result.days} day${result.days === 1 ? "" : "s"} until ${formatDateLabel(result.graceUntil)}.`
+      );
+      setRefreshNonce((value) => value + 1);
+    } catch (graceError) {
+      setActionError(
+        graceError instanceof Error ? graceError.message : "Grace could not be extended."
+      );
+    } finally {
+      setGraceSaving(null);
+    }
+  }
 
   if (role !== "super_admin") {
     return (
@@ -275,6 +367,42 @@ export default function BusinessAccountDetailPage() {
                 emphasis={detail.account.commercialHealth !== "healthy"}
               />
             </div>
+
+            {actionFeedback ? (
+              <div className="mt-4 rounded-[20px] border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+                {actionFeedback}
+              </div>
+            ) : null}
+
+            {actionError ? (
+              <div className="mt-4 rounded-[20px] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                {actionError}
+              </div>
+            ) : null}
+
+            {detail.account.planId !== "free" ? (
+              <div className="mt-5 border-t border-line pt-5">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Safe operator actions</p>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void handleExtendGrace(3)}
+                    disabled={graceSaving !== null}
+                    className="inline-flex items-center rounded-full border border-line px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {graceSaving === 3 ? "Extending..." : "Extend grace 3d"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleExtendGrace(7)}
+                    disabled={graceSaving !== null}
+                    className="inline-flex items-center rounded-full border border-line px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {graceSaving === 7 ? "Extending..." : "Extend grace 7d"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </OpsPanel>
         </div>
 
@@ -341,6 +469,131 @@ export default function BusinessAccountDetailPage() {
             />
           )}
         </OpsPanel>
+
+        <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+          <OpsPanel
+            eyebrow="Business notes"
+            title="Internal commercial notes"
+            description="Keep the business follow-up, upgrade signal and exception context on the account itself."
+          >
+            <div className="rounded-[22px] border border-line bg-card2 p-4">
+              <div className="grid gap-3 md:grid-cols-[180px_1fr]">
+                <label className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                  Note type
+                  <select
+                    value={noteType}
+                    onChange={(event) =>
+                      setNoteType(event.target.value as AdminCustomerAccountBusinessNote["noteType"])
+                    }
+                    className="mt-2 w-full rounded-2xl border border-line bg-card px-3 py-2 text-sm font-medium text-text outline-none transition focus:border-primary/35"
+                  >
+                    {noteTypeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                  Title
+                  <input
+                    value={noteTitle}
+                    onChange={(event) => setNoteTitle(event.target.value)}
+                    placeholder="What should the next operator know?"
+                    className="mt-2 w-full rounded-2xl border border-line bg-card px-3 py-2 text-sm text-text outline-none transition focus:border-primary/35"
+                  />
+                </label>
+              </div>
+
+              <label className="mt-3 block text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                Note body
+                <textarea
+                  value={noteBody}
+                  onChange={(event) => setNoteBody(event.target.value)}
+                  placeholder="Add the commercial context, risk or next move."
+                  rows={4}
+                  className="mt-2 w-full rounded-[22px] border border-line bg-card px-3 py-3 text-sm leading-6 text-text outline-none transition focus:border-primary/35"
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={() => void handleCreateNote()}
+                disabled={noteSaving}
+                className="mt-4 inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {noteSaving ? "Saving note..." : "Add internal note"}
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {detail.businessNotes.length ? (
+                detail.businessNotes.map((note) => (
+                  <div key={note.id} className="rounded-[22px] border border-line bg-card2 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-text">{note.title}</p>
+                          <OpsStatusPill tone={note.status === "open" ? "warning" : "default"}>
+                            {note.noteType.replaceAll("_", " ")}
+                          </OpsStatusPill>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-sub">{note.body}</p>
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-sub">
+                        {formatDateLabel(note.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <InlineEmptyNotice
+                  title="No business notes yet"
+                  description="Add your first internal note so account context lives with the billing and growth posture."
+                />
+              )}
+            </div>
+          </OpsPanel>
+
+          <OpsPanel
+            eyebrow="Billing events"
+            title="Recent commercial audit"
+            description="This is the recent billing and commercial trail for the account."
+          >
+            {detail.billingEvents.length ? (
+              <div className="space-y-3">
+                {detail.billingEvents.map((event) => (
+                  <div key={event.id} className="rounded-[22px] border border-line bg-card2 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-text">
+                            {event.summary || formatBillingEventLabel(event.eventType)}
+                          </p>
+                          <OpsStatusPill tone={event.eventSource === "portal_admin" ? "warning" : "default"}>
+                            {formatBillingEventLabel(event.eventSource)}
+                          </OpsStatusPill>
+                        </div>
+                        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-sub">
+                          {formatBillingEventLabel(event.eventType)}
+                        </p>
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-sub">
+                        {formatDateLabel(event.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <InlineEmptyNotice
+                title="No billing events yet"
+                description="Stripe and portal-admin billing events will show up here as the commercial history grows."
+              />
+            )}
+          </OpsPanel>
+        </div>
       </PortalPageFrame>
     </AdminShell>
   );

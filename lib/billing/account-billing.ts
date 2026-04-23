@@ -80,10 +80,11 @@ export type PortalCustomerBillingWorkspace = {
   supportUrl: string;
 };
 
-const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://veltrix-web.vercel.app").replace(
-  /\/+$/,
-  ""
-);
+const appUrl = (
+  process.env.NEXT_PUBLIC_WEBAPP_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  "https://veltrix-web.vercel.app"
+).replace(/\/+$/, "");
 
 function mapBillingPlan(row: DbBillingPlan): AdminBillingPlan {
   return {

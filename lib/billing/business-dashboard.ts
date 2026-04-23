@@ -5,6 +5,7 @@ import type {
   BusinessControlAccountDetail,
   BusinessControlOverview,
 } from "@/lib/billing/business-control";
+import type { AdminCustomerAccountBusinessNote } from "@/types/entities/billing-subscription";
 
 function getSupabaseAccessToken() {
   const supabase = createClient();
@@ -66,4 +67,70 @@ export async function fetchBusinessControlAccountDetail(accountId: string) {
   }>(response);
 
   return payload.detail;
+}
+
+export async function createPortalBusinessNote(input: {
+  accountId: string;
+  noteType: AdminCustomerAccountBusinessNote["noteType"];
+  title: string;
+  body: string;
+  ownerAuthUserId?: string | null;
+}) {
+  const accessToken = await getSupabaseAccessToken();
+  if (!accessToken) {
+    throw new Error("Missing portal session.");
+  }
+
+  const response = await fetch(`/api/business/accounts/${input.accountId}/notes`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      noteType: input.noteType,
+      title: input.title,
+      body: input.body,
+      ownerAuthUserId: input.ownerAuthUserId ?? null,
+    }),
+  });
+
+  const payload = await readJsonResponse<{
+    ok: true;
+    note: AdminCustomerAccountBusinessNote;
+  }>(response);
+
+  return payload.note;
+}
+
+export async function extendPortalBusinessGrace(input: {
+  accountId: string;
+  days: number;
+}) {
+  const accessToken = await getSupabaseAccessToken();
+  if (!accessToken) {
+    throw new Error("Missing portal session.");
+  }
+
+  const response = await fetch(`/api/business/accounts/${input.accountId}/actions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      action: "extend_grace",
+      days: input.days,
+    }),
+  });
+
+  const payload = await readJsonResponse<{
+    ok: true;
+    result: {
+      graceUntil: string;
+      days: number;
+    };
+  }>(response);
+
+  return payload.result;
 }

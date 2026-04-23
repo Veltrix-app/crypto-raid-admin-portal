@@ -12,7 +12,13 @@ import type { AdminBillingPlan } from "@/types/entities/billing-plan";
 import type {
   AdminActivationStatus,
   AdminCommercialHealthStatus,
+  AdminCustomerAccountBillingEvent,
+  AdminCustomerAccountBusinessNote,
 } from "@/types/entities/billing-subscription";
+import {
+  loadBusinessAccountEvents,
+  loadBusinessAccountNotes,
+} from "@/lib/billing/business-actions";
 import type {
   DbBillingPlan,
   DbCustomerAccount,
@@ -149,6 +155,8 @@ export type BusinessControlOverview = {
 export type BusinessControlAccountDetail = {
   account: BusinessControlAccountSummary;
   workspace: PortalCustomerBillingWorkspace;
+  billingEvents: AdminCustomerAccountBillingEvent[];
+  businessNotes: AdminCustomerAccountBusinessNote[];
 };
 
 const MS_IN_DAY = 24 * 60 * 60 * 1000;
@@ -694,9 +702,11 @@ export async function loadBusinessControlOverview() {
 }
 
 export async function loadBusinessControlAccountDetail(accountId: string) {
-  const [overview, workspace] = await Promise.all([
+  const [overview, workspace, billingEvents, businessNotes] = await Promise.all([
     loadBusinessControlOverview(),
     loadPortalCustomerBillingWorkspace(accountId),
+    loadBusinessAccountEvents(accountId),
+    loadBusinessAccountNotes(accountId),
   ]);
 
   const account = overview.accounts.find((entry) => entry.accountId === accountId);
@@ -707,5 +717,7 @@ export async function loadBusinessControlAccountDetail(accountId: string) {
   return {
     account,
     workspace,
+    billingEvents,
+    businessNotes,
   } satisfies BusinessControlAccountDetail;
 }
