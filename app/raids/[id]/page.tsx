@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { PortalBillingBlockNotice } from "@/components/billing/PortalBillingBlockNotice";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import RaidForm from "@/components/forms/raid/RaidForm";
 import LifecycleStatusPill from "@/components/platform/LifecycleStatusPill";
@@ -24,6 +25,10 @@ import {
   getPrimaryProjectContentAction,
   type ProjectContentAction,
 } from "@/lib/projects/content-actions";
+import {
+  isBillingLimitError,
+  type BillingLimitBlock,
+} from "@/lib/billing/entitlement-blocks";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -43,6 +48,7 @@ export default function RaidDetailPage() {
     tone: "error" | "success";
     text: string;
   } | null>(null);
+  const [actionBlock, setActionBlock] = useState<BillingLimitBlock | null>(null);
 
   const raid = useMemo(() => getRaidById(params.id), [getRaidById, params.id]);
   const raidOps = useProjectOps(raid?.projectId, {
@@ -112,6 +118,7 @@ export default function RaidDetailPage() {
 
   async function handleLifecycleAction(action: ProjectContentAction) {
     setActionMessage(null);
+    setActionBlock(null);
     setRunningAction(action);
 
     try {
@@ -138,6 +145,11 @@ export default function RaidDetailPage() {
 
       setActionMessage({ tone: "success", text: successLabel });
     } catch (error) {
+      if (isBillingLimitError(error)) {
+        setActionBlock(error.block);
+        return;
+      }
+
       setActionMessage({
         tone: "error",
         text:
@@ -215,6 +227,13 @@ export default function RaidDetailPage() {
             </>
           }
         />
+
+        {actionBlock ? (
+          <PortalBillingBlockNotice
+            block={actionBlock}
+            title="Starting another live raid needs more plan capacity"
+          />
+        ) : null}
 
         {actionMessage ? (
           <div

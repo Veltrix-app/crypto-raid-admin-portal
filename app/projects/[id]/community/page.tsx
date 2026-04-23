@@ -59,6 +59,10 @@ import { OpsPanel, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops
 import { LoadingState, NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
+import {
+  isBillingLimitBlockPayload,
+  type BillingLimitBlock,
+} from "@/lib/billing/entitlement-blocks";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
@@ -587,6 +591,7 @@ export default function ProjectCommunityManagementPage() {
     createDefaultPushSettings("telegram")
   );
   const [savingIntegration, setSavingIntegration] = useState<"discord" | "telegram" | null>(null);
+  const [integrationBlock, setIntegrationBlock] = useState<BillingLimitBlock | null>(null);
   const [integrationNotice, setIntegrationNotice] = useState("");
   const [testingIntegration, setTestingIntegration] = useState<"discord" | "telegram" | null>(null);
   const [integrationTestNotice, setIntegrationTestNotice] = useState("");
@@ -1677,6 +1682,7 @@ export default function ProjectCommunityManagementPage() {
         : Boolean(config.chatId || config.groupId);
 
     setSavingIntegration(provider);
+    setIntegrationBlock(null);
     setIntegrationNotice("");
 
     const response = await fetch("/api/project-integrations", {
@@ -1693,6 +1699,12 @@ export default function ProjectCommunityManagementPage() {
 
     const payload = await response.json().catch(() => null);
     setSavingIntegration(null);
+
+    if (isBillingLimitBlockPayload(payload)) {
+      setIntegrationBlock(payload.block);
+      setIntegrationNotice("");
+      return;
+    }
 
     if (!response.ok || !payload?.ok) {
       setIntegrationNotice(payload?.error || `Failed to save ${provider} integration.`);
@@ -2899,6 +2911,7 @@ export default function ProjectCommunityManagementPage() {
               projectNameById={projectNameById}
               savingIntegration={savingIntegration}
               testingIntegration={testingIntegration}
+              integrationBlock={integrationBlock}
               integrationNotice={integrationNotice}
               integrationTestNotice={integrationTestNotice}
               integrationTestTone={integrationTestTone}

@@ -6,9 +6,17 @@ import {
   OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
+import { PortalBillingBlockNotice } from "@/components/billing/PortalBillingBlockNotice";
 import { InlineEmptyNotice } from "@/components/layout/state/StatePrimitives";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
-import { updatePortalWorkspaceInvite } from "@/lib/accounts/account-onboarding";
+import {
+  createPortalWorkspaceInvite,
+  updatePortalWorkspaceInvite,
+} from "@/lib/accounts/account-onboarding";
+import {
+  isBillingLimitError,
+  type BillingLimitBlock,
+} from "@/lib/billing/entitlement-blocks";
 
 type TeamMember = {
   id: string;
@@ -53,6 +61,7 @@ export default function AccountInvitePanel({
   const [role, setRole] = useState<TeamInvite["role"]>("member");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [inviteBlock, setInviteBlock] = useState<BillingLimitBlock | null>(null);
 
   const pendingInviteCount = useMemo(
     () => invites.filter((invite) => invite.status === "pending").length,
@@ -63,6 +72,7 @@ export default function AccountInvitePanel({
     try {
       setLoading(true);
       setError("");
+      setInviteBlock(null);
       const response = await fetch(`/api/accounts/${accountId}/invites`, {
         cache: "no-store",
       });
@@ -72,8 +82,8 @@ export default function AccountInvitePanel({
         throw new Error(payload?.error ?? "Could not load team state.");
       }
 
-      const nextMembers = Array.isArray(payload.members) ? payload.members : [];
-      const nextInvites = Array.isArray(payload.invites) ? payload.invites : [];
+      const nextMembers = Array.isArray(payload.members) ? (payload.members as TeamMember[]) : [];
+      const nextInvites = Array.isArray(payload.invites) ? (payload.invites as TeamInvite[]) : [];
       setMembers(nextMembers);
       setInvites(nextInvites);
       onStateChange?.({
@@ -101,24 +111,15 @@ export default function AccountInvitePanel({
       setSaving(true);
       setError("");
       setNotice("");
-      const response = await fetch(`/api/accounts/${accountId}/invites`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          role,
-        }),
+      setInviteBlock(null);
+      const payload = await createPortalWorkspaceInvite({
+        accountId,
+        email: email.trim(),
+        role,
       });
-      const payload = await response.json().catch(() => null);
 
-      if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.error ?? "Invite creation failed.");
-      }
-
-      const nextMembers = Array.isArray(payload.members) ? payload.members : [];
-      const nextInvites = Array.isArray(payload.invites) ? payload.invites : [];
+      const nextMembers = Array.isArray(payload.members) ? (payload.members as TeamMember[]) : [];
+      const nextInvites = Array.isArray(payload.invites) ? (payload.invites as TeamInvite[]) : [];
       setMembers(nextMembers);
       setInvites(nextInvites);
       setNotice(
@@ -135,6 +136,11 @@ export default function AccountInvitePanel({
       });
       await refresh();
     } catch (inviteError) {
+      if (isBillingLimitError(inviteError)) {
+        setInviteBlock(inviteError.block);
+        return;
+      }
+
       setError(inviteError instanceof Error ? inviteError.message : "Invite creation failed.");
     } finally {
       setSaving(false);
@@ -146,6 +152,7 @@ export default function AccountInvitePanel({
       setActioningInviteId(inviteId);
       setError("");
       setNotice("");
+      setInviteBlock(null);
       const payload = await updatePortalWorkspaceInvite({
         accountId,
         inviteId,
@@ -178,6 +185,13 @@ export default function AccountInvitePanel({
         tone="accent"
       >
         <div className="space-y-4">
+          {inviteBlock ? (
+            <PortalBillingBlockNotice
+              block={inviteBlock}
+              title="Adding another billable teammate needs a plan upgrade"
+            />
+          ) : null}
+
           <label className="block space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
               Invite email
@@ -196,7 +210,10 @@ export default function AccountInvitePanel({
             </span>
             <select
               value={role}
-              onChange={(event) => setRole(event.target.value as TeamInvite["role"])}
+              onChange={(event) => {
+                setRole(event.target.value as TeamInvite["role"]);
+                setInviteBlock(null);
+              }}
               className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
             >
               <option value="member">member</option>

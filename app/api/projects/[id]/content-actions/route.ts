@@ -10,6 +10,7 @@ import {
   assertProjectAccess,
   createProjectCommunityAccessErrorResponse,
 } from "@/lib/community/project-community-auth";
+import { requireProjectGrowthCapacity } from "@/lib/billing/entitlement-guard";
 import { getServiceSupabaseClient } from "@/lib/community/project-community-ops";
 import { createProjectOperationAudit } from "@/lib/platform/core-ops";
 import type { DbCampaign, DbQuest, DbRaid, DbReward } from "@/types/database";
@@ -195,6 +196,50 @@ function buildActionSummary(params: {
   return `${params.action[0].toUpperCase()}${params.action.slice(1)}d ${label} ${params.title} into ${params.nextStatus}.`;
 }
 
+async function enforceProjectGrowthAction(params: {
+  projectId: string;
+  objectId: string;
+  objectType: ProjectContentType;
+  action: MutableContentAction;
+  previousStatus: string | null | undefined;
+}) {
+  if (
+    (params.action !== "publish" && params.action !== "resume") ||
+    params.previousStatus === "active"
+  ) {
+    return;
+  }
+
+  if (params.objectType === "campaign") {
+    await requireProjectGrowthCapacity({
+      projectId: params.projectId,
+      usageKey: "campaigns",
+      growthAction: "publish_campaign",
+      returnTo: `/campaigns/${params.objectId}`,
+    });
+    return;
+  }
+
+  if (params.objectType === "quest") {
+    await requireProjectGrowthCapacity({
+      projectId: params.projectId,
+      usageKey: "quests",
+      growthAction: "activate_quest",
+      returnTo: `/quests/${params.objectId}`,
+    });
+    return;
+  }
+
+  if (params.objectType === "raid") {
+    await requireProjectGrowthCapacity({
+      projectId: params.projectId,
+      usageKey: "raids",
+      growthAction: "activate_raid",
+      returnTo: `/raids/${params.objectId}`,
+    });
+  }
+}
+
 async function loadSourceRow(
   objectType: ProjectContentType,
   objectId: string
@@ -318,6 +363,14 @@ export async function POST(
     }
 
     const nextStatus = resolveProjectContentStatus(body.objectType, body.action);
+    await enforceProjectGrowthAction({
+      projectId: access.projectId,
+      objectId,
+      objectType: body.objectType,
+      action: body.action,
+      previousStatus: "status" in sourceRow ? sourceRow.status : null,
+    });
+
     const { data: updatedRow, error: updateError } = await supabase
       .from(table)
       .update({
@@ -327,6 +380,16 @@ export async function POST(
       .eq("id", objectId)
       .select("*")
       .single();
+
+    if (updateError?.message?.toLowerCase().includes("billing limit reached")) {
+      await enforceProjectGrowthAction({
+        projectId: access.projectId,
+        objectId,
+        objectType: body.objectType,
+        action: body.action,
+        previousStatus: "status" in sourceRow ? sourceRow.status : null,
+      });
+    }
 
     if (updateError || !updatedRow) {
       throw new Error(updateError?.message || `Failed to ${body.action} ${body.objectType}.`);

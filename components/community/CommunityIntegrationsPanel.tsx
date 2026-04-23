@@ -1,6 +1,7 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
+import { PortalBillingBlockNotice } from "@/components/billing/PortalBillingBlockNotice";
 import { OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import {
   CommunityPushSettings,
@@ -10,6 +11,7 @@ import {
   getIntegrationTone,
   toggleScopeSelection,
 } from "@/components/community/community-config";
+import type { BillingLimitBlock } from "@/lib/billing/entitlement-blocks";
 
 type ProjectOption = {
   id: string;
@@ -50,6 +52,7 @@ type Props = {
   projectNameById: Map<string, string>;
   savingIntegration: "discord" | "telegram" | null;
   testingIntegration: "discord" | "telegram" | null;
+  integrationBlock: BillingLimitBlock | null;
   integrationNotice: string;
   integrationTestNotice: string;
   integrationTestTone: "success" | "error";
@@ -308,6 +311,7 @@ export function CommunityIntegrationsPanel({
   projectNameById,
   savingIntegration,
   testingIntegration,
+  integrationBlock,
   integrationNotice,
   integrationTestNotice,
   integrationTestTone,
@@ -470,6 +474,13 @@ export function CommunityIntegrationsPanel({
             </div>
           </div>
         </div>
+
+        {integrationBlock ? (
+          <PortalBillingBlockNotice
+            block={integrationBlock}
+            title="Connecting another provider needs more plan capacity"
+          />
+        ) : null}
 
         {integrationNotice ? (
           <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">

@@ -37,6 +37,260 @@ export type SubmissionStatus = "pending" | "approved" | "rejected";
 export type TeamRole = "owner" | "admin" | "reviewer" | "analyst";
 export type TeamStatus = "active" | "invited";
 
+export type BillingSubscriptionStatus =
+  | "free"
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "grace"
+  | "canceled"
+  | "enterprise_managed";
+
+export type BillingPaymentMethodStatus =
+  | "missing"
+  | "ready"
+  | "requires_attention";
+
+export type BillingCollectionStatus =
+  | "clear"
+  | "renewing_soon"
+  | "payment_failed"
+  | "action_required"
+  | "refunded";
+
+export type BillingEventSource =
+  | "stripe_webhook"
+  | "portal_admin"
+  | "system"
+  | "customer";
+
+export type BillingEventType =
+  | "profile_created"
+  | "subscription_started"
+  | "subscription_updated"
+  | "subscription_canceled"
+  | "invoice_created"
+  | "invoice_paid"
+  | "invoice_payment_failed"
+  | "trial_extended"
+  | "grace_extended"
+  | "plan_changed"
+  | "enterprise_managed_set"
+  | "billing_synced"
+  | "business_note_added";
+
+export type DbBillingPlan = {
+  id: string;
+  name: string;
+  price_monthly: number;
+  projects_limit: number;
+  campaigns_limit: number;
+  quests_limit: number;
+  raids_limit: number;
+  providers_limit: number;
+  included_billable_seats: number;
+  features: string[];
+  current: boolean;
+  sort_order: number;
+  trial_days: number;
+  currency: string;
+  billing_interval: string;
+  is_public: boolean;
+  is_self_serve: boolean;
+  is_checkout_enabled: boolean;
+  is_free_tier: boolean;
+  is_enterprise: boolean;
+  feature_flags: Record<string, any>;
+  entitlement_metadata: Record<string, any>;
+  stripe_product_id: string | null;
+  stripe_monthly_price_id: string | null;
+};
+
+export type DbCustomerAccount = {
+  id: string;
+  legacy_project_id: string | null;
+  name: string;
+  status: string;
+  contact_email: string;
+  created_by_auth_user_id: string | null;
+  primary_owner_auth_user_id: string | null;
+  source_type: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountMembership = {
+  id: string;
+  customer_account_id: string;
+  auth_user_id: string;
+  role: string;
+  status: string;
+  invited_by_auth_user_id: string | null;
+  joined_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountInvite = {
+  id: string;
+  customer_account_id: string;
+  email: string;
+  role: string;
+  status: string;
+  invite_token: string;
+  invited_by_auth_user_id: string;
+  accepted_by_auth_user_id: string | null;
+  expires_at: string;
+  accepted_at: string | null;
+  revoked_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountOnboarding = {
+  customer_account_id: string;
+  status: string;
+  current_step: string;
+  completed_steps: string[] | Record<string, any> | null;
+  first_project_id: string | null;
+  first_invite_sent_at: string | null;
+  launch_workspace_opened_at: string | null;
+  completed_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountEvent = {
+  id: string;
+  customer_account_id: string;
+  event_type: string;
+  actor_auth_user_id: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbCustomerAccountBillingProfile = {
+  customer_account_id: string;
+  billing_email: string;
+  stripe_customer_id: string | null;
+  stripe_default_payment_method_id: string | null;
+  currency: string;
+  country_code: string | null;
+  payment_method_status: BillingPaymentMethodStatus;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountSubscription = {
+  id: string;
+  customer_account_id: string;
+  billing_plan_id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  status: BillingSubscriptionStatus;
+  is_current: boolean;
+  started_at: string;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  trial_started_at: string | null;
+  trial_ends_at: string | null;
+  cancel_at: string | null;
+  cancel_at_period_end: boolean;
+  canceled_at: string | null;
+  ended_at: string | null;
+  grace_until: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountInvoice = {
+  id: string;
+  customer_account_id: string;
+  customer_account_subscription_id: string | null;
+  stripe_invoice_id: string | null;
+  stripe_payment_intent_id: string | null;
+  invoice_number: string | null;
+  status: "draft" | "open" | "paid" | "void" | "uncollectible";
+  collection_status: BillingCollectionStatus;
+  currency: string;
+  subtotal_amount: number;
+  tax_amount: number;
+  total_amount: number;
+  amount_paid: number;
+  amount_remaining: number;
+  refunded_amount: number;
+  due_at: string | null;
+  paid_at: string | null;
+  hosted_invoice_url: string | null;
+  invoice_pdf_url: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountBillingEvent = {
+  id: string;
+  customer_account_id: string;
+  customer_account_subscription_id: string | null;
+  customer_account_invoice_id: string | null;
+  event_source: BillingEventSource;
+  event_type: BillingEventType;
+  stripe_event_id: string | null;
+  actor_auth_user_id: string | null;
+  summary: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbCustomerAccountEntitlement = {
+  customer_account_id: string;
+  billing_plan_id: string;
+  customer_account_subscription_id: string | null;
+  max_projects: number;
+  max_active_campaigns: number;
+  max_live_quests: number;
+  max_live_raids: number;
+  max_providers: number;
+  included_billable_seats: number;
+  current_projects: number;
+  current_active_campaigns: number;
+  current_live_quests: number;
+  current_live_raids: number;
+  current_providers: number;
+  current_billable_seats: number;
+  warning_threshold_info: number;
+  warning_threshold_upgrade: number;
+  block_threshold: number;
+  self_serve_allowed: boolean;
+  enterprise_managed: boolean;
+  grace_until: string | null;
+  last_computed_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountBusinessNote = {
+  id: string;
+  customer_account_id: string;
+  author_auth_user_id: string | null;
+  owner_auth_user_id: string | null;
+  note_type: string;
+  status: string;
+  title: string;
+  body: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+};
+
 export type DbProject = {
   id: string;
   name: string;
@@ -75,6 +329,7 @@ export type DbProject = {
   is_featured: boolean | null;
   is_public: boolean | null;
   owner_user_id?: string | null;
+  customer_account_id?: string | null;
 
   created_at?: string;
   updated_at?: string;
@@ -329,16 +584,6 @@ export type DbTeamMember = {
   created_at: string;
 };
 
-export type DbBillingPlan = {
-  id: string;
-  name: string;
-  price_monthly: number;
-  projects_limit: number;
-  campaigns_limit: number;
-  features: string[];
-  current: boolean;
-};
-
 export type DbProjectCampaignTemplate = {
   id: string;
   project_id: string;
@@ -380,6 +625,7 @@ export type DbOnboardingRequest = {
   telegram_url: string;
   discord_url: string;
   requested_plan_id: string | null;
+  customer_account_id?: string | null;
   status: string;
   review_notes: string;
   reviewed_by_auth_user_id: string | null;

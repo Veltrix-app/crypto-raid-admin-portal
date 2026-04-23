@@ -22,7 +22,7 @@ export default function AdminSidebar() {
           item.href === "/getting-started" ||
           (item.href === "/account" && Boolean(accessState.primaryAccount))
       )
-    : GLOBAL_NAV_ITEMS;
+    : GLOBAL_NAV_ITEMS.filter((item) => !item.superAdminOnly || role === "super_admin");
 
   return (
     <aside

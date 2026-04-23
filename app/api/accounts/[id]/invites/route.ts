@@ -6,6 +6,9 @@ import {
   expireStaleWorkspaceInvites,
   listWorkspaceMembersAndInvites,
 } from "@/lib/accounts/account-invites";
+import { isBillableAccountRole } from "@/lib/billing/billing-entitlements";
+import { isBillingLimitError } from "@/lib/billing/entitlement-blocks";
+import { requireAccountGrowthCapacity } from "@/lib/billing/entitlement-guard";
 import type { AdminCustomerAccountRole, AdminCustomerAccountOnboardingStep } from "@/types/entities/account";
 
 const VALID_ROLES: AdminCustomerAccountRole[] = ["owner", "admin", "member", "viewer"];
@@ -17,6 +20,28 @@ function appendCompletedStep(
 ) {
   const existing = Array.isArray(current) ? current.filter(Boolean) : [];
   return existing.includes(nextStep) ? existing : [...existing, nextStep];
+}
+
+function createInviteErrorResponse(message: string, status: number) {
+  return NextResponse.json({ ok: false, error: message }, { status });
+}
+
+function createInviteBillingErrorResponse(error: unknown, fallbackMessage: string) {
+  if (isBillingLimitError(error)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error.message,
+        block: error.block,
+      },
+      { status: 409 }
+    );
+  }
+
+  return createInviteErrorResponse(
+    error instanceof Error ? error.message : fallbackMessage,
+    400
+  );
 }
 
 async function resolveAuthenticatedPortalUser() {
@@ -188,6 +213,33 @@ export async function POST(
       });
     }
 
+    if (isBillableAccountRole(role)) {
+      const pendingInviteCountResponse = await serviceSupabase
+        .from("customer_account_invites")
+        .select("id", { count: "exact", head: true })
+        .eq("customer_account_id", accountId)
+        .eq("status", "pending")
+        .in("role", ["owner", "admin", "member"]);
+
+      if (pendingInviteCountResponse.error) {
+        throw new Error(
+          pendingInviteCountResponse.error.message || "Failed to inspect current invite pressure."
+        );
+      }
+
+      try {
+        await requireAccountGrowthCapacity({
+          accountId,
+          usageKey: "seats",
+          growthAction: "invite_billable_seat",
+          increment: (pendingInviteCountResponse.count ?? 0) + 1,
+          returnTo: "/account/team",
+        });
+      } catch (error) {
+        return createInviteBillingErrorResponse(error, "Seat capacity check failed.");
+      }
+    }
+
     const expiresAt = new Date(Date.now() + INVITE_TTL_MS).toISOString();
     const inviteToken = crypto.randomUUID();
 
@@ -205,6 +257,20 @@ export async function POST(
     });
 
     if (inviteInsert.error) {
+      if (inviteInsert.error.message?.toLowerCase().includes("billing limit reached")) {
+        try {
+          await requireAccountGrowthCapacity({
+            accountId,
+            usageKey: "seats",
+            growthAction: "invite_billable_seat",
+            increment: 1,
+            returnTo: "/account/team",
+          });
+        } catch (error) {
+          return createInviteBillingErrorResponse(error, "Seat capacity check failed.");
+        }
+      }
+
       throw new Error(inviteInsert.error.message || "Failed to create invite.");
     }
 

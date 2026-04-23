@@ -23,6 +23,7 @@ import {
   type ProjectContentAction,
   type ProjectContentType,
 } from "@/lib/projects/content-actions";
+import { readBillingAwareJsonResponse } from "@/lib/billing/entitlement-blocks";
 import {
   DbAuditLog,
   DbBillingPlan,
@@ -591,6 +592,23 @@ function mapBillingPlan(row: DbBillingPlan): AdminBillingPlan {
     priceMonthly: row.price_monthly,
     projectsLimit: row.projects_limit,
     campaignsLimit: row.campaigns_limit,
+    questsLimit: row.quests_limit,
+    raidsLimit: row.raids_limit,
+    providersLimit: row.providers_limit,
+    includedBillableSeats: row.included_billable_seats,
+    sortOrder: row.sort_order,
+    trialDays: row.trial_days,
+    currency: row.currency,
+    billingInterval: row.billing_interval,
+    isPublic: row.is_public,
+    isSelfServe: row.is_self_serve,
+    isCheckoutEnabled: row.is_checkout_enabled,
+    isFreeTier: row.is_free_tier,
+    isEnterprise: row.is_enterprise,
+    featureFlags: row.feature_flags,
+    entitlementMetadata: row.entitlement_metadata,
+    stripeProductId: row.stripe_product_id ?? undefined,
+    stripeMonthlyPriceId: row.stripe_monthly_price_id ?? undefined,
     features: row.features,
     current: row.current,
   };
@@ -1734,18 +1752,10 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       }),
     });
 
-    const payload = (await response.json().catch(() => null)) as
-      | ProjectContentActionResponse
-      | { ok?: false; error?: string }
-      | null;
-
-    if (!response.ok || !payload || payload.ok !== true) {
-      const errorMessage =
-        payload && "error" in payload && typeof payload.error === "string"
-          ? payload.error
-          : "Failed to run project content action.";
-      throw new Error(errorMessage);
-    }
+    const payload = await readBillingAwareJsonResponse<ProjectContentActionResponse>(
+      response,
+      "Failed to run project content action."
+    );
 
     if (payload.objectType === "campaign") {
       const mapped = mapCampaign(payload.record as DbCampaign);

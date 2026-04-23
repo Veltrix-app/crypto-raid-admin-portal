@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { PortalBillingBlockNotice } from "@/components/billing/PortalBillingBlockNotice";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import QuestForm from "@/components/forms/quest/QuestForm";
@@ -25,6 +26,10 @@ import {
   getPrimaryProjectContentAction,
   type ProjectContentAction,
 } from "@/lib/projects/content-actions";
+import {
+  isBillingLimitError,
+  type BillingLimitBlock,
+} from "@/lib/billing/entitlement-blocks";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -46,6 +51,7 @@ export default function QuestDetailPage() {
     tone: "error" | "success";
     text: string;
   } | null>(null);
+  const [actionBlock, setActionBlock] = useState<BillingLimitBlock | null>(null);
 
   const quest = useMemo(
     () => getQuestById(params.id),
@@ -138,6 +144,7 @@ export default function QuestDetailPage() {
 
   async function handleLifecycleAction(action: ProjectContentAction) {
     setActionMessage(null);
+    setActionBlock(null);
     setRunningAction(action);
 
     try {
@@ -164,6 +171,11 @@ export default function QuestDetailPage() {
 
       setActionMessage({ tone: "success", text: successLabel });
     } catch (error) {
+      if (isBillingLimitError(error)) {
+        setActionBlock(error.block);
+        return;
+      }
+
       setActionMessage({
         tone: "error",
         text:
@@ -241,6 +253,13 @@ export default function QuestDetailPage() {
             </>
           }
         />
+
+        {actionBlock ? (
+          <PortalBillingBlockNotice
+            block={actionBlock}
+            title="Making another quest live needs more plan capacity"
+          />
+        ) : null}
 
         {actionMessage ? (
           <div

@@ -1,3 +1,11 @@
+import type {
+  AdminActivationStatus,
+  AdminBillingPaymentMethodStatus,
+  AdminBillingPlanKey,
+  AdminBillingSubscriptionStatus,
+  AdminCommercialHealthStatus,
+} from "./billing-subscription";
+
 export type AdminCustomerAccountStatus =
   | "pending_verification"
   | "active"
@@ -60,6 +68,14 @@ export type AdminCustomerAccount = {
   createdByAuthUserId?: string;
   primaryOwnerAuthUserId?: string;
   sourceType: AdminCustomerAccountSourceType;
+  billingPlanId?: AdminBillingPlanKey | string;
+  billingStatus?: AdminBillingSubscriptionStatus;
+  currentSubscriptionId?: string;
+  paymentMethodStatus?: AdminBillingPaymentMethodStatus;
+  currentPeriodEnd?: string;
+  graceUntil?: string;
+  commercialHealthStatus?: AdminCommercialHealthStatus;
+  activationStatus?: AdminActivationStatus;
   metadata?: Record<string, unknown>;
   createdAt?: string;
   updatedAt?: string;

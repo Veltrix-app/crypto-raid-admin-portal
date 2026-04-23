@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   FolderKanban,
   Home,
+  Landmark,
   Settings,
   Shield,
   Sparkles,
@@ -17,6 +18,7 @@ export type GlobalNavItem = {
   label: string;
   description: string;
   icon: LucideIcon;
+  superAdminOnly?: boolean;
 };
 
 export type ProjectWorkspaceTab = {
@@ -88,6 +90,13 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Analytics",
     description: "Outcomes, activation trends, reliability pressure and performance signals.",
     icon: BarChart3,
+  },
+  {
+    href: "/business",
+    label: "Business",
+    description: "Internal revenue cockpit for plan mix, billing ops, collections and account health.",
+    icon: Landmark,
+    superAdminOnly: true,
   },
   {
     href: "/submissions",

@@ -4,6 +4,7 @@ import {
   assertProjectAccess,
   createProjectCommunityAccessErrorResponse,
 } from "@/lib/community/project-community-auth";
+import { requireProjectGrowthCapacity } from "@/lib/billing/entitlement-guard";
 import { createProjectOperationAudit } from "@/lib/platform/core-ops";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -371,6 +372,35 @@ export async function POST(request: NextRequest) {
         : Boolean(config.chatId || config.groupId);
 
     const supabase = getServiceSupabaseClient();
+    const existingIntegrationResponse = await supabase
+      .from("project_integrations")
+      .select("id, status")
+      .eq("project_id", projectId)
+      .eq("provider", provider)
+      .maybeSingle();
+
+    if (existingIntegrationResponse.error) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: existingIntegrationResponse.error.message || "Failed to inspect integration state.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const existingIntegration = existingIntegrationResponse.data;
+    const shouldCountProviderGrowth =
+      hasPrimaryIdentifier && existingIntegration?.status !== "connected";
+
+    if (shouldCountProviderGrowth) {
+      await requireProjectGrowthCapacity({
+        projectId,
+        usageKey: "providers",
+        growthAction: "connect_provider",
+        returnTo: `/projects/${projectId}/community`,
+      });
+    }
 
     const { data, error } = await supabase
       .from("project_integrations")
@@ -388,6 +418,15 @@ export async function POST(request: NextRequest) {
       )
       .select("id, provider, status, config")
       .single();
+
+    if (error?.message?.toLowerCase().includes("billing limit reached")) {
+      await requireProjectGrowthCapacity({
+        projectId,
+        usageKey: "providers",
+        growthAction: "connect_provider",
+        returnTo: `/projects/${projectId}/community`,
+      });
+    }
 
     if (error) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 });

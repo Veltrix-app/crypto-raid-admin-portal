@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
+import { PortalBillingBlockNotice } from "@/components/billing/PortalBillingBlockNotice";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   OpsFilterBar,
@@ -16,6 +17,11 @@ import {
 import ProjectsBoardHeader from "@/components/projects/ProjectsBoardHeader";
 import ProjectsOnboardingQueue from "@/components/projects/ProjectsOnboardingQueue";
 import ProjectsRosterTable from "@/components/projects/ProjectsRosterTable";
+import { bootstrapPortalWorkspaceProject } from "@/lib/accounts/account-onboarding";
+import {
+  isBillingLimitError,
+  type BillingLimitBlock,
+} from "@/lib/billing/entitlement-blocks";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminFiltersStore } from "@/store/filters/useAdminFiltersStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
@@ -40,6 +46,7 @@ function ProjectsPageContent() {
   const [bootstrapDescription, setBootstrapDescription] = useState("");
   const [bootstrappingProject, setBootstrappingProject] = useState(false);
   const [bootstrapError, setBootstrapError] = useState("");
+  const [bootstrapBlock, setBootstrapBlock] = useState<BillingLimitBlock | null>(null);
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
@@ -88,27 +95,23 @@ function ProjectsPageContent() {
     try {
       setBootstrappingProject(true);
       setBootstrapError("");
-      const response = await fetch(`/api/accounts/${primaryAccount.id}/projects/bootstrap`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: bootstrapName.trim(),
-          chain: bootstrapChain,
-          category: bootstrapCategory.trim(),
-          description: bootstrapDescription.trim(),
-        }),
+      setBootstrapBlock(null);
+      const payload = await bootstrapPortalWorkspaceProject({
+        accountId: primaryAccount.id,
+        name: bootstrapName.trim(),
+        chain: bootstrapChain,
+        category: bootstrapCategory.trim(),
+        description: bootstrapDescription.trim(),
       });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.error ?? "First project bootstrap failed.");
-      }
 
       await Promise.all([refreshMemberships(), loadAll(), refresh()]);
       router.push(`/projects/${payload.projectId}/launch?source=account_onboarding`);
     } catch (error) {
+      if (isBillingLimitError(error)) {
+        setBootstrapBlock(error.block);
+        return;
+      }
+
       setBootstrapError(error instanceof Error ? error.message : "First project bootstrap failed.");
     } finally {
       setBootstrappingProject(false);
@@ -141,6 +144,13 @@ function ProjectsPageContent() {
           >
             <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
               <div className="space-y-4">
+                {bootstrapBlock ? (
+                  <PortalBillingBlockNotice
+                    block={bootstrapBlock}
+                    title="Creating another project needs more plan capacity"
+                  />
+                ) : null}
+
                 <div className="grid gap-4 md:grid-cols-3">
                   <OpsMetricCard label="Workspace" value={primaryAccount?.name ?? "Workspace"} emphasis="primary" />
                   <OpsMetricCard label="Projects" value={0} emphasis="warning" />

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isBillingLimitError } from "@/lib/billing/entitlement-blocks";
 import { getServiceSupabaseClient } from "@/lib/community/project-community-ops";
 
 export class ProjectCommunityAccessError extends Error {
@@ -86,6 +87,17 @@ export function createProjectCommunityAccessErrorResponse(
   error: unknown,
   fallbackMessage: string
 ) {
+  if (isBillingLimitError(error)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error.message,
+        block: error.block,
+      },
+      { status: 409 }
+    );
+  }
+
   if (error instanceof ProjectCommunityAccessError) {
     return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
   }

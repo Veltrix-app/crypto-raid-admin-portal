@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { getAccountsServiceClient } from "@/lib/accounts/account-auth";
+import { isBillingLimitError } from "@/lib/billing/entitlement-blocks";
+import { requireAccountGrowthCapacity } from "@/lib/billing/entitlement-guard";
 
 function slugifyProjectName(name: string, accountId: string) {
   const base = name
@@ -16,6 +18,27 @@ function slugifyProjectName(name: string, accountId: string) {
 function appendCompletedStep(current: string[] | null | undefined, nextStep: string) {
   const existing = Array.isArray(current) ? current.filter(Boolean) : [];
   return existing.includes(nextStep) ? existing : [...existing, nextStep];
+}
+
+function createBootstrapErrorResponse(error: unknown, fallbackMessage: string) {
+  if (isBillingLimitError(error)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error.message,
+        block: error.block,
+      },
+      { status: 409 }
+    );
+  }
+
+  return NextResponse.json(
+    {
+      ok: false,
+      error: error instanceof Error ? error.message : fallbackMessage,
+    },
+    { status: 500 }
+  );
 }
 
 export async function POST(
@@ -113,6 +136,17 @@ export async function POST(
     });
   }
 
+  try {
+    await requireAccountGrowthCapacity({
+      accountId,
+      usageKey: "projects",
+      growthAction: "create_project",
+      returnTo: "/projects",
+    });
+  } catch (error) {
+    return createBootstrapErrorResponse(error, "Project capacity check failed.");
+  }
+
   const slug = slugifyProjectName(projectName, accountId);
   const { data: createdProject, error: projectError } = await serviceSupabase
     .from("projects")
@@ -149,6 +183,21 @@ export async function POST(
     })
     .select("id, name")
     .single();
+
+  if (
+    projectError?.message?.toLowerCase().includes("billing limit reached")
+  ) {
+    try {
+      await requireAccountGrowthCapacity({
+        accountId,
+        usageKey: "projects",
+        growthAction: "create_project",
+        returnTo: "/projects",
+      });
+    } catch (error) {
+      return createBootstrapErrorResponse(error, "Project capacity check failed.");
+    }
+  }
 
   if (projectError || !createdProject) {
     return NextResponse.json(

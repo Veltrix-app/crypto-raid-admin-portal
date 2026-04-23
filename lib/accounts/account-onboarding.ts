@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { readBillingAwareJsonResponse } from "@/lib/billing/entitlement-blocks";
 import type {
   AdminCustomerAccountOnboardingStep,
   AdminCustomerAccountRole,
@@ -78,16 +79,7 @@ function getSupabaseAccessToken() {
 }
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
-  const payload = await response.json().catch(() => null);
-  if (!response.ok || !payload?.ok) {
-    throw new Error(
-      payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string"
-        ? payload.error
-        : "Workspace account request failed."
-    );
-  }
-
-  return payload as T;
+  return readBillingAwareJsonResponse<T>(response, "Workspace account request failed.");
 }
 
 export async function fetchPortalAccountOverview() {
@@ -177,6 +169,60 @@ export async function updatePortalWorkspaceInvite(params: {
     action: "resend" | "revoke";
     members: Array<unknown>;
     invites: Array<unknown>;
+  }>(response);
+}
+
+export async function createPortalWorkspaceInvite(params: {
+  accountId: string;
+  email: string;
+  role: AdminCustomerAccountRole;
+}) {
+  const response = await fetch(`/api/accounts/${params.accountId}/invites`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: params.email,
+      role: params.role,
+    }),
+    cache: "no-store",
+  });
+
+  return readJsonResponse<{
+    ok: true;
+    created: boolean;
+    members: Array<unknown>;
+    invites: Array<unknown>;
+  }>(response);
+}
+
+export async function bootstrapPortalWorkspaceProject(params: {
+  accountId: string;
+  name: string;
+  chain: string;
+  category: string;
+  description: string;
+}) {
+  const response = await fetch(`/api/accounts/${params.accountId}/projects/bootstrap`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: params.name,
+      chain: params.chain,
+      category: params.category,
+      description: params.description,
+    }),
+    cache: "no-store",
+  });
+
+  return readJsonResponse<{
+    ok: true;
+    created: boolean;
+    projectId: string;
+    projectName: string;
   }>(response);
 }
 

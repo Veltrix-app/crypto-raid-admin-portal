@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { PortalBillingBlockNotice } from "@/components/billing/PortalBillingBlockNotice";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
 import LifecycleStatusPill from "@/components/platform/LifecycleStatusPill";
@@ -24,6 +25,10 @@ import {
   getPrimaryProjectContentAction,
   type ProjectContentAction,
 } from "@/lib/projects/content-actions";
+import {
+  isBillingLimitError,
+  type BillingLimitBlock,
+} from "@/lib/billing/entitlement-blocks";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
@@ -70,6 +75,7 @@ export default function CampaignDetailPage() {
     tone: "error" | "success";
     text: string;
   } | null>(null);
+  const [actionBlock, setActionBlock] = useState<BillingLimitBlock | null>(null);
 
   const campaignEntry = useMemo(
     () => getCampaignById(params.id),
@@ -331,6 +337,7 @@ export default function CampaignDetailPage() {
     }
 
     setActionMessage(null);
+    setActionBlock(null);
     setRunningAction(action);
 
     try {
@@ -360,6 +367,11 @@ export default function CampaignDetailPage() {
         text: successLabel,
       });
     } catch (error) {
+      if (isBillingLimitError(error)) {
+        setActionBlock(error.block);
+        return;
+      }
+
       setActionMessage({
         tone: "error",
         text:
@@ -452,6 +464,13 @@ export default function CampaignDetailPage() {
             </>
           }
         />
+
+        {actionBlock ? (
+          <PortalBillingBlockNotice
+            block={actionBlock}
+            title="Publishing another campaign needs more plan capacity"
+          />
+        ) : null}
 
         {actionMessage ? (
           <div

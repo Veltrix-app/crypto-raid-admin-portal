@@ -86,3 +86,23 @@ export async function resolveAuthenticatedPortalAccountUser(
 export function getAccountsServiceClient() {
   return getServiceSupabaseClient();
 }
+
+export async function assertAuthenticatedPortalSuperAdmin(authUserId: string) {
+  const supabase = getAccountsServiceClient();
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("auth_user_id, role, status")
+    .eq("auth_user_id", authUserId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message || "Failed to verify admin access.");
+  }
+
+  if (!data?.auth_user_id || data.role !== "super_admin") {
+    throw new Error("Admin access denied.");
+  }
+
+  return data;
+}
