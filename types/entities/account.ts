@@ -5,6 +5,11 @@ import type {
   AdminBillingSubscriptionStatus,
   AdminCommercialHealthStatus,
 } from "./billing-subscription";
+import type {
+  AdminActivationStage,
+  AdminSuccessHealthState,
+  AdminWorkspaceHealthState,
+} from "./success";
 
 export type AdminCustomerAccountStatus =
   | "pending_verification"
@@ -76,6 +81,9 @@ export type AdminCustomerAccount = {
   graceUntil?: string;
   commercialHealthStatus?: AdminCommercialHealthStatus;
   activationStatus?: AdminActivationStatus;
+  activationStage?: AdminActivationStage;
+  workspaceHealthState?: AdminWorkspaceHealthState;
+  successHealthState?: AdminSuccessHealthState;
   metadata?: Record<string, unknown>;
   createdAt?: string;
   updatedAt?: string;

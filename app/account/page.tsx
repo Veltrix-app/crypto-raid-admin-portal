@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
+import { SuccessActivationRail } from "@/components/success/SuccessActivationRail";
 import {
   OpsMetricCard,
   OpsPanel,
@@ -11,16 +13,46 @@ import {
   OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
+import { fetchCurrentPortalAccountActivation } from "@/lib/success/account-activation";
+import type { AdminSuccessAccountSummary } from "@/types/entities/success";
 
 function AccountOverviewContent() {
   const { accessState } = useAccountEntryGuard();
   const primaryAccount = accessState?.primaryAccount ?? null;
+  const [activationSummary, setActivationSummary] = useState<AdminSuccessAccountSummary | null>(null);
   const nextHref =
     primaryAccount?.firstProjectId && primaryAccount.currentStep === "open_launch_workspace"
       ? `/projects/${primaryAccount.firstProjectId}/launch`
       : primaryAccount?.projectCount
       ? "/projects"
       : "/getting-started";
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadActivation() {
+      try {
+        const payload = await fetchCurrentPortalAccountActivation();
+        if (!active) {
+          return;
+        }
+
+        setActivationSummary(payload.summary);
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setActivationSummary(null);
+      }
+    }
+
+    void loadActivation();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (!primaryAccount) {
     return null;
@@ -89,6 +121,17 @@ function AccountOverviewContent() {
           </OpsPanel>
         </div>
       </div>
+
+      {activationSummary ? (
+        <div className="mt-6">
+          <SuccessActivationRail
+            summary={activationSummary}
+            eyebrow="Workspace activation"
+            title="How this account is actually progressing"
+            description="The account layer should explain both current health and the next real move, not only list identity fields."
+          />
+        </div>
+      ) : null}
     </PortalPageFrame>
   );
 }

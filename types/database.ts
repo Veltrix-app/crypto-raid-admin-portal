@@ -166,6 +166,95 @@ export type ServiceStatusLevel =
 
 export type ServiceStatusSnapshotSource = "system" | "incident_command" | "manual";
 
+export type ActivationStage =
+  | "workspace_created"
+  | "first_project_created"
+  | "provider_connected"
+  | "campaign_live"
+  | "member_active"
+  | "live";
+
+export type WorkspaceHealthState =
+  | "not_started"
+  | "activating"
+  | "live"
+  | "stalled";
+
+export type SuccessHealthState =
+  | "healthy"
+  | "watching"
+  | "expansion_ready"
+  | "churn_risk";
+
+export type SuccessNoteType =
+  | "general"
+  | "activation_blocker"
+  | "expansion"
+  | "churn_risk"
+  | "member_health"
+  | "follow_up";
+
+export type SuccessNoteStatus = "open" | "resolved" | "archived";
+
+export type SuccessTaskType =
+  | "activation_follow_up"
+  | "expansion_follow_up"
+  | "risk_review"
+  | "member_reactivation"
+  | "billing_follow_up";
+
+export type SuccessTaskStatus =
+  | "open"
+  | "in_progress"
+  | "waiting"
+  | "resolved"
+  | "canceled";
+
+export type SuccessTaskDueState =
+  | "upcoming"
+  | "due_now"
+  | "overdue"
+  | "resolved";
+
+export type SuccessSignalType =
+  | "activation_stalled"
+  | "first_project_missing"
+  | "first_campaign_missing"
+  | "member_drift"
+  | "expansion_ready"
+  | "paid_low_usage"
+  | "healthy_repeat_usage";
+
+export type SuccessSignalTone = "default" | "success" | "warning" | "danger";
+
+export type SuccessSignalStatus = "open" | "watching" | "resolved" | "dismissed";
+
+export type ActivationLane = "onboarding" | "active" | "comeback";
+
+export type MemberHealthState =
+  | "new"
+  | "active"
+  | "drifting"
+  | "reactivation_needed";
+
+export type MemberReactivationEventType =
+  | "prompt_shown"
+  | "email_sent"
+  | "member_returned"
+  | "dismissed"
+  | "completed";
+
+export type ActivationNudgeTargetType = "account" | "project" | "member";
+
+export type ActivationNudgeChannel = "in_product" | "email";
+
+export type ActivationNudgeStatus =
+  | "pending"
+  | "shown"
+  | "sent"
+  | "dismissed"
+  | "completed";
+
 export type DbBillingPlan = {
   id: string;
   name: string;
@@ -376,6 +465,129 @@ export type DbCustomerAccountBusinessNote = {
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
+};
+
+export type DbCustomerAccountActivation = {
+  customer_account_id: string;
+  activation_stage: ActivationStage;
+  workspace_health_state: WorkspaceHealthState;
+  success_health_state: SuccessHealthState;
+  completed_milestones: string[] | Record<string, any> | null;
+  blockers: string[] | Record<string, any> | null;
+  next_best_action_key: string | null;
+  next_best_action_label: string | null;
+  next_best_action_route: string | null;
+  first_project_id: string | null;
+  first_live_campaign_id: string | null;
+  first_provider_connected_at: string | null;
+  first_campaign_live_at: string | null;
+  last_member_activity_at: string | null;
+  last_activation_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountSuccessNote = {
+  id: string;
+  customer_account_id: string;
+  project_id: string | null;
+  author_auth_user_id: string | null;
+  owner_auth_user_id: string | null;
+  note_type: SuccessNoteType;
+  status: SuccessNoteStatus;
+  title: string;
+  body: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+};
+
+export type DbCustomerAccountSuccessTask = {
+  id: string;
+  customer_account_id: string;
+  project_id: string | null;
+  owner_auth_user_id: string | null;
+  task_type: SuccessTaskType;
+  status: SuccessTaskStatus;
+  due_state: SuccessTaskDueState;
+  title: string;
+  summary: string;
+  due_at: string | null;
+  completed_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCustomerAccountSuccessSignal = {
+  id: string;
+  customer_account_id: string;
+  project_id: string | null;
+  dedupe_key: string;
+  signal_type: SuccessSignalType;
+  signal_tone: SuccessSignalTone;
+  status: SuccessSignalStatus;
+  summary: string;
+  signal_payload: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+};
+
+export type DbMemberActivationState = {
+  id: string;
+  auth_user_id: string;
+  primary_project_id: string | null;
+  activation_lane: ActivationLane;
+  member_health_state: MemberHealthState;
+  completed_milestones: string[] | Record<string, any> | null;
+  blockers: string[] | Record<string, any> | null;
+  next_best_action_key: string | null;
+  next_best_action_label: string | null;
+  next_best_action_route: string | null;
+  linked_provider_count: number;
+  wallet_verified: boolean;
+  joined_project_count: number;
+  completed_quest_count: number;
+  claimed_reward_count: number;
+  streak_days: number;
+  last_activity_at: string | null;
+  last_nudge_at: string | null;
+  last_reactivation_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbMemberReactivationEvent = {
+  id: string;
+  auth_user_id: string;
+  primary_project_id: string | null;
+  event_type: MemberReactivationEventType;
+  reason_key: string;
+  event_payload: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbActivationNudge = {
+  id: string;
+  dedupe_key: string;
+  target_type: ActivationNudgeTargetType;
+  customer_account_id: string | null;
+  project_id: string | null;
+  auth_user_id: string | null;
+  channel: ActivationNudgeChannel;
+  reason_key: string;
+  status: ActivationNudgeStatus;
+  title: string;
+  body: string;
+  route: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
 };
 
 export type DbSupportTicket = {

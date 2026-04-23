@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   FolderKanban,
   Home,
+  HeartHandshake,
   Landmark,
   LifeBuoy,
   Settings,
@@ -97,6 +98,13 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Business",
     description: "Internal revenue cockpit for plan mix, billing ops, collections and account health.",
     icon: Landmark,
+    superAdminOnly: true,
+  },
+  {
+    href: "/success",
+    label: "Success",
+    description: "Internal activation cockpit for workspace health, expansion pressure, member drift and customer follow-up.",
+    icon: HeartHandshake,
     superAdminOnly: true,
   },
   {
