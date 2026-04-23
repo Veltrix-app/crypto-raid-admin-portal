@@ -2,6 +2,7 @@ import { getServiceSupabaseClient } from "@/lib/community/project-community-ops"
 import type {
   AdminGrowthAnalyticsEventType,
   AdminGrowthEventSource,
+  AdminGrowthFunnelStage,
 } from "@/types/entities/growth-analytics";
 
 export type GrowthAnalyticsTouch = {
@@ -34,6 +35,24 @@ type WriteGrowthAnalyticsEventInput = {
   eventPayload?: Record<string, unknown>;
 };
 
+const funnelStageByEventType: Partial<
+  Record<AdminGrowthAnalyticsEventType, AdminGrowthFunnelStage>
+> = {
+  anonymous_visit: "anonymous_visit",
+  pricing_view: "pricing_view",
+  signup_started: "signup_started",
+  signup_completed: "signup_completed",
+  workspace_created: "workspace_created",
+  first_project_created: "first_project_created",
+  provider_connected: "first_provider_connected",
+  first_campaign_live: "first_campaign_live",
+  checkout_started: "checkout_started",
+  paid_converted: "paid_converted",
+  expanded: "expanded",
+  downgraded: "downgraded",
+  churned: "churned",
+};
+
 function sanitizeNullableString(value: unknown) {
   if (typeof value !== "string") {
     return null;
@@ -59,6 +78,70 @@ function normalizeTouch(value: unknown): GrowthAnalyticsTouch | null {
     landingPath: sanitizeNullableString(record.landingPath),
     capturedAt: sanitizeNullableString(record.capturedAt),
   };
+}
+
+async function refreshGrowthFunnelStageMetric(params: {
+  supabase: ReturnType<typeof getServiceSupabaseClient>;
+  eventType: AdminGrowthAnalyticsEventType;
+}) {
+  const funnelStage = funnelStageByEventType[params.eventType];
+  if (!funnelStage) {
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const usesDistinctAccounts = new Set([
+    "workspace_created",
+    "first_project_created",
+    "provider_connected",
+    "first_campaign_live",
+    "paid_converted",
+    "expanded",
+    "downgraded",
+    "churned",
+  ]).has(params.eventType);
+
+  const query = params.supabase
+    .from("growth_analytics_events")
+    .select(usesDistinctAccounts ? "customer_account_id" : "id")
+    .gte("occurred_at", `${today}T00:00:00.000Z`)
+    .lt("occurred_at", `${today}T23:59:59.999Z`)
+    .eq("event_type", params.eventType);
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(error.message || "Failed to refresh growth funnel stage metric.");
+  }
+
+  const metricValue = usesDistinctAccounts
+    ? new Set(
+        ((data ?? []) as Array<{ customer_account_id?: string | null }>)
+          .map((row) => row.customer_account_id)
+          .filter((value): value is string => typeof value === "string" && value.length > 0)
+      ).size
+    : (data ?? []).length;
+
+  const upsertResult = await params.supabase.from("growth_funnel_snapshots").upsert(
+    {
+      snapshot_date: today,
+      funnel_stage: funnelStage,
+      metric_value: metricValue,
+      conversion_rate: null,
+      metadata: {
+        source: "event_sync",
+        eventType: params.eventType,
+      },
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "snapshot_date,funnel_stage",
+    }
+  );
+
+  if (upsertResult.error) {
+    throw new Error(upsertResult.error.message || "Failed to upsert growth funnel metric.");
+  }
 }
 
 export function coerceGrowthAnalyticsContext(value: unknown): GrowthAnalyticsContext | null {
@@ -125,4 +208,9 @@ export async function writeGrowthAnalyticsEvent(input: WriteGrowthAnalyticsEvent
   if (insertResult.error) {
     throw new Error(insertResult.error.message || "Failed to write growth analytics event.");
   }
+
+  await refreshGrowthFunnelStageMetric({
+    supabase,
+    eventType: input.eventType,
+  });
 }

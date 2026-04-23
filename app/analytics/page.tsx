@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import { DbVerificationResult } from "@/types/database";
+import type { AdminGrowthOverview } from "@/types/entities/growth-analytics";
 import { AdminVerificationResult } from "@/types/entities/verification-result";
 
 type MetricSummary = {
@@ -41,11 +42,14 @@ export default function AnalyticsPage() {
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const role = useAdminAuthStore((s) => s.role);
   const [verificationResults, setVerificationResults] = useState<AdminVerificationResult[]>([]);
+  const [growthOverview, setGrowthOverview] = useState<AdminGrowthOverview | null>(null);
   const [platformSummary, setPlatformSummary] = useState<MetricSummary | null>(null);
   const [projectSummary, setProjectSummary] = useState<MetricSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
-  const [analyticsView, setAnalyticsView] = useState<"outcomes" | "campaigns" | "verification">(
-    "outcomes"
+  const [analyticsView, setAnalyticsView] = useState<
+    "growth" | "outcomes" | "campaigns" | "verification"
+  >(
+    "growth"
   );
 
   useEffect(() => {
@@ -96,13 +100,14 @@ export default function AnalyticsPage() {
 
     async function loadMetricSummaries() {
       try {
-        const [platformResponse, projectResponse] = await Promise.all([
+        const [platformResponse, projectResponse, growthResponse] = await Promise.all([
           fetch("/api/analytics/platform-summary", { cache: "no-store" }),
           activeProjectId
             ? fetch(`/api/analytics/project-summary?projectId=${activeProjectId}`, {
                 cache: "no-store",
               })
             : Promise.resolve(null),
+          fetch("/api/analytics/growth-overview", { cache: "no-store" }),
         ]);
 
         const platformPayload = (await platformResponse.json().catch(() => null)) as
@@ -122,15 +127,30 @@ export default function AnalyticsPage() {
           ((await projectResponse.json().catch(() => null)) as
             | { ok?: boolean; summary?: MetricSummary; error?: string }
             | null);
+        const growthPayload =
+          growthResponse &&
+          ((await growthResponse.json().catch(() => null)) as
+            | { ok?: boolean; overview?: AdminGrowthOverview; error?: string }
+            | null);
+
+        if (growthResponse && (!growthResponse.ok || !growthPayload?.ok)) {
+          throw new Error(
+            growthPayload && typeof growthPayload.error === "string"
+              ? growthPayload.error
+              : "Failed to load growth analytics overview."
+          );
+        }
 
         if (!active) return;
         setPlatformSummary(platformPayload.summary);
         setProjectSummary(projectPayload?.ok ? projectPayload.summary ?? null : null);
+        setGrowthOverview(growthPayload?.ok ? growthPayload.overview ?? null : null);
         setSummaryError(null);
       } catch (error) {
         if (!active) return;
         setPlatformSummary(null);
         setProjectSummary(null);
+        setGrowthOverview(null);
         setSummaryError(
           error instanceof Error ? error.message : "Failed to load analytics summaries."
         );
@@ -267,6 +287,54 @@ export default function AnalyticsPage() {
           : ("default" as OutcomeCard["emphasis"]),
     },
   ];
+  const growthCards = [
+    {
+      label: "Visits",
+      value:
+        growthOverview?.funnel.find((stage) => stage.stage === "anonymous_visit")?.value ?? 0,
+      emphasis: "primary" as const,
+      sub: "Top-of-funnel signal",
+    },
+    {
+      label: "Paid conversions",
+      value:
+        growthOverview?.funnel.find((stage) => stage.stage === "paid_converted")?.value ?? 0,
+      emphasis:
+        (growthOverview?.funnel.find((stage) => stage.stage === "paid_converted")?.value ?? 0) > 0
+          ? ("primary" as const)
+          : ("default" as const),
+      sub: "Current paid accounts",
+    },
+    {
+      label: "MRR",
+      value: formatCurrencyValue(growthOverview?.revenue.mrr ?? 0),
+      emphasis: "default" as const,
+      sub: `${growthOverview?.revenue.activePaidAccounts ?? 0} paid accounts`,
+    },
+    {
+      label: "Retained 30d",
+      value: `${growthOverview?.retention.overallRetained30dRate ?? 0}%`,
+      emphasis: "default" as const,
+      sub: `${growthOverview?.retention.paidRetained30dRate ?? 0}% for paid cohorts`,
+    },
+    {
+      label: "Expansion ready",
+      value: growthOverview?.revenue.expansionReadyAccounts ?? 0,
+      emphasis:
+        (growthOverview?.revenue.expansionReadyAccounts ?? 0) > 0
+          ? ("primary" as const)
+          : ("default" as const),
+      sub: "Accounts with scale posture",
+    },
+    {
+      label: "Benchmarks ready",
+      value: `${
+        growthOverview?.benchmarkCoverage.workspaceBenchmarksReady ?? 0
+      } / ${growthOverview?.benchmarkCoverage.workspaceAccountsMeasured ?? 0}`,
+      emphasis: "default" as const,
+      sub: "Workspace peer bands live",
+    },
+  ];
 
   return (
     <AdminShell>
@@ -299,15 +367,27 @@ export default function AnalyticsPage() {
         statusBand={
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-              {outcomeCards.map((card) => {
-                const metric = platformMetricMap.get(card.key);
+              {(analyticsView === "growth" ? growthCards : outcomeCards).map((card) => {
+                if ("key" in card) {
+                  const metric = platformMetricMap.get(card.key);
+                  return (
+                    <OpsMetricCard
+                      key={card.key}
+                      label={metric?.label ?? humanize(card.key)}
+                      value={formatMetricValue(metric?.value ?? 0, metric?.unit ?? "count")}
+                      emphasis={card.emphasis}
+                      sub={metric?.healthState ? humanize(metric.healthState) : undefined}
+                    />
+                  );
+                }
+
                 return (
                   <OpsMetricCard
-                    key={card.key}
-                    label={metric?.label ?? humanize(card.key)}
-                    value={formatMetricValue(metric?.value ?? 0, metric?.unit ?? "count")}
+                    key={card.label}
+                    label={card.label}
+                    value={typeof card.value === "number" ? card.value.toLocaleString() : card.value}
                     emphasis={card.emphasis}
-                    sub={metric?.healthState ? humanize(metric.healthState) : undefined}
+                    sub={card.sub}
                   />
                 );
               })}
@@ -321,6 +401,7 @@ export default function AnalyticsPage() {
                   value={analyticsView}
                   onChange={setAnalyticsView}
                   options={[
+                    { value: "growth", label: "Growth" },
                     { value: "outcomes", label: "Outcomes" },
                     { value: "campaigns", label: "Campaigns" },
                     { value: "verification", label: "Verification" },
@@ -329,6 +410,10 @@ export default function AnalyticsPage() {
               }
             >
               <div className="grid gap-4 md:grid-cols-3">
+                <ModeCard
+                  label="Growth"
+                  body="Funnel, revenue, retention, attribution and benchmark coverage in one internal workspace."
+                />
                 <ModeCard
                   label="Outcomes"
                   body="Activation, readiness, trust, claims and on-chain reliability trends."
@@ -352,6 +437,225 @@ export default function AnalyticsPage() {
               Verification and campaign intelligence still render from live portal data, but the new snapshot-backed outcome board needs the Phase 7 metric job to be healthy.
             </p>
           </OpsPanel>
+        ) : null}
+
+        {analyticsView === "growth" ? (
+          <div className="space-y-6">
+            <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+              <OpsPanel
+                eyebrow="Growth funnel"
+                title="Visit to retained revenue"
+                description="Top-of-funnel is event-led, while workspace progression is snapshot-backed. Together they show whether traffic is actually turning into durable accounts."
+                tone="accent"
+              >
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {(growthOverview?.funnel ?? []).slice(0, 10).map((stage) => (
+                    <div
+                      key={stage.stage}
+                      className="rounded-[22px] border border-line bg-card2 px-4 py-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-bold text-text">{stage.label}</p>
+                        <OpsStatusPill
+                          tone={
+                            stage.dataSource === "events"
+                              ? "default"
+                              : stage.dataSource === "blended"
+                                ? "warning"
+                                : "success"
+                          }
+                        >
+                          {stage.dataSource}
+                        </OpsStatusPill>
+                      </div>
+                      <p className="mt-3 text-2xl font-extrabold tracking-tight text-text">
+                        {stage.value.toLocaleString()}
+                      </p>
+                      <p className="mt-3 text-sm text-sub">
+                        {stage.conversionRate === null
+                          ? "Starting point"
+                          : `${stage.conversionRate}% from previous stage`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </OpsPanel>
+
+              <OpsPanel
+                eyebrow="Revenue pulse"
+                title="Commercial posture"
+                description="Use this when you need the fast internal read before dropping into Business or Success."
+              >
+                <div className="grid gap-4 md:grid-cols-2">
+                  <OpsMetricCard
+                    label="MRR"
+                    value={formatCurrencyValue(growthOverview?.revenue.mrr ?? 0)}
+                    emphasis="primary"
+                  />
+                  <OpsMetricCard
+                    label="Active paid"
+                    value={growthOverview?.revenue.activePaidAccounts ?? 0}
+                  />
+                  <OpsMetricCard
+                    label="Free"
+                    value={growthOverview?.revenue.freeAccounts ?? 0}
+                  />
+                  <OpsMetricCard
+                    label="Trialing"
+                    value={growthOverview?.revenue.trialingAccounts ?? 0}
+                  />
+                  <OpsMetricCard
+                    label="Expansion ready"
+                    value={growthOverview?.revenue.expansionReadyAccounts ?? 0}
+                    emphasis={
+                      (growthOverview?.revenue.expansionReadyAccounts ?? 0) > 0
+                        ? "primary"
+                        : "default"
+                    }
+                  />
+                  <OpsMetricCard
+                    label="Churn risk"
+                    value={growthOverview?.revenue.churnRiskAccounts ?? 0}
+                    emphasis={
+                      (growthOverview?.revenue.churnRiskAccounts ?? 0) > 0
+                        ? "warning"
+                        : "default"
+                    }
+                  />
+                </div>
+              </OpsPanel>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+              <OpsPanel
+                eyebrow="Retention"
+                title="Cohort durability"
+                description="Retention only matters if the product keeps accounts moving after setup, billing and first launch."
+              >
+                <div className="grid gap-4 md:grid-cols-4">
+                  <OpsMetricCard
+                    label="Overall retained 30d"
+                    value={`${growthOverview?.retention.overallRetained30dRate ?? 0}%`}
+                  />
+                  <OpsMetricCard
+                    label="Paid retained 30d"
+                    value={`${growthOverview?.retention.paidRetained30dRate ?? 0}%`}
+                  />
+                  <OpsMetricCard
+                    label="Expansion rate"
+                    value={`${growthOverview?.retention.expansionReadyRate ?? 0}%`}
+                  />
+                  <OpsMetricCard
+                    label="Churn risk rate"
+                    value={`${growthOverview?.retention.churnRiskRate ?? 0}%`}
+                    emphasis={
+                      (growthOverview?.retention.churnRiskRate ?? 0) > 0 ? "warning" : "default"
+                    }
+                  />
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  {(growthOverview?.retention.cohorts ?? []).map((cohort) => (
+                    <div
+                      key={cohort.cohortLabel}
+                      className="rounded-[22px] border border-line bg-card2 px-4 py-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-text">{cohort.cohortLabel}</p>
+                        <OpsStatusPill tone="success">{cohort.retainedRate}% retained</OpsStatusPill>
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-sub">
+                        {cohort.retainedCount} of {cohort.accountCount} accounts stayed active long
+                        enough to cross the 30-day retention mark.
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </OpsPanel>
+
+              <OpsPanel
+                eyebrow="Attribution"
+                title="Which sources are producing real customers"
+                description="This keeps acquisition honest by showing source quality, not just traffic volume."
+              >
+                <div className="space-y-3">
+                  {(growthOverview?.attribution.sources ?? []).length > 0 ? (
+                    growthOverview?.attribution.sources.map((source) => (
+                      <div
+                        key={source.source}
+                        className="rounded-[22px] border border-line bg-card2 px-4 py-4"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="font-semibold text-text">{source.source}</p>
+                          <OpsStatusPill
+                            tone={source.paidConversions > 0 ? "success" : "default"}
+                          >
+                            {source.paidConversions} paid
+                          </OpsStatusPill>
+                        </div>
+                        <div className="mt-4 grid gap-3 md:grid-cols-4 text-sm text-sub">
+                          <p>{source.anonymousVisits} visits</p>
+                          <p>{source.pricingViews} pricing views</p>
+                          <p>{source.signups} signups</p>
+                          <p>{source.checkoutStarts} checkouts</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm leading-6 text-sub">
+                      Attribution sources will start to stack here as tracked growth events move
+                      through the new funnel.
+                    </p>
+                  )}
+                </div>
+              </OpsPanel>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+              <OpsPanel
+                eyebrow="Benchmarks"
+                title="Peer coverage"
+                description="Benchmarks are shown only when the cohort is large enough to be useful, not just because we can compute a percentile."
+              >
+                <div className="grid gap-4 md:grid-cols-2">
+                  <OpsMetricCard
+                    label="Workspace peer bands"
+                    value={`${
+                      growthOverview?.benchmarkCoverage.workspaceBenchmarksReady ?? 0
+                    } / ${
+                      growthOverview?.benchmarkCoverage.workspaceAccountsMeasured ?? 0
+                    }`}
+                    emphasis="primary"
+                  />
+                  <OpsMetricCard
+                    label="Project peer bands"
+                    value={`${
+                      growthOverview?.benchmarkCoverage.projectBenchmarksReady ?? 0
+                    } / ${growthOverview?.benchmarkCoverage.projectsMeasured ?? 0}`}
+                  />
+                </div>
+              </OpsPanel>
+
+              <OpsPanel
+                eyebrow="Execution links"
+                title="Where to act next"
+                description="Analytics tells you what is happening; Business and Success tell you who should act next."
+              >
+                <div className="grid gap-4">
+                  <LinkRow
+                    href="/business"
+                    title="Open Business"
+                    body="Use the commercial cockpit when the growth read points to plan pressure, failed conversion, or pricing-related friction."
+                  />
+                  <LinkRow
+                    href="/success"
+                    title="Open Success"
+                    body="Use the success cockpit when accounts are activating too slowly, drifting after launch, or failing to turn first setup into real motion."
+                  />
+                </div>
+              </OpsPanel>
+            </div>
+          </div>
         ) : null}
 
         {analyticsView === "outcomes" ? (
@@ -594,6 +898,14 @@ function formatMetricValue(value: number, unit: string) {
     return `${Math.round(value)}%`;
   }
   return Math.round(value).toLocaleString();
+}
+
+function formatCurrencyValue(value: number) {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 function ModeCard({ label, body }: { label: string; body: string }) {

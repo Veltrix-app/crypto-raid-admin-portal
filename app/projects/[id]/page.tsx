@@ -16,7 +16,12 @@ import {
   DetailSidebarSurface,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
-import { OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import {
+  OpsMetricCard,
+  OpsPanel,
+  OpsSnapshotRow,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import {
   buildProjectOverviewStats,
   buildProjectWorkspaceHealthPills,
@@ -25,6 +30,7 @@ import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
+import type { AdminProjectGrowthSummary } from "@/types/entities/growth-analytics";
 
 type PushScopeMode =
   | "project_only"
@@ -534,6 +540,7 @@ export default function ProjectDetailPage() {
     onchainFailures: 0,
     latestIssue: "No active operator incidents logged.",
   });
+  const [growthSummary, setGrowthSummary] = useState<AdminProjectGrowthSummary | null>(null);
 
   const project = useMemo(
     () => getProjectById(params.id),
@@ -819,6 +826,52 @@ export default function ProjectDetailPage() {
     }
 
     void loadOnchainConfig();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [project?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadGrowthSummary() {
+      if (!project?.id) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/analytics/project-growth-summary?projectId=${encodeURIComponent(project.id)}`,
+          {
+            cache: "no-store",
+          }
+        );
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              ok?: boolean;
+              summary?: AdminProjectGrowthSummary | null;
+            }
+          | null;
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!response.ok || !payload?.ok) {
+          setGrowthSummary(null);
+          return;
+        }
+
+        setGrowthSummary(payload.summary ?? null);
+      } catch {
+        if (!cancelled) {
+          setGrowthSummary(null);
+        }
+      }
+    }
+
+    void loadGrowthSummary();
 
     return () => {
       cancelled = true;
@@ -1571,6 +1624,70 @@ export default function ProjectDetailPage() {
             }
             metrics={overviewMetrics}
           />
+
+          {growthSummary ? (
+            <OpsPanel
+              eyebrow="Project analytics"
+              title="Launch performance against peer projects"
+              description="This Phase 13 layer turns the project overview into a real performance read: current launch density, peer band and the next growth move."
+              tone="accent"
+            >
+              <div className="grid gap-4 md:grid-cols-4">
+                <OpsMetricCard
+                  label="Peer band"
+                  value={growthSummary.benchmark.labelText}
+                  emphasis={
+                    growthSummary.benchmark.label === "below_peer_range" ? "warning" : "primary"
+                  }
+                />
+                <OpsMetricCard
+                  label="Launch score"
+                  value={growthSummary.benchmark.currentValue}
+                  sub={growthSummary.benchmark.cohortLabel ?? "Benchmark building"}
+                />
+                <OpsMetricCard
+                  label="Live quests"
+                  value={growthSummary.liveQuestCount}
+                  sub={`${growthSummary.activeCampaignCount} active campaigns`}
+                />
+                <OpsMetricCard
+                  label="Providers"
+                  value={growthSummary.providerCount}
+                  sub={`${growthSummary.visibleRewardCount} visible rewards`}
+                />
+              </div>
+
+              <div className="mt-6 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+                <div className="space-y-3">
+                  <OpsSnapshotRow
+                    label="Peer cohort"
+                    value={
+                      growthSummary.benchmark.cohortLabel
+                        ? `${growthSummary.benchmark.cohortLabel} (${growthSummary.benchmark.cohortSize} projects)`
+                        : "Benchmark building as more comparable projects move through this lane."
+                    }
+                  />
+                  <OpsSnapshotRow
+                    label="What this means"
+                    value={
+                      growthSummary.benchmark.available
+                        ? `Median peer score: ${growthSummary.benchmark.medianValue ?? 0}. This project is currently ${growthSummary.benchmark.labelText.toLowerCase()}.`
+                        : "There is not enough cohort density yet to show a safe peer band, so this project is still helping build the benchmark set."
+                    }
+                  />
+                </div>
+
+                <div className="rounded-[22px] border border-line bg-card2 p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                    Recommended next move
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-sub">
+                    {growthSummary.recommendedMove}
+                  </p>
+                </div>
+              </div>
+            </OpsPanel>
+          ) : null}
 
           <ProjectOverviewQueues signals={overviewSignals} />
 

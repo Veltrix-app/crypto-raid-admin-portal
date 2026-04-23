@@ -126,3 +126,108 @@ export type AdminProjectGrowthSnapshot = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type AdminGrowthBenchmarkSummary = {
+  available: boolean;
+  benchmarkKey: "workspace_growth_score" | "project_launch_score";
+  label: AdminBenchmarkLabel | null;
+  labelText: string;
+  currentValue: number;
+  cohortKey: string | null;
+  cohortLabel: string | null;
+  cohortSize: number;
+  lowerBound: number | null;
+  medianValue: number | null;
+  upperBound: number | null;
+  topBandThreshold: number | null;
+  unit: string;
+};
+
+export type AdminGrowthOverview = {
+  latestSnapshotDate: string | null;
+  funnel: Array<{
+    stage: AdminGrowthFunnelStage;
+    label: string;
+    value: number;
+    conversionRate: number | null;
+    dataSource: "events" | "snapshots" | "blended";
+  }>;
+  revenue: {
+    mrr: number;
+    activePaidAccounts: number;
+    freeAccounts: number;
+    trialingAccounts: number;
+    expansionReadyAccounts: number;
+    churnRiskAccounts: number;
+  };
+  retention: {
+    overallRetained30dRate: number;
+    paidRetained30dRate: number;
+    expansionReadyRate: number;
+    churnRiskRate: number;
+    cohorts: Array<{
+      cohortLabel: string;
+      accountCount: number;
+      retainedCount: number;
+      retainedRate: number;
+    }>;
+  };
+  attribution: {
+    sources: Array<{
+      source: string;
+      anonymousVisits: number;
+      pricingViews: number;
+      signups: number;
+      checkoutStarts: number;
+      paidConversions: number;
+    }>;
+  };
+  benchmarkCoverage: {
+    workspaceBenchmarksReady: number;
+    workspaceAccountsMeasured: number;
+    projectBenchmarksReady: number;
+    projectsMeasured: number;
+  };
+};
+
+export type AdminCustomerGrowthSummary = {
+  customerAccountId: string;
+  accountName: string;
+  snapshotDate: string | null;
+  billingPlanId: string | null;
+  billingStatus: string;
+  activationStage: string;
+  workspaceHealthState: string;
+  successHealthState: string;
+  projectCount: number;
+  activeCampaignCount: number;
+  providerCount: number;
+  billableSeatCount: number;
+  currentMrr: number;
+  isPaidAccount: boolean;
+  isRetained30d: boolean;
+  isExpansionReady: boolean;
+  isChurnRisk: boolean;
+  firstTouchSource: string | null;
+  latestTouchSource: string | null;
+  conversionTouchSource: string | null;
+  benchmark: AdminGrowthBenchmarkSummary;
+  recommendedMove: string;
+};
+
+export type AdminProjectGrowthSummary = {
+  projectId: string;
+  projectName: string;
+  snapshotDate: string | null;
+  projectStatus: string;
+  campaignCount: number;
+  activeCampaignCount: number;
+  liveQuestCount: number;
+  liveRaidCount: number;
+  visibleRewardCount: number;
+  providerCount: number;
+  teamMemberCount: number;
+  memberCount: number;
+  benchmark: AdminGrowthBenchmarkSummary;
+  recommendedMove: string;
+};

@@ -14,12 +14,14 @@ import {
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
 import { fetchCurrentPortalAccountActivation } from "@/lib/success/account-activation";
+import type { AdminCustomerGrowthSummary } from "@/types/entities/growth-analytics";
 import type { AdminSuccessAccountSummary } from "@/types/entities/success";
 
 function AccountOverviewContent() {
   const { accessState } = useAccountEntryGuard();
   const primaryAccount = accessState?.primaryAccount ?? null;
   const [activationSummary, setActivationSummary] = useState<AdminSuccessAccountSummary | null>(null);
+  const [growthSummary, setGrowthSummary] = useState<AdminCustomerGrowthSummary | null>(null);
   const nextHref =
     primaryAccount?.firstProjectId && primaryAccount.currentStep === "open_launch_workspace"
       ? `/projects/${primaryAccount.firstProjectId}/launch`
@@ -47,7 +49,39 @@ function AccountOverviewContent() {
       }
     }
 
+    async function loadGrowth() {
+      try {
+        const response = await fetch("/api/analytics/account/current", {
+          cache: "no-store",
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              ok?: boolean;
+              summary?: AdminCustomerGrowthSummary | null;
+            }
+          | null;
+
+        if (!active) {
+          return;
+        }
+
+        if (!response.ok || !payload?.ok) {
+          setGrowthSummary(null);
+          return;
+        }
+
+        setGrowthSummary(payload.summary ?? null);
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setGrowthSummary(null);
+      }
+    }
+
     void loadActivation();
+    void loadGrowth();
 
     return () => {
       active = false;
@@ -130,6 +164,77 @@ function AccountOverviewContent() {
             title="How this account is actually progressing"
             description="The account layer should explain both current health and the next real move, not only list identity fields."
           />
+        </div>
+      ) : null}
+
+      {growthSummary ? (
+        <div className="mt-6">
+          <OpsPanel
+            eyebrow="Growth analytics"
+            title="How this workspace is performing against peers"
+            description="Phase 13 keeps the account-facing analytics compact here: a peer label, the current growth score and the acquisition context that brought this workspace in."
+            tone="accent"
+          >
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard
+                label="Peer band"
+                value={growthSummary.benchmark.labelText}
+                emphasis={growthSummary.benchmark.label === "below_peer_range" ? "warning" : "primary"}
+              />
+              <OpsMetricCard
+                label="Growth score"
+                value={growthSummary.benchmark.currentValue}
+                sub={growthSummary.benchmark.cohortLabel ?? "Benchmark building"}
+              />
+              <OpsMetricCard
+                label="Campaigns live"
+                value={growthSummary.activeCampaignCount}
+                sub={`${growthSummary.projectCount} projects in workspace`}
+              />
+              <OpsMetricCard
+                label="Providers"
+                value={growthSummary.providerCount}
+                sub={`${growthSummary.billableSeatCount} billable seats`}
+              />
+            </div>
+
+            <div className="mt-6 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+              <div className="space-y-3">
+                <OpsSnapshotRow
+                  label="Peer cohort"
+                  value={
+                    growthSummary.benchmark.cohortLabel
+                      ? `${growthSummary.benchmark.cohortLabel} (${growthSummary.benchmark.cohortSize} workspaces)`
+                      : "Benchmark building as more workspaces enter this cohort."
+                  }
+                />
+                <OpsSnapshotRow
+                  label="Acquisition context"
+                  value={[
+                    growthSummary.firstTouchSource
+                      ? `First touch: ${growthSummary.firstTouchSource}`
+                      : null,
+                    growthSummary.latestTouchSource
+                      ? `Latest touch: ${growthSummary.latestTouchSource}`
+                      : null,
+                    growthSummary.conversionTouchSource
+                      ? `Conversion touch: ${growthSummary.conversionTouchSource}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" / ") || "This workspace has not captured enough attribution context yet."}
+                />
+              </div>
+
+              <OpsPriorityLink
+                href={nextHref}
+                title="Use the benchmark to choose the next move"
+                body={growthSummary.recommendedMove}
+                cta="Open next move"
+                emphasis
+              />
+            </div>
+          </OpsPanel>
         </div>
       ) : null}
     </PortalPageFrame>
