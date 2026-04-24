@@ -14,6 +14,7 @@ import {
   Shield,
   Sparkles,
   Rocket,
+  TrendingUp,
   WalletCards,
   Workflow,
 } from "lucide-react";
@@ -95,6 +96,13 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Analytics",
     description: "Outcomes, activation trends, reliability pressure and performance signals.",
     icon: BarChart3,
+  },
+  {
+    href: "/growth",
+    label: "Growth",
+    description: "Internal commercial cockpit for leads, buyer requests, evaluation posture and follow-up.",
+    icon: TrendingUp,
+    superAdminOnly: true,
   },
   {
     href: "/business",

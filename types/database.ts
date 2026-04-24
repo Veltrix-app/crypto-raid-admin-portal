@@ -390,6 +390,76 @@ export type SubprocessorStatus = "active" | "planned" | "retired";
 
 export type ReleaseTargetEnvironment = "local" | "preview" | "production";
 
+export type CommercialLeadState =
+  | "new"
+  | "qualified"
+  | "watching"
+  | "engaged"
+  | "evaluation"
+  | "converted"
+  | "cooling_off"
+  | "lost";
+
+export type CommercialLeadSource =
+  | "manual"
+  | "pricing"
+  | "start"
+  | "homepage"
+  | "trust"
+  | "docs"
+  | "demo_request"
+  | "enterprise_intake"
+  | "support"
+  | "billing"
+  | "success"
+  | "analytics"
+  | "converted_account";
+
+export type CommercialLeadEventType =
+  | "lead_created"
+  | "signal_captured"
+  | "qualified"
+  | "state_changed"
+  | "note_added"
+  | "task_added"
+  | "task_resolved"
+  | "request_linked"
+  | "account_linked"
+  | "converted"
+  | "cooling_off"
+  | "lost";
+
+export type CommercialLeadNoteType =
+  | "general"
+  | "qualification"
+  | "buyer_concern"
+  | "enterprise_requirement"
+  | "follow_up";
+
+export type CommercialLeadNoteStatus = "open" | "resolved" | "archived";
+
+export type CommercialFollowUpTaskType =
+  | "follow_up"
+  | "qualification"
+  | "demo_follow_up"
+  | "enterprise_review"
+  | "expansion_follow_up";
+
+export type CommercialFollowUpTaskStatus =
+  | "open"
+  | "in_progress"
+  | "waiting"
+  | "resolved"
+  | "canceled";
+
+export type CommercialFollowUpTaskDueState =
+  | "upcoming"
+  | "due_now"
+  | "overdue"
+  | "resolved";
+
+export type CommercialRequestStatus = "new" | "qualified" | "converted" | "closed";
+
 export type ReleaseRunState =
   | "draft"
   | "ready_for_review"
@@ -1974,6 +2044,108 @@ export type DbReleaseRun = {
   approved_at: string | null;
   deploying_at: string | null;
   verified_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCommercialLead = {
+  id: string;
+  lead_state: CommercialLeadState;
+  source: CommercialLeadSource;
+  contact_name: string;
+  contact_email: string;
+  company_name: string;
+  company_domain: string | null;
+  owner_auth_user_id: string | null;
+  linked_customer_account_id: string | null;
+  qualification_summary: string;
+  intent_summary: string;
+  last_signal_at: string | null;
+  last_contact_at: string | null;
+  converted_at: string | null;
+  lost_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCommercialLeadEvent = {
+  id: string;
+  commercial_lead_id: string;
+  event_type: CommercialLeadEventType;
+  actor_auth_user_id: string | null;
+  summary: string;
+  event_payload: Record<string, any> | null;
+  created_at: string;
+};
+
+export type DbCommercialLeadNote = {
+  id: string;
+  commercial_lead_id: string;
+  author_auth_user_id: string | null;
+  owner_auth_user_id: string | null;
+  note_type: CommercialLeadNoteType;
+  status: CommercialLeadNoteStatus;
+  title: string;
+  body: string;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+};
+
+export type DbCommercialFollowUpTask = {
+  id: string;
+  commercial_lead_id: string;
+  owner_auth_user_id: string | null;
+  task_type: CommercialFollowUpTaskType;
+  status: CommercialFollowUpTaskStatus;
+  due_state: CommercialFollowUpTaskDueState;
+  title: string;
+  summary: string;
+  due_at: string | null;
+  completed_at: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbDemoRequest = {
+  id: string;
+  commercial_lead_id: string | null;
+  requester_name: string;
+  requester_email: string;
+  company_name: string;
+  company_domain: string | null;
+  team_size: string;
+  use_case: string;
+  urgency: string;
+  request_source: string;
+  status: CommercialRequestStatus;
+  source_path: string | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbEnterpriseIntakeRequest = {
+  id: string;
+  commercial_lead_id: string | null;
+  requester_name: string;
+  requester_email: string;
+  company_name: string;
+  company_domain: string | null;
+  team_size: string;
+  use_case: string;
+  requirement_summary: string;
+  security_requirements: string;
+  billing_requirements: string;
+  onboarding_requirements: string;
+  urgency: string;
+  request_source: string;
+  status: CommercialRequestStatus;
+  source_path: string | null;
   metadata: Record<string, any> | null;
   created_at: string;
   updated_at: string;
