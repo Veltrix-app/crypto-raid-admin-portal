@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import AdminShell from "@/components/layout/shell/AdminShell";
@@ -36,6 +37,21 @@ type OpsHealthSummary = {
   openIncidentCount?: number;
   activeOverrideCount?: number;
 };
+
+const overviewModeCopy = {
+  launch: {
+    title: "Launch lane in focus",
+    body: "Readiness, activation and workspace motion take priority when the next launch window is near.",
+  },
+  health: {
+    title: "Health lane in focus",
+    body: "Provider, queue, deploy and automation posture matter most when the platform itself starts to drift.",
+  },
+  escalations: {
+    title: "Escalation lane in focus",
+    body: "Cross-surface ownership and the next exact recovery move matter most when issues start bouncing between teams.",
+  },
+} as const;
 
 export default function OverviewPage() {
   const { activeProjectId, memberships, role } = useAdminAuthStore();
@@ -193,20 +209,88 @@ export default function OverviewPage() {
   const openIncidentCount = Number(healthSummary?.openIncidentCount ?? 0);
   const activeOverrideCount = Number(healthSummary?.activeOverrideCount ?? 0);
 
+  const currentModeCopy = overviewModeCopy[overviewMode];
+  const primaryPriority = controlPriorities[0];
+  const watchSignals = [
+    {
+      label: "Queue pressure",
+      value: queueBacklogCount > 0 ? `${queueBacklogCount}` : "Clear",
+      tone: queueBacklogCount > 0 ? "warning" : "default",
+    },
+    {
+      label: "Provider failures",
+      value: providerFailureCount > 0 ? `${providerFailureCount}` : "Stable",
+      tone: providerFailureCount > 0 ? "warning" : "default",
+    },
+    {
+      label: "Open incidents",
+      value: openIncidentCount > 0 ? `${openIncidentCount}` : "None",
+      tone: openIncidentCount > 0 ? "warning" : "default",
+    },
+    {
+      label: "Escalations",
+      value: supportEscalationCount > 0 ? `${supportEscalationCount}` : "Low",
+      tone: supportEscalationCount > 0 ? "warning" : "default",
+    },
+  ] as const;
+
+  const nowSummary = useMemo(() => {
+    if (overviewMode === "launch") {
+      return {
+        title: activeProject?.name || activeMembership?.projectName || "Launch posture",
+        body:
+          launchReadyProjects > 0
+            ? `${launchReadyProjects} projects look launch-ready right now, with ${activationRate}% member activation across the latest snapshot.`
+            : "No launch-ready projects are visible yet, so workspace setup and readiness still matter most.",
+      };
+    }
+
+    if (overviewMode === "health") {
+      return {
+        title: "Platform health posture",
+        body:
+          providerFailureCount + queueBacklogCount + automationFailureCount > 0
+            ? "Health pressure is visible across providers, queue backlog or automation drift. Use this lane to keep platform pressure contained."
+            : "Platform posture looks stable right now, so operators can stay focused on launch motion instead of infra drift.",
+      };
+    }
+
+    return {
+      title: "Escalation routing posture",
+      body:
+        supportEscalationCount + openTrustCaseCount + openPayoutCaseCount + openOnchainCaseCount > 0
+          ? "Cross-surface ownership matters right now. Route the next action into the right workspace before the pressure starts bouncing."
+          : "Escalation volume is low right now, so the platform is not showing a heavy cross-team recovery pattern.",
+    };
+  }, [
+    activeMembership?.projectName,
+    activeProject?.name,
+    activationRate,
+    automationFailureCount,
+    launchReadyProjects,
+    openOnchainCaseCount,
+    openPayoutCaseCount,
+    openTrustCaseCount,
+    overviewMode,
+    providerFailureCount,
+    queueBacklogCount,
+    supportEscalationCount,
+  ]);
+
   return (
     <AdminShell>
       <PortalPageFrame
-        eyebrow="Command center"
+        eyebrow="Launch command center"
         title="Overview"
-        description="Use Overview as the operator command center: launch posture first, live health second, and escalation routing when the platform starts to drift."
+        description="Overview should feel like the premium operator entry point: current workspace state first, the most important next move second, and the pressure worth watching third."
         actions={
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-              Active workspace
-            </p>
-            <p className="text-lg font-extrabold text-text">
-              {activeMembership?.projectName || activeProject?.name || "Workspace"}
-            </p>
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Active workspace</p>
+              <p className="mt-2 text-lg font-extrabold text-text">
+                {activeMembership?.projectName || activeProject?.name || "Workspace"}
+              </p>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <OpsStatusPill tone={role === "super_admin" ? "success" : "default"}>
                 {role === "super_admin" ? "Super admin" : activeMembership?.role || "Project operator"}
@@ -218,96 +302,91 @@ export default function OverviewPage() {
           </div>
         }
         statusBand={
-          <div className="rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(13,18,27,0.94),rgba(10,14,21,0.92))] p-5">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-              <div className="max-w-2xl">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
-                  Overview modes
-                </p>
-                <h2 className="mt-2 text-xl font-extrabold tracking-[-0.02em] text-text">
-                  Pick the layer you want to run from
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-sub">
-                  Separate launch posture, live health and escalation routing so operators can scan
-                  one concern at a time instead of reading every pressure source at once.
-                </p>
+          <div className="grid gap-4 xl:grid-cols-[1.02fr_1fr_0.98fr]">
+            <OverviewTopCard
+              label="Now"
+              title={nowSummary.title}
+              body={nowSummary.body}
+              tone="primary"
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <OverviewState
+                  label="Campaigns in motion"
+                  value={workspaceCampaigns.length > 0 ? `${workspaceCampaigns.length}` : "None yet"}
+                />
+                <OverviewState
+                  label="Claims in motion"
+                  value={highPriorityClaims > 0 ? `${highPriorityClaims}` : "Low"}
+                />
+                <OverviewState
+                  label="Pending invites"
+                  value={pendingInvites > 0 ? `${pendingInvites}` : "Stable"}
+                />
+                <OverviewState
+                  label="Launch-ready projects"
+                  value={launchReadyProjects > 0 ? `${launchReadyProjects}` : "Not yet"}
+                />
               </div>
+            </OverviewTopCard>
 
-              <SegmentToggle
-                value={overviewMode}
-                onChange={setOverviewMode}
-                options={[
-                  { value: "launch", label: "Launch" },
-                  { value: "health", label: "Health" },
-                  { value: "escalations", label: "Escalations" },
-                ]}
-              />
-            </div>
+            <OverviewTopCard
+              label="Next"
+              title={primaryPriority.title}
+              body={primaryPriority.body}
+            >
+              <div className="grid gap-3">
+                {controlPriorities.map((item) => (
+                  <a
+                    key={item.title}
+                    href={item.href}
+                    className={`rounded-[22px] border px-4 py-4 transition hover:border-primary/28 ${
+                      item.emphasis
+                        ? "border-primary/18 bg-primary/[0.08]"
+                        : "border-white/8 bg-white/[0.03]"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-bold text-text">{item.title}</p>
+                        <p className="mt-2 text-sm leading-6 text-sub">{item.body}</p>
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-[0.16em] text-primary">{item.cta}</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </OverviewTopCard>
 
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
-              <ModeCard
-                label="Launch"
-                body="Readiness, activation and snapshot freshness before a launch push."
-              />
-              <ModeCard
-                label="Health"
-                body="Provider, queue, automation and override pressure in one scan."
-              />
-              <ModeCard
-                label="Escalations"
-                body="Route current pressure into the exact workspace that should own the next action."
-              />
-            </div>
+            <OverviewTopCard
+              label="Watch"
+              title={currentModeCopy.title}
+              body={currentModeCopy.body}
+            >
+              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-3">
+                <SegmentToggle
+                  value={overviewMode}
+                  onChange={setOverviewMode}
+                  options={[
+                    { value: "launch", label: "Launch" },
+                    { value: "health", label: "Health" },
+                    { value: "escalations", label: "Escalations" },
+                  ]}
+                />
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                {watchSignals.map((signal) => (
+                  <OverviewWatchSignal
+                    key={signal.label}
+                    label={signal.label}
+                    value={signal.value}
+                    tone={signal.tone}
+                  />
+                ))}
+              </div>
+            </OverviewTopCard>
           </div>
         }
       >
-        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-          <OpsPanel
-            eyebrow="Today on overview"
-            title="Start with the lane that moves delivery forward"
-            description="Use the top rail for the next action, not for every metric. These are the boards most likely to change launch quality if they sit idle."
-          >
-            <div className="grid gap-4 md:grid-cols-3">
-              {controlPriorities.map((item) => (
-                <OpsPriorityLink
-                  key={item.title}
-                  href={item.href}
-                  title={item.title}
-                  body={item.body}
-                  cta={item.cta}
-                  emphasis={item.emphasis}
-                />
-              ))}
-            </div>
-          </OpsPanel>
-
-          <OpsPanel
-            eyebrow="Workspace context"
-            title="Keep the active workspace in view"
-            description="Overview stays platform-first, but the current workspace should still be visible so the next handoff is obvious."
-            tone="accent"
-          >
-            <div className="grid gap-3">
-              <InlineState
-                label="Current workspace"
-                value={activeMembership?.projectName || activeProject?.name || "Workspace"}
-              />
-              <InlineState
-                label="Campaigns in motion"
-                value={workspaceCampaigns.length > 0 ? String(workspaceCampaigns.length) : "None yet"}
-              />
-              <InlineState
-                label="Claims in motion"
-                value={highPriorityClaims > 0 ? `${highPriorityClaims} active` : "Low"}
-              />
-              <InlineState
-                label="Pending invites"
-                value={pendingInvites > 0 ? `${pendingInvites} pending` : "Stable"}
-              />
-            </div>
-          </OpsPanel>
-        </div>
-
         {healthError ? (
           <OpsPanel eyebrow="Health error" title="Ops health could not load" description={healthError}>
             <div className="grid gap-4 md:grid-cols-2">
@@ -321,7 +400,7 @@ export default function OverviewPage() {
               <OpsPriorityLink
                 href="/onchain"
                 title="Open on-chain ops"
-                    body="If this feels like runtime drift, start with the execution workflows and confirm cases are still landing."
+                body="If this feels like runtime drift, start with the execution workflows and confirm cases are still landing."
                 cta="Open on-chain"
               />
             </div>
@@ -339,7 +418,7 @@ export default function OverviewPage() {
               <OpsMetricCard label="Linked readiness" value={`${linkedReadinessRate}%`} />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+            <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
               <LaunchHealthBoard
                 activeProjects={activeProjects}
                 launchReadyProjects={launchReadyProjects}
@@ -351,29 +430,73 @@ export default function OverviewPage() {
               />
 
               <OpsPanel
-                eyebrow="Workspace launch board"
-                title="Active workspace posture"
-                description="Keep the current workspace visible while Overview stays platform-first."
+                eyebrow="Next inside the workspace"
+                title="Keep the active workspace moving"
+                description="When launch posture is the focus, use the active workspace as the next exact place to push work forward."
+                tone="accent"
               >
                 <div className="grid gap-4">
                   <OpsPriorityLink
                     href={activeProjectId ? `/projects/${activeProjectId}/launch` : "/projects"}
                     title="Open launch workspace"
-                    body="Check launch readiness, templates and the next builder handoff for the active project."
+                    body="Check launch readiness, templates, setup pressure and the next builder handoff for the active project."
                     cta="Open launch"
                     emphasis
                   />
                   <OpsPriorityLink
                     href={activeProjectId ? `/projects/${activeProjectId}/community` : "/projects"}
                     title="Open community workspace"
-                    body="If launch is moving, confirm captains, automations and command surfaces are ready too."
+                    body="If launch is moving, confirm captains, automations and community execution are moving with it."
                     cta="Open community"
                   />
                   <OpsPriorityLink
                     href={activeProjectId ? `/projects/${activeProjectId}` : "/projects"}
                     title="Open project overview"
-                    body="Use the project workspace when this launch window turns into specific object work."
+                    body="Drop back into the project surface when this launch window becomes specific object work."
                     cta="Open project"
+                  />
+                </div>
+              </OpsPanel>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+              <OpsPanel
+                eyebrow="Workspace state"
+                title="Quick state on the active project"
+                description="A calmer command center still needs one simple project snapshot in view."
+              >
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <OverviewState label="Workspace" value={activeProject?.name || "Workspace"} />
+                  <OverviewState label="Reward inventory" value={workspaceRewards.length > 0 ? `${workspaceRewards.length}` : "Low"} />
+                  <OverviewState label="Team size" value={`${workspaceMembers.length}`} />
+                  <OverviewState label="Pending invites" value={pendingInvites > 0 ? `${pendingInvites}` : "Stable"} />
+                </div>
+              </OpsPanel>
+
+              <OpsPanel
+                eyebrow="What to watch"
+                title="Launch pressure should stay directional, not noisy"
+                description="The goal is clarity: know the current workspace state, know the next action, and know whether launch readiness or activation is drifting."
+              >
+                <div className="grid gap-4 md:grid-cols-2">
+                  <OverviewWatchSignal
+                    label="Snapshot freshness"
+                    value={healthSummary?.snapshotStale ? "Stale" : "Fresh"}
+                    tone={healthSummary?.snapshotStale ? "warning" : "default"}
+                  />
+                  <OverviewWatchSignal
+                    label="Claims pressure"
+                    value={highPriorityClaims > 0 ? `${highPriorityClaims}` : "Low"}
+                    tone={highPriorityClaims > 0 ? "warning" : "default"}
+                  />
+                  <OverviewWatchSignal
+                    label="Member activation"
+                    value={`${activationRate}%`}
+                  />
+                  <OverviewWatchSignal
+                    label="Launch-ready projects"
+                    value={launchReadyProjects > 0 ? `${launchReadyProjects}` : "Not yet"}
+                    tone={launchReadyProjects > 0 ? "default" : "warning"}
                   />
                 </div>
               </OpsPanel>
@@ -445,8 +568,8 @@ export default function OverviewPage() {
             <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
               <OpsPanel
                 eyebrow="Escalation routing"
-                title="What needs named ownership"
-                description="Route platform pressure into the exact workspace that should own the next action."
+                title="Route pressure into the exact workspace that should own it"
+                description="The overview command center should keep named ownership visible before issues turn into circular handoffs."
               >
                 <div className="grid gap-4">
                   <OpsPriorityLink
@@ -482,22 +605,16 @@ export default function OverviewPage() {
 
               <OpsPanel
                 eyebrow="Workspace context"
-                title="Active workspace support posture"
-                description="Keep the current workspace visible while escalation routing stays platform-first."
+                title="Keep the active workspace in sight while you route incidents"
+                description="Escalations should still stay anchored to the workspace the operator is most likely to jump back into."
                 tone="accent"
               >
                 <div className="grid gap-3">
-                  <InlineState label="Campaigns in motion" value={String(workspaceCampaigns.length)} />
-                  <InlineState label="Reward inventory" value={String(workspaceRewards.length)} />
-                  <InlineState
-                    label="Claims in motion"
-                    value={highPriorityClaims > 0 ? `${highPriorityClaims} active` : "Low"}
-                  />
-                  <InlineState
-                    label="Pending invites"
-                    value={pendingInvites > 0 ? `${pendingInvites} pending` : "Stable"}
-                  />
-                  <InlineState label="Team size" value={String(workspaceMembers.length)} />
+                  <OverviewState label="Campaigns in motion" value={`${workspaceCampaigns.length}`} />
+                  <OverviewState label="Reward inventory" value={`${workspaceRewards.length}`} />
+                  <OverviewState label="Claims in motion" value={highPriorityClaims > 0 ? `${highPriorityClaims}` : "Low"} />
+                  <OverviewState label="Pending invites" value={pendingInvites > 0 ? `${pendingInvites}` : "Stable"} />
+                  <OverviewState label="Team size" value={`${workspaceMembers.length}`} />
                 </div>
               </OpsPanel>
             </div>
@@ -525,24 +642,69 @@ export default function OverviewPage() {
             ) : null}
           </div>
         )}
-
       </PortalPageFrame>
     </AdminShell>
   );
 }
 
-function ModeCard({ label, body }: { label: string; body: string }) {
+function OverviewTopCard({
+  label,
+  title,
+  body,
+  children,
+  tone = "default",
+}: {
+  label: string;
+  title: string;
+  body: string;
+  children: ReactNode;
+  tone?: "default" | "primary";
+}) {
   return (
-    <div className="rounded-[22px] border border-white/6 bg-white/[0.02] px-4 py-4">
-      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{body}</p>
+    <section
+      className={`relative overflow-hidden rounded-[32px] border p-5 shadow-[0_28px_90px_rgba(0,0,0,0.2)] ${
+        tone === "primary"
+          ? "border-primary/18 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.12),transparent_24%),linear-gradient(180deg,rgba(14,20,30,0.98),rgba(10,14,22,0.96))]"
+          : "border-white/8 bg-[linear-gradient(180deg,rgba(15,21,32,0.96),rgba(10,14,22,0.94))]"
+      }`}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.03),transparent_34%)]" />
+      <div className="relative z-10">
+        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">{label}</p>
+        <h2 className="mt-3 text-2xl font-black tracking-[-0.03em] text-text">{title}</h2>
+        <p className="mt-3 text-sm leading-7 text-sub">{body}</p>
+        <div className="mt-5">{children}</div>
+      </div>
+    </section>
+  );
+}
+
+function OverviewState({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
+      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>
   );
 }
 
-function InlineState({ label, value }: { label: string; value: string }) {
+function OverviewWatchSignal({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "warning";
+}) {
   return (
-    <div className="rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-3">
+    <div
+      className={`rounded-[22px] border px-4 py-4 ${
+        tone === "warning"
+          ? "border-amber-400/18 bg-amber-500/[0.08]"
+          : "border-white/8 bg-white/[0.03]"
+      }`}
+    >
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>

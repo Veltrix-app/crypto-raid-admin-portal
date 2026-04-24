@@ -21,7 +21,7 @@ export default function PortalPageFrame({
   children,
 }: PortalPageFrameProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <OpsHero eyebrow={eyebrow} title={title} description={description} aside={actions} />
       {statusBand ? <div>{statusBand}</div> : null}
       <div className="space-y-8">{children}</div>
