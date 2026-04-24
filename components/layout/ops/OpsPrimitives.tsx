@@ -18,23 +18,23 @@ export function OpsHero({
   aside?: ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[38px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.13),transparent_24%),radial-gradient(circle_at_82%_18%,rgba(74,217,255,0.12),transparent_26%),linear-gradient(180deg,rgba(12,18,28,0.99),rgba(8,12,20,0.97))] px-6 py-7 shadow-[0_30px_90px_rgba(0,0,0,0.28)] md:px-7 md:py-8">
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.04),transparent_32%,transparent_68%,rgba(255,255,255,0.02))]" />
-      <div className="pointer-events-none absolute inset-x-10 bottom-0 h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
+    <div className="relative overflow-hidden rounded-[34px] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.1),transparent_22%),radial-gradient(circle_at_82%_18%,rgba(74,217,255,0.08),transparent_24%),linear-gradient(180deg,rgba(10,13,19,0.99),rgba(6,8,13,0.98))] px-6 py-7 shadow-[0_28px_84px_rgba(0,0,0,0.34)] md:px-7 md:py-8">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/16 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.03),transparent_32%,transparent_68%,rgba(255,255,255,0.015))]" />
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-6">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-primary">
             <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_18px_rgba(186,255,59,0.55)]" />
             {eyebrow}
           </div>
-          <h1 className="mt-5 text-3xl font-extrabold tracking-[-0.04em] text-text md:text-[3rem] md:leading-[0.96]">
+          <h1 className="mt-5 text-3xl font-extrabold tracking-[-0.04em] text-text md:text-[2.85rem] md:leading-[0.96]">
             {title}
           </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-sub md:text-[0.96rem] md:leading-8">{description}</p>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-sub md:text-[0.94rem] md:leading-8">{description}</p>
         </div>
 
         {aside ? (
-          <div className="min-w-[260px] rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-5 py-4 backdrop-blur-xl">
+          <div className="min-w-[260px] rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] px-5 py-4 backdrop-blur-xl">
             {aside}
           </div>
         ) : null}
@@ -63,14 +63,15 @@ export function OpsPanel({
   return (
     <section
       className={cx(
-        "relative overflow-hidden rounded-[32px] border p-6 shadow-[0_24px_80px_rgba(0,0,0,0.18)]",
+        "relative overflow-hidden rounded-[30px] border p-6 shadow-[0_22px_68px_rgba(0,0,0,0.22)]",
         tone === "accent"
-          ? "border-primary/16 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.1),transparent_24%),radial-gradient(circle_at_88%_14%,rgba(74,217,255,0.08),transparent_22%),linear-gradient(180deg,rgba(14,20,30,0.98),rgba(10,14,22,0.96))]"
-          : "border-white/8 bg-[linear-gradient(180deg,rgba(14,20,30,0.96),rgba(10,14,22,0.94))]",
+          ? "border-primary/14 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.08),transparent_22%),radial-gradient(circle_at_88%_14%,rgba(74,217,255,0.06),transparent_20%),linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
+          : "border-white/6 bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]",
         className
       )}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.025),transparent_34%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/16 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.02),transparent_34%)]" />
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
           {eyebrow ? (
@@ -101,15 +102,16 @@ export function OpsMetricCard({
   return (
     <div
       className={cx(
-        "relative overflow-hidden rounded-[26px] border px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.16)]",
+        "relative overflow-hidden rounded-[24px] border px-5 py-5 shadow-[0_16px_34px_rgba(0,0,0,0.16)]",
         emphasis === "primary"
-          ? "border-primary/20 bg-[linear-gradient(180deg,rgba(186,255,59,0.13),rgba(14,19,28,0.95))]"
+          ? "border-primary/16 bg-[linear-gradient(180deg,rgba(186,255,59,0.1),rgba(11,14,20,0.98))]"
           : emphasis === "warning"
-            ? "border-amber-400/16 bg-[linear-gradient(180deg,rgba(245,158,11,0.1),rgba(14,19,28,0.95))]"
-            : "border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.92),rgba(12,17,25,0.9))]"
+            ? "border-amber-400/16 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(11,14,20,0.98))]"
+            : "border-white/6 bg-[linear-gradient(180deg,rgba(14,18,26,0.96),rgba(9,12,18,0.96))]"
       )}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_42%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/14 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_42%)]" />
       <div className="relative z-10">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">{label}</p>
         <p className="mt-3 text-[1.95rem] font-extrabold tracking-[-0.03em] text-text">{value}</p>
@@ -121,7 +123,7 @@ export function OpsMetricCard({
 
 export function OpsSnapshotRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+    <div className="rounded-[20px] border border-white/6 bg-white/[0.02] px-4 py-4">
       <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold leading-6 text-text">{value}</p>
     </div>
@@ -145,10 +147,10 @@ export function OpsPriorityLink({
     <a
       href={href}
       className={cx(
-        "group block rounded-[26px] border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/28",
+        "group block rounded-[24px] border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/24",
         emphasis
-          ? "border-primary/20 bg-[linear-gradient(180deg,rgba(186,255,59,0.1),rgba(18,24,35,0.92))]"
-          : "border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.86))]"
+          ? "border-primary/16 bg-[linear-gradient(180deg,rgba(186,255,59,0.08),rgba(12,15,22,0.98))]"
+          : "border-white/6 bg-[linear-gradient(180deg,rgba(13,17,25,0.98),rgba(8,11,16,0.98))]"
       )}
     >
       <div className="flex items-start justify-between gap-4">
@@ -166,7 +168,7 @@ export function OpsPriorityLink({
 
 export function OpsFilterBar({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[24px] border border-white/6 bg-[linear-gradient(180deg,rgba(13,18,27,0.94),rgba(10,14,21,0.92))] p-4">
+    <div className="rounded-[22px] border border-white/6 bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-4">
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_220px]">{children}</div>
     </div>
   );

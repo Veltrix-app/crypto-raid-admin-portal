@@ -20,7 +20,7 @@ export default function ProjectsRosterTable({
       label: "Project",
       render: (project) => (
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/8 bg-white/[0.03] text-xl shadow-[0_12px_30px_rgba(0,0,0,0.14)]">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/6 bg-white/[0.02] text-xl shadow-[0_12px_30px_rgba(0,0,0,0.14)]">
             {project.logo}
           </span>
           <div className="min-w-0">
@@ -91,10 +91,10 @@ export default function ProjectsRosterTable({
       label: "Open",
       render: (project) => (
         <div className="flex flex-wrap gap-3">
-          <Link href={`/projects/${project.id}`} className="font-semibold text-primary">
+          <Link href={`/projects/${project.id}`} className="font-semibold text-primary transition hover:text-primary/80">
             Workspace
           </Link>
-          <Link href={`/projects/${project.id}/community`} className="font-semibold text-sub">
+          <Link href={`/projects/${project.id}/community`} className="font-semibold text-sub transition hover:text-text">
             Community
           </Link>
         </div>
