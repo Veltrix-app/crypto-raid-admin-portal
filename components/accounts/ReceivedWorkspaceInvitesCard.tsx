@@ -50,7 +50,7 @@ export default function ReceivedWorkspaceInvitesCard() {
         {invites.map((invite) => (
           <div
             key={invite.id}
-            className="rounded-[24px] border border-line bg-card2 px-4 py-4"
+            className="rounded-[24px] border border-white/6 bg-white/[0.025] px-4 py-4"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

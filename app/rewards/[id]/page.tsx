@@ -15,6 +15,7 @@ import {
   DetailMetaRow,
   DetailMetricCard,
   DetailSidebarSurface,
+  DetailStatusRow,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
@@ -238,7 +239,7 @@ export default function RewardDetailPage() {
           </div>
         ) : null}
 
-        <div className="rounded-[28px] border border-line bg-card p-5">
+        <div className="rounded-[28px] border border-white/6 bg-white/[0.025] p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
@@ -262,76 +263,55 @@ export default function RewardDetailPage() {
         {rewardView === "operate" ? (
           <>
             <DetailSurface
-              eyebrow="Reward Logic"
-              title="Builder Summary"
+              eyebrow="Reward posture"
+              title="Keep this reward legible and deliverable"
               description={rewardSummary}
+              aside={<DetailMetricCard label="Pending claims" value={pendingClaims.length} />}
             >
-              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-                <p className="text-sm leading-7 text-sub">
-                  Use the settings below to keep scarcity, visibility and claim pressure aligned with how this reward should feel inside the contributor journey.
-                </p>
+              <div className="space-y-3">
+                <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+                  <p className="text-sm leading-7 text-sub">
+                    Use the settings below to keep scarcity, visibility and claim pressure aligned with how this reward should feel inside the contributor journey.
+                  </p>
+                </div>
+                {rewardReadinessItems.map((item) => (
+                  <DetailStatusRow
+                    key={item.label}
+                    label={item.label}
+                    value={item.value}
+                    tone={item.complete ? "primary" : "warning"}
+                  />
+                ))}
               </div>
             </DetailSurface>
 
-            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <DetailSurface
-                eyebrow="Reward Readiness"
-                title="What this reward still needs"
-                description="A concise read on claim posture, visibility and operational drag before more demand routes into this reward."
-                aside={<DetailMetricCard label="Pending Claims" value={pendingClaims.length} />}
-              >
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  {rewardReadinessItems.map((item) => (
-                    <div
-                      key={item.label}
-                      className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-bold text-text">{item.label}</p>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                            item.complete
-                              ? "bg-primary/15 text-primary"
-                              : "bg-amber-500/15 text-amber-300"
-                          }`}
-                        >
-                          {item.complete ? "Ready" : "Needs attention"}
-                        </span>
-                      </div>
-                      <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </DetailSurface>
-
-              <DetailSurface
-                eyebrow="Next Actions"
-                title="Keep the reward loop healthy"
-                description="Use these routes to manage demand, connect new quest pressure and tune scarcity."
-              >
-                <div className="mt-5 space-y-3">
-                  <DetailActionTile
-                    href="/claims"
-                    label="Review reward claims"
-                    description={`${relatedClaims.length} claim${relatedClaims.length === 1 ? "" : "s"} currently route through this reward.`}
-                  />
-                  <DetailActionTile
-                    href={relatedQuests.length > 0 ? "/quests" : "/quests/new"}
-                    label={relatedQuests.length > 0 ? "Connect to active quests" : "Create a quest"}
-                    description={
-                      relatedQuests.length > 0
-                        ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} exist in this project and can be used to drive reward demand.`
-                        : "Add a quest next so contributors have a clear path to unlock this reward."
-                    }
-                  />
-                  <DetailActionTile
-                    href="#edit-reward"
-                    label="Tune stock and delivery"
-                    description="Use the builder below to align scarcity, visibility and claim behavior with the intended campaign pressure."
-                  />
-                </div>
-              </DetailSurface>
-            </div>
+            <DetailSurface
+              eyebrow="Next actions"
+              title="Keep the reward loop healthy"
+              description="Use these routes to manage demand, connect new quest pressure and tune scarcity."
+            >
+              <div className="space-y-3">
+                <DetailActionTile
+                  href="/claims"
+                  label="Review reward claims"
+                  description={`${relatedClaims.length} claim${relatedClaims.length === 1 ? "" : "s"} currently route through this reward.`}
+                />
+                <DetailActionTile
+                  href={relatedQuests.length > 0 ? "/quests" : "/quests/new"}
+                  label={relatedQuests.length > 0 ? "Connect to active quests" : "Create a quest"}
+                  description={
+                    relatedQuests.length > 0
+                      ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} exist in this project and can be used to drive reward demand.`
+                      : "Add a quest next so contributors have a clear path to unlock this reward."
+                  }
+                />
+                <DetailActionTile
+                  href="#edit-reward"
+                  label="Tune stock and delivery"
+                  description="Use the builder below to align scarcity, visibility and claim behavior with the intended campaign pressure."
+                />
+              </div>
+            </DetailSurface>
 
             <DetailSurface
               eyebrow="Platform Core"

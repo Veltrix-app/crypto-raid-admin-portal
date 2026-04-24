@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { ArrowUpRight, CheckCircle2, Circle, Clock3 } from "lucide-react";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
-import { OpsMetricCard, OpsPanel, OpsPriorityLink, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import {
+  OpsMetricCard,
+  OpsPanel,
+  OpsPriorityLink,
+  OpsSnapshotRow,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 
 function getNextAction(props: {
   currentStep: string | undefined;
@@ -59,22 +65,65 @@ export default function AccountOnboardingChecklist() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <OpsMetricCard
-          label="Workspace"
-          value={primaryAccount?.name ?? "Not created"}
-          emphasis={primaryAccount ? "primary" : "default"}
-        />
-        <OpsMetricCard
-          label="Projects"
-          value={primaryAccount ? primaryAccount.projectCount : 0}
-          emphasis={primaryAccount?.projectCount ? "primary" : "warning"}
-        />
-        <OpsMetricCard
-          label="Workspace role"
-          value={primaryAccount?.role ?? "Owner"}
-          emphasis={primaryAccount?.role === "owner" ? "primary" : "default"}
-        />
+      <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <OpsPanel
+          eyebrow="First-run posture"
+          title="Keep the onboarding rail readable"
+          description="This rail should answer what exists already, what is still missing and where the owner should go next without turning into another dashboard."
+        >
+          <div className="grid gap-4 md:grid-cols-3">
+            <OpsMetricCard
+              label="Workspace"
+              value={primaryAccount?.name ?? "Not created"}
+              emphasis={primaryAccount ? "primary" : "default"}
+            />
+            <OpsMetricCard
+              label="Projects"
+              value={primaryAccount ? primaryAccount.projectCount : 0}
+              emphasis={primaryAccount?.projectCount ? "primary" : "warning"}
+            />
+            <OpsMetricCard
+              label="Workspace role"
+              value={primaryAccount?.role ?? "Owner"}
+              emphasis={primaryAccount?.role === "owner" ? "primary" : "default"}
+            />
+          </div>
+        </OpsPanel>
+
+        <OpsPanel
+          eyebrow="Next move"
+          title={nextAction.label}
+          description={nextAction.body}
+          tone="accent"
+          action={
+            <Link
+              href={nextAction.href}
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105"
+            >
+              Open
+              <ArrowUpRight size={14} />
+            </Link>
+          }
+        >
+          <div className="space-y-3">
+            <OpsSnapshotRow
+              label="Current step"
+              value={primaryAccount?.currentStep ?? "create_workspace"}
+            />
+            <OpsSnapshotRow
+              label="Workspace status"
+              value={
+                primaryAccount
+                  ? `${primaryAccount.status} / ${primaryAccount.role}`
+                  : "Not created yet"
+              }
+            />
+            <OpsSnapshotRow
+              label="First project"
+              value={primaryAccount?.firstProjectName ?? "Not created yet"}
+            />
+          </div>
+        </OpsPanel>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -87,7 +136,7 @@ export default function AccountOnboardingChecklist() {
             {checklist.map((item) => (
               <div
                 key={item.id}
-                className="rounded-[24px] border border-line bg-[linear-gradient(180deg,rgba(18,26,38,0.92),rgba(13,19,29,0.96))] px-4 py-4"
+                className="rounded-[24px] border border-white/6 bg-white/[0.025] px-4 py-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -123,37 +172,6 @@ export default function AccountOnboardingChecklist() {
         </OpsPanel>
 
         <div className="space-y-6">
-          <OpsPanel
-            eyebrow="Next move"
-            title={nextAction.label}
-            description={nextAction.body}
-            tone="accent"
-            action={
-              <Link
-                href={nextAction.href}
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105"
-              >
-                Open
-                <ArrowUpRight size={14} />
-              </Link>
-            }
-          >
-            <div className="space-y-3">
-              <OpsSnapshotRow
-                label="Current step"
-                value={primaryAccount?.currentStep ?? "create_workspace"}
-              />
-              <OpsSnapshotRow
-                label="Workspace status"
-                value={primaryAccount ? `${primaryAccount.status} / ${primaryAccount.role}` : "Not created yet"}
-              />
-              <OpsSnapshotRow
-                label="First project"
-                value={primaryAccount?.firstProjectName ?? "Not created yet"}
-              />
-            </div>
-          </OpsPanel>
-
           {primaryAccount?.currentStep === "invite_team" ? (
             <OpsPanel
               eyebrow="Workspace team"

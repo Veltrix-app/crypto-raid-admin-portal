@@ -119,247 +119,240 @@ function ProjectsPageContent() {
   }
 
   return (
-    <div className="space-y-6">
-        <ProjectsBoardHeader
-          isSuperAdmin={isSuperAdmin}
-          projectCount={projects.length}
-          activeProjects={activeProjects}
-          approvedProjects={approvedProjects}
-          publicProjects={publicProjects}
-          pendingRequests={pendingRequests.length}
-          totalMembers={totalMembers}
-          chainCount={chainCount}
-          draftProjects={draftProjects}
-          pausedProjects={pausedProjects}
-          view={boardView}
-          onViewChange={setBoardView}
-        />
+    <div className="space-y-8">
+      <ProjectsBoardHeader
+        isSuperAdmin={isSuperAdmin}
+        projectCount={projects.length}
+        activeProjects={activeProjects}
+        approvedProjects={approvedProjects}
+        publicProjects={publicProjects}
+        pendingRequests={pendingRequests.length}
+        totalMembers={totalMembers}
+        chainCount={chainCount}
+        draftProjects={draftProjects}
+        pausedProjects={pausedProjects}
+        view={boardView}
+        onViewChange={setBoardView}
+      />
 
-        {showBootstrapEmptyState ? (
-          <OpsPanel
-            eyebrow="First project bootstrap"
-            title="Create the first project from the account workspace"
-            description="A workspace can exist without projects, but the operator product really starts once the first project is created. Keep this payload intentionally small and move into Launch immediately after."
-            tone="accent"
-          >
-            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <div className="space-y-4">
-                {bootstrapBlock ? (
-                  <PortalBillingBlockNotice
-                    block={bootstrapBlock}
-                    title="Creating another project needs more plan capacity"
-                  />
-                ) : null}
-
-                <div className="grid gap-4 md:grid-cols-3">
-                  <OpsMetricCard label="Workspace" value={primaryAccount?.name ?? "Workspace"} emphasis="primary" />
-                  <OpsMetricCard label="Projects" value={0} emphasis="warning" />
-                  <OpsMetricCard label="Next step" value="Launch setup" />
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Project name</span>
-                    <input
-                      value={bootstrapName}
-                      onChange={(event) => setBootstrapName(event.target.value)}
-                      placeholder="Veltrix Founding Campaign"
-                      className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
-                    />
-                  </label>
-
-                  <label className="space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Chain</span>
-                    <select
-                      value={bootstrapChain}
-                      onChange={(event) => setBootstrapChain(event.target.value)}
-                      className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
-                    >
-                      <option value="Base">Base</option>
-                      <option value="Ethereum">Ethereum</option>
-                      <option value="Solana">Solana</option>
-                      <option value="Polygon">Polygon</option>
-                      <option value="Arbitrum">Arbitrum</option>
-                    </select>
-                  </label>
-
-                  <label className="space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Category</span>
-                    <input
-                      value={bootstrapCategory}
-                      onChange={(event) => setBootstrapCategory(event.target.value)}
-                      placeholder="community"
-                      className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
-                    />
-                  </label>
-
-                  <label className="space-y-2 md:col-span-2">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Short context</span>
-                    <textarea
-                      value={bootstrapDescription}
-                      onChange={(event) => setBootstrapDescription(event.target.value)}
-                      placeholder="What is this project launching and what kind of community is it building?"
-                      rows={4}
-                      className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
-                    />
-                  </label>
-                </div>
-
-                {bootstrapError ? (
-                  <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                    {bootstrapError}
-                  </div>
-                ) : null}
-
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={() => void handleBootstrapProject()}
-                    disabled={bootstrappingProject || !bootstrapName.trim()}
-                    className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {bootstrappingProject ? "Creating project..." : "Create first project"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/getting-started")}
-                    className="rounded-full border border-line bg-card2 px-5 py-3 text-sm font-semibold text-text"
-                  >
-                    Back to Getting Started
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <OpsPanel
-                  eyebrow="Why this matters"
-                  title="Projects are the operational unit"
-                  description="Campaigns, quests, raids, rewards and launch readiness all hang off a project workspace. That is why the first project is the point where the portal starts to become operational software."
-                >
-                  <div className="space-y-3">
-                    <OpsSnapshotRow label="What gets created" value="Project workspace, owner linkage and initial team membership." />
-                    <OpsSnapshotRow label="What happens next" value="You land directly in Launch so the setup spine stays obvious." />
-                    <div className="pt-1">
-                      <OpsStatusPill tone="warning">Small bootstrap payload only</OpsStatusPill>
-                    </div>
-                  </div>
-                </OpsPanel>
-              </div>
-            </div>
-          </OpsPanel>
-        ) : null}
-
-        {boardView === "onboarding" ? (
-          <OpsPanel
-            eyebrow="Onboarding queue"
-            title="Workspace intake"
-            description="Review incoming projects first, then move straight into the workspace once a decision is made."
-            tone="accent"
-          >
-            <ProjectsOnboardingQueue
-              requests={pendingRequests}
-              isSuperAdmin={isSuperAdmin}
-              runningRequestId={runningRequestId}
-              onApprove={(requestId) => {
-                void (async () => {
-                  setRunningRequestId(requestId);
-                  try {
-                    const projectId = await approveOnboardingRequest(requestId);
-                    window.location.href = `/projects/${projectId}`;
-                  } finally {
-                    setRunningRequestId(null);
-                  }
-                })();
-              }}
-              onReject={(requestId) => {
-                void (async () => {
-                  setRunningRequestId(requestId);
-                  try {
-                    await rejectOnboardingRequest(requestId);
-                  } finally {
-                    setRunningRequestId(null);
-                  }
-                })();
-              }}
-            />
-          </OpsPanel>
-        ) : (
-          <OpsPanel
-            eyebrow="Portfolio posture"
-            title="Workspace mix"
-            description="A quick scan of the live portfolio, with the roster kept front and center for day-to-day navigation."
-            tone="accent"
-          >
-            <div className="grid gap-4 md:grid-cols-3">
-              <SignalCard
-                label="Pending requests"
-                value={pendingRequests.length}
-                hint="Projects waiting for approval or rejection."
-              />
-              <SignalCard
-                label="Tracked members"
-                value={totalMembers.toLocaleString()}
-                hint="Member count across all current projects."
-              />
-              <SignalCard
-                label="Chains represented"
-                value={chainCount}
-                hint="Distinct ecosystems currently in the workspace set."
-              />
-            </div>
-          </OpsPanel>
-        )}
-
-        <OpsFilterBar>
-          <OpsSearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Search projects, chain or contact..."
-            ariaLabel="Search projects"
-            name="project-search"
-          />
-          <OpsSelect
-            value={status}
-            onChange={setStatus}
-            ariaLabel="Filter projects by status"
-            name="project-status"
-          >
-            <option value="all">all</option>
-            <option value="draft">draft</option>
-            <option value="active">active</option>
-            <option value="paused">paused</option>
-            <option value="pending">pending</option>
-            <option value="approved">approved</option>
-          </OpsSelect>
-          <button
-            onClick={resetFilters}
-            className="rounded-[20px] border border-line bg-card2 px-4 py-3 font-semibold text-text"
-          >
-            Reset
-          </button>
-        </OpsFilterBar>
-
+      {showBootstrapEmptyState ? (
         <OpsPanel
-          eyebrow="Workspace roster"
-          title={boardView === "onboarding" ? "Intake-facing roster" : "Project stream"}
-          description={
-            boardView === "onboarding"
-              ? "Filtered to the projects that are most likely to need approval, setup or a recovery action next."
-              : "The active project list with status, onboarding posture and a fast route into each workspace."
-          }
+          eyebrow="First project bootstrap"
+          title="Create the first project from the account workspace"
+          description="A workspace can exist without projects, but the operator product really starts once the first project is created. Keep this payload intentionally small and move into Launch immediately after."
+          tone="accent"
         >
-          <ProjectsRosterTable
-            projects={boardView === "onboarding" ? onboardingProjects : filteredProjects}
-            emptyState={
-              showBootstrapEmptyState
-                ? "Create the first project to turn this workspace into a real operator surface."
-                : boardView === "onboarding"
-                ? "No draft, paused or pending workspaces match your filters."
-                : "No projects match your filters."
-            }
+          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-4">
+              {bootstrapBlock ? (
+                <PortalBillingBlockNotice
+                  block={bootstrapBlock}
+                  title="Creating another project needs more plan capacity"
+                />
+              ) : null}
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <OpsMetricCard
+                  label="Workspace"
+                  value={primaryAccount?.name ?? "Workspace"}
+                  emphasis="primary"
+                />
+                <OpsMetricCard label="Projects" value={0} emphasis="warning" />
+                <OpsMetricCard label="Next step" value="Launch setup" />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
+                    Project name
+                  </span>
+                  <input
+                    value={bootstrapName}
+                    onChange={(event) => setBootstrapName(event.target.value)}
+                    placeholder="Veltrix Founding Campaign"
+                    className="w-full rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-4 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
+                    Chain
+                  </span>
+                  <select
+                    value={bootstrapChain}
+                    onChange={(event) => setBootstrapChain(event.target.value)}
+                    className="w-full rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-4 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="Base">Base</option>
+                    <option value="Ethereum">Ethereum</option>
+                    <option value="Solana">Solana</option>
+                    <option value="Polygon">Polygon</option>
+                    <option value="Arbitrum">Arbitrum</option>
+                  </select>
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
+                    Category
+                  </span>
+                  <input
+                    value={bootstrapCategory}
+                    onChange={(event) => setBootstrapCategory(event.target.value)}
+                    placeholder="community"
+                    className="w-full rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-4 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                  />
+                </label>
+
+                <label className="space-y-2 md:col-span-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
+                    Short context
+                  </span>
+                  <textarea
+                    value={bootstrapDescription}
+                    onChange={(event) => setBootstrapDescription(event.target.value)}
+                    placeholder="What is this project launching and what kind of community is it building?"
+                    rows={4}
+                    className="w-full rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-4 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                  />
+                </label>
+              </div>
+
+              {bootstrapError ? (
+                <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                  {bootstrapError}
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => void handleBootstrapProject()}
+                  disabled={bootstrappingProject || !bootstrapName.trim()}
+                  className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {bootstrappingProject ? "Creating project..." : "Create first project"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push("/getting-started")}
+                  className="rounded-full border border-white/6 bg-white/[0.025] px-5 py-3 text-sm font-semibold text-text"
+                >
+                  Back to Getting Started
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <OpsPanel
+                eyebrow="Why this matters"
+                title="Projects are the operational unit"
+                description="Campaigns, quests, raids, rewards and launch readiness all hang off a project workspace. That is why the first project is the point where the portal starts to become operational software."
+              >
+                <div className="space-y-3">
+                  <OpsSnapshotRow
+                    label="What gets created"
+                    value="Project workspace, owner linkage and initial team membership."
+                  />
+                  <OpsSnapshotRow
+                    label="What happens next"
+                    value="You land directly in Launch so the setup spine stays obvious."
+                  />
+                  <div className="pt-1">
+                    <OpsStatusPill tone="warning">Small bootstrap payload only</OpsStatusPill>
+                  </div>
+                </div>
+              </OpsPanel>
+            </div>
+          </div>
+        </OpsPanel>
+      ) : null}
+
+      {boardView === "onboarding" ? (
+        <OpsPanel
+          eyebrow="Onboarding queue"
+          title="Workspace intake"
+          description="Review incoming projects first, then move straight into the workspace once a decision is made."
+          tone="accent"
+        >
+          <ProjectsOnboardingQueue
+            requests={pendingRequests}
+            isSuperAdmin={isSuperAdmin}
+            runningRequestId={runningRequestId}
+            onApprove={(requestId) => {
+              void (async () => {
+                setRunningRequestId(requestId);
+                try {
+                  const projectId = await approveOnboardingRequest(requestId);
+                  window.location.href = `/projects/${projectId}`;
+                } finally {
+                  setRunningRequestId(null);
+                }
+              })();
+            }}
+            onReject={(requestId) => {
+              void (async () => {
+                setRunningRequestId(requestId);
+                try {
+                  await rejectOnboardingRequest(requestId);
+                } finally {
+                  setRunningRequestId(null);
+                }
+              })();
+            }}
           />
         </OpsPanel>
-      </div>
+      ) : null}
+
+      <OpsFilterBar>
+        <OpsSearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search projects, chain or contact..."
+          ariaLabel="Search projects"
+          name="project-search"
+        />
+        <OpsSelect
+          value={status}
+          onChange={setStatus}
+          ariaLabel="Filter projects by status"
+          name="project-status"
+        >
+          <option value="all">all</option>
+          <option value="draft">draft</option>
+          <option value="active">active</option>
+          <option value="paused">paused</option>
+          <option value="pending">pending</option>
+          <option value="approved">approved</option>
+        </OpsSelect>
+        <button
+          onClick={resetFilters}
+          className="rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-3 font-semibold text-text"
+        >
+          Reset
+        </button>
+      </OpsFilterBar>
+
+      <OpsPanel
+        eyebrow="Workspace roster"
+        title={boardView === "onboarding" ? "Intake-facing roster" : "Project stream"}
+        description={
+          boardView === "onboarding"
+            ? "Filtered to the projects that are most likely to need approval, setup or a recovery action next."
+            : "The active project list with status, onboarding posture and a fast route into each workspace."
+        }
+      >
+        <ProjectsRosterTable
+          projects={boardView === "onboarding" ? onboardingProjects : filteredProjects}
+          emptyState={
+            showBootstrapEmptyState
+              ? "Create the first project to turn this workspace into a real operator surface."
+              : boardView === "onboarding"
+                ? "No draft, paused or pending workspaces match your filters."
+                : "No projects match your filters."
+          }
+        />
+      </OpsPanel>
+    </div>
   );
 }
 
@@ -368,23 +361,5 @@ export default function ProjectsPage() {
     <AdminShell>
       <ProjectsPageContent />
     </AdminShell>
-  );
-}
-
-function SignalCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string | number;
-  hint: string;
-}) {
-  return (
-    <div className="rounded-[24px] border border-line bg-card2 p-5">
-      <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold text-text">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
-    </div>
   );
 }

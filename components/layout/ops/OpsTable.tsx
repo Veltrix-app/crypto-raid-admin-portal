@@ -26,9 +26,9 @@ export default function OpsTable<T>({
   rowClassName,
 }: OpsTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-line bg-card shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+    <div className="overflow-hidden rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(13,18,27,0.94),rgba(10,14,21,0.92))]">
       <div
-        className="grid gap-4 border-b border-line px-5 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-sub"
+        className="grid gap-4 border-b border-white/6 px-5 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-sub"
         style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
       >
         {columns.map((column) => (
@@ -43,7 +43,7 @@ export default function OpsTable<T>({
           <div
             key={getRowKey(row)}
             className={cn(
-              "grid gap-4 border-b border-line/70 px-5 py-4 text-sm text-text last:border-b-0",
+              "grid gap-4 border-b border-white/6 px-5 py-4 text-sm text-text last:border-b-0",
               rowClassName
             )}
             style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}

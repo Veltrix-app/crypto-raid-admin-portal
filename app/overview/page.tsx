@@ -218,10 +218,21 @@ export default function OverviewPage() {
           </div>
         }
         statusBand={
-          <OpsPanel
-            title="Overview modes"
-            description="Separate launch posture, live health, and escalation routing so operators can scan the right layer without mixing every concern together."
-            action={
+          <div className="rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(13,18,27,0.94),rgba(10,14,21,0.92))] p-5">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+                  Overview modes
+                </p>
+                <h2 className="mt-2 text-xl font-extrabold tracking-[-0.02em] text-text">
+                  Pick the layer you want to run from
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-sub">
+                  Separate launch posture, live health and escalation routing so operators can scan
+                  one concern at a time instead of reading every pressure source at once.
+                </p>
+              </div>
+
               <SegmentToggle
                 value={overviewMode}
                 onChange={setOverviewMode}
@@ -231,9 +242,9 @@ export default function OverviewPage() {
                   { value: "escalations", label: "Escalations" },
                 ]}
               />
-            }
-          >
-            <div className="grid gap-4 md:grid-cols-3">
+            </div>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
               <ModeCard
                 label="Launch"
                 body="Readiness, activation and snapshot freshness before a launch push."
@@ -247,9 +258,56 @@ export default function OverviewPage() {
                 body="Route current pressure into the exact workspace that should own the next action."
               />
             </div>
-          </OpsPanel>
+          </div>
         }
       >
+        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <OpsPanel
+            eyebrow="Today on overview"
+            title="Start with the lane that moves delivery forward"
+            description="Use the top rail for the next action, not for every metric. These are the boards most likely to change launch quality if they sit idle."
+          >
+            <div className="grid gap-4 md:grid-cols-3">
+              {controlPriorities.map((item) => (
+                <OpsPriorityLink
+                  key={item.title}
+                  href={item.href}
+                  title={item.title}
+                  body={item.body}
+                  cta={item.cta}
+                  emphasis={item.emphasis}
+                />
+              ))}
+            </div>
+          </OpsPanel>
+
+          <OpsPanel
+            eyebrow="Workspace context"
+            title="Keep the active workspace in view"
+            description="Overview stays platform-first, but the current workspace should still be visible so the next handoff is obvious."
+            tone="accent"
+          >
+            <div className="grid gap-3">
+              <InlineState
+                label="Current workspace"
+                value={activeMembership?.projectName || activeProject?.name || "Workspace"}
+              />
+              <InlineState
+                label="Campaigns in motion"
+                value={workspaceCampaigns.length > 0 ? String(workspaceCampaigns.length) : "None yet"}
+              />
+              <InlineState
+                label="Claims in motion"
+                value={highPriorityClaims > 0 ? `${highPriorityClaims} active` : "Low"}
+              />
+              <InlineState
+                label="Pending invites"
+                value={pendingInvites > 0 ? `${pendingInvites} pending` : "Stable"}
+              />
+            </div>
+          </OpsPanel>
+        </div>
+
         {healthError ? (
           <OpsPanel eyebrow="Health error" title="Ops health could not load" description={healthError}>
             <div className="grid gap-4 md:grid-cols-2">
@@ -468,24 +526,6 @@ export default function OverviewPage() {
           </div>
         )}
 
-        <OpsPanel
-          eyebrow="Operator next actions"
-          title="Priority board"
-          description="The boards most likely to drag delivery or launch quality if ignored."
-        >
-          <div className="grid gap-4 md:grid-cols-3">
-            {controlPriorities.map((item) => (
-              <OpsPriorityLink
-                key={item.title}
-                href={item.href}
-                title={item.title}
-                body={item.body}
-                cta={item.cta}
-                emphasis={item.emphasis}
-              />
-            ))}
-          </div>
-        </OpsPanel>
       </PortalPageFrame>
     </AdminShell>
   );
@@ -493,8 +533,8 @@ export default function OverviewPage() {
 
 function ModeCard({ label, body }: { label: string; body: string }) {
   return (
-    <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">{label}</p>
+    <div className="rounded-[22px] border border-white/6 bg-white/[0.02] px-4 py-4">
+      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">{label}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{body}</p>
     </div>
   );
@@ -502,7 +542,7 @@ function ModeCard({ label, body }: { label: string; body: string }) {
 
 function InlineState({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3">
+    <div className="rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-3">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>

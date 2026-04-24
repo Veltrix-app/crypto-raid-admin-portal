@@ -39,17 +39,17 @@ export default function ProjectWorkspaceFrame({
   const pathname = usePathname() ?? "";
 
   return (
-    <div className="space-y-6">
-      <section className="overflow-hidden rounded-[32px] border border-line bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.10),transparent_24%),linear-gradient(180deg,rgba(13,19,29,0.98),rgba(10,15,24,0.98))] p-6 shadow-[0_26px_90px_rgba(0,0,0,0.34)]">
-        <div className="flex flex-wrap items-start justify-between gap-5">
+    <div className="space-y-8">
+      <section className="overflow-hidden rounded-[32px] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.09),transparent_24%),linear-gradient(180deg,rgba(13,18,27,0.98),rgba(10,14,21,0.96))] px-6 py-7">
+        <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
               Project workspace
             </p>
-            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-text md:text-4xl">
+            <h1 className="mt-4 text-3xl font-extrabold tracking-[-0.03em] text-text md:text-[2.75rem]">
               {projectName}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-sub">
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-sub">
               {projectChain} operations surface for community, trust, on-chain execution and reward flow.
             </p>
           </div>
@@ -65,7 +65,7 @@ export default function ProjectWorkspaceFrame({
         </div>
 
         <div className="mt-6 overflow-x-auto">
-          <div className="inline-flex min-w-full gap-2 rounded-[24px] border border-white/10 bg-black/20 p-2">
+          <div className="inline-flex min-w-full gap-2 rounded-[24px] border border-white/6 bg-white/[0.025] p-2">
             {PROJECT_WORKSPACE_TABS.map((tab) => {
               const href = getProjectWorkspaceHref(projectId, tab.slug);
               const active = isWorkspaceTabActive(pathname, projectId, tab);
@@ -77,8 +77,8 @@ export default function ProjectWorkspaceFrame({
                   className={cn(
                     "rounded-[18px] px-4 py-3 text-sm font-semibold transition",
                     active
-                      ? "bg-primary text-black shadow-[0_12px_32px_rgba(186,255,59,0.20)]"
-                      : "text-sub hover:bg-white/[0.06] hover:text-text"
+                      ? "bg-primary text-black"
+                      : "text-sub hover:bg-white/[0.05] hover:text-text"
                   )}
                 >
                   {tab.label}
@@ -89,7 +89,7 @@ export default function ProjectWorkspaceFrame({
         </div>
       </section>
 
-      <div className="space-y-6">{children}</div>
+      <div className="space-y-8">{children}</div>
     </div>
   );
 }

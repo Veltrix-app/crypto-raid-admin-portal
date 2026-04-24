@@ -119,11 +119,41 @@ function AccountOverviewContent() {
       title="Account"
       description="This is the workspace layer above projects: identity, owner posture, onboarding state and the next clean route into the operational product."
       statusBand={
-        <div className="grid gap-4 md:grid-cols-4">
-          <OpsMetricCard label="Workspace" value={primaryAccount.name} emphasis="primary" />
-          <OpsMetricCard label="Status" value={primaryAccount.status} />
-          <OpsMetricCard label="Role" value={primaryAccount.role} />
-          <OpsMetricCard label="Projects" value={primaryAccount.projectCount} />
+        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <OpsPanel
+            eyebrow="Account posture"
+            title="Read the workspace before dropping into projects"
+            description="The account layer should explain the identity, health and next move of the workspace without feeling like another dense admin dashboard."
+          >
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard label="Workspace" value={primaryAccount.name} emphasis="primary" />
+              <OpsMetricCard label="Status" value={primaryAccount.status} />
+              <OpsMetricCard label="Role" value={primaryAccount.role} />
+              <OpsMetricCard label="Projects" value={primaryAccount.projectCount} />
+            </div>
+          </OpsPanel>
+
+          <OpsPanel
+            eyebrow="Continue from account"
+            title="Use the account layer to choose the next clean route"
+            description="This page should make it obvious whether the owner should continue onboarding, open the launch workspace or move into team and security posture."
+            tone="accent"
+          >
+            <div className="space-y-3">
+              <OpsSnapshotRow label="Current step" value={primaryAccount.currentStep} />
+              <OpsSnapshotRow
+                label="First project"
+                value={primaryAccount.firstProjectName ?? "Not created yet"}
+              />
+              <OpsPriorityLink
+                href={nextHref}
+                title="Continue from the account rail"
+                body="The account layer should never feel like a dead end. It exists to hand you into the next safe operator move."
+                cta="Continue"
+                emphasis
+              />
+            </div>
+          </OpsPanel>
         </div>
       }
     >
@@ -146,14 +176,6 @@ function AccountOverviewContent() {
         </OpsPanel>
 
         <div className="space-y-6">
-          <OpsPriorityLink
-            href={nextHref}
-            title="Continue from the account rail"
-            body="The account layer should never feel like a dead end. It exists to hand you into the next safe operator move."
-            cta="Continue"
-            emphasis
-          />
-
           <OpsPanel
             eyebrow="Team"
             title="Workspace members and invites"

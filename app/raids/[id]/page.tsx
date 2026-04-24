@@ -15,6 +15,7 @@ import {
   DetailMetaRow,
   DetailMetricCard,
   DetailSidebarSurface,
+  DetailStatusRow,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
@@ -247,7 +248,7 @@ export default function RaidDetailPage() {
           </div>
         ) : null}
 
-        <div className="rounded-[28px] border border-line bg-card p-5">
+        <div className="rounded-[28px] border border-white/6 bg-white/[0.025] p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
@@ -271,78 +272,57 @@ export default function RaidDetailPage() {
         {raidView === "operate" ? (
           <>
             <DetailSurface
-              eyebrow="Raid Logic"
-              title="Community pressure summary"
+              eyebrow="Raid posture"
+              title="Keep this raid easy to coordinate"
               description="This raid coordinates live pressure around a target post, account or destination. Keep the CTA crisp, the timer believable and the verification route easy to understand."
+              aside={<DetailMetricCard label="Progress" value={`${raid.progress}%`} />}
             >
-              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-                <p className="text-sm leading-7 text-sub">{raid.target}</p>
+              <div className="space-y-3">
+                <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+                  <p className="text-sm leading-7 text-sub">{raid.target}</p>
+                </div>
+                {readinessItems.map((item) => (
+                  <DetailStatusRow
+                    key={item.label}
+                    label={item.label}
+                    value={item.value}
+                    tone={item.complete ? "primary" : "warning"}
+                  />
+                ))}
               </div>
             </DetailSurface>
 
-            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <DetailSurface
-                eyebrow="Raid Readiness"
-                title="What this raid still needs"
-                description="A concise read on destination quality, instruction clarity and live timing before more contributors route in."
-                aside={<DetailMetricCard label="Progress" value={`${raid.progress}%`} />}
-              >
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  {readinessItems.map((item) => (
-                    <div
-                      key={item.label}
-                      className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-bold text-text">{item.label}</p>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                            item.complete
-                              ? "bg-primary/15 text-primary"
-                              : "bg-amber-500/15 text-amber-300"
-                          }`}
-                        >
-                          {item.complete ? "Ready" : "Needs attention"}
-                        </span>
-                      </div>
-                      <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </DetailSurface>
-
-              <DetailSurface
-                eyebrow="Next Actions"
-                title="Keep raid pressure moving"
-                description="Use these routes to validate the target, align campaign context and tighten instructions before traffic spikes."
-              >
-                <div className="mt-5 space-y-3">
-                  <DetailActionTile
-                    href={raid.targetUrl || "#edit-raid"}
-                    label={raid.targetUrl ? "Open raid destination" : "Add raid destination"}
-                    description={
-                      raid.targetUrl
-                        ? "Sanity-check the exact page contributors are expected to engage with."
-                        : "Point this raid at the live post, profile or page before launch."
-                    }
-                  />
-                  <DetailActionTile
-                    href={campaign ? `/campaigns/${campaign.id}` : "/campaigns"}
-                    label={campaign ? "Open campaign context" : "Connect a campaign"}
-                    description={
-                      campaign
-                        ? "Keep the surrounding campaign narrative aligned with this raid."
-                        : "Assign this raid to a campaign so it lives inside a broader pressure plan."
-                    }
-                  />
-                  <DetailActionTile
-                    href="#edit-raid"
-                    label="Tune timing and instructions"
-                    description="Use the builder below to tighten timer, verification and instruction quality."
-                  />
-                </div>
-              </DetailSurface>
-            </div>
+            <DetailSurface
+              eyebrow="Next actions"
+              title="Keep raid pressure moving"
+              description="Use these routes to validate the target, align campaign context and tighten instructions before traffic spikes."
+            >
+              <div className="space-y-3">
+                <DetailActionTile
+                  href={raid.targetUrl || "#edit-raid"}
+                  label={raid.targetUrl ? "Open raid destination" : "Add raid destination"}
+                  description={
+                    raid.targetUrl
+                      ? "Sanity-check the exact page contributors are expected to engage with."
+                      : "Point this raid at the live post, profile or page before launch."
+                  }
+                />
+                <DetailActionTile
+                  href={campaign ? `/campaigns/${campaign.id}` : "/campaigns"}
+                  label={campaign ? "Open campaign context" : "Connect a campaign"}
+                  description={
+                    campaign
+                      ? "Keep the surrounding campaign narrative aligned with this raid."
+                      : "Assign this raid to a campaign so it lives inside a broader pressure plan."
+                  }
+                />
+                <DetailActionTile
+                  href="#edit-raid"
+                  label="Tune timing and instructions"
+                  description="Use the builder below to tighten timer, verification and instruction quality."
+                />
+              </div>
+            </DetailSurface>
 
             <DetailSurface
               eyebrow="Platform Core"

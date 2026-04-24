@@ -80,19 +80,67 @@ export default function ProjectSettingsPage() {
           operatorIncidentCount: 0,
         })}
       >
-        <OpsPanel
-          eyebrow="Project settings"
-          title="Workspace configuration"
-          description="Keep the public profile, links and launch context for this project clean from one focused setup surface."
-        >
-          <ProjectForm
-            initialValues={initialValues}
-            submitLabel="Save workspace"
-            onSubmit={async (values) => {
-              await updateProject(project.id, values);
-            }}
-          />
-        </OpsPanel>
+        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <OpsPanel
+            eyebrow="Project settings"
+            title="Workspace configuration"
+            description="Use settings as the project dossier: public profile, links and launch context should be readable before you drop into the deeper builder."
+          >
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Identity</p>
+                <p className="mt-3 text-lg font-extrabold tracking-[-0.02em] text-text">
+                  {project.name}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-sub">{project.slug || "No slug set yet"}</p>
+              </div>
+              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Public surface</p>
+                <p className="mt-3 text-lg font-extrabold tracking-[-0.02em] text-text">
+                  {project.isPublic ? "Public" : "Private"}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-sub">{project.contactEmail || "No contact email yet"}</p>
+              </div>
+              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Context</p>
+                <p className="mt-3 text-lg font-extrabold tracking-[-0.02em] text-text">
+                  {project.chain}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-sub">{project.category || "No category set yet"}</p>
+              </div>
+            </div>
+          </OpsPanel>
+
+          <OpsPanel
+            eyebrow="Settings posture"
+            title="Change the project without losing orientation"
+            description="The builder below holds the real edit flow. This top rail exists so the team can still read what this workspace is before changing it."
+            tone="accent"
+          >
+            <div className="space-y-3">
+              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">What this affects</p>
+                <p className="mt-2 text-sm leading-6 text-text">
+                  Public project pages, launch context, templates, connected channels and the profile surfaces used across the portal.
+                </p>
+              </div>
+              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Recommended use</p>
+                <p className="mt-2 text-sm leading-6 text-text">
+                  Treat this as a dossier and builder, not as a dumping ground for every project action. Operational work should still happen in Launch, Community and the project overview.
+                </p>
+              </div>
+            </div>
+          </OpsPanel>
+        </div>
+
+        <ProjectForm
+          initialValues={initialValues}
+          submitLabel="Save workspace"
+          onSubmit={async (values) => {
+            await updateProject(project.id, values);
+          }}
+        />
 
         <OpsPanel
           eyebrow="Danger zone"

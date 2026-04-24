@@ -111,7 +111,7 @@ function SignalCard({
   body: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-black/20 px-4 py-4">
+    <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
       <div className="flex items-center gap-3 text-primary">
         {icon}
         <p className="font-bold text-text">{title}</p>

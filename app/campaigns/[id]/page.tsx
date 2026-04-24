@@ -16,6 +16,7 @@ import {
   DetailMetaRow,
   DetailMetricCard,
   DetailSidebarSurface,
+  DetailStatusRow,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
@@ -101,6 +102,9 @@ export default function CampaignDetailPage() {
   const relatedRaids = raids.filter((r) => r.campaignId === currentCampaignId);
   const relatedQuests = quests.filter((q) => q.campaignId === currentCampaignId);
   const relatedRewards = rewards.filter((reward) => reward.campaignId === currentCampaignId);
+  const campaignBlueprintSummary = getCampaignBlueprintSummary(
+    currentCampaign?.campaignType ?? "hybrid"
+  );
   const relatedQuestIdList = useMemo(
     () => relatedQuests.map((quest) => quest.id),
     [relatedQuests]
@@ -484,49 +488,42 @@ export default function CampaignDetailPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
           <DetailSurface
-            eyebrow="Readiness"
-            title="What this campaign still needs"
-            description="A quick operator read on messaging, timing, mechanics and incentive coverage before you scale more traffic into the loop."
-            aside={<DetailMetricCard label="Active Mechanics" value={relatedQuests.length + relatedRaids.length} />}
+            eyebrow="Campaign posture"
+            title="Keep this campaign launchable"
+            description={campaignBlueprintSummary}
+            aside={
+              <DetailMetricCard
+                label="Active mechanics"
+                value={relatedQuests.length + relatedRaids.length}
+              />
+            }
           >
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3">
               {readinessItems.map((item) => (
-                <div
+                <DetailStatusRow
                   key={item.label}
-                  className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold text-text">{item.label}</p>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                        item.complete
-                          ? "bg-primary/15 text-primary"
-                          : "bg-amber-500/15 text-amber-300"
-                      }`}
-                    >
-                      {item.complete ? "Ready" : "Needs attention"}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm text-sub">{item.value}</p>
-                </div>
+                  label={item.label}
+                  value={item.value}
+                  tone={item.complete ? "primary" : "warning"}
+                />
               ))}
             </div>
           </DetailSurface>
 
-        <DetailSurface
-          eyebrow="Next Actions"
-          title="Studios and next actions"
-          description="Keep the campaign moving by opening the right builder with this campaign already wired in."
-        >
-          <div className="mt-5 space-y-3">
-            <DetailActionTile
+          <DetailSurface
+            eyebrow="Next actions"
+            title="Open the right builder next"
+            description="Keep the campaign moving by opening the builder that changes the loop most."
+          >
+            <div className="space-y-3">
+              <DetailActionTile
                 href={`/quests/new?projectId=${campaign.projectId}&campaignId=${campaign.id}`}
                 label="Open Quest Studio"
                 description={
                   relatedQuests.length > 0
-                    ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} already shape this campaign. Add the next one in Quest Studio with this campaign prefilled.`
+                    ? `${relatedQuests.length} quest${relatedQuests.length === 1 ? "" : "s"} already shape this campaign. Add the next one with this campaign prefilled.`
                     : "Start the contributor journey in Quest Studio with this campaign already attached."
                 }
               />
@@ -535,7 +532,7 @@ export default function CampaignDetailPage() {
                 label="Open Raid Builder"
                 description={
                   relatedRaids.length > 0
-                    ? `${relatedRaids.length} raid${relatedRaids.length === 1 ? "" : "s"} are linked already. Open the builder to layer in the next pressure wave from this campaign context.`
+                    ? `${relatedRaids.length} raid${relatedRaids.length === 1 ? "" : "s"} are linked already. Open the builder to layer in the next pressure wave.`
                     : "Raids help layer in time-sensitive social momentum on top of the quest structure."
                 }
               />

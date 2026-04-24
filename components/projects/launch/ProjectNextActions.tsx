@@ -37,16 +37,16 @@ export default function ProjectNextActions({
             <Link
               key={`${action.title}:${action.href}`}
               href={action.href}
-              className={`block rounded-[24px] border px-5 py-5 transition hover:-translate-y-0.5 ${
+              className={`block rounded-[24px] border px-5 py-5 transition-colors duration-200 ${
                 action.tone === "primary"
-                  ? "border-primary/30 bg-primary/10 hover:bg-primary/12"
-                  : "border-white/10 bg-black/20 hover:border-white/16 hover:bg-white/[0.04]"
+                  ? "border-primary/24 bg-primary/8 hover:bg-primary/10"
+                  : "border-white/6 bg-white/[0.025] hover:border-white/12 hover:bg-white/[0.04]"
               }`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-black/20 text-primary">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/6 bg-white/[0.025] text-primary">
                       {index === 0 ? <Rocket size={16} /> : <Sparkles size={16} />}
                     </div>
                     <p className="font-bold text-text">{action.title}</p>
@@ -70,7 +70,7 @@ export default function ProjectNextActions({
             <Link
               key={link.label}
               href={link.href}
-              className="block rounded-[22px] border border-white/10 bg-black/20 px-4 py-4 transition hover:border-primary/25 hover:bg-white/[0.04]"
+              className="block rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4 transition-colors duration-200 hover:border-primary/20 hover:bg-white/[0.04]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">

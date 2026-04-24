@@ -20,7 +20,7 @@ export default function ProjectsOnboardingQueue({
 }: ProjectsOnboardingQueueProps) {
   if (requests.length === 0) {
     return (
-      <div className="rounded-[24px] border border-dashed border-line bg-card2 px-5 py-8 text-sm text-sub">
+      <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] px-5 py-8 text-sm text-sub">
         No pending onboarding requests right now.
       </div>
     );
@@ -32,7 +32,7 @@ export default function ProjectsOnboardingQueue({
         const busy = runningRequestId === request.id;
 
         return (
-          <div key={request.id} className="rounded-[24px] border border-line bg-card2 p-5">
+          <div key={request.id} className="rounded-[24px] border border-white/6 bg-white/[0.025] p-5">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">

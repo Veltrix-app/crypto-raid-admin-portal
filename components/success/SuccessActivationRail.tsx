@@ -69,7 +69,7 @@ export function SuccessActivationRail({
         />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <OpsStatusPill tone={toneForWorkspaceHealth(summary.workspaceHealthState)}>

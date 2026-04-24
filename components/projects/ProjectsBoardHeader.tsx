@@ -71,7 +71,7 @@ export default function ProjectsBoardHeader({
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <div className="rounded-[28px] border border-line bg-card p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+            <div className="rounded-[28px] border border-white/6 bg-white/[0.025] p-5">
               <div className="flex flex-wrap items-start justify-between gap-5">
                 <div className="max-w-2xl">
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
@@ -80,7 +80,7 @@ export default function ProjectsBoardHeader({
                   <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
                     Switch between portfolio and intake
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-sub">
+                  <p className="mt-3 text-sm leading-6 text-sub">
                     Portfolio mode keeps the roster front and center. Intake mode prioritizes
                     onboarding requests, drafts and paused workspaces that need attention.
                   </p>
@@ -103,7 +103,7 @@ export default function ProjectsBoardHeader({
               <OpsSnapshotRow label="Chains represented" value={chainCount.toString()} />
               <OpsSnapshotRow
                 label="Draft / paused"
-                value={`${draftProjects.toString()} draft · ${pausedProjects.toString()} paused`}
+                value={`${draftProjects.toString()} draft / ${pausedProjects.toString()} paused`}
               />
             </div>
           </div>

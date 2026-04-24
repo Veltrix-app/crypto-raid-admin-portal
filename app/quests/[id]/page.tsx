@@ -16,6 +16,7 @@ import {
   DetailMetaRow,
   DetailMetricCard,
   DetailSidebarSurface,
+  DetailStatusRow,
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { getQuestVerificationPreview } from "@/lib/quest-verification";
@@ -273,7 +274,7 @@ export default function QuestDetailPage() {
           </div>
         ) : null}
 
-        <div className="rounded-[28px] border border-line bg-card p-5">
+        <div className="rounded-[28px] border border-white/6 bg-white/[0.025] p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
@@ -297,88 +298,67 @@ export default function QuestDetailPage() {
         {questView === "operate" ? (
           <>
             <DetailSurface
-              eyebrow="Quest Logic"
-              title="Builder Summary and Verification Route"
+              eyebrow="Quest posture"
+              title="Keep this quest readable and verifiable"
               description={questBlueprintSummary}
+              aside={<DetailMetricCard label="Pending reviews" value={pendingSubmissions.length} />}
             >
-              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                      Verification Route
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-sub">
-                      {verificationPreview.routeDescription}
-                    </p>
+              <div className="space-y-3">
+                <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                        Verification route
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-sub">
+                        {verificationPreview.routeDescription}
+                      </p>
+                    </div>
+                    <DetailBadge tone="primary">{verificationPreview.routeLabel}</DetailBadge>
                   </div>
-                  <DetailBadge tone="primary">{verificationPreview.routeLabel}</DetailBadge>
                 </div>
+                {questReadinessItems.map((item) => (
+                  <DetailStatusRow
+                    key={item.label}
+                    label={item.label}
+                    value={item.value}
+                    tone={item.complete ? "primary" : "warning"}
+                  />
+                ))}
               </div>
             </DetailSurface>
 
-            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <DetailSurface
-                eyebrow="Quest Readiness"
-                title="What this quest still needs"
-                description="A concise operator read on destination quality, verification stability and moderation drag."
-                aside={<DetailMetricCard label="Pending Reviews" value={pendingSubmissions.length} />}
-              >
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  {questReadinessItems.map((item) => (
-                    <div
-                      key={item.label}
-                      className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-bold text-text">{item.label}</p>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                            item.complete
-                              ? "bg-primary/15 text-primary"
-                              : "bg-amber-500/15 text-amber-300"
-                          }`}
-                        >
-                          {item.complete ? "Ready" : "Needs attention"}
-                        </span>
-                      </div>
-                      <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </DetailSurface>
-
-              <DetailSurface
-                eyebrow="Next Actions"
-                title="Keep this campaign moving"
-                description="Use these routes to tighten the destination, moderate incoming proofs and connect stronger incentives."
-              >
-                <div className="mt-5 space-y-3">
-                  <DetailActionTile
-                    href={quest.actionUrl || "#edit-quest"}
-                    label={quest.actionUrl ? "Open quest destination" : "Add quest destination"}
-                    description={
-                      quest.actionUrl
-                        ? "Sanity-check the contributor journey from the exact destination page."
-                        : "Point this quest at the live page, post or wallet action before launch."
-                    }
-                  />
-                  <DetailActionTile
-                    href="/submissions"
-                    label="Review submissions"
-                    description={`${relatedSubmissions.length} submission${relatedSubmissions.length === 1 ? "" : "s"} linked to this quest.`}
-                  />
-                  <DetailActionTile
-                    href={relatedRewards.length > 0 ? "/rewards" : "/rewards/new"}
-                    label={relatedRewards.length > 0 ? "Link campaign rewards" : "Create a reward"}
-                    description={
-                      relatedRewards.length > 0
-                        ? `${relatedRewards.length} reward${relatedRewards.length === 1 ? "" : "s"} already exist in this project.`
-                        : "Add a reward next so contributors see a clear payoff for completing quests."
-                    }
-                  />
-                </div>
-              </DetailSurface>
-            </div>
+            <DetailSurface
+              eyebrow="Next actions"
+              title="Keep this quest moving"
+              description="Use these routes to tighten the destination, moderate incoming proofs and connect stronger incentives."
+            >
+              <div className="space-y-3">
+                <DetailActionTile
+                  href={quest.actionUrl || "#edit-quest"}
+                  label={quest.actionUrl ? "Open quest destination" : "Add quest destination"}
+                  description={
+                    quest.actionUrl
+                      ? "Sanity-check the contributor journey from the exact destination page."
+                      : "Point this quest at the live page, post or wallet action before launch."
+                  }
+                />
+                <DetailActionTile
+                  href="/submissions"
+                  label="Review submissions"
+                  description={`${relatedSubmissions.length} submission${relatedSubmissions.length === 1 ? "" : "s"} linked to this quest.`}
+                />
+                <DetailActionTile
+                  href={relatedRewards.length > 0 ? "/rewards" : "/rewards/new"}
+                  label={relatedRewards.length > 0 ? "Link campaign rewards" : "Create a reward"}
+                  description={
+                    relatedRewards.length > 0
+                      ? `${relatedRewards.length} reward${relatedRewards.length === 1 ? "" : "s"} already exist in this project.`
+                      : "Add a reward next so contributors see a clear payoff for completing quests."
+                  }
+                />
+              </div>
+            </DetailSurface>
 
             <DetailSurface
               eyebrow="Platform Core"
@@ -545,8 +525,8 @@ export default function QuestDetailPage() {
                           ? audit.metadata.summary
                           : `${audit.object_type} · ${audit.object_id}`}
                       </p>
-                    </div>
-                  ))}
+                  </div>
+                ))}
                   {questOps.audits.length === 0 ? (
                     <p className="text-sm text-sub">
                       No platform audit entries are logged for this quest yet.

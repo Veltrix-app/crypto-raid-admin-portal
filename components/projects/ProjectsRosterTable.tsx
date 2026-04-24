@@ -24,7 +24,9 @@ export default function ProjectsRosterTable({
           <div>
             <p className="font-semibold text-text">{project.name}</p>
             <p className="mt-1 text-xs text-sub">
-              {project.contactEmail || "No contact email"} · {project.category || "Uncategorized"}
+              {(project.contactEmail || "No contact email") +
+                " / " +
+                (project.category || "Uncategorized")}
             </p>
           </div>
         </div>

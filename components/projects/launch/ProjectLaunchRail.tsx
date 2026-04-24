@@ -45,7 +45,7 @@ export default function ProjectLaunchRail({
 
   return (
     <aside className="space-y-4 xl:sticky xl:top-28">
-      <div className="overflow-hidden rounded-[28px] border border-line bg-[linear-gradient(180deg,rgba(13,19,29,0.98),rgba(9,13,21,0.98))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+      <div className="overflow-hidden rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(13,19,29,0.98),rgba(9,13,21,0.98))] p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
@@ -63,7 +63,7 @@ export default function ProjectLaunchRail({
           </div>
         </div>
 
-        <div className="mt-5 rounded-[22px] border border-white/10 bg-black/20 p-4">
+        <div className="mt-5 rounded-[22px] border border-white/6 bg-white/[0.025] p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
               Completion
@@ -81,7 +81,7 @@ export default function ProjectLaunchRail({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[28px] border border-line bg-[linear-gradient(180deg,rgba(13,19,29,0.98),rgba(10,15,24,0.98))] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+      <div className="overflow-hidden rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(13,19,29,0.98),rgba(10,15,24,0.98))] p-3">
         <div className="space-y-2">
           {steps.map((step, index) => {
             const active = activeStepId === step.id;
@@ -92,10 +92,10 @@ export default function ProjectLaunchRail({
                 type="button"
                 onClick={() => onSelect(step.id)}
                 className={cn(
-                  "w-full rounded-[22px] border px-4 py-4 text-left transition-all duration-200",
+                  "w-full rounded-[22px] border px-4 py-4 text-left transition-colors duration-200",
                   active
-                    ? "border-primary/30 bg-primary/10 shadow-[0_14px_36px_rgba(186,255,59,0.12)]"
-                    : "border-white/8 bg-black/15 hover:border-white/14 hover:bg-white/[0.04]"
+                    ? "border-primary/24 bg-primary/8"
+                    : "border-white/6 bg-white/[0.02] hover:border-white/12 hover:bg-white/[0.04]"
                 )}
               >
                 <div className="flex items-start gap-4">
@@ -104,8 +104,8 @@ export default function ProjectLaunchRail({
                       className={cn(
                         "flex h-10 w-10 items-center justify-center rounded-[16px] border text-xs font-extrabold",
                         active
-                          ? "border-primary/35 bg-primary/12 text-primary"
-                          : "border-white/10 bg-black/20 text-text"
+                          ? "border-primary/24 bg-primary/10 text-primary"
+                          : "border-white/6 bg-white/[0.025] text-text"
                       )}
                     >
                       {index + 1}

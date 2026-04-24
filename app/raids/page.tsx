@@ -9,6 +9,7 @@ import {
   OpsPanel,
   OpsSearchInput,
   OpsSelect,
+  OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
@@ -27,8 +28,8 @@ export default function RaidsPage() {
 
   const filteredRaids = useMemo(() => {
     return raids.filter((raid) => {
-      const campaign = campaigns.find((c) => c.id === raid.campaignId);
-      const project = projects.find((p) => p.id === raid.projectId);
+      const campaign = campaigns.find((item) => item.id === raid.campaignId);
+      const project = projects.find((item) => item.id === raid.projectId);
       const term = search.toLowerCase();
 
       const matchesSearch =
@@ -52,6 +53,7 @@ export default function RaidsPage() {
     ? Math.round(raids.reduce((sum, raid) => sum + raid.rewardXp, 0) / raids.length)
     : 0;
   const totalParticipants = raids.reduce((sum, raid) => sum + raid.participants, 0);
+  const platformCoverage = new Set(raids.map((raid) => raid.platform)).size;
   const liveRaids = useMemo(
     () =>
       [...filteredRaids]
@@ -65,71 +67,68 @@ export default function RaidsPage() {
       <PortalPageFrame
         eyebrow="Raid management"
         title="Raids"
-        description="Split the raid surface between overall inventory and the live pressure board so the team can coordinate faster."
+        description="Keep raid pressure understandable: one quiet inventory lane for the full roster, and one live lane for the posts and pushes that need coordination now."
         actions={
           <Link
             href="/raids/new"
-            className="rounded-2xl bg-primary px-4 py-3 font-bold text-black"
+            className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black"
           >
             New Raid
           </Link>
         }
         statusBand={
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-              <OpsMetricCard label="Total raids" value={raids.length} />
-              <OpsMetricCard
-                label="Active"
-                value={activeCount}
-                emphasis={activeCount > 0 ? "primary" : "default"}
-              />
-              <OpsMetricCard
-                label="Scheduled"
-                value={scheduledCount}
-                emphasis={scheduledCount > 0 ? "primary" : "default"}
-              />
-              <OpsMetricCard
-                label="Ended"
-                value={endedCount}
-                emphasis={endedCount > 0 ? "default" : "warning"}
-              />
-              <OpsMetricCard label="Participants" value={totalParticipants} />
-              <OpsMetricCard label="Avg reward XP" value={avgRewardXp} />
-            </div>
+            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+              <OpsPanel
+                eyebrow="Current lane"
+                title={raidsView === "board" ? "Read the raid inventory" : "Read live pressure"}
+                description={
+                  raidsView === "board"
+                    ? "Stay in this lane when the goal is to understand the roster across campaigns, platforms and communities."
+                    : "Switch here when the team is actively steering live or scheduled raids and needs a shorter decision path."
+                }
+                action={
+                  <SegmentToggle
+                    value={raidsView}
+                    onChange={setRaidsView}
+                    options={[
+                      { value: "board", label: "Board" },
+                      { value: "live", label: "Live" },
+                    ]}
+                  />
+                }
+              >
+                <div className="grid gap-3 md:grid-cols-3">
+                  <OpsSnapshotRow
+                    label="In view"
+                    value={`${filteredRaids.length} raids match the current filters.`}
+                  />
+                  <OpsSnapshotRow
+                    label="Platforms"
+                    value={`${platformCoverage} platform${platformCoverage === 1 ? "" : "s"} currently carry raid traffic.`}
+                  />
+                  <OpsSnapshotRow
+                    label="Next read"
+                    value={
+                      raidsView === "board"
+                        ? "Scan community, campaign and reward pressure before opening detail."
+                        : "Look at participation and target quality before deciding what needs real-time support."
+                    }
+                  />
+                </div>
+              </OpsPanel>
 
-            <OpsPanel
-              title="Raid work modes"
-              description="Use board mode for raid inventory and live mode when the team is coordinating active or imminent raid pressure."
-              action={
-                <SegmentToggle
-                  value={raidsView}
-                  onChange={setRaidsView}
-                  options={[
-                    { value: "board", label: "Board" },
-                    { value: "live", label: "Live" },
-                  ]}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <OpsMetricCard label="Active" value={activeCount} emphasis="primary" />
+                <OpsMetricCard
+                  label="Scheduled"
+                  value={scheduledCount}
+                  emphasis={scheduledCount > 0 ? "primary" : "default"}
                 />
-              }
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Board
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
-                    Scan the full raid roster across campaigns, communities and platforms.
-                  </p>
-                </div>
-                <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    Live
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
-                    Focus on active and upcoming raids that need live coordination.
-                  </p>
-                </div>
+                <OpsMetricCard label="Participants" value={totalParticipants} />
+                <OpsMetricCard label="Avg reward XP" value={avgRewardXp} />
               </div>
-            </OpsPanel>
+            </div>
 
             <OpsFilterBar>
               <OpsSearchInput
@@ -171,136 +170,203 @@ export default function RaidsPage() {
         }
       >
         {raidsView === "board" ? (
-          <OpsPanel
-            eyebrow="Raid roster"
-            title="Raid stream"
-            description="The current raid list with project context, platform, reward pressure and a fast route into detail."
-          >
-            <div className="overflow-hidden rounded-[24px] border border-line bg-card2">
-              <div className="grid grid-cols-8 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
-                <div>Raid</div>
-                <div>Project</div>
-                <div>Campaign</div>
-                <div>Platform</div>
-                <div>Status</div>
-                <div>Reward XP</div>
-                <div>Participants</div>
-                <div>Open</div>
+          <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
+            <OpsPanel
+              eyebrow="Raid posture"
+              title="What the raid system is carrying"
+              description="Use this side to understand where attention is concentrated before you drop into a single raid."
+            >
+              <div className="grid gap-3">
+                <OpsSnapshotRow
+                  label="Live now"
+                  value={`${activeCount} raid${activeCount === 1 ? "" : "s"} are actively pulling community traffic.`}
+                />
+                <OpsSnapshotRow
+                  label="Queued next"
+                  value={`${scheduledCount} scheduled raid${scheduledCount === 1 ? "" : "s"} still need timing and target confidence.`}
+                />
+                <OpsSnapshotRow
+                  label="Ended"
+                  value={`${endedCount} raid${endedCount === 1 ? "" : "s"} can be treated as historical context instead of live work.`}
+                />
               </div>
+            </OpsPanel>
 
-              {filteredRaids.map((raid) => {
-                const campaign = campaigns.find((c) => c.id === raid.campaignId);
-                const project = projects.find((p) => p.id === raid.projectId);
+            <OpsPanel
+              eyebrow="Raid roster"
+              title="Read the raid stream"
+              description="Start with title and community, then check campaign, platform and reward pressure before opening detail."
+            >
+              <div className="overflow-hidden rounded-[24px] border border-white/6 bg-white/[0.025]">
+                <div className="grid grid-cols-8 border-b border-white/6 px-5 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
+                  <div>Raid</div>
+                  <div>Project</div>
+                  <div>Campaign</div>
+                  <div>Platform</div>
+                  <div>Status</div>
+                  <div>Reward XP</div>
+                  <div>Participants</div>
+                  <div>Open</div>
+                </div>
 
-                return (
-                  <div
-                    key={raid.id}
-                    className="grid grid-cols-8 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
-                  >
-                    <div>
-                      <p className="font-semibold">{raid.title}</p>
-                      <p className="mt-1 text-xs text-sub">{raid.community}</p>
-                    </div>
-                    <div>{project?.name || "-"}</div>
-                    <div>{campaign?.title || "-"}</div>
-                    <div className="capitalize">{raid.platform}</div>
-                    <div>
-                      <OpsStatusPill
-                        tone={
-                          raid.status === "active"
-                            ? "success"
-                            : raid.status === "scheduled"
-                              ? "warning"
-                              : raid.status === "draft"
-                                ? "warning"
-                                : "default"
-                        }
-                      >
-                        {raid.status}
-                      </OpsStatusPill>
-                    </div>
-                    <div>{raid.rewardXp}</div>
-                    <div>{raid.participants}</div>
-                    <div>
-                      <Link
-                        href={`/raids/${raid.id}`}
-                        className="rounded-xl border border-line bg-card px-3 py-2 font-semibold"
-                      >
-                        View
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
+                {filteredRaids.map((raid) => {
+                  const campaign = campaigns.find((item) => item.id === raid.campaignId);
+                  const project = projects.find((item) => item.id === raid.projectId);
 
-              {filteredRaids.length === 0 ? (
-                <div className="px-5 py-8 text-sm text-sub">No raids match your filters.</div>
-              ) : null}
-            </div>
-          </OpsPanel>
+                  return (
+                    <div
+                      key={raid.id}
+                      className="grid grid-cols-8 items-center border-b border-white/6 px-5 py-4 text-sm text-text last:border-b-0"
+                    >
+                      <div>
+                        <p className="font-semibold">{raid.title}</p>
+                        <p className="mt-1 text-xs text-sub">{raid.community}</p>
+                      </div>
+                      <div>{project?.name || "-"}</div>
+                      <div>{campaign?.title || "-"}</div>
+                      <div className="capitalize">{raid.platform}</div>
+                      <div>
+                        <OpsStatusPill tone={raidStatusTone(raid.status)}>{raid.status}</OpsStatusPill>
+                      </div>
+                      <div>{raid.rewardXp}</div>
+                      <div>{raid.participants}</div>
+                      <div>
+                        <Link
+                          href={`/raids/${raid.id}`}
+                          className="rounded-full border border-white/6 bg-white/[0.025] px-3 py-2 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
+                        >
+                          View
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {filteredRaids.length === 0 ? (
+                  <div className="px-5 py-8 text-sm text-sub">No raids match your filters.</div>
+                ) : null}
+              </div>
+            </OpsPanel>
+          </div>
         ) : null}
 
         {raidsView === "live" ? (
-          <OpsPanel
-            eyebrow="Live pressure"
-            title="Active and upcoming raids"
-            description="This lane keeps the raids that actually need live coordination separate from archive noise."
-            tone="accent"
-          >
-            <div className="grid gap-4">
-              {liveRaids.map((raid) => {
-                const campaign = campaigns.find((c) => c.id === raid.campaignId);
-                const project = projects.find((p) => p.id === raid.projectId);
-                return (
-                  <div key={raid.id} className="rounded-[24px] border border-line bg-card2 p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <p className="text-lg font-extrabold text-text">{raid.title}</p>
-                          <OpsStatusPill
-                            tone={raid.status === "active" ? "success" : "warning"}
-                          >
-                            {raid.status}
-                          </OpsStatusPill>
-                          <OpsStatusPill tone="default">{raid.platform}</OpsStatusPill>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-sub">{raid.target}</p>
-                        <div className="mt-4 grid gap-3 md:grid-cols-4">
-                          <RaidStat label="Project" value={project?.name || "-"} />
-                          <RaidStat label="Campaign" value={campaign?.title || "-"} />
-                          <RaidStat label="Reward XP" value={raid.rewardXp} />
-                          <RaidStat label="Participants" value={raid.participants} />
-                        </div>
-                      </div>
-                      <Link
-                        href={`/raids/${raid.id}`}
-                        className="rounded-2xl border border-line bg-card px-4 py-3 font-bold text-sub"
-                      >
-                        Open
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
+          <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
+            <OpsPanel
+              eyebrow="Live pressure"
+              title="What needs coordination first"
+              description="This lane is about the raids that can change community momentum right now."
+              tone="accent"
+            >
+              <div className="grid gap-3">
+                <OpsSnapshotRow
+                  label="Active"
+                  value={`${activeCount} live raid${activeCount === 1 ? "" : "s"} are already pulling participant attention.`}
+                />
+                <OpsSnapshotRow
+                  label="Scheduled"
+                  value={`${scheduledCount} upcoming raid${scheduledCount === 1 ? "" : "s"} still need timing confidence.`}
+                />
+                <OpsSnapshotRow
+                  label="What to open next"
+                  value="Prioritize the raids with the biggest participant weight or the most visible target surface."
+                />
+              </div>
+            </OpsPanel>
 
-              {liveRaids.length === 0 ? (
-                <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
-                  No live raids match the current filters.
-                </div>
-              ) : null}
-            </div>
-          </OpsPanel>
+            <OpsPanel
+              eyebrow="Live board"
+              title="Open the raids that shape visible pressure"
+              description="These raids carry the most immediate coordination value, so they get the shortest reading path."
+            >
+              <div className="grid gap-3">
+                {liveRaids.map((raid) => {
+                  const campaign = campaigns.find((item) => item.id === raid.campaignId);
+                  const project = projects.find((item) => item.id === raid.projectId);
+                  return (
+                    <RaidLiveCard
+                      key={raid.id}
+                      title={raid.title}
+                      description={raid.target}
+                      href={`/raids/${raid.id}`}
+                      status={raid.status}
+                      platform={raid.platform}
+                      stats={[
+                        { label: "Project", value: project?.name || "-" },
+                        { label: "Campaign", value: campaign?.title || "-" },
+                        { label: "Reward XP", value: raid.rewardXp },
+                        { label: "Participants", value: raid.participants },
+                      ]}
+                    />
+                  );
+                })}
+
+                {liveRaids.length === 0 ? (
+                  <div className="rounded-[24px] border border-white/6 bg-white/[0.025] px-5 py-6 text-sm text-sub">
+                    No live raids match the current filters.
+                  </div>
+                ) : null}
+              </div>
+            </OpsPanel>
+          </div>
         ) : null}
       </PortalPageFrame>
     </AdminShell>
   );
 }
 
-function RaidStat({ label, value }: { label: string; value: string | number }) {
+function raidStatusTone(status: string): "default" | "success" | "warning" {
+  if (status === "active") return "success";
+  if (status === "draft" || status === "scheduled") return "warning";
+  return "default";
+}
+
+function RaidLiveCard({
+  title,
+  description,
+  href,
+  status,
+  platform,
+  stats,
+}: {
+  title: string;
+  description: string;
+  href: string;
+  status: string;
+  platform: string;
+  stats: Array<{ label: string; value: string | number }>;
+}) {
   return (
-    <div className="rounded-2xl border border-line bg-card px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
+    <div className="rounded-[24px] border border-white/6 bg-white/[0.025] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-lg font-extrabold text-text">{title}</p>
+            <OpsStatusPill tone={status === "active" ? "success" : "warning"}>{status}</OpsStatusPill>
+            <OpsStatusPill tone="default">{platform}</OpsStatusPill>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-sub">{description}</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-4">
+            {stats.map((stat) => (
+              <div
+                key={`${title}-${stat.label}`}
+                className="rounded-[20px] border border-white/6 bg-white/[0.02] px-4 py-3"
+              >
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
+                  {stat.label}
+                </p>
+                <p className="mt-2 text-sm font-semibold text-text">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <Link
+          href={href}
+          className="rounded-full border border-white/6 bg-white/[0.025] px-4 py-3 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
+        >
+          Open
+        </Link>
+      </div>
     </div>
   );
 }
