@@ -126,11 +126,11 @@ export function CommunityCohortsPanel({
           />
         </div>
 
-        <div className="rounded-[24px] border border-line bg-card2 p-5">
+        <div className="rounded-[20px] border border-line bg-card2 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">Funnel controls</p>
-              <p className="mt-2 text-sm text-sub">
+              <p className="mt-2 text-sm leading-5.5 text-sub">
                 Turn the newcomer and comeback rails on only when the project is ready to carry the
                 resulting pressure into missions, raids and community nudges.
               </p>
@@ -145,8 +145,8 @@ export function CommunityCohortsPanel({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <label className="flex items-center gap-3 rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-text">
+          <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
+            <label className="flex items-center gap-3 rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-sm text-text">
               <input
                 type="checkbox"
                 checked={settings.newcomerFunnelEnabled}
@@ -160,7 +160,7 @@ export function CommunityCohortsPanel({
               Enable newcomer starter lane
             </label>
 
-            <label className="flex items-center gap-3 rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center gap-3 rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-sm text-text">
               <input
                 type="checkbox"
                 checked={settings.reactivationFunnelEnabled}
@@ -175,12 +175,12 @@ export function CommunityCohortsPanel({
             </label>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-3.5 flex flex-wrap gap-2.5">
             <button
               type="button"
               onClick={onSaveSettings}
               disabled={savingSettings}
-              className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-[13px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {savingSettings ? "Saving funnel settings..." : "Save funnel settings"}
             </button>
@@ -188,7 +188,7 @@ export function CommunityCohortsPanel({
               type="button"
               onClick={() => onRunFunnelAction("newcomer")}
               disabled={runningFunnelAction !== null}
-              className="rounded-[18px] bg-primary px-4 py-3 text-sm font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[16px] bg-primary px-3.5 py-2.5 text-[13px] font-bold text-black transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningFunnelAction === "newcomer" ? "Pushing starter wave..." : "Send starter wave"}
             </button>
@@ -196,7 +196,7 @@ export function CommunityCohortsPanel({
               type="button"
               onClick={() => onRunFunnelAction("reactivation")}
               disabled={runningFunnelAction !== null}
-              className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-[13px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningFunnelAction === "reactivation"
                 ? "Pushing comeback wave..."
@@ -206,7 +206,7 @@ export function CommunityCohortsPanel({
 
           {funnelNotice ? (
             <div
-              className={`mt-4 rounded-[20px] border px-4 py-3 text-sm ${
+              className={`mt-3.5 rounded-[16px] border px-3.5 py-2.5 text-sm ${
                 funnelNoticeTone === "error"
                   ? "border-rose-500/30 bg-rose-500/10 text-rose-200"
                   : "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
@@ -217,7 +217,7 @@ export function CommunityCohortsPanel({
           ) : null}
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-5">
+        <div className="grid gap-3.5 xl:grid-cols-5">
           {(
             [
               ["newcomer", newcomer],
@@ -229,7 +229,7 @@ export function CommunityCohortsPanel({
           ).map(([key, snapshot]) => (
             <div
               key={key}
-              className="rounded-[22px] border border-line bg-card2 p-4"
+              className="rounded-[18px] border border-line bg-card2 p-3.5"
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-bold text-text">{snapshot?.label ?? "Lane"}</p>
@@ -237,7 +237,7 @@ export function CommunityCohortsPanel({
                   {snapshot?.memberCount ?? 0}
                 </OpsStatusPill>
               </div>
-              <div className="mt-4 space-y-2 text-sm text-sub">
+              <div className="mt-3 space-y-1.5 text-[13px] text-sub">
                 <p>{snapshot?.readyCount ?? 0} ready seats</p>
                 <p>{snapshot?.blockedCount ?? 0} blocked seats</p>
                 <p>{snapshot?.activeCount ?? 0} active now</p>
@@ -248,26 +248,26 @@ export function CommunityCohortsPanel({
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[20px] border border-line bg-card2 p-4">
             <p className="text-sm font-bold text-text">Segment pressure</p>
             <p className="mt-2 text-sm text-sub">
               Keep these ratios readable: starter and comeback queues should shrink into the active
               rail, while high-trust seats outgrow the watchlist.
             </p>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+            <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Starter to active</p>
-                <p className="mt-3 text-2xl font-black text-text">
+                  <p className="mt-2 text-[1.02rem] font-black text-text">
                   {summary.newcomers} / {summary.warmingUp + summary.core}
                 </p>
                 <p className="mt-2 text-sm text-sub">
                   Use this ratio to see whether onboarding pressure is graduating into the active rail.
                 </p>
               </div>
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Trust balance</p>
-                <p className="mt-3 text-2xl font-black text-text">
+                  <p className="mt-2 text-[1.02rem] font-black text-text">
                   {summary.highTrust} / {summary.watchlist}
                 </p>
                 <p className="mt-2 text-sm text-sub">
@@ -277,11 +277,11 @@ export function CommunityCohortsPanel({
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[20px] border border-line bg-card2 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Trust posture</p>
-                <p className="mt-2 text-sm text-sub">
+                <p className="mt-2 text-sm leading-5.5 text-sub">
                   This project should not blindly broaden pushes when trust or review pressure starts
                   leaning the wrong way.
                 </p>
@@ -291,18 +291,18 @@ export function CommunityCohortsPanel({
               </OpsStatusPill>
             </div>
 
-            <div className="mt-4 space-y-3">
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+            <div className="mt-3.5 space-y-2.5">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Average trust</p>
-                <p className="mt-3 text-xl font-black text-text">{trust.averageTrust}</p>
+                <p className="mt-2 text-lg font-black text-text">{trust.averageTrust}</p>
               </div>
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Open flags</p>
-                <p className="mt-3 text-xl font-black text-text">{trust.openFlagCount}</p>
+                <p className="mt-2 text-lg font-black text-text">{trust.openFlagCount}</p>
               </div>
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Signal readout</p>
-                <p className="mt-3 text-sm leading-6 text-sub">
+                <p className="mt-2 text-sm leading-5.5 text-sub">
                   {trustSignal?.summary || trust.latestIssue}
                 </p>
               </div>

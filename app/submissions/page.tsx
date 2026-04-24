@@ -110,13 +110,13 @@ export default function SubmissionsPage() {
                 />
               </div>
 
-              <div className="rounded-[28px] border border-line bg-card p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+              <div className="rounded-[22px] border border-line bg-card p-4 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
                 <div className="flex flex-wrap items-start justify-between gap-5">
                   <div className="max-w-2xl">
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
                       Workspace focus
                     </p>
-                    <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                    <h2 className="mt-2 text-[1.02rem] font-extrabold tracking-tight text-text">
                       Switch between review queue and decision signals
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-sub">
@@ -352,7 +352,7 @@ function DecisionCard({
   return (
     <div className="rounded-[24px] border border-line bg-card2 p-5">
       <p className="text-sm text-sub">{label}</p>
-      <p className={`mt-2 text-2xl font-extrabold ${toneClass}`}>{value}</p>
+              <p className={`mt-2 text-[1.45rem] font-extrabold ${toneClass}`}>{value}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
     </div>
   );

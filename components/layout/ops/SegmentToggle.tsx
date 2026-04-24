@@ -19,7 +19,7 @@ export default function SegmentToggle<T extends string>({
   onChange,
 }: SegmentToggleProps<T>) {
   return (
-    <div className="inline-flex flex-wrap gap-1 rounded-full border border-line bg-card2 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.16)]">
+    <div className="inline-flex flex-wrap gap-1 rounded-[18px] border border-line bg-card2 p-1 shadow-[0_10px_28px_rgba(0,0,0,0.14)]">
       {options.map((option) => {
         const active = option.value === value;
 
@@ -29,7 +29,7 @@ export default function SegmentToggle<T extends string>({
             type="button"
             onClick={() => onChange(option.value)}
             className={cn(
-              "rounded-full px-4 py-2.5 text-sm font-semibold transition",
+              "rounded-[14px] px-3 py-2 text-[12px] font-semibold transition",
               active
                 ? "bg-primary text-black shadow-[0_10px_24px_rgba(186,255,59,0.22)]"
                 : "text-sub hover:bg-white/[0.05] hover:text-text"

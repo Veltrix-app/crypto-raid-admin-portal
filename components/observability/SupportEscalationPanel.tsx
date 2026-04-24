@@ -417,7 +417,7 @@ export default function SupportEscalationPanel({
                 </div>
               </div>
             ) : (
-              <div className="rounded-[22px] border border-dashed border-line px-5 py-8 text-sm leading-6 text-sub">
+              <div className="rounded-[20px] border border-dashed border-line px-4 py-6 text-sm leading-6 text-sub">
                 Select an escalation to inspect the current owner, next action and waiting state.
               </div>
             )}

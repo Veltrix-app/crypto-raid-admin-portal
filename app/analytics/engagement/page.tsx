@@ -29,7 +29,7 @@ export default function AnalyticsEngagementPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-3">
+        <div className="grid gap-5 xl:grid-cols-3">
           <MetricCard
             label="Active Campaigns"
             value={campaigns.filter((campaign) => campaign.status === "active").length}
@@ -47,9 +47,9 @@ export default function AnalyticsEngagementPage() {
           />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-2">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Campaign Completion</h2>
+        <div className="grid gap-5 xl:grid-cols-2">
+          <div className="rounded-[22px] border border-line bg-card p-5">
+            <h2 className="text-[1.08rem] font-extrabold text-text">Campaign Completion</h2>
             <p className="mt-2 text-sm text-sub">
               Which campaigns are actually converting activity into completion.
             </p>
@@ -63,8 +63,8 @@ export default function AnalyticsEngagementPage() {
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Raid Participation</h2>
+          <div className="rounded-[22px] border border-line bg-card p-5">
+            <h2 className="text-[1.08rem] font-extrabold text-text">Raid Participation</h2>
             <p className="mt-2 text-sm text-sub">
               Social pushes that are pulling the strongest immediate response.
             </p>
@@ -79,8 +79,8 @@ export default function AnalyticsEngagementPage() {
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <h2 className="text-xl font-extrabold text-text">Quest Activity</h2>
+        <div className="rounded-[22px] border border-line bg-card p-5">
+          <h2 className="text-[1.08rem] font-extrabold text-text">Quest Activity</h2>
           <p className="mt-2 text-sm text-sub">
             Submission volume per quest shows where contributors spend their actual effort.
           </p>
@@ -103,9 +103,9 @@ function MetricCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
+    <div className="rounded-[20px] border border-line bg-card p-4">
       <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-3xl font-extrabold text-text">{value}</p>
+      <p className="mt-1.5 text-[1.4rem] font-extrabold text-text">{value}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
     </div>
   );

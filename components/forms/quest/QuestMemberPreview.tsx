@@ -8,14 +8,14 @@ export default function QuestMemberPreview({
   preview: QuestMemberPreviewModel;
 }) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5">
+    <div className="overflow-hidden rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
       <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(6,8,12,0.82))] p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-xl">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
               {preview.eyebrow}
             </p>
-            <h3 className="mt-3 text-2xl font-extrabold tracking-[-0.03em] text-text">
+            <h3 className="mt-3 text-[1.45rem] font-extrabold tracking-[-0.03em] text-text">
               {preview.title}
             </h3>
             <p className="mt-3 text-sm leading-7 text-sub">{preview.description}</p>

@@ -57,7 +57,7 @@ export function SuccessAccountDetail({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <OpsPanel
         eyebrow="Account command read"
         title="Pressure and next move"
@@ -108,7 +108,7 @@ export function SuccessAccountDetail({
         description="The success rail should make both the missing setup steps and the commercial upside obvious."
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
         <OpsPanel
           eyebrow="Workspace detail"
           title="Current posture"
@@ -124,7 +124,7 @@ export function SuccessAccountDetail({
             />
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <OpsMetricCard label="Campaigns" value={detail.activeCampaignCount} />
             <OpsMetricCard label="Providers" value={detail.providerCount} />
             <OpsMetricCard label="Billable seats" value={detail.billableSeatCount} />
@@ -169,31 +169,31 @@ export function SuccessAccountDetail({
 
       <SuccessSignalPanel signals={detail.signals} />
 
-      <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
         <OpsPanel
           eyebrow="Notes"
           title="Internal CS notes"
           description="Keep account narrative, blockers and follow-up context inside the workspace record."
         >
-          <div className="grid gap-3">
+          <div className="grid gap-2.5">
             <input
               value={noteTitle}
               onChange={(event) => setNoteTitle(event.target.value)}
               placeholder="Note title"
-              className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/40"
+              className="rounded-[18px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text outline-none transition focus:border-primary/40"
             />
             <textarea
               value={noteBody}
               onChange={(event) => setNoteBody(event.target.value)}
               placeholder="What matters about this account right now?"
-              rows={4}
-              className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/40"
+              rows={3}
+              className="rounded-[18px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/40"
             />
             <button
               type="button"
               onClick={() => void addNote()}
               disabled={saving || !noteTitle.trim() || !noteBody.trim()}
-              className="inline-flex w-fit items-center rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-fit items-center rounded-full bg-primary px-3.5 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Saving..." : "Add note"}
             </button>
@@ -205,19 +205,19 @@ export function SuccessAccountDetail({
             </div>
           ) : null}
 
-          <div className="mt-5 space-y-3">
+          <div className="mt-4 space-y-2.5">
             {detail.notes.length ? (
               detail.notes.map((note) => (
-                <div key={note.id} className="rounded-[22px] border border-line bg-card2 px-4 py-4">
+                <div key={note.id} className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-text">{note.title}</p>
+                    <p className="text-[13px] font-semibold text-text">{note.title}</p>
                     <OpsStatusPill>{humanizeSuccessValue(note.noteType)}</OpsStatusPill>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-sub">{note.body}</p>
+                  <p className="mt-2.5 text-[13px] leading-5 text-sub">{note.body}</p>
                 </div>
               ))
             ) : (
-              <div className="rounded-[22px] border border-line bg-card2 px-4 py-4 text-sm text-sub">
+              <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5 text-[13px] text-sub">
                 No internal CS notes yet.
               </div>
             )}

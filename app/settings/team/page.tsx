@@ -192,7 +192,7 @@ export default function SettingsTeamPage() {
             {roleBreakdown.map((item) => (
               <div key={item.role} className="rounded-[22px] border border-line bg-card2 p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{item.role}</p>
-                <p className="mt-2 text-2xl font-extrabold capitalize text-text">{item.count}</p>
+                <p className="mt-2 text-[1.45rem] font-extrabold capitalize text-text">{item.count}</p>
               </div>
             ))}
           </div>

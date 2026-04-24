@@ -30,14 +30,14 @@ export function LeadNotesPanel({
       title="Internal commercial notes"
       description="Keep qualification context, buyer concerns and enterprise edges with the lead."
     >
-      <div className="rounded-[22px] border border-line bg-card2 p-4">
+      <div className="rounded-[20px] border border-line bg-card2 p-3.5">
         <div className="grid gap-3 md:grid-cols-[180px_1fr]">
           <label className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
             Note type
             <select
               value={noteType}
               onChange={(event) => setNoteType(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-line bg-card px-3 py-2 text-sm text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
             >
               {commercialNoteTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -51,7 +51,7 @@ export function LeadNotesPanel({
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-line bg-card px-3 py-2 text-sm text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
               placeholder="What should the next operator know?"
             />
           </label>
@@ -61,8 +61,8 @@ export function LeadNotesPanel({
           <textarea
             value={body}
             onChange={(event) => setBody(event.target.value)}
-            rows={4}
-            className="mt-2 w-full rounded-[22px] border border-line bg-card px-3 py-3 text-sm leading-6 text-text outline-none transition focus:border-primary/35"
+            rows={3}
+            className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/35"
             placeholder="Capture the commercial context or buyer concern."
           />
         </label>
@@ -76,32 +76,32 @@ export function LeadNotesPanel({
             })
           }
           disabled={saving}
-          className="mt-4 inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-3.5 inline-flex items-center rounded-full bg-primary px-3.5 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? "Saving..." : "Add note"}
         </button>
       </div>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-2.5">
         {notes.length ? (
           notes.map((note) => (
-            <div key={note.id} className="rounded-[22px] border border-line bg-card2 p-4">
+            <div key={note.id} className="rounded-[20px] border border-line bg-card2 p-3.5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-text">{note.title}</p>
+                    <p className="text-[13px] font-bold text-text">{note.title}</p>
                     <OpsStatusPill tone={note.status === "open" ? "warning" : "default"}>
                       {humanizeCommercialLabel(note.noteType)}
                     </OpsStatusPill>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-sub">{note.body}</p>
+                  <p className="mt-2.5 text-[13px] leading-5 text-sub">{note.body}</p>
                 </div>
-                <p className="text-xs uppercase tracking-[0.14em] text-sub">{note.createdAt}</p>
+                <p className="text-[11px] uppercase tracking-[0.14em] text-sub">{note.createdAt}</p>
               </div>
             </div>
           ))
         ) : (
-          <div className="rounded-[22px] border border-line bg-card2 px-4 py-4 text-sm text-sub">
+          <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5 text-[13px] text-sub">
             No notes yet.
           </div>
         )}

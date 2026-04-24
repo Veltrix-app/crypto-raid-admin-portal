@@ -32,22 +32,22 @@ export function StatePanel({
   actions?: ReactNode;
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-[32px] border p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_78px_rgba(0,0,0,0.26)] ${toneClasses(tone)}`}>
+    <div className={`relative overflow-hidden rounded-[24px] border p-5 shadow-[0_18px_54px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_62px_rgba(0,0,0,0.24)] ${toneClasses(tone)}`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.04),transparent_26%)]" />
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-current/15 bg-black/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3.5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-current/15 bg-black/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             {icon}
           </div>
           <div className="max-w-2xl">
             {eyebrow ? (
               <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sub">{eyebrow}</p>
             ) : null}
-            <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.02em] text-text">{title}</h2>
-            <p className="mt-3 text-sm leading-7 text-sub">{description}</p>
+            <h2 className="mt-1.5 text-[1.45rem] font-extrabold tracking-[-0.02em] text-text">{title}</h2>
+            <p className="mt-2.5 text-sm leading-6 text-sub">{description}</p>
           </div>
         </div>
-        {actions ? <div className="flex shrink-0 flex-wrap gap-3">{actions}</div> : null}
+        {actions ? <div className="flex shrink-0 flex-wrap gap-2.5">{actions}</div> : null}
       </div>
     </div>
   );
@@ -140,14 +140,14 @@ export function InlineEmptyNotice({
   description: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-dashed border-white/10 bg-[linear-gradient(180deg,rgba(18,26,38,0.82),rgba(13,19,29,0.88))] p-5 transition-all duration-300 hover:border-primary/18 hover:bg-white/[0.04]">
+    <div className="rounded-[20px] border border-dashed border-white/10 bg-[linear-gradient(180deg,rgba(18,26,38,0.82),rgba(13,19,29,0.88))] p-4 transition-all duration-300 hover:border-primary/18 hover:bg-white/[0.04]">
       <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-[16px] border border-white/10 bg-black/15 text-sub">
+        <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-[14px] border border-white/10 bg-black/15 text-sub">
           <AlertCircle size={16} />
         </div>
         <div>
           <p className="font-bold text-text">{title}</p>
-          <p className="mt-2 text-sm leading-6 text-sub">{description}</p>
+          <p className="mt-2 text-sm leading-5.5 text-sub">{description}</p>
         </div>
       </div>
     </div>

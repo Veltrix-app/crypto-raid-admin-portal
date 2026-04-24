@@ -111,11 +111,11 @@ export function CommunityFunnelsPanel({
         <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
           <div className="space-y-4">
             {funnelAutomations.map((automation) => (
-              <div key={automation.id} className="rounded-[24px] border border-line bg-card2 p-5">
+              <div key={automation.id} className="rounded-[20px] border border-line bg-card2 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-bold text-text">{automation.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-sub">{automation.description}</p>
+                    <p className="mt-2 text-sm leading-5.5 text-sub">{automation.description}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <OpsStatusPill
@@ -141,18 +141,18 @@ export function CommunityFunnelsPanel({
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm text-sub">
+                <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
+                  <div className="rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-sm text-sub">
                     <p className="font-bold text-text">Cadence</p>
                     <p className="mt-2">{automation.cadence}</p>
                   </div>
-                  <div className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm text-sub">
+                  <div className="rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-sm text-sub">
                     <p className="font-bold text-text">Next run</p>
                     <p className="mt-2">{formatTimestamp(automation.nextRunAt)}</p>
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-2 text-sm text-sub">
+                <div className="mt-3 space-y-1.5 text-sm text-sub">
                   <p>Last run: {formatTimestamp(automation.lastRunAt)}</p>
                   <p>
                     Latest result:{" "}
@@ -165,7 +165,7 @@ export function CommunityFunnelsPanel({
                   type="button"
                   onClick={() => onRunAutomation(automation.id)}
                   disabled={runningAutomationId === automation.id}
-                  className="mt-4 rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-3.5 rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-[13px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {runningAutomationId === automation.id ? "Running..." : "Run funnel now"}
                 </button>
@@ -175,11 +175,11 @@ export function CommunityFunnelsPanel({
 
           <div className="space-y-4">
             {[conversionSignal, retentionSignal].filter(Boolean).map((signal) => (
-              <div key={signal?.key} className="rounded-[24px] border border-line bg-card2 p-5">
+              <div key={signal?.key} className="rounded-[20px] border border-line bg-card2 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-bold text-text">{signal?.label}</p>
-                    <p className="mt-2 text-sm leading-6 text-sub">{signal?.summary}</p>
+                    <p className="mt-2 text-sm leading-5.5 text-sub">{signal?.summary}</p>
                   </div>
                   <OpsStatusPill
                     tone={
@@ -198,28 +198,28 @@ export function CommunityFunnelsPanel({
               </div>
             ))}
 
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <div className="rounded-[20px] border border-line bg-card2 p-4">
               <p className="text-sm font-bold text-text">Queue balance</p>
               <p className="mt-2 text-sm text-sub">
                 Owners should use this read to decide whether to arm another funnel wave or first
                 let the active rail absorb the current pressure.
               </p>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div className="rounded-[18px] border border-line bg-card px-4 py-3">
+              <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
+                <div className="rounded-[16px] border border-line bg-card px-3.5 py-2.5">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                     Starter pressure
                   </p>
-                  <p className="mt-3 text-2xl font-black text-text">{newcomerCount}</p>
+                  <p className="mt-2 text-[1.02rem] font-black text-text">{newcomerCount}</p>
                   <p className="mt-2 text-sm text-sub">
                     {newcomer?.blockedCount ?? 0} seats are currently blocked from graduating cleanly.
                   </p>
                 </div>
-                <div className="rounded-[18px] border border-line bg-card px-4 py-3">
+                <div className="rounded-[16px] border border-line bg-card px-3.5 py-2.5">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                     Comeback pressure
                   </p>
-                  <p className="mt-3 text-2xl font-black text-text">{reactivationCount}</p>
+                  <p className="mt-2 text-[1.02rem] font-black text-text">{reactivationCount}</p>
                   <p className="mt-2 text-sm text-sub">
                     {reactivation?.blockedCount ?? 0} returning seats still need cleanup or better timing.
                   </p>

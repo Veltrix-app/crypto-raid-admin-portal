@@ -20,7 +20,7 @@ export default function ProjectsOnboardingQueue({
 }: ProjectsOnboardingQueueProps) {
   if (requests.length === 0) {
     return (
-      <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] px-5 py-8 text-sm text-sub">
+      <div className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-sub">
         No pending onboarding requests right now.
       </div>
     );
@@ -36,7 +36,7 @@ export default function ProjectsOnboardingQueue({
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xl">{request.logo}</span>
+                  <span className="text-[1.02rem]">{request.logo}</span>
                   <p className="font-bold text-text">{request.projectName}</p>
                   <OpsStatusPill tone="default">{request.chain}</OpsStatusPill>
                   {request.category ? (

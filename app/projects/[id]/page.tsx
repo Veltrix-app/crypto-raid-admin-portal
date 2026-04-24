@@ -1614,7 +1614,7 @@ export default function ProjectDetailPage() {
           </OpsPanel>
         ) : null}
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
             <ProjectOverviewSummary
               title={`${project.logo} ${project.name}`}
@@ -1830,13 +1830,13 @@ export default function ProjectDetailPage() {
 
                 <div className="p-5">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-card text-3xl">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-line bg-card text-[1.5rem]">
                       {project.logo || "🚀"}
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-xl font-extrabold text-text">{project.name}</p>
+                        <p className="truncate text-[1.02rem] font-extrabold text-text">{project.name}</p>
                         <DetailBadge>{project.chain}</DetailBadge>
                         {project.category ? <DetailBadge>{project.category}</DetailBadge> : null}
                         <DetailBadge>{project.isPublic ? "Public" : "Private"}</DetailBadge>

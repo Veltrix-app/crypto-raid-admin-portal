@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import {
   OpsFilterBar,
-  OpsMetricCard,
   OpsPanel,
   OpsSearchInput,
   OpsSelect,
@@ -129,16 +128,18 @@ export default function RaidsPage() {
                 </div>
               </OpsPanel>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <OpsMetricCard label="Active" value={activeCount} emphasis="primary" />
-                <OpsMetricCard
+              <div className="space-y-2.5 rounded-[22px] border border-white/6 bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-3.5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                  Signal rail
+                </p>
+                <RaidSignal label="Active" value={`${activeCount}`} />
+                <RaidSignal
                   label="Live pressure"
-                  value={livePressureCount}
-                  emphasis={livePressureCount > 0 ? "warning" : "default"}
-                  sub="Active and scheduled raids still shape visible coordination load."
+                  value={`${livePressureCount}`}
+                  tone={livePressureCount > 0 ? "warning" : "default"}
                 />
-                <OpsMetricCard label="Participants" value={totalParticipants} />
-                <OpsMetricCard label="Avg reward XP" value={avgRewardXp} />
+                <RaidSignal label="Participants" value={totalParticipants.toLocaleString()} />
+                <RaidSignal label="Avg reward XP" value={`${avgRewardXp}`} />
               </div>
             </div>
 
@@ -224,7 +225,7 @@ export default function RaidsPage() {
               title="Open the raids shaping visible pressure"
               description="This rail replaces the dense roster with cards so you can read target, community and reward pressure in one glance."
             >
-              <div className="grid gap-4">
+              <div className="grid gap-4 2xl:grid-cols-2">
                 {boardLeadRaids.map((raid) => {
                   const campaign = campaigns.find((item) => item.id === raid.campaignId);
                   const project = projects.find((item) => item.id === raid.projectId);
@@ -247,7 +248,7 @@ export default function RaidsPage() {
                 })}
 
                 {boardLeadRaids.length === 0 ? (
-                  <div className="rounded-[24px] border border-white/6 bg-white/[0.025] px-5 py-6 text-sm text-sub">
+                  <div className="rounded-[24px] border border-white/6 bg-white/[0.025] px-5 py-6 text-sm text-sub 2xl:col-span-2">
                     No raids match the current filters.
                   </div>
                 ) : null}
@@ -285,7 +286,7 @@ export default function RaidsPage() {
               title="Open the raids that shape visible pressure"
               description="These raids carry the shortest operator reading path because they change public momentum fastest."
             >
-              <div className="grid gap-4">
+              <div className="grid gap-4 2xl:grid-cols-2">
                 {liveRaids.map((raid) => {
                   const campaign = campaigns.find((item) => item.id === raid.campaignId);
                   const project = projects.find((item) => item.id === raid.projectId);
@@ -309,7 +310,7 @@ export default function RaidsPage() {
                 })}
 
                 {liveRaids.length === 0 ? (
-                  <div className="rounded-[24px] border border-white/6 bg-white/[0.025] px-5 py-6 text-sm text-sub">
+                  <div className="rounded-[24px] border border-white/6 bg-white/[0.025] px-5 py-6 text-sm text-sub 2xl:col-span-2">
                     No live raids match the current filters.
                   </div>
                 ) : null}
@@ -326,6 +327,29 @@ function raidStatusTone(status: string): "default" | "success" | "warning" {
   if (status === "active") return "success";
   if (status === "draft" || status === "scheduled") return "warning";
   return "default";
+}
+
+function RaidSignal({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "warning";
+}) {
+  return (
+    <div
+      className={`rounded-[18px] border px-3.5 py-3 ${
+        tone === "warning"
+          ? "border-amber-400/16 bg-amber-500/[0.07]"
+          : "border-white/6 bg-white/[0.02]"
+      }`}
+    >
+      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
+      <p className="mt-1.5 text-[13px] font-semibold text-text">{value}</p>
+    </div>
+  );
 }
 
 function RaidSurfaceCard({
@@ -347,7 +371,7 @@ function RaidSurfaceCard({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-[28px] border p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] ${
+      className={`relative overflow-hidden rounded-[24px] border p-4 shadow-[0_18px_46px_rgba(0,0,0,0.16)] ${
         accent
           ? "border-primary/14 bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.1),transparent_22%),linear-gradient(180deg,rgba(18,24,35,0.96),rgba(10,14,22,0.94))]"
           : "border-white/6 bg-[linear-gradient(180deg,rgba(18,24,35,0.94),rgba(11,15,23,0.92))]"
@@ -357,7 +381,7 @@ function RaidSurfaceCard({
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xl font-extrabold tracking-[-0.03em] text-text">{title}</p>
+            <p className="text-[0.92rem] font-semibold tracking-[-0.02em] text-text">{title}</p>
             {badges.filter(Boolean).map((badge, index) => (
               <OpsStatusPill
                 key={`${title}-${badge}`}
@@ -367,26 +391,26 @@ function RaidSurfaceCard({
               </OpsStatusPill>
             ))}
           </div>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-sub">{description}</p>
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <p className="mt-2 line-clamp-2 max-w-3xl text-[13px] leading-6 text-sub">{description}</p>
+          <div className="mt-3 grid gap-2 md:grid-cols-3">
             {stats.map((stat) => (
               <div
                 key={`${title}-${stat.label}`}
-                className="rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-3"
+                className="rounded-[14px] border border-white/6 bg-white/[0.025] px-3 py-2"
               >
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
                   {stat.label}
                 </p>
-                <p className="mt-2 text-sm font-semibold text-text">{stat.value}</p>
+                <p className="mt-1 text-[12px] font-semibold text-text">{stat.value}</p>
               </div>
             ))}
           </div>
         </div>
         <Link
           href={href}
-          className="rounded-full border border-white/8 bg-white/[0.035] px-4 py-3 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
+          className="rounded-full border border-white/8 bg-white/[0.035] px-4 py-2 text-[13px] font-semibold text-text transition hover:border-primary/24 hover:text-primary"
         >
-          Open
+          View
         </Link>
       </div>
     </div>

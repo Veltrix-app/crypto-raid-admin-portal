@@ -20,7 +20,7 @@ export default function StudioReadinessCard({
   const visibleItems = showOnlyIncomplete ? items.filter((item) => !item.complete) : items;
 
   return (
-    <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.96),rgba(10,12,18,0.94))] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
+    <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.96),rgba(10,12,18,0.94))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
       <div className="flex items-center gap-3">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{title}</p>
         <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.18),transparent)]" />

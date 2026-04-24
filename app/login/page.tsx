@@ -92,8 +92,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-6">
-      <div className="w-full max-w-md rounded-[32px] border border-line bg-card p-8 shadow-neon">
-        <div className="mb-8 flex items-center gap-4">
+      <div className="w-full max-w-md rounded-[26px] border border-line bg-card p-6 shadow-neon">
+        <div className="mb-6 flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
             <ShieldCheck size={26} />
           </div>
@@ -101,7 +101,7 @@ export default function LoginPage() {
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
               Project Access
             </p>
-            <h1 className="mt-1 text-2xl font-extrabold text-text">
+            <h1 className="mt-1 text-[1.45rem] font-extrabold text-text">
               Admin Portal Login
             </h1>
           </div>

@@ -116,8 +116,8 @@ export default function QaPage() {
         title="QA"
         description="One internal board for release verification, smoke completeness, environment warnings and the surfaces that still need operator proof."
         actions={
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Veltrix internal</p>
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">Veltrix internal</p>
             <div className="flex flex-wrap gap-2">
               <OpsStatusPill tone={overview.blockingChecks.length > 0 ? "warning" : "success"}>
                 {overview.blockingChecks.length} blocking failures
@@ -129,15 +129,15 @@ export default function QaPage() {
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/releases"
-                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white transition hover:bg-white/[0.08]"
               >
-                Open releases
+                Releases
               </Link>
             </div>
           </div>
         }
         statusBand={
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <OpsMetricCard
                 label="Waiting on QA"
@@ -167,7 +167,7 @@ export default function QaPage() {
               description="The board should make one thing obvious: which candidate is active, what still blocks launch, and what still needs operator proof before anyone calls a release safe."
               tone="accent"
             >
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-3 lg:grid-cols-3">
                 <OpsSnapshotRow
                   label="Now"
                   value={

@@ -409,8 +409,8 @@ export default function AnalyticsPage() {
         title="Analytics"
         description="Use Analytics for outcomes and trends, not live triage: launch and health pressure lives in Overview, while campaign and verification intelligence stay available here."
         actions={
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Decision routes</p>
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">Decision routes</p>
             <div className="flex flex-wrap gap-2">
               <OpsStatusPill tone={analyticsView === "growth" ? "success" : "default"}>
                 {analyticsView}
@@ -422,19 +422,19 @@ export default function AnalyticsPage() {
             <div className="flex flex-wrap gap-3">
             <Link
               href="/overview"
-              className="rounded-2xl border border-line bg-card px-4 py-3 font-semibold"
+              className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
             >
               Overview
             </Link>
             <Link
               href="/analytics/engagement"
-              className="rounded-2xl border border-line bg-card px-4 py-3 font-semibold"
+              className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
             >
               Engagement
             </Link>
             <Link
               href="/analytics/rewards"
-              className="rounded-2xl border border-line bg-card px-4 py-3 font-semibold"
+              className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
             >
               Rewards
             </Link>
@@ -442,8 +442,8 @@ export default function AnalyticsPage() {
           </div>
         }
         statusBand={
-          <div className="space-y-5">
-            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+          <div className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
               {(analyticsView === "growth" ? growthCards : outcomeCards).map((card) => {
                 if ("key" in card) {
                   const metric = platformMetricMap.get(card.key);
@@ -488,14 +488,14 @@ export default function AnalyticsPage() {
                 />
               }
             >
-              <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-3">
+                <div className="grid gap-3 lg:grid-cols-3">
                   <OpsSnapshotRow label="Now" value={analyticsCommandRead.now} />
                   <OpsSnapshotRow label="Next" value={analyticsCommandRead.next} />
                   <OpsSnapshotRow label="Watch" value={analyticsCommandRead.watch} />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-4">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   <ModeCard
                     label="Growth"
                     body="Funnel, revenue, retention, attribution and benchmark coverage in one internal workspace."
@@ -539,10 +539,10 @@ export default function AnalyticsPage() {
                   {(growthOverview?.funnel ?? []).slice(0, 10).map((stage) => (
                     <div
                       key={stage.stage}
-                      className="rounded-[22px] border border-line bg-card2 px-4 py-4"
+                      className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3.5 py-3.5"
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-bold text-text">{stage.label}</p>
+                        <p className="text-[13px] font-bold text-text">{stage.label}</p>
                         <OpsStatusPill
                           tone={
                             stage.dataSource === "events"
@@ -555,10 +555,10 @@ export default function AnalyticsPage() {
                           {stage.dataSource}
                         </OpsStatusPill>
                       </div>
-                      <p className="mt-3 text-2xl font-extrabold tracking-tight text-text">
+                      <p className="mt-2.5 text-[1.18rem] font-extrabold tracking-tight text-text">
                         {stage.value.toLocaleString()}
                       </p>
-                      <p className="mt-3 text-sm text-sub">
+                      <p className="mt-2 text-[11px] text-sub">
                         {stage.conversionRate === null
                           ? "Starting point"
                           : `${stage.conversionRate}% from previous stage`}
@@ -645,7 +645,7 @@ export default function AnalyticsPage() {
                   {(growthOverview?.retention.cohorts ?? []).map((cohort) => (
                     <div
                       key={cohort.cohortLabel}
-                      className="rounded-[22px] border border-line bg-card2 px-4 py-4"
+                      className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3.5 py-3.5"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="font-semibold text-text">{cohort.cohortLabel}</p>
@@ -670,7 +670,7 @@ export default function AnalyticsPage() {
                     growthOverview?.attribution.sources.map((source) => (
                       <div
                         key={source.source}
-                        className="rounded-[22px] border border-line bg-card2 px-4 py-4"
+                        className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3.5 py-3.5"
                       >
                         <div className="flex items-center justify-between gap-3">
                           <p className="font-semibold text-text">{source.source}</p>
@@ -803,7 +803,7 @@ export default function AnalyticsPage() {
                     ].map((key) => {
                       const metric = projectMetricMap.get(key);
                       return (
-                        <div key={key} className="rounded-[22px] border border-line bg-card2 p-4">
+                        <div key={key} className="rounded-[18px] border border-white/6 bg-white/[0.03] p-3.5">
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-sm font-bold text-text">{metric?.label ?? humanize(key)}</p>
                             <OpsStatusPill
@@ -818,7 +818,7 @@ export default function AnalyticsPage() {
                               {metric?.healthState ? humanize(metric.healthState) : "stable"}
                             </OpsStatusPill>
                           </div>
-                          <p className="mt-3 text-2xl font-extrabold tracking-tight text-text">
+                          <p className="mt-3 text-[1.45rem] font-extrabold tracking-tight text-text">
                             {formatMetricValue(metric?.value ?? 0, metric?.unit ?? "count")}
                           </p>
                         </div>
@@ -872,7 +872,7 @@ export default function AnalyticsPage() {
           >
             <div className="grid gap-4 xl:grid-cols-3">
               {campaignHealth.slice(0, 6).map((campaign) => (
-                <div key={campaign.id} className="rounded-[24px] border border-line bg-card2 p-5">
+                <div key={campaign.id} className="rounded-[20px] border border-white/6 bg-white/[0.03] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-bold text-text">{campaign.title}</p>
@@ -932,8 +932,8 @@ export default function AnalyticsPage() {
               title="Quest review load"
               description="These quests are creating the most moderator drag right now."
             >
-              <div className="overflow-hidden rounded-[24px] border border-line bg-card2">
-                <div className="grid grid-cols-7 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
+              <div className="overflow-hidden rounded-[20px] border border-white/6 bg-white/[0.03]">
+                <div className="grid grid-cols-7 border-b border-white/6 px-4 py-3.5 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
                   <div>Quest</div>
                   <div>Verification</div>
                   <div>Submissions</div>
@@ -946,7 +946,7 @@ export default function AnalyticsPage() {
                 {questReviewLoad.map((quest) => (
                   <div
                     key={quest.id}
-                    className="grid grid-cols-7 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
+                    className="grid grid-cols-7 items-center border-b border-white/6 px-4 py-3.5 text-[13px] text-text last:border-b-0"
                   >
                     <div className="font-semibold">{quest.title}</div>
                     <div className="capitalize">{humanize(quest.verificationType)}</div>
@@ -959,7 +959,7 @@ export default function AnalyticsPage() {
                 ))}
 
                 {questReviewLoad.length === 0 ? (
-                  <div className="px-5 py-8 text-sm text-sub">
+                  <div className="px-4 py-6 text-sm text-sub">
                     No quest review hotspots yet. As submissions flow in, this will highlight where teams still spend manual effort.
                   </div>
                 ) : null}
@@ -997,9 +997,9 @@ function formatCurrencyValue(value: number) {
 
 function ModeCard({ label, body }: { label: string; body: string }) {
   return (
-    <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{body}</p>
+    <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3 py-3">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{label}</p>
+      <p className="mt-1.5 text-[11px] leading-5 text-sub">{body}</p>
     </div>
   );
 }
@@ -1014,9 +1014,9 @@ function LinkRow({
   body: string;
 }) {
   return (
-    <Link href={href} className="rounded-[24px] border border-line bg-card2 p-5 transition hover:border-primary/40">
-      <p className="font-bold text-text">{title}</p>
-      <p className="mt-3 text-sm leading-6 text-sub">{body}</p>
+    <Link href={href} className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3.5 py-3 transition hover:border-primary/40">
+      <p className="text-[13px] font-bold text-text">{title}</p>
+      <p className="mt-1.5 text-[11px] leading-5 text-sub">{body}</p>
     </Link>
   );
 }
@@ -1031,10 +1031,10 @@ function RouteRow({
   share: number;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-card2 p-4">
+    <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3 py-2.5">
       <div className="flex items-center justify-between gap-3">
-        <p className="font-semibold text-text">{label}</p>
-        <span className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
+        <p className="text-sm font-semibold text-text">{label}</p>
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
           {value} ({share}%)
         </span>
       </div>
@@ -1050,9 +1050,9 @@ function SnapshotStat({
   value: number;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-card px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-lg font-extrabold text-text">{value}</p>
+    <div className="rounded-[16px] border border-white/6 bg-white/[0.03] px-3 py-2.5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
+      <p className="mt-1 text-[0.92rem] font-extrabold text-text">{value}</p>
     </div>
   );
 }

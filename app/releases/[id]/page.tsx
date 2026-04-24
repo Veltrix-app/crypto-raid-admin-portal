@@ -377,8 +377,8 @@ export default function ReleaseDetailPage() {
         title={detail.release.title}
         description="Operate the full release candidate from one place: state, services, checks, smoke, environment posture and migration discipline."
         actions={
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
               {detail.release.releaseRef}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -393,21 +393,21 @@ export default function ReleaseDetailPage() {
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/releases"
-                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white transition hover:bg-white/[0.08]"
               >
-                Back to releases
+                Releases
               </Link>
               <Link
                 href="/qa"
-                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white transition hover:bg-white/[0.08]"
               >
-                Open QA
+                QA
               </Link>
             </div>
           </div>
         }
         statusBand={
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               <OpsMetricCard
                 label="Blocking failures"
@@ -442,13 +442,13 @@ export default function ReleaseDetailPage() {
               description="This screen should tell you what currently blocks rollout, what still needs proof, and what still requires migration or environment discipline before the release is truly calm."
               tone="accent"
             >
-              <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-3">
+                <div className="grid gap-3 lg:grid-cols-3">
                   <OpsSnapshotRow label="Now" value={releaseCommandRead.now} />
                   <OpsSnapshotRow label="Next" value={releaseCommandRead.next} />
                   <OpsSnapshotRow label="Watch" value={releaseCommandRead.watch} />
                 </div>
-                <p className="text-sm leading-7 text-sub">
+                <p className="text-xs leading-6 text-sub">
                   {detail.release.summary ||
                     detail.release.decisionNotes ||
                     "No extra release summary has been recorded yet, so this command read is currently driven by lifecycle, checks and smoke posture only."}

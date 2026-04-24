@@ -410,14 +410,14 @@ export default function CampaignDetailPage() {
             <>
               <Link
                 href="/analytics"
-                className="rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-text transition hover:border-primary/30 hover:bg-primary/5"
+                className="rounded-[14px] border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-[12px] font-semibold text-text transition hover:border-primary/30 hover:bg-primary/5"
               >
                 Open Analytics
               </Link>
               <button
                 onClick={() => void handleLifecycleAction("duplicate")}
                 disabled={runningAction !== null}
-                className="rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-text transition hover:border-primary/30 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-[14px] border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-[12px] font-semibold text-text transition hover:border-primary/30 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {runningAction === "duplicate" ? "Duplicating..." : "Duplicate"}
               </button>
@@ -425,7 +425,7 @@ export default function CampaignDetailPage() {
                 <button
                   onClick={() => void handleLifecycleAction(primaryLifecycleAction.action)}
                   disabled={runningAction !== null}
-                  className="rounded-[18px] border border-primary/30 bg-primary/10 px-4 py-3 font-bold text-primary transition hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-[14px] border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-[12px] font-bold text-primary transition hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {runningAction === primaryLifecycleAction.action
                     ? `${primaryLifecycleAction.label}...`
@@ -436,7 +436,7 @@ export default function CampaignDetailPage() {
                 <button
                   onClick={() => void handleLifecycleAction("archive")}
                   disabled={runningAction !== null}
-                  className="rounded-[18px] border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-bold text-amber-200 transition hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-[14px] border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-[12px] font-bold text-amber-200 transition hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {runningAction === "archive" ? "Archiving..." : "Archive"}
                 </button>
@@ -446,7 +446,7 @@ export default function CampaignDetailPage() {
                   await deleteCampaign(campaign.id);
                   router.push("/campaigns");
                 }}
-                className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
+                className="rounded-[14px] border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-[12px] font-bold text-rose-300 transition hover:bg-rose-500/15"
               >
                 Delete Campaign
               </button>
@@ -480,7 +480,7 @@ export default function CampaignDetailPage() {
 
         {actionMessage ? (
           <div
-            className={`rounded-[24px] border px-5 py-4 text-sm font-semibold ${
+            className={`rounded-[18px] border px-4 py-3 text-[12px] font-semibold ${
               actionMessage.tone === "success"
                 ? "border-primary/30 bg-primary/10 text-primary"
                 : "border-rose-500/30 bg-rose-500/10 text-rose-200"
@@ -490,13 +490,13 @@ export default function CampaignDetailPage() {
           </div>
         ) : null}
 
-        <div className="rounded-[28px] border border-white/6 bg-white/[0.025] p-5">
+        <div className="rounded-[22px] border border-white/6 bg-white/[0.025] p-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
                 Campaign workspace
               </p>
-              <p className="mt-2 text-sm leading-6 text-sub">
+              <p className="mt-1.5 text-[13px] leading-5 text-sub">
                 Operate mode keeps launch posture, analytics and platform pressure visible.
                 Configure mode keeps the builder and system settings focused.
               </p>
@@ -896,10 +896,10 @@ function AnalyticsStat({
   hint: string;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-card2 p-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold text-text">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
+    <div className="rounded-[18px] border border-white/6 bg-white/[0.025] p-3.5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-2 text-[1.18rem] font-extrabold text-text">{value}</p>
+      <p className="mt-2 text-[11px] leading-5 text-sub">{hint}</p>
     </div>
   );
 }

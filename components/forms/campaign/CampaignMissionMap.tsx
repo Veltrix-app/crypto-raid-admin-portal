@@ -26,7 +26,7 @@ export default function CampaignMissionMap({
   }
 
   return (
-    <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4">
+    <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/8 pb-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">

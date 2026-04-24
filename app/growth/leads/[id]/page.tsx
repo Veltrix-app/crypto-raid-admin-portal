@@ -242,7 +242,7 @@ export default function GrowthLeadDetailPage() {
         title={detail.companyName || detail.contactName || detail.contactEmail}
         description="Run the conversation, qualification and next commercial move without leaving the lead timeline."
         actions={
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div className="flex flex-wrap gap-2">
               <OpsStatusPill tone={detail.leadState === "evaluation" || detail.leadState === "engaged" ? "warning" : detail.leadState === "converted" ? "success" : "default"}>
                 {detail.leadState.replaceAll("_", " ")}
@@ -253,9 +253,9 @@ export default function GrowthLeadDetailPage() {
             </div>
             <Link
               href="/growth"
-              className="inline-flex items-center rounded-full border border-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary"
+              className="inline-flex items-center rounded-full border border-white/12 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/35 hover:text-primary"
             >
-              Back to growth
+              Growth
             </Link>
           </div>
         }
@@ -268,22 +268,22 @@ export default function GrowthLeadDetailPage() {
               <OpsMetricCard label="Overdue" value={detail.taskCounts.overdue} emphasis={detail.taskCounts.overdue > 0 ? "warning" : "default"} />
             </div>
 
-            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
-              <div className="flex flex-wrap items-start justify-between gap-5">
-                <div className="max-w-2xl">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+            <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] px-4 py-4 shadow-[0_12px_42px_rgba(0,0,0,0.22)]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-xl">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
                     Lead command read
                   </p>
-                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                  <h2 className="mt-1.5 text-base font-semibold tracking-tight text-text">
                     Read intent and follow-up pressure first, then decide whether the next move is qualification, scheduling, or enterprise routing.
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-sub">
+                  <p className="mt-1.5 max-w-2xl text-xs leading-5 text-sub">
                     This drilldown should keep commercial momentum, overdue follow-up and the clearest next move visible before you dive into notes and tasks.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="mt-4 grid gap-3 lg:grid-cols-3">
                 <OpsSnapshotRow label="Now" value={detail.intentSummary || "No intent summary captured yet"} />
                 <OpsSnapshotRow label="Next" value={detail.taskCounts.overdue > 0 ? `Resolve ${detail.taskCounts.overdue} overdue follow-up task${detail.taskCounts.overdue === 1 ? "" : "s"}` : "Advance qualification and commercial narrative"} />
                 <OpsSnapshotRow label="Watch" value={detail.latestEnterpriseRequest ? "Enterprise requirements are already in play" : detail.latestDemoRequest ? "Demo intent is active" : "No structured buyer request captured yet"} />

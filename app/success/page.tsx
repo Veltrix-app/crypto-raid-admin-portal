@@ -55,9 +55,9 @@ export default function SuccessPage() {
         title="Success"
         description="Run activation, follow-up, expansion and churn posture from one shared success cockpit instead of splitting it across billing, onboarding and support."
         actions={
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Success posture</p>
-            <p className="text-lg font-extrabold text-text">
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">Success posture</p>
+            <p className="text-base font-extrabold text-text">
               {overview?.counts.totalAccounts ?? 0} tracked accounts
             </p>
             <div className="flex flex-wrap items-center gap-2">
@@ -76,16 +76,16 @@ export default function SuccessPage() {
               <OpsMetricCard label="Churn risk" value={loading ? "..." : overview?.counts.churnRisk ?? 0} emphasis={(overview?.counts.churnRisk ?? 0) > 0 ? "warning" : "default"} />
             </div>
 
-            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
-              <div className="flex flex-wrap items-start justify-between gap-5">
-                <div className="max-w-2xl">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+            <div className="rounded-[20px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-xl">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
                     Success command read
                   </p>
-                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                  <h2 className="mt-1.5 text-[0.94rem] font-semibold tracking-tight text-text">
                     Read activation drag first, then decide whether the next move is rescue, expansion, or billing alignment.
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-sub">
+                  <p className="mt-1.5 max-w-2xl text-[11px] leading-5 text-sub">
                     This cockpit works best when it answers where customers are stalling, who deserves named follow-up next, and which accounts are quietly becoming expansion or churn stories.
                   </p>
                 </div>
@@ -103,7 +103,7 @@ export default function SuccessPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="mt-3.5 grid gap-2.5 lg:grid-cols-3">
                 <OpsSnapshotRow
                   label="Now"
                   value={

@@ -17,7 +17,7 @@ export default function StudioStepRail<TStep extends string>({
   onSelect: (step: TStep) => void;
 }) {
   return (
-    <aside className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,22,31,0.96),rgba(10,12,18,0.94))] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.24)] xl:sticky xl:top-24 xl:self-start">
+    <aside className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,22,31,0.96),rgba(10,12,18,0.94))] p-4 shadow-[0_18px_46px_rgba(0,0,0,0.18)] xl:sticky xl:top-24 xl:self-start">
       <div className="mb-4 flex items-center gap-3 px-1">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
           Studio Flow

@@ -230,7 +230,7 @@ export default function UsersPage() {
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-3">
-                          <h2 className="text-xl font-extrabold text-text">{user.username}</h2>
+                          <h2 className="text-[1.02rem] font-extrabold text-text">{user.username}</h2>
                           <OpsStatusPill tone="default">{user.contributionTier}</OpsStatusPill>
                           {user.title ? <OpsStatusPill tone="success">{user.title}</OpsStatusPill> : null}
                         </div>
@@ -249,7 +249,7 @@ export default function UsersPage() {
 
                       <div className="rounded-2xl border border-line bg-card px-4 py-3 text-right">
                         <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Rank</p>
-                        <p className="mt-2 text-2xl font-extrabold text-text">
+                        <p className="mt-2 text-[1.45rem] font-extrabold text-text">
                           {user.reputationRank > 0 ? `#${user.reputationRank}` : "-"}
                         </p>
                         <div className="mt-3">
@@ -359,7 +359,7 @@ function DecisionCard({
   return (
     <div className="rounded-[24px] border border-line bg-card2 p-5">
       <p className="text-sm text-sub">{label}</p>
-      <p className={`mt-2 text-2xl font-extrabold ${tone === "warning" ? "text-amber-300" : "text-text"}`}>
+              <p className={`mt-2 text-[1.45rem] font-extrabold ${tone === "warning" ? "text-amber-300" : "text-text"}`}>
         {value}
       </p>
       <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>

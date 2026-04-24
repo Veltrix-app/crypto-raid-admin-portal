@@ -418,7 +418,7 @@ export default function CampaignForm({
 
   return (
     <form
-      className="space-y-8"
+              className="space-y-6"
       onSubmit={async (e) => {
         e.preventDefault();
         const nextErrors = validate(values);

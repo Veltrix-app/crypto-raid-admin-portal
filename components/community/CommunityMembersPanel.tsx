@@ -127,11 +127,11 @@ export function CommunityMembersPanel({
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[20px] border border-line bg-card2 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Readiness posture</p>
-                <p className="mt-2 text-sm text-sub">
+                <p className="mt-2 text-sm leading-5.5 text-sub">
                   These lanes tell you whether the project can actually move contributors into
                   missions, raids and rewards without manual chasing.
                 </p>
@@ -141,39 +141,39 @@ export function CommunityMembersPanel({
               </OpsStatusPill>
             </div>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+            <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Starter lane
                 </p>
-                <p className="mt-3 text-2xl font-black text-text">{newcomer?.memberCount ?? 0}</p>
+                  <p className="mt-2 text-[1.02rem] font-black text-text">{newcomer?.memberCount ?? 0}</p>
                 <p className="mt-2 text-sm text-sub">
                   {analytics.newcomerReadyCount} newcomer seats are already command-ready.
                 </p>
               </div>
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Active rail
                 </p>
-                <p className="mt-3 text-2xl font-black text-text">{active?.readyCount ?? 0}</p>
+                  <p className="mt-2 text-[1.02rem] font-black text-text">{active?.readyCount ?? 0}</p>
                 <p className="mt-2 text-sm text-sub">
                   Ready active contributors who can absorb immediate mission pressure.
                 </p>
               </div>
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Comeback lane
                 </p>
-                <p className="mt-3 text-2xl font-black text-text">{reactivation?.memberCount ?? 0}</p>
+                  <p className="mt-2 text-[1.02rem] font-black text-text">{reactivation?.memberCount ?? 0}</p>
                 <p className="mt-2 text-sm text-sub">
                   {analytics.reactivationReadyCount} comeback seats are already reachable.
                 </p>
               </div>
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   High-trust anchor
                 </p>
-                <p className="mt-3 text-2xl font-black text-text">{highTrust?.memberCount ?? 0}</p>
+                  <p className="mt-2 text-[1.02rem] font-black text-text">{highTrust?.memberCount ?? 0}</p>
                 <p className="mt-2 text-sm text-sub">
                   Trusted contributors who can carry launch, reward and raid pressure.
                 </p>
@@ -181,7 +181,7 @@ export function CommunityMembersPanel({
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[20px] border border-line bg-card2 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Quality overlay</p>
@@ -195,30 +195,30 @@ export function CommunityMembersPanel({
               </OpsStatusPill>
             </div>
 
-            <div className="mt-4 space-y-3">
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+            <div className="mt-3.5 space-y-2.5">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Watchlist seats
                 </p>
-                <p className="mt-3 text-xl font-black text-text">{watchlist?.memberCount ?? 0}</p>
+                <p className="mt-2 text-lg font-black text-text">{watchlist?.memberCount ?? 0}</p>
                 <p className="mt-2 text-sm text-sub">
                   {analytics.openFlagCount} open review flags are currently shaping trust posture.
                 </p>
               </div>
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Activation-ready
                 </p>
-                <p className="mt-3 text-xl font-black text-text">{analytics.activationReadyCount}</p>
+                <p className="mt-2 text-lg font-black text-text">{analytics.activationReadyCount}</p>
                 <p className="mt-2 text-sm text-sub">
                   Contributors who are both reachable and wallet-ready right now.
                 </p>
               </div>
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Average trust
                 </p>
-                <p className="mt-3 text-xl font-black text-text">{analytics.averageTrust}</p>
+                <p className="mt-2 text-lg font-black text-text">{analytics.averageTrust}</p>
                 <p className="mt-2 text-sm text-sub">
                   Project-wide trust baseline across the currently visible contributor base.
                 </p>
@@ -230,7 +230,7 @@ export function CommunityMembersPanel({
         <div className="grid gap-3 md:grid-cols-3">
           {primarySignals.length > 0 ? (
             primarySignals.map((signal) => (
-              <div key={signal.key} className="rounded-[20px] border border-line bg-card2 px-4 py-4">
+              <div key={signal.key} className="rounded-[16px] border border-line bg-card2 px-3.5 py-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-bold text-text">{signal.label}</p>
                   <OpsStatusPill
@@ -247,11 +247,11 @@ export function CommunityMembersPanel({
                     {signal.value || "Tracking"}
                   </OpsStatusPill>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-sub">{signal.summary}</p>
+                <p className="mt-2.5 text-sm leading-5.5 text-sub">{signal.summary}</p>
               </div>
             ))
           ) : (
-            <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub md:col-span-3">
+            <div className="rounded-[16px] border border-dashed border-line bg-card px-3.5 py-4 text-sm text-sub md:col-span-3">
               Community health signals will appear here as soon as the Phase 3 rollups refresh.
             </div>
           )}

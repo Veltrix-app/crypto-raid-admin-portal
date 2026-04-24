@@ -163,7 +163,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
   if (loading) {
     return (
       <OpsPanel title="Loading support ticket" description="Veltrix is resolving the ticket history, status posture and handoff state.">
-        <div className="rounded-[22px] border border-line bg-card2 px-4 py-5 text-sm text-sub">
+        <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
           Loading support ticket...
         </div>
       </OpsPanel>
@@ -173,7 +173,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
   if (error && !ticket) {
     return (
       <OpsPanel title="Support ticket could not load" description={error} tone="accent">
-        <div className="rounded-[22px] border border-line bg-card2 px-4 py-5 text-sm text-sub">
+        <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
           Retry the route once the support APIs are available again.
         </div>
       </OpsPanel>
@@ -183,7 +183,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
   if (!ticket) {
     return (
       <OpsPanel title="Support ticket not found" description="This ticket is no longer available in the internal support queue.">
-        <div className="rounded-[22px] border border-line bg-card2 px-4 py-5 text-sm text-sub">
+        <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
           The ticket may have been removed from the workspace or never existed.
         </div>
       </OpsPanel>
@@ -191,14 +191,14 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {error ? (
-        <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+        <div className="rounded-[20px] border border-rose-400/20 bg-rose-500/10 px-3.5 py-2.5 text-[13px] text-rose-200">
           {error}
         </div>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-4">
         <OpsMetricCard label="Ticket" value={ticket.ticketRef} emphasis="primary" />
         <OpsMetricCard label="Priority" value={humanize(ticket.priority)} emphasis={ticket.priority === "urgent" || ticket.priority === "high" ? "warning" : "default"} />
         <OpsMetricCard label="Status" value={humanize(ticket.status)} emphasis={ticket.status === "escalated" ? "warning" : "default"} />
@@ -245,7 +245,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
         </div>
       </OpsPanel>
 
-      <div className="grid gap-6 xl:grid-cols-[1.04fr_0.96fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.04fr_0.96fr]">
         <OpsPanel
           eyebrow="Ticket context"
           title={ticket.subject}
@@ -260,9 +260,9 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
             <OpsStatusPill>{humanize(ticket.ticketType)}</OpsStatusPill>
           </div>
 
-          <p className="mt-4 text-sm leading-7 text-sub">{ticket.message}</p>
+          <p className="mt-3.5 text-[13px] leading-5 text-sub">{ticket.message}</p>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
             <ContextRow label="Requester" value={`${ticket.requesterName} (${ticket.requesterEmail})`} />
             <ContextRow label="Workspace account" value={ticket.customerAccountName ?? "No linked account"} />
             <ContextRow label="Project" value={ticket.projectName ?? "No linked project"} />
@@ -272,19 +272,19 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
           </div>
 
           {ticket.linkedIncidentId ? (
-            <div className="mt-5 rounded-[22px] border border-line bg-card2 p-4">
+            <div className="mt-4 rounded-[20px] border border-line bg-card2 p-3.5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                     Linked incident
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
+                  <p className="mt-1.5 text-[13px] leading-5 text-sub">
                     This ticket is already tied to an active service incident and should keep its public wording aligned.
                   </p>
                 </div>
                 <Link
                   href={`/support/incidents/${ticket.linkedIncidentId}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-primary transition hover:border-primary/45 hover:bg-primary/15"
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-primary transition hover:border-primary/45 hover:bg-primary/15"
                 >
                   Open incident
                   <ArrowUpRight size={12} />
@@ -294,16 +294,16 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
           ) : null}
 
           {latestPublicUpdate ? (
-            <div className="mt-5 rounded-[22px] border border-line bg-card2 p-4">
+            <div className="mt-4 rounded-[20px] border border-line bg-card2 p-3.5">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                 Latest customer-facing update
               </p>
-              <p className="mt-3 text-sm leading-6 text-sub">{latestPublicUpdate.body}</p>
+              <p className="mt-2.5 text-[13px] leading-5 text-sub">{latestPublicUpdate.body}</p>
             </div>
           ) : null}
         </OpsPanel>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           <OpsPanel
             eyebrow="Ownership"
             title="Move the ticket"
@@ -314,17 +314,17 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
                 type="button"
                 onClick={() => void runAction("claim")}
                 disabled={busy !== null}
-                className="rounded-[18px] border border-primary/35 bg-primary/15 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-primary/35 bg-primary/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {busy === "claim" ? "Claiming..." : "Claim ticket"}
               </button>
             </div>
 
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
               <select
                 value={statusDraft}
                 onChange={(event) => setStatusDraft(event.target.value as AdminSupportTicketStatus)}
-                className="rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <option value="new">New</option>
                 <option value="triaging">Triaging</option>
@@ -337,7 +337,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
               <select
                 value={waitingStateDraft}
                 onChange={(event) => setWaitingStateDraft(event.target.value as AdminSupportWaitingState)}
-                className="rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <option value="none">No waiting state</option>
                 <option value="customer">Waiting on customer</option>
@@ -350,7 +350,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
               type="button"
               onClick={() => void runAction("change_status")}
               disabled={busy !== null}
-              className="mt-3 rounded-[18px] border border-line px-4 py-2 text-sm font-semibold text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-3 rounded-full border border-line px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {busy === "change_status" ? "Saving..." : "Update status"}
             </button>
@@ -361,37 +361,37 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
             title="Internal and customer updates"
             description="Keep internal reasoning and customer-facing wording separate so the queue stays explainable."
           >
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <textarea
                 value={internalNote}
                 onChange={(event) => setInternalNote(event.target.value)}
-                rows={4}
-                className="w-full rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                rows={3}
+                className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="Add an internal note for operators."
               />
               <button
                 type="button"
                 onClick={() => void runAction("internal_note")}
                 disabled={busy !== null}
-                className="rounded-[18px] border border-line px-4 py-2 text-sm font-semibold text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-line px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {busy === "internal_note" ? "Saving..." : "Add internal note"}
               </button>
             </div>
 
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 space-y-2.5">
               <textarea
                 value={customerUpdate}
                 onChange={(event) => setCustomerUpdate(event.target.value)}
-                rows={4}
-                className="w-full rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                rows={3}
+                className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="Write the next customer-facing update."
               />
               <button
                 type="button"
                 onClick={() => void runAction("customer_update")}
                 disabled={busy !== null}
-                className="rounded-[18px] border border-primary/35 bg-primary/15 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-primary/35 bg-primary/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {busy === "customer_update" ? "Sending..." : "Add customer update"}
               </button>
@@ -403,11 +403,11 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
             title="Push into a specialist surface"
             description="Create an explicit support handoff when the ticket should continue in billing, trust, payout, on-chain or project ops."
           >
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <select
                 value={handoffType}
                 onChange={(event) => setHandoffType(event.target.value as AdminSupportHandoffType)}
-                className="w-full rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <option value="general_support">General support</option>
                 <option value="billing">Billing</option>
@@ -419,15 +419,15 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
               <textarea
                 value={handoffSummary}
                 onChange={(event) => setHandoffSummary(event.target.value)}
-                rows={4}
-                className="w-full rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                rows={3}
+                className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="Explain why this ticket is moving into another surface."
               />
               <button
                 type="button"
                 onClick={() => void runAction("handoff")}
                 disabled={busy !== null}
-                className="rounded-[18px] border border-line px-4 py-2 text-sm font-semibold text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-line px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {busy === "handoff" ? "Creating..." : "Create handoff"}
               </button>
@@ -436,23 +436,23 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
         <OpsPanel
           eyebrow="Ticket history"
           title="Event timeline"
           description="Every ownership, waiting-state and customer-facing step stays visible here."
         >
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {ticket.events.map((event) => (
-              <div key={event.id} className="rounded-[22px] border border-line bg-card2 p-4">
+              <div key={event.id} className="rounded-[20px] border border-line bg-card2 p-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-bold text-text">{event.title ?? humanize(event.eventType)}</p>
+                    <p className="text-[13px] font-bold text-text">{event.title ?? humanize(event.eventType)}</p>
                     <OpsStatusPill>{event.visibilityScope}</OpsStatusPill>
                   </div>
-                  <p className="text-xs text-sub">{new Date(event.createdAt).toLocaleString()}</p>
+                  <p className="text-[11px] text-sub">{new Date(event.createdAt).toLocaleString()}</p>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-sub">{event.body}</p>
+                <p className="mt-2.5 text-[13px] leading-5 text-sub">{event.body}</p>
               </div>
             ))}
           </div>
@@ -463,27 +463,27 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
           title="Escalation trail"
           description="When a ticket leaves generic support, keep the exact destination and the reason visible."
         >
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {ticket.handoffs.length === 0 ? (
-              <div className="rounded-[22px] border border-line bg-card2 px-4 py-5 text-sm text-sub">
+              <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
                 This ticket has not been handed into another specialist surface yet.
               </div>
             ) : (
               ticket.handoffs.map((handoff) => (
-                <div key={handoff.id} className="rounded-[22px] border border-line bg-card2 p-4">
+                <div key={handoff.id} className="rounded-[20px] border border-line bg-card2 p-3.5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-bold text-text">{humanize(handoff.handoffType)}</p>
+                      <p className="text-[13px] font-bold text-text">{humanize(handoff.handoffType)}</p>
                       <OpsStatusPill tone={statusTone(handoff.status)}>{humanize(handoff.status)}</OpsStatusPill>
                     </div>
-                    <p className="text-xs text-sub">{new Date(handoff.createdAt).toLocaleString()}</p>
+                    <p className="text-[11px] text-sub">{new Date(handoff.createdAt).toLocaleString()}</p>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-sub">{handoff.summary}</p>
+                  <p className="mt-2.5 text-[13px] leading-5 text-sub">{handoff.summary}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {handoff.targetRoute ? (
                       <Link
                         href={handoff.targetRoute}
-                        className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-primary transition hover:border-primary/45 hover:bg-primary/15"
+                        className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-primary transition hover:border-primary/45 hover:bg-primary/15"
                       >
                         Open destination
                         <ArrowUpRight size={12} />
@@ -502,9 +502,9 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
 
 function ContextRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] border border-line bg-card2 px-4 py-3">
+    <div className="rounded-[18px] border border-line bg-card2 px-3.5 py-2.5">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-text">{value}</p>
+      <p className="mt-1.5 text-[13px] leading-5 text-text">{value}</p>
     </div>
   );
 }

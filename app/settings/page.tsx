@@ -108,7 +108,7 @@ export default function SettingsPage() {
                   </p>
                   <OpsStatusPill tone={item.tone}>{item.metric}</OpsStatusPill>
                 </div>
-                <h2 className="mt-4 text-xl font-extrabold text-text">{item.title}</h2>
+                <h2 className="mt-4 text-[1.02rem] font-extrabold text-text">{item.title}</h2>
                 <p className="mt-3 text-sm leading-6 text-sub">{item.description}</p>
               </Link>
             ))}

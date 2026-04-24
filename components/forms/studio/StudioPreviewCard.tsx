@@ -17,7 +17,7 @@ export default function StudioPreviewCard({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-[28px] border border-white/8 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.08),transparent_24%),linear-gradient(180deg,rgba(17,21,31,0.97),rgba(10,12,18,0.95))] p-4 shadow-[0_20px_56px_rgba(0,0,0,0.22)] ${className}`.trim()}
+      className={`relative overflow-hidden rounded-[22px] border border-white/8 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.08),transparent_24%),linear-gradient(180deg,rgba(17,21,31,0.97),rgba(10,12,18,0.95))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)] ${className}`.trim()}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)]" />
 

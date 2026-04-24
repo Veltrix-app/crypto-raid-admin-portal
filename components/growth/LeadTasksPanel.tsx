@@ -38,14 +38,14 @@ export function LeadTasksPanel({
       title="Commercial next moves"
       description="Use structured tasks instead of remembering who to reply to next."
     >
-      <div className="rounded-[22px] border border-line bg-card2 p-4">
+      <div className="rounded-[20px] border border-line bg-card2 p-3.5">
         <div className="grid gap-3 md:grid-cols-[180px_1fr_180px]">
           <label className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
             Task type
             <select
               value={taskType}
               onChange={(event) => setTaskType(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-line bg-card px-3 py-2 text-sm text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
             >
               {commercialTaskTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -59,7 +59,7 @@ export function LeadTasksPanel({
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-line bg-card px-3 py-2 text-sm text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
               placeholder="Follow-up title"
             />
           </label>
@@ -69,7 +69,7 @@ export function LeadTasksPanel({
               type="date"
               value={dueDate}
               onChange={(event) => setDueDate(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-line bg-card px-3 py-2 text-sm text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
             />
           </label>
         </div>
@@ -78,8 +78,8 @@ export function LeadTasksPanel({
           <textarea
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
-            rows={4}
-            className="mt-2 w-full rounded-[22px] border border-line bg-card px-3 py-3 text-sm leading-6 text-text outline-none transition focus:border-primary/35"
+            rows={3}
+            className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/35"
             placeholder="What should happen next?"
           />
         </label>
@@ -99,31 +99,31 @@ export function LeadTasksPanel({
             })
           }
           disabled={saving}
-          className="mt-4 inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-3.5 inline-flex items-center rounded-full bg-primary px-3.5 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? "Saving..." : "Add task"}
         </button>
       </div>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-2.5">
         {tasks.length ? (
           tasks.map((task) => (
-            <div key={task.id} className="rounded-[22px] border border-line bg-card2 p-4">
+            <div key={task.id} className="rounded-[20px] border border-line bg-card2 p-3.5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="max-w-3xl">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-text">{task.title}</p>
+                    <p className="text-[13px] font-bold text-text">{task.title}</p>
                     <OpsStatusPill tone={task.dueState === "overdue" ? "danger" : task.dueState === "due_now" ? "warning" : "default"}>
                       {humanizeCommercialLabel(task.dueState)}
                     </OpsStatusPill>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-sub">{task.summary}</p>
+                  <p className="mt-2.5 text-[13px] leading-5 text-sub">{task.summary}</p>
                 </div>
                 {task.status !== "resolved" && task.status !== "canceled" ? (
                   <button
                     type="button"
                     onClick={() => void onResolve(task.id)}
-                    className="inline-flex rounded-full border border-line px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-primary"
+                    className="inline-flex rounded-full border border-line px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-primary"
                   >
                     Resolve
                   </button>
@@ -134,7 +134,7 @@ export function LeadTasksPanel({
             </div>
           ))
         ) : (
-          <div className="rounded-[22px] border border-line bg-card2 px-4 py-4 text-sm text-sub">
+          <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5 text-[13px] text-sub">
             No tasks yet.
           </div>
         )}

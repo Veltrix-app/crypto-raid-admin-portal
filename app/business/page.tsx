@@ -98,12 +98,12 @@ function QueueList({
             <Link
               key={account.accountId}
               href={`/business/accounts/${account.accountId}`}
-              className="block rounded-[22px] border border-line bg-card2 p-4 transition hover:border-primary/30"
+              className="block rounded-[18px] border border-white/6 bg-white/[0.03] p-3.5 transition hover:border-primary/30"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-bold text-text">{account.accountName}</p>
-                  <p className="mt-2 text-sm leading-6 text-sub">
+                  <p className="text-[13px] font-bold text-text">{account.accountName}</p>
+                  <p className="mt-1.5 text-[12px] leading-5 text-sub">
                     {account.planName} | {account.billingStatus} | next window{" "}
                     {formatDateLabel(account.nextBillingAt)}
                   </p>
@@ -240,8 +240,8 @@ export default function BusinessPage() {
         title="Business"
         description="Run the commercial machine from one internal cockpit: revenue posture, billing ops, collections and the accounts that need attention next."
         actions={
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
               Veltrix internal
             </p>
             <div className="flex flex-wrap gap-2">
@@ -253,9 +253,9 @@ export default function BusinessPage() {
             </div>
             <Link
               href="/qa"
-              className="inline-flex items-center rounded-full border border-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/30 hover:text-primary"
+              className="inline-flex items-center rounded-full border border-white/12 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
             >
-              Open QA board
+              QA board
             </Link>
           </div>
         }
@@ -268,16 +268,16 @@ export default function BusinessPage() {
               <OpsMetricCard label="Upgrade candidates" value={overview.queues.upgradeCandidates.length} emphasis={overview.queues.upgradeCandidates.length > 0 ? "warning" : "default"} />
             </div>
 
-            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
-              <div className="flex flex-wrap items-start justify-between gap-5">
-                <div className="max-w-2xl">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+            <div className="rounded-[20px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-xl">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
                     Commercial command read
                   </p>
-                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                  <h2 className="mt-1.5 text-[0.94rem] font-semibold tracking-tight text-text">
                     Read revenue pressure first, then decide whether the next move is collections, activation, or expansion.
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-sub">
+                  <p className="mt-1.5 max-w-2xl text-[11px] leading-5 text-sub">
                     This cockpit should answer what is moving now, which accounts need a human move next, and where hidden billing or activation drag is building beneath the topline.
                   </p>
                 </div>
@@ -295,7 +295,7 @@ export default function BusinessPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="mt-3.5 grid gap-2.5 lg:grid-cols-3">
                 <OpsSnapshotRow
                   label="Now"
                   value={
@@ -342,9 +342,9 @@ export default function BusinessPage() {
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {overview.planMix.map((entry) => (
-                <div key={entry.planId} className="rounded-[22px] border border-line bg-card2 px-4 py-4">
+                <div key={entry.planId} className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3.5 py-3.5">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{entry.label}</p>
-                  <p className="mt-2 text-xl font-extrabold text-text">{entry.count}</p>
+                  <p className="mt-2 text-[1.02rem] font-extrabold text-text">{entry.count}</p>
                 </div>
               ))}
             </div>
@@ -433,7 +433,7 @@ export default function BusinessPage() {
                 <Link
                   key={account.accountId}
                   href={`/business/accounts/${account.accountId}`}
-                  className="block rounded-[22px] border border-line bg-card2 p-4 transition hover:border-primary/30"
+                  className="block rounded-[18px] border border-white/6 bg-white/[0.03] p-3.5 transition hover:border-primary/30"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>

@@ -60,12 +60,12 @@ export function QaReadinessBoard({ overview }: { overview: AdminQaOverview }) {
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {overview.readinessByService.map((surface) => (
-            <div key={surface.serviceKey} className="rounded-[22px] border border-line bg-card2 p-4">
+            <div key={surface.serviceKey} className="rounded-[20px] border border-line bg-card2 px-4 py-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-bold text-text">{surface.label}</p>
                 <OpsStatusPill tone={readinessTone(surface.readiness)}>{surface.readiness}</OpsStatusPill>
               </div>
-              <p className="mt-2 text-sm leading-6 text-sub">
+              <p className="mt-1.5 text-xs leading-5 text-sub">
                 {surface.releaseCount} active releases, {surface.blockingFailures} blocking failures,{" "}
                 {surface.smokePending} pending smoke items.
               </p>
@@ -94,9 +94,9 @@ export function QaReadinessBoard({ overview }: { overview: AdminQaOverview }) {
               </div>
               <Link
                 href={`/releases/${overview.activeRelease.id}`}
-                className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105"
+                className="inline-flex items-center rounded-full bg-primary px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105"
               >
-                Open release detail
+                Open release
               </Link>
             </div>
           ) : (
@@ -133,7 +133,7 @@ export function QaReadinessBoard({ overview }: { overview: AdminQaOverview }) {
               </div>
               <div className="space-y-2">
                 {overview.deployChecks.checks.map((check) => (
-                  <div key={check.key} className="rounded-[18px] border border-white/10 bg-black/15 px-4 py-3">
+                  <div key={check.key} className="rounded-[16px] border border-white/10 bg-black/15 px-3.5 py-2.5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-text">{check.label}</p>
                       <OpsStatusPill
@@ -170,9 +170,9 @@ export function QaReadinessBoard({ overview }: { overview: AdminQaOverview }) {
           {overview.blockingChecks.length ? (
             <div className="space-y-2">
               {overview.blockingChecks.map((check) => (
-                <div key={check.id} className="rounded-[18px] border border-rose-400/20 bg-rose-500/10 px-4 py-3">
+                <div key={check.id} className="rounded-[16px] border border-rose-400/20 bg-rose-500/10 px-3.5 py-2.5">
                   <p className="text-sm font-bold text-text">{check.label}</p>
-                  <p className="mt-2 text-sm leading-6 text-sub">{check.summary}</p>
+                  <p className="mt-1.5 text-xs leading-5 text-sub">{check.summary}</p>
                 </div>
               ))}
             </div>
@@ -195,7 +195,7 @@ export function QaReadinessBoard({ overview }: { overview: AdminQaOverview }) {
                 <p className="text-sm font-bold text-text">Incomplete smoke</p>
                 <div className="mt-2 space-y-2">
                   {overview.incompleteSmoke.map((entry) => (
-                    <div key={entry.id} className="rounded-[18px] border border-white/10 bg-black/15 px-4 py-3">
+                    <div key={entry.id} className="rounded-[16px] border border-white/10 bg-black/15 px-3.5 py-2.5">
                       <p className="text-sm font-semibold text-text">{entry.scenarioLabel}</p>
                     </div>
                   ))}
@@ -208,7 +208,7 @@ export function QaReadinessBoard({ overview }: { overview: AdminQaOverview }) {
                 <p className="text-sm font-bold text-text">Environment warnings</p>
                 <div className="mt-2 space-y-2">
                   {overview.environmentWarnings.map((audit) => (
-                    <div key={audit.id} className="rounded-[18px] border border-white/10 bg-black/15 px-4 py-3">
+                    <div key={audit.id} className="rounded-[16px] border border-white/10 bg-black/15 px-3.5 py-2.5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-sm font-semibold text-text">{audit.serviceKey.replaceAll("_", " ")}</p>
                         <OpsStatusPill tone={audit.status === "critical" ? "danger" : "warning"}>
@@ -233,4 +233,3 @@ export function QaReadinessBoard({ overview }: { overview: AdminQaOverview }) {
     </div>
   );
 }
-

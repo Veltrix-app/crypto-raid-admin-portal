@@ -1653,7 +1653,7 @@ function SuccessCampaignModal({
 }) {
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4 backdrop-blur-md">
-      <div className="w-full max-w-2xl rounded-[32px] border border-primary/20 bg-[linear-gradient(180deg,rgba(16,20,28,0.98),rgba(8,10,16,0.98))] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
+      <div className="w-full max-w-2xl rounded-[26px] border border-primary/20 bg-[linear-gradient(180deg,rgba(16,20,28,0.98),rgba(8,10,16,0.98))] p-5 shadow-[0_26px_80px_rgba(0,0,0,0.38)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
@@ -1761,7 +1761,7 @@ function TemplateOptionCard({
               {template.fitLabel}
             </span>
           </div>
-          <p className={`mt-3 font-bold text-text ${featured ? "text-xl" : "text-sm"}`}>
+          <p className={`mt-3 font-bold text-text ${featured ? "text-[1.02rem]" : "text-sm"}`}>
             {template.label}
           </p>
           <p className="mt-2 text-sm leading-6 text-sub">{template.summary}</p>
@@ -1813,14 +1813,14 @@ function CampaignPreviewSurface({
   missingContext: number;
 }) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5">
+    <div className="overflow-hidden rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
       <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(6,8,12,0.82))] p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-xl">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
               {templateLabel}
             </p>
-            <h3 className="mt-3 text-2xl font-extrabold tracking-[-0.03em] text-text">
+            <h3 className="mt-3 text-[1.45rem] font-extrabold tracking-[-0.03em] text-text">
               {title}
             </h3>
             <p className="mt-3 text-sm leading-7 text-sub">{summary}</p>
@@ -1899,7 +1899,7 @@ function CampaignStepNavigator({
   onSelect: (step: BuilderStepId) => void;
 }) {
   return (
-    <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+    <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
       <div className="grid gap-3 xl:grid-cols-4">
         {steps.map((step, index) => {
           const active = step.id === currentStep;

@@ -311,8 +311,8 @@ export default function BusinessAccountDetailPage() {
         title={detail.account.accountName}
         description="Inspect the full commercial posture of this workspace account: plan, invoices, pressure and the current next move."
         actions={
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Commercial health</p>
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">Commercial health</p>
             <div className="flex flex-wrap gap-2">
               <OpsStatusPill tone={healthTone(detail.account.commercialHealth)}>
                 {detail.account.commercialHealth.replaceAll("_", " ")}
@@ -323,9 +323,9 @@ export default function BusinessAccountDetailPage() {
             </div>
             <Link
               href="/business"
-              className="inline-flex items-center rounded-full border border-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary"
+              className="inline-flex items-center rounded-full border border-white/12 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/35 hover:text-primary"
             >
-              Back to business
+              Business
             </Link>
           </div>
         }
@@ -338,16 +338,16 @@ export default function BusinessAccountDetailPage() {
               <OpsMetricCard label="Open invoices" value={detail.account.openInvoiceCount} emphasis={detail.account.openInvoiceCount > 0 ? "warning" : "default"} />
             </div>
 
-            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
-              <div className="flex flex-wrap items-start justify-between gap-5">
-                <div className="max-w-2xl">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+            <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] px-4 py-4 shadow-[0_12px_42px_rgba(0,0,0,0.22)]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-xl">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
                     Account command read
                   </p>
-                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                  <h2 className="mt-1.5 text-base font-semibold tracking-tight text-text">
                     Read usage and invoice pressure first, then decide whether the next move is upgrade, grace, or activation cleanup.
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-sub">
+                  <p className="mt-1.5 max-w-2xl text-xs leading-5 text-sub">
                     This drilldown should keep commercial pressure, payment posture and the recommended operator move visible before you dive into invoices or notes.
                   </p>
                 </div>
@@ -365,7 +365,7 @@ export default function BusinessAccountDetailPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="mt-4 grid gap-3 lg:grid-cols-3">
                 <OpsSnapshotRow label="Now" value={detail.workspace.recommendedAction} />
                 <OpsSnapshotRow label="Next" value={detail.workspace.nextPlan ? `Review move to ${detail.workspace.nextPlan.name}` : "Keep current plan and monitor pressure"} />
                 <OpsSnapshotRow label="Watch" value={detail.account.openInvoiceCount > 0 ? `${detail.account.openInvoiceCount} invoices still need attention` : "Invoice posture is currently calm"} />

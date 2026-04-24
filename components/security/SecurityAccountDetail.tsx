@@ -11,7 +11,7 @@ export function SecurityAccountDetail({
   detail: AdminSecurityAccountDetail;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <OpsPanel
         eyebrow="Account command read"
         title="Pressure and next move"
@@ -47,7 +47,7 @@ export function SecurityAccountDetail({
         title="Policy, incidents and access posture"
         description="Use this drilldown to inspect how the account is configured, who is missing security posture, and which lifecycle items still need action."
       >
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-4">
           <OpsMetricCard label="Policy status" value={formatSecurityLabel(detail.account.policyStatus)} emphasis="primary" />
           <OpsMetricCard label="Billing status" value={detail.account.billingStatus ?? "Unknown"} />
           <OpsMetricCard label="Open requests" value={detail.account.openDataRequestCount} emphasis={detail.account.openDataRequestCount > 0 ? "warning" : "default"} />
@@ -57,13 +57,13 @@ export function SecurityAccountDetail({
 
       <OpsPanel eyebrow="Members" title="Who still needs security work" description="Owners and admins should be the first place you look when 2FA or SSO posture is weak.">
         {detail.members.length ? (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {detail.members.map((member) => (
-              <div key={member.authUserId} className="rounded-[22px] border border-line bg-card2 p-4">
+              <div key={member.authUserId} className="rounded-[20px] border border-line bg-card2 p-3.5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-text">{member.email}</p>
-                    <p className="mt-2 text-sm leading-6 text-sub">
+                    <p className="text-[13px] font-bold text-text">{member.email}</p>
+                    <p className="mt-1.5 text-[13px] leading-5 text-sub">
                       {member.role} | {member.security?.currentAal ?? "aal1"} | {member.security?.twoFactorEnabled ? "2FA enabled" : "2FA missing"}
                     </p>
                   </div>

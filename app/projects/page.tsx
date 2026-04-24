@@ -119,7 +119,7 @@ function ProjectsPageContent() {
   }
 
   return (
-    <div className="space-y-8">
+      <div className="space-y-6">
       <ProjectsBoardHeader
         isSuperAdmin={isSuperAdmin}
         projectCount={projects.length}

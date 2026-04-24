@@ -94,11 +94,11 @@ export function CommunityAnalyticsPanel({
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[20px] border border-line bg-card2 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Health rollups</p>
-                <p className="mt-2 text-sm text-sub">
+                <p className="mt-2 text-sm leading-5.5 text-sub">
                   These owner-facing signals compress participation, conversion, retention, trust
                   posture and reward quality into a faster read than scrolling through raw members.
                 </p>
@@ -110,17 +110,17 @@ export function CommunityAnalyticsPanel({
               </OpsStatusPill>
             </div>
 
-            <div className="mt-4 grid gap-3">
+            <div className="mt-3.5 grid gap-2.5">
               {healthRollups.length > 0 ? (
                 healthRollups.map((rollup) => (
                   <div
                     key={rollup.key}
-                    className="rounded-[20px] border border-line bg-card px-4 py-4"
+                    className="rounded-[16px] border border-line bg-card px-3.5 py-3.5"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-bold text-text">{rollup.label}</p>
-                        <p className="mt-2 text-sm leading-6 text-sub">{rollup.summary}</p>
+                        <p className="mt-2 text-sm leading-5.5 text-sub">{rollup.summary}</p>
                       </div>
                       <OpsStatusPill
                         tone={
@@ -139,45 +139,45 @@ export function CommunityAnalyticsPanel({
                   </div>
                 ))
               ) : (
-                <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+                <div className="rounded-[16px] border border-dashed border-line bg-card px-3.5 py-4 text-sm text-sub">
                   Health rollups will appear here as soon as the Phase 3 snapshot refresh runs.
                 </div>
               )}
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[20px] border border-line bg-card2 p-4">
             <p className="text-sm font-bold text-text">Segment balance</p>
             <p className="mt-2 text-sm text-sub">
               The community machine gets healthier when active and high-trust lanes outgrow
               watchlist and comeback pressure.
             </p>
 
-            <div className="mt-4 space-y-3">
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+            <div className="mt-3.5 space-y-2.5">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Active contributor rail
                 </p>
-                <p className="mt-3 text-2xl font-black text-text">{active?.memberCount ?? 0}</p>
+                  <p className="mt-2 text-[1.02rem] font-black text-text">{active?.memberCount ?? 0}</p>
                 <p className="mt-2 text-sm text-sub">
                   {active?.readyCount ?? 0} of those contributors are already ready for immediate
                   mission pressure.
                 </p>
               </div>
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   High-trust anchor
                 </p>
-                <p className="mt-3 text-2xl font-black text-text">{highTrust?.memberCount ?? 0}</p>
+                  <p className="mt-2 text-[1.02rem] font-black text-text">{highTrust?.memberCount ?? 0}</p>
                 <p className="mt-2 text-sm text-sub">
                   Trusted seats that can hold launch, leaderboard and reward quality together.
                 </p>
               </div>
-              <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Risk and retention drag
                 </p>
-                <p className="mt-3 text-2xl font-black text-text">
+                  <p className="mt-2 text-[1.02rem] font-black text-text">
                   {watchlist?.memberCount ?? 0} / {analytics.retentionPressureCount}
                 </p>
                 <p className="mt-2 text-sm text-sub">

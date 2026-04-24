@@ -272,7 +272,7 @@ export default function ProjectForm({
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
-          <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+        <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
             <BuilderStepRail
               steps={steps.map((step, index) => ({
                 ...step,
@@ -284,7 +284,7 @@ export default function ProjectForm({
             />
           </div>
 
-          <div className="space-y-6 rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
+        <div className="space-y-5 rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-5 shadow-[0_22px_58px_rgba(0,0,0,0.2)]">
           <BuilderStepHeader
             eyebrow={`Step ${currentStepIndex + 1}`}
             title={currentStepMeta.label}
@@ -853,7 +853,7 @@ function PreviewStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
       <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-xl font-extrabold text-text">{value}</p>
+                  <p className="mt-2 text-[1.02rem] font-extrabold text-text">{value}</p>
     </div>
   );
 }
@@ -886,7 +886,7 @@ function ProjectPreviewSurface({
   values: Omit<AdminProject, "id">;
 }) {
   return (
-    <div className="overflow-hidden rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.98),rgba(10,12,18,0.96))] shadow-[0_22px_60px_rgba(0,0,0,0.22)]">
+      <div className="overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.98),rgba(10,12,18,0.96))] shadow-[0_20px_48px_rgba(0,0,0,0.18)]">
       <div
         className="h-40 bg-gradient-to-br from-primary/15 via-card to-card2"
         style={
@@ -911,11 +911,11 @@ function ProjectPreviewSurface({
           Public Project Preview
         </p>
         <div className="mt-4 flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/8 bg-white/[0.04] text-2xl">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/8 bg-white/[0.04] text-[1.35rem]">
             {values.logo || "\uD83D\uDE80"}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-xl font-extrabold text-text">
+            <p className="truncate text-[1.02rem] font-extrabold text-text">
               {values.name || "Project name"}
             </p>
             <p className="truncate text-sm text-sub">/{values.slug || "project-slug"}</p>

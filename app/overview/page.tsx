@@ -210,7 +210,6 @@ export default function OverviewPage() {
   const activeOverrideCount = Number(healthSummary?.activeOverrideCount ?? 0);
 
   const currentModeCopy = overviewModeCopy[overviewMode];
-  const primaryPriority = controlPriorities[0];
   const watchSignals = [
     {
       label: "Queue pressure",
@@ -302,63 +301,91 @@ export default function OverviewPage() {
           </div>
         }
         statusBand={
-          <div className="grid gap-4 xl:grid-cols-[1.02fr_1fr_0.98fr]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.16fr)_320px]">
             <OverviewTopCard
-              label="Now"
+              label="Control read"
               title={nowSummary.title}
               body={nowSummary.body}
               tone="primary"
             >
-              <div className="grid gap-3 sm:grid-cols-2">
-                <OverviewState
-                  label="Campaigns in motion"
-                  value={workspaceCampaigns.length > 0 ? `${workspaceCampaigns.length}` : "None yet"}
-                />
-                <OverviewState
-                  label="Claims in motion"
-                  value={highPriorityClaims > 0 ? `${highPriorityClaims}` : "Low"}
-                />
-                <OverviewState
-                  label="Pending invites"
-                  value={pendingInvites > 0 ? `${pendingInvites}` : "Stable"}
-                />
-                <OverviewState
-                  label="Launch-ready projects"
-                  value={launchReadyProjects > 0 ? `${launchReadyProjects}` : "Not yet"}
-                />
-              </div>
-            </OverviewTopCard>
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_292px]">
+                <div className="space-y-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <OverviewState
+                      label="Campaigns in motion"
+                      value={workspaceCampaigns.length > 0 ? `${workspaceCampaigns.length}` : "None yet"}
+                    />
+                    <OverviewState
+                      label="Claims in motion"
+                      value={highPriorityClaims > 0 ? `${highPriorityClaims}` : "Low"}
+                    />
+                    <OverviewState
+                      label="Pending invites"
+                      value={pendingInvites > 0 ? `${pendingInvites}` : "Stable"}
+                    />
+                    <OverviewState
+                      label="Launch-ready projects"
+                      value={launchReadyProjects > 0 ? `${launchReadyProjects}` : "Not yet"}
+                    />
+                  </div>
 
-            <OverviewTopCard
-              label="Next"
-              title={primaryPriority.title}
-              body={primaryPriority.body}
-            >
-              <div className="grid gap-3">
-                {controlPriorities.map((item) => (
-                  <a
-                    key={item.title}
-                    href={item.href}
-                    className={`rounded-[22px] border px-4 py-4 transition hover:border-primary/28 ${
-                      item.emphasis
-                        ? "border-primary/18 bg-primary/[0.08]"
-                        : "border-white/8 bg-white/[0.03]"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-bold text-text">{item.title}</p>
-                        <p className="mt-2 text-sm leading-6 text-sub">{item.body}</p>
-                      </div>
-                      <span className="text-xs font-bold uppercase tracking-[0.16em] text-primary">{item.cta}</span>
+                  <div className="space-y-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                      Next lanes
+                    </p>
+                    <div className="grid gap-2.5">
+                      {controlPriorities.map((item) => (
+                        <a
+                          key={item.title}
+                          href={item.href}
+                          className={`rounded-[18px] border px-3.5 py-3 transition hover:border-primary/26 ${
+                            item.emphasis
+                              ? "border-primary/18 bg-primary/[0.08]"
+                              : "border-white/6 bg-white/[0.025]"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-[13px] font-semibold text-text">{item.title}</p>
+                              <p className="mt-1.5 text-[12px] leading-5 text-sub">{item.body}</p>
+                            </div>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+                              {item.cta}
+                            </span>
+                          </div>
+                        </a>
+                      ))}
                     </div>
-                  </a>
-                ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2.5 rounded-[20px] border border-white/8 bg-white/[0.03] p-3.5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                    Workspace snapshot
+                  </p>
+                  <OverviewWatchSignal
+                    label="Workspace"
+                    value={activeProject?.name || activeMembership?.projectName || "Workspace"}
+                  />
+                  <OverviewWatchSignal
+                    label="Reward inventory"
+                    value={workspaceRewards.length > 0 ? `${workspaceRewards.length}` : "Low"}
+                  />
+                  <OverviewWatchSignal
+                    label="Team size"
+                    value={`${workspaceMembers.length}`}
+                  />
+                  <OverviewWatchSignal
+                    label="Activation"
+                    value={`${activationRate}%`}
+                    tone={activationRate < 50 ? "warning" : "default"}
+                  />
+                </div>
               </div>
             </OverviewTopCard>
 
             <OverviewTopCard
-              label="Watch"
+              label="Signal rail"
               title={currentModeCopy.title}
               body={currentModeCopy.body}
             >
@@ -662,7 +689,7 @@ function OverviewTopCard({
 }) {
   return (
     <section
-      className={`relative overflow-hidden rounded-[32px] border p-5 shadow-[0_28px_90px_rgba(0,0,0,0.2)] ${
+      className={`relative overflow-hidden rounded-[22px] border p-4 shadow-[0_22px_70px_rgba(0,0,0,0.18)] ${
         tone === "primary"
           ? "border-primary/14 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.1),transparent_22%),linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.98))]"
           : "border-white/6 bg-[linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.98))]"
@@ -671,8 +698,8 @@ function OverviewTopCard({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/16 to-transparent" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.025),transparent_34%)]" />
       <div className="relative z-10">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">{label}</p>
-        <h2 className="mt-3 text-2xl font-black tracking-[-0.03em] text-text">{title}</h2>
+        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">{label}</p>
+        <h2 className="mt-3 text-[1.15rem] font-semibold tracking-[-0.03em] text-text sm:text-[1.3rem]">{title}</h2>
         <p className="mt-3 text-sm leading-6 text-sub">{body}</p>
         <div className="mt-5">{children}</div>
       </div>
@@ -682,8 +709,8 @@ function OverviewTopCard({
 
 function OverviewState({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] border border-white/6 bg-white/[0.02] px-4 py-4">
-      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+    <div className="rounded-[18px] border border-white/6 bg-white/[0.02] px-4 py-3.5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>
   );
@@ -706,7 +733,7 @@ function OverviewWatchSignal({
           : "border-white/6 bg-white/[0.02]"
       }`}
     >
-      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>
   );

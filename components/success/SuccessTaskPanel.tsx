@@ -87,25 +87,25 @@ export function SuccessTaskPanel({
       title="Customer success actions"
       description="Keep the follow-up layer inside the product so activation work does not drift into memory."
     >
-      <div className="grid gap-3">
+      <div className="grid gap-2.5">
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Task title"
-          className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/40"
+          className="rounded-[18px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text outline-none transition focus:border-primary/40"
         />
         <textarea
           value={summary}
           onChange={(event) => setSummary(event.target.value)}
           placeholder="Task summary"
           rows={3}
-          className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/40"
+          className="rounded-[18px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/40"
         />
         <button
           type="button"
           onClick={() => void createTask()}
           disabled={saving || !title.trim() || !summary.trim()}
-          className="inline-flex w-fit items-center rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-fit items-center rounded-full bg-primary px-3.5 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? "Saving..." : "Add task"}
         </button>
@@ -117,12 +117,12 @@ export function SuccessTaskPanel({
         </div>
       ) : null}
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-4 space-y-2.5">
         {tasks.length ? (
           tasks.map((task) => (
-            <div key={task.id} className="rounded-[22px] border border-line bg-card2 px-4 py-4">
+            <div key={task.id} className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-text">{task.title}</p>
+                <p className="text-[13px] font-semibold text-text">{task.title}</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <OpsStatusPill>{humanizeSuccessValue(task.status)}</OpsStatusPill>
                   <OpsStatusPill tone={task.dueState === "overdue" ? "warning" : "default"}>
@@ -130,12 +130,12 @@ export function SuccessTaskPanel({
                   </OpsStatusPill>
                 </div>
               </div>
-              <p className="mt-3 text-sm leading-6 text-sub">{task.summary}</p>
+              <p className="mt-2.5 text-[13px] leading-5 text-sub">{task.summary}</p>
               {task.status !== "resolved" && task.status !== "canceled" ? (
                 <button
                   type="button"
                   onClick={() => void resolveTask(task.id)}
-                  className="mt-4 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-primary/15"
+                  className="mt-3 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/30 hover:bg-primary/15"
                 >
                   Resolve
                 </button>
@@ -143,7 +143,7 @@ export function SuccessTaskPanel({
             </div>
           ))
         ) : (
-          <div className="rounded-[22px] border border-line bg-card2 px-4 py-4 text-sm text-sub">
+          <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5 text-[13px] text-sub">
             No follow-up tasks yet.
           </div>
         )}

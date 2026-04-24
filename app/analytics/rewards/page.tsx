@@ -42,7 +42,7 @@ export default function AnalyticsRewardsPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-3">
+        <div className="grid gap-5 xl:grid-cols-3">
           <MetricCard
             label="Rewards"
             value={rewards.length}
@@ -60,25 +60,25 @@ export default function AnalyticsRewardsPage() {
           />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-2">
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Reward Demand</h2>
+        <div className="grid gap-5 xl:grid-cols-2">
+          <div className="rounded-[22px] border border-line bg-card p-5">
+            <h2 className="text-[1.08rem] font-extrabold text-text">Reward Demand</h2>
             <div className="mt-5">
               <RewardsChart items={rewardClaims} />
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-line bg-card p-6">
-            <h2 className="text-xl font-extrabold text-text">Value Bands</h2>
+          <div className="rounded-[22px] border border-line bg-card p-5">
+            <h2 className="text-[1.08rem] font-extrabold text-text">Value Bands</h2>
             <div className="mt-5">
               <RewardsChart items={rewardCostBands} />
             </div>
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-line bg-card p-6">
-          <h2 className="text-xl font-extrabold text-text">Fulfillment Pressure</h2>
-          <div className="mt-5 overflow-hidden rounded-[24px] border border-line bg-card2">
+        <div className="rounded-[22px] border border-line bg-card p-5">
+          <h2 className="text-[1.08rem] font-extrabold text-text">Fulfillment Pressure</h2>
+          <div className="mt-4 overflow-hidden rounded-[18px] border border-line bg-card2">
             <div className="grid grid-cols-5 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
               <div>Reward</div>
               <div>Type</div>
@@ -124,9 +124,9 @@ function MetricCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-line bg-card p-5">
+    <div className="rounded-[20px] border border-line bg-card p-4">
       <p className="text-sm text-sub">{label}</p>
-      <p className="mt-2 text-3xl font-extrabold text-text">{value}</p>
+      <p className="mt-1.5 text-[1.4rem] font-extrabold text-text">{value}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
     </div>
   );

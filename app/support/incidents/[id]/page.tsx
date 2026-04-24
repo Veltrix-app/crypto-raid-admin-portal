@@ -18,9 +18,9 @@ export default function SupportIncidentPage() {
         actions={
           <Link
             href="/support"
-            className="inline-flex items-center rounded-full border border-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary"
+            className="inline-flex items-center rounded-full border border-white/12 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/35 hover:text-primary"
           >
-            Back to support
+            Support
           </Link>
         }
       >

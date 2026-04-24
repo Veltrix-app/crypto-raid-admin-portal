@@ -65,10 +65,10 @@ export function ReleaseOverviewPanel({ overview }: { overview: AdminReleaseOverv
         {overview.activeRelease ? (
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
                 {overview.activeRelease.releaseRef}
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-2">
                 <OpsStatusPill tone={stateTone(overview.activeRelease.state)}>
                   {formatReleaseLabel(overview.activeRelease.state)}
                 </OpsStatusPill>
@@ -77,7 +77,7 @@ export function ReleaseOverviewPanel({ overview }: { overview: AdminReleaseOverv
                 </OpsStatusPill>
                 <OpsStatusPill>{overview.activeRelease.targetEnvironment}</OpsStatusPill>
               </div>
-              <p className="mt-4 text-sm leading-6 text-sub">
+              <p className="mt-3 text-xs leading-5 text-sub">
                 {overview.activeRelease.counts.blockingFailures} blocking failures,{" "}
                 {overview.activeRelease.counts.smokePending} pending smoke items and{" "}
                 {overview.activeRelease.counts.envWarnings} environment warnings are currently attached to this release.
@@ -87,9 +87,9 @@ export function ReleaseOverviewPanel({ overview }: { overview: AdminReleaseOverv
             <div className="flex items-end">
               <Link
                 href={`/releases/${overview.activeRelease.id}`}
-                className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105"
+                className="inline-flex items-center rounded-full bg-primary px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105"
               >
-                Open release
+                Open
               </Link>
             </div>
           </div>
@@ -112,12 +112,12 @@ export function ReleaseOverviewPanel({ overview }: { overview: AdminReleaseOverv
               <Link
                 key={release.id}
                 href={`/releases/${release.id}`}
-                className="block rounded-[22px] border border-line bg-card2 p-4 transition hover:border-primary/30"
+                className="block rounded-[20px] border border-line bg-card2 px-4 py-3.5 transition hover:border-primary/30"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-bold text-text">{release.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-sub">
+                    <p className="mt-1.5 text-xs leading-5 text-sub">
                       {release.releaseRef} | {release.targetEnvironment} | {release.counts.servicesIncluded} services in scope
                     </p>
                   </div>
@@ -144,4 +144,3 @@ export function ReleaseOverviewPanel({ overview }: { overview: AdminReleaseOverv
     </div>
   );
 }
-

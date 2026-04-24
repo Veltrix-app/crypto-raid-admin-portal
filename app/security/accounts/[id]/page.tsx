@@ -176,8 +176,8 @@ export default function SecurityAccountDetailPage() {
         title={detail.account.accountName}
         description="Inspect and operate the security posture of this workspace account."
         actions={
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Security state</p>
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">Security state</p>
             <div className="flex flex-wrap gap-2">
               <OpsStatusPill tone={detail.account.weakPosture ? "warning" : "success"}>
                 {detail.account.weakPosture ? "Needs review" : "Healthy"}
@@ -186,9 +186,9 @@ export default function SecurityAccountDetailPage() {
             </div>
             <Link
               href="/security"
-              className="inline-flex items-center rounded-full border border-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary"
+              className="inline-flex items-center rounded-full border border-white/12 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/35 hover:text-primary"
             >
-              Back to security
+              Security
             </Link>
           </div>
         }
@@ -201,22 +201,22 @@ export default function SecurityAccountDetailPage() {
               <OpsMetricCard label="Sessions" value={detail.sessions.length} emphasis={detail.sessions.length > 0 ? "primary" : "default"} />
             </div>
 
-            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
-              <div className="flex flex-wrap items-start justify-between gap-5">
-                <div className="max-w-2xl">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+            <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] px-4 py-4 shadow-[0_12px_42px_rgba(0,0,0,0.22)]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-xl">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
                     Account command read
                   </p>
-                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                  <h2 className="mt-1.5 text-base font-semibold tracking-tight text-text">
                     Read weak posture and lifecycle pressure first, then decide whether the next move is policy tightening, SSO cleanup, or request handling.
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-sub">
+                  <p className="mt-1.5 max-w-2xl text-xs leading-5 text-sub">
                     This drilldown should keep trust posture, open requests and the next operator move visible before you drop into member-level cleanup.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="mt-4 grid gap-3 lg:grid-cols-3">
                 <OpsSnapshotRow label="Now" value={detail.account.weakPosture ? "Account posture still needs cleanup" : "Account posture looks healthy"} />
                 <OpsSnapshotRow label="Next" value={detail.requests.length > 0 ? `Review ${detail.requests.length} lifecycle request${detail.requests.length === 1 ? "" : "s"}` : "Check SSO and member posture"} />
                 <OpsSnapshotRow label="Watch" value={detail.members.some((member) => !member.security?.twoFactorEnabled) ? "At least one member still needs 2FA" : "Admin 2FA posture looks calm"} />
