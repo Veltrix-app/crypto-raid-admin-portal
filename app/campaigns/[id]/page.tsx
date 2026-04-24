@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { PortalBillingBlockNotice } from "@/components/billing/PortalBillingBlockNotice";
+import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
 import LifecycleStatusPill from "@/components/platform/LifecycleStatusPill";
@@ -38,6 +39,7 @@ import { DbAuditLog, DbVerificationResult } from "@/types/database";
 export default function CampaignDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const [campaignView, setCampaignView] = useState<"operate" | "configure">("operate");
 
   const getCampaignById = useAdminPortalStore((s) => s.getCampaignById);
   const updateCampaign = useAdminPortalStore((s) => s.updateCampaign);
@@ -488,7 +490,31 @@ export default function CampaignDetailPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="rounded-[28px] border border-white/6 bg-white/[0.025] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                Campaign workspace
+              </p>
+              <p className="mt-2 text-sm leading-6 text-sub">
+                Operate mode keeps launch posture, analytics and platform pressure visible.
+                Configure mode keeps the builder and system settings focused.
+              </p>
+            </div>
+            <SegmentToggle
+              value={campaignView}
+              onChange={setCampaignView}
+              options={[
+                { value: "operate", label: "Operate" },
+                { value: "configure", label: "Configure" },
+              ]}
+            />
+          </div>
+        </div>
+
+        {campaignView === "operate" ? (
+          <>
+            <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
           <DetailSurface
             eyebrow="Campaign posture"
             title="Keep this campaign launchable"
@@ -620,7 +646,11 @@ export default function CampaignDetailPage() {
           </div>
         </DetailSurface>
 
-        <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+          </>
+        ) : null}
+
+        {campaignView === "configure" ? (
+          <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
           <DetailSurface
             title="Edit Campaign"
             description="Tighten the hook, structure and timing without leaving the detail view."
@@ -830,7 +860,8 @@ export default function CampaignDetailPage() {
               </div>
             </DetailSidebarSurface>
           </div>
-        </div>
+          </div>
+        ) : null}
       </div>
     </AdminShell>
   );

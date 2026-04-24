@@ -361,6 +361,35 @@ export default function QuestDetailPage() {
             </DetailSurface>
 
             <DetailSurface
+              eyebrow="Verification pressure"
+              title="How this quest will behave under load"
+              description="Use this read to judge whether the quest can absorb traffic cleanly or whether moderation and proof friction will start to pile up."
+            >
+              <div className="grid gap-3 md:grid-cols-4">
+                <QuestSignalCard
+                  label="Submissions"
+                  value={relatedSubmissions.length}
+                  hint="All submission volume currently attached to this quest."
+                />
+                <QuestSignalCard
+                  label="Pending"
+                  value={pendingSubmissions.length}
+                  hint="Open review load that still needs an operator or automated clear."
+                />
+                <QuestSignalCard
+                  label="Rewards"
+                  value={relatedRewards.length}
+                  hint="Reward options already available in the parent project."
+                />
+                <QuestSignalCard
+                  label="Route"
+                  value={verificationPreview.routeLabel}
+                  hint="The current verification path contributors will experience."
+                />
+              </div>
+            </DetailSurface>
+
+            <DetailSurface
               eyebrow="Platform Core"
               title="Lifecycle, incidents and overrides"
               description="This operator rail keeps quest verification issues and manual pause or retry controls attached directly to the quest."
@@ -563,4 +592,22 @@ function getQuestBlueprintSummary(questType: string) {
     default:
       return `This quest is currently configured as ${questTypeLabel}. Use the builder to tighten the action destination, verification and reward loop before making it a core campaign step.`;
   }
+}
+
+function QuestSignalCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string | number;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
+      <p className="mt-2 text-2xl font-extrabold tracking-[-0.03em] text-text">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
+    </div>
+  );
 }

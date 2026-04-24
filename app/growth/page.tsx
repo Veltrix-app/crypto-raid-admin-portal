@@ -7,7 +7,7 @@ import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
 import { GrowthOverviewPanel } from "@/components/growth/GrowthOverviewPanel";
 import { LeadQueuePanel } from "@/components/growth/LeadQueuePanel";
 import { LoadingState, StatePanel } from "@/components/layout/state/StatePrimitives";
-import { OpsPriorityLink, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { OpsMetricCard, OpsPriorityLink, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import type { AdminGrowthOverview } from "@/types/entities/growth-sales";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 
@@ -130,6 +130,71 @@ export default function GrowthPage() {
               <OpsStatusPill tone={(overview.counts.dueNowTasks ?? 0) > 0 ? "warning" : "success"}>
                 {overview.counts.dueNowTasks} tasks due now
               </OpsStatusPill>
+            </div>
+          </div>
+        }
+        statusBand={
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard label="New leads" value={overview.counts.new} emphasis={overview.counts.new > 0 ? "primary" : "default"} />
+              <OpsMetricCard label="Evaluation" value={overview.counts.evaluation} emphasis={overview.counts.evaluation > 0 ? "warning" : "default"} />
+              <OpsMetricCard label="Due now" value={overview.counts.dueNowTasks} emphasis={overview.counts.dueNowTasks > 0 ? "warning" : "default"} />
+              <OpsMetricCard label="Converted" value={overview.counts.converted} emphasis={overview.counts.converted > 0 ? "primary" : "default"} />
+            </div>
+
+            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div className="max-w-2xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    Growth command read
+                  </p>
+                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                    Read buyer intent first, then decide whether the next move is follow-up, enterprise handling, or self-serve conversion pressure.
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    This workspace should tell you which commercial conversations are heating up, where human follow-up is late, and when a lead should stay in the queue versus move into Business or Success.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <OpsStatusPill tone={overview.counts.evaluation > 0 ? "warning" : "default"}>
+                    {overview.counts.evaluation} evaluating
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={overview.counts.dueNowTasks > 0 ? "warning" : "success"}>
+                    {overview.counts.dueNowTasks} follow-ups due
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={overview.counts.converted > 0 ? "success" : "default"}>
+                    {overview.counts.converted} converted
+                  </OpsStatusPill>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <OpsSnapshotRow
+                  label="Now"
+                  value={
+                    overview.counts.evaluation > 0
+                      ? `${overview.counts.evaluation} leads are in active evaluation`
+                      : "No lead is in a hot evaluation lane right now"
+                  }
+                />
+                <OpsSnapshotRow
+                  label="Next"
+                  value={
+                    topLead
+                      ? `Open ${topLead.companyName || topLead.contactName} as the next commercial lead`
+                      : "The queue is calm right now"
+                  }
+                />
+                <OpsSnapshotRow
+                  label="Watch"
+                  value={
+                    overview.counts.dueNowTasks > 0
+                      ? `${overview.counts.dueNowTasks} follow-up tasks are already due`
+                      : "Follow-up timing looks healthy"
+                  }
+                />
+              </div>
             </div>
           </div>
         }

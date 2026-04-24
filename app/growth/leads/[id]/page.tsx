@@ -9,7 +9,7 @@ import { LeadDetailPanel } from "@/components/growth/LeadDetailPanel";
 import { LeadNotesPanel } from "@/components/growth/LeadNotesPanel";
 import { LeadTasksPanel } from "@/components/growth/LeadTasksPanel";
 import { LoadingState, StatePanel } from "@/components/layout/state/StatePrimitives";
-import { OpsMetricCard } from "@/components/layout/ops/OpsPrimitives";
+import { OpsMetricCard, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import type { AdminGrowthLeadDetail } from "@/types/entities/growth-sales";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 
@@ -242,19 +242,53 @@ export default function GrowthLeadDetailPage() {
         title={detail.companyName || detail.contactName || detail.contactEmail}
         description="Run the conversation, qualification and next commercial move without leaving the lead timeline."
         actions={
-          <Link
-            href="/growth"
-            className="inline-flex items-center rounded-full border border-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary"
-          >
-            Back to growth
-          </Link>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <OpsStatusPill tone={detail.leadState === "evaluation" || detail.leadState === "engaged" ? "warning" : detail.leadState === "converted" ? "success" : "default"}>
+                {detail.leadState.replaceAll("_", " ")}
+              </OpsStatusPill>
+              <OpsStatusPill tone={detail.taskCounts.overdue > 0 ? "warning" : "default"}>
+                {detail.taskCounts.overdue} overdue
+              </OpsStatusPill>
+            </div>
+            <Link
+              href="/growth"
+              className="inline-flex items-center rounded-full border border-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary"
+            >
+              Back to growth
+            </Link>
+          </div>
         }
         statusBand={
-          <div className="grid gap-4 md:grid-cols-4">
-            <OpsMetricCard label="State" value={detail.leadState} emphasis="primary" />
-            <OpsMetricCard label="Source" value={detail.source} />
-            <OpsMetricCard label="Open tasks" value={detail.taskCounts.open} emphasis={detail.taskCounts.open > 0 ? "warning" : "default"} />
-            <OpsMetricCard label="Overdue" value={detail.taskCounts.overdue} emphasis={detail.taskCounts.overdue > 0 ? "warning" : "default"} />
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard label="State" value={detail.leadState} emphasis="primary" />
+              <OpsMetricCard label="Source" value={detail.source} />
+              <OpsMetricCard label="Open tasks" value={detail.taskCounts.open} emphasis={detail.taskCounts.open > 0 ? "warning" : "default"} />
+              <OpsMetricCard label="Overdue" value={detail.taskCounts.overdue} emphasis={detail.taskCounts.overdue > 0 ? "warning" : "default"} />
+            </div>
+
+            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div className="max-w-2xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    Lead command read
+                  </p>
+                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                    Read intent and follow-up pressure first, then decide whether the next move is qualification, scheduling, or enterprise routing.
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    This drilldown should keep commercial momentum, overdue follow-up and the clearest next move visible before you dive into notes and tasks.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <OpsSnapshotRow label="Now" value={detail.intentSummary || "No intent summary captured yet"} />
+                <OpsSnapshotRow label="Next" value={detail.taskCounts.overdue > 0 ? `Resolve ${detail.taskCounts.overdue} overdue follow-up task${detail.taskCounts.overdue === 1 ? "" : "s"}` : "Advance qualification and commercial narrative"} />
+                <OpsSnapshotRow label="Watch" value={detail.latestEnterpriseRequest ? "Enterprise requirements are already in play" : detail.latestDemoRequest ? "Demo intent is active" : "No structured buyer request captured yet"} />
+              </div>
+            </div>
           </div>
         }
       >

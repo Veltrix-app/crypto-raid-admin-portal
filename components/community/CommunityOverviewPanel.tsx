@@ -170,120 +170,156 @@ export function CommunityOverviewPanel({
       }
     >
       <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <OpsMetricCard
-            label="Active mode"
-            value={activeMode === "owner" ? "Owner" : "Captain"}
-            sub="The page can bias toward owner guidance or captain execution without leaving this project scope."
-            emphasis="primary"
-          />
-          <OpsMetricCard
-            label="Campaigns"
-            value={campaignCount}
-            sub="Campaigns currently feeding community pressure, rankings and launch sequencing."
-            emphasis={campaignCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Quests"
-            value={questCount}
-            sub="Mission surfaces that can feed automations, leaderboards and funnels."
-            emphasis={questCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Raids"
-            value={raidCount}
-            sub="Raid pressure that can be coordinated through playbooks and alerts."
-            emphasis={raidCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Linked contributors"
-            value={linkedContributorCount}
-            sub="Community members already reachable through commands and delivery workflows."
-            emphasis={linkedContributorCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Wallet verified"
-            value={walletVerifiedCount}
-            sub="Contributors ready for deeper trust, reward and on-chain workflows."
-          />
-          <OpsMetricCard
-            label="Captains assigned"
-            value={captainCount}
-            sub="Project-owned captain seats that currently have an active person attached."
-            emphasis={captainCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Captain coverage"
-            value={formatPercent(captainCoverageRate)}
-            sub="How much of the intended captain surface is actively covered right now."
-            emphasis={captainCoverageRate >= 70 ? "primary" : captainCoverageRate > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Unassigned seats"
-            value={unassignedCaptainCount}
-            sub="Captain seats that still need an owner assignment before the queue is fully covered."
-            emphasis={unassignedCaptainCount > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Overdue captain actions"
-            value={overdueCaptainCount}
-            sub="Queue work that has slipped past its due window and needs intervention."
-            emphasis={overdueCaptainCount > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Automations"
-            value={automationRailCount}
-            sub="Durable community execution workflows stored in Community OS."
-            emphasis={automationRailCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Armed now"
-            value={activeAutomationCount}
-            sub="Automations currently active and eligible to fire."
-            emphasis={activeAutomationCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Ready now"
-            value={readyAutomationCount}
-            sub="Automations already in a ready posture for the next community move."
-            emphasis={readyAutomationCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Degraded or blocked"
-            value={blockedAutomationCount + degradedAutomationCount}
-            sub="Execution workflows that are stalled or drifting and need owner attention."
-            emphasis={blockedAutomationCount + degradedAutomationCount > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Success rate"
-            value={formatPercent(automationSuccessRate)}
-            sub="Current automation health based on recent recorded execution outcomes."
-            emphasis={automationSuccessRate >= 70 ? "primary" : automationSuccessRate > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Playbooks enabled"
-            value={enabledPlaybookCount}
-            sub="Reusable operating modes currently armed for launch, raid or comeback pressure."
-            emphasis={enabledPlaybookCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Newcomer pressure"
-            value={newcomerCount}
-            sub="Fresh contributors waiting for a first mission."
-            emphasis={newcomerCount > 0 ? "primary" : "default"}
-          />
-          <OpsMetricCard
-            label="Comeback pressure"
-            value={reactivationCount}
-            sub="Dormant contributors that could be pulled back through reactivation waves."
-            emphasis={reactivationCount > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Watchlist"
-            value={watchlistCount}
-            sub="Community members currently carrying trust, quality or moderation pressure."
-            emphasis={watchlistCount > 0 ? "warning" : "default"}
-          />
+        <div className="grid gap-3">
+          <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                  Workspace scale
+                </p>
+                <p className="mt-2 text-sm leading-6 text-sub">
+                  First read the size of the launch surface before you zoom into health or execution.
+                </p>
+              </div>
+              <OpsStatusPill tone="success">
+                {activeMode === "owner" ? "Owner mode" : "Captain mode"}
+              </OpsStatusPill>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <OpsMetricCard
+                label="Campaigns"
+                value={campaignCount}
+                sub="Launch lanes currently feeding community pressure."
+                emphasis={campaignCount > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Quests"
+                value={questCount}
+                sub="Mission surfaces feeding verification and momentum."
+                emphasis={questCount > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Raids"
+                value={raidCount}
+                sub="Raid pressure coordinated through alerts and playbooks."
+                emphasis={raidCount > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Playbooks enabled"
+                value={enabledPlaybookCount}
+                sub="Reusable operating modes currently armed."
+                emphasis={enabledPlaybookCount > 0 ? "primary" : "default"}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              Reach and readiness
+            </p>
+            <p className="mt-2 text-sm leading-6 text-sub">
+              Then read who is reachable, who is verified and where newcomer or comeback pressure is building.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <OpsMetricCard
+                label="Linked contributors"
+                value={linkedContributorCount}
+                sub="Members already reachable through commands and delivery flows."
+                emphasis={linkedContributorCount > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Wallet verified"
+                value={walletVerifiedCount}
+                sub="Members ready for deeper trust, reward and on-chain flows."
+              />
+              <OpsMetricCard
+                label="Newcomer pressure"
+                value={newcomerCount}
+                sub="Fresh contributors still waiting for a clean first mission."
+                emphasis={newcomerCount > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Comeback pressure"
+                value={reactivationCount}
+                sub="Dormant contributors that could be pulled back into motion."
+                emphasis={reactivationCount > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Watchlist"
+                value={watchlistCount}
+                sub="Members currently carrying trust or moderation drag."
+                emphasis={watchlistCount > 0 ? "warning" : "default"}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              Captain and execution health
+            </p>
+            <p className="mt-2 text-sm leading-6 text-sub">
+              Finally read captain coverage and automation health together so execution risk is obvious.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <OpsMetricCard
+                label="Captains assigned"
+                value={captainCount}
+                sub="Project-owned captain seats with an active person attached."
+                emphasis={captainCount > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Captain coverage"
+                value={formatPercent(captainCoverageRate)}
+                sub="How much of the intended captain surface is covered."
+                emphasis={captainCoverageRate >= 70 ? "primary" : captainCoverageRate > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Unassigned seats"
+                value={unassignedCaptainCount}
+                sub="Captain seats that still need an owner assignment."
+                emphasis={unassignedCaptainCount > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Overdue captain actions"
+                value={overdueCaptainCount}
+                sub="Queue work that has slipped past its due window."
+                emphasis={overdueCaptainCount > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Automations"
+                value={automationRailCount}
+                sub="Durable community execution workflows stored in Community OS."
+                emphasis={automationRailCount > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Armed now"
+                value={activeAutomationCount}
+                sub="Automations currently active and eligible to fire."
+                emphasis={activeAutomationCount > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Ready now"
+                value={readyAutomationCount}
+                sub="Workflows already in a ready posture for the next move."
+                emphasis={readyAutomationCount > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Degraded or blocked"
+                value={blockedAutomationCount + degradedAutomationCount}
+                sub="Execution workflows that are stalled or drifting."
+                emphasis={blockedAutomationCount + degradedAutomationCount > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Success rate"
+                value={formatPercent(automationSuccessRate)}
+                sub="Current automation health based on recent execution outcomes."
+                emphasis={automationSuccessRate >= 70 ? "primary" : automationSuccessRate > 0 ? "warning" : "default"}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-3">

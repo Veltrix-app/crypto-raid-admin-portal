@@ -6,6 +6,7 @@ import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import {
   OpsMetricCard,
   OpsPanel,
+  OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
 import EngagementChart from "@/components/charts/engagement/EngagementChart";
@@ -335,6 +336,71 @@ export default function AnalyticsPage() {
       sub: "Workspace peer bands live",
     },
   ];
+  const analyticsCommandRead =
+    analyticsView === "growth"
+      ? {
+          title: "Growth is the cleanest read right now",
+          description:
+            "Use this lane when you need to understand whether traffic is turning into durable paid accounts, retained cohorts and expansion pressure.",
+          now: `${
+            growthOverview?.funnel.find((stage) => stage.stage === "paid_converted")?.value ?? 0
+          } paid conversions are currently mapped against ${
+            growthOverview?.funnel.find((stage) => stage.stage === "anonymous_visit")?.value ?? 0
+          } top-of-funnel visits.`,
+          next: `${
+            growthOverview?.revenue.expansionReadyAccounts ?? 0
+          } accounts are expansion-ready and ${
+            growthOverview?.revenue.churnRiskAccounts ?? 0
+          } are signaling churn risk.`,
+          watch: `${growthOverview?.benchmarkCoverage.workspaceBenchmarksReady ?? 0} workspace benchmark bands are live, with ${
+            growthOverview?.retention.overallRetained30dRate ?? 0
+          }% retained at 30 days.`,
+        }
+      : analyticsView === "outcomes"
+        ? {
+            title: "Outcomes need a reliability read",
+            description:
+              "This lane is best when you want the platform-health story instead of campaign throughput or commercial funnel pressure.",
+            now: `${formatMetricValue(
+              platformMetricMap.get("member_activation_rate")?.value ?? 0,
+              platformMetricMap.get("member_activation_rate")?.unit ?? "percent"
+            )} member activation and ${formatMetricValue(
+              platformMetricMap.get("reward_claim_conversion_rate")?.value ?? 0,
+              platformMetricMap.get("reward_claim_conversion_rate")?.unit ?? "percent"
+            )} reward claim conversion are the headline outcomes.`,
+            next: `${formatMetricValue(
+              platformMetricMap.get("open_trust_case_count")?.value ?? 0,
+              platformMetricMap.get("open_trust_case_count")?.unit ?? "count"
+            )} open trust cases and ${formatMetricValue(
+              platformMetricMap.get("open_onchain_case_count")?.value ?? 0,
+              platformMetricMap.get("open_onchain_case_count")?.unit ?? "count"
+            )} open on-chain cases still need follow-through.`,
+            watch: `${formatMetricValue(
+              platformMetricMap.get("automation_health_score")?.value ?? 0,
+              platformMetricMap.get("automation_health_score")?.unit ?? "score"
+            )} automation health keeps this lane calm or noisy.`,
+          }
+        : analyticsView === "campaigns"
+          ? {
+              title: "Campaign throughput is the pressure lane",
+              description:
+                "Use campaign mode when the question is where review load, low confidence or weak completion is accumulating right now.",
+              now: campaignHealth.length
+                ? `${campaignHealth[0].title} currently carries the heaviest submission load with ${campaignHealth[0].submissions} submissions and ${campaignHealth[0].pending} still pending.`
+                : "No campaign submission pressure is being reported right now.",
+              next: questReviewLoad.length
+                ? `${questReviewLoad[0].title} is the first quest lane to inspect for review pressure and verification friction.`
+                : "Quest review pressure is calm across the measured set.",
+              watch: `${pendingVerificationCount} verification decisions remain pending, with ${duplicateSignalCount} duplicate signal cases in play.`,
+            }
+          : {
+              title: "Verification is the proof-pressure lane",
+              description:
+                "Stay here when you need to understand manual review load, route quality and where verification friction is slowing campaign flow down.",
+              now: `${pendingVerificationCount} verification results are still pending, while ${autoApprovedCount} already resolved through auto approval or approval routes.`,
+              next: `${duplicateSignalCount} duplicate-signal cases and ${rejectedVerificationCount} rejections are the next places to inspect for friction or misconfiguration.`,
+              watch: `${verificationResults.length} total verification records are currently shaping the route mix and confidence posture.`,
+            };
 
   return (
     <AdminShell>
@@ -343,7 +409,17 @@ export default function AnalyticsPage() {
         title="Analytics"
         description="Use Analytics for outcomes and trends, not live triage: launch and health pressure lives in Overview, while campaign and verification intelligence stay available here."
         actions={
-          <div className="flex flex-wrap gap-3">
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Decision routes</p>
+            <div className="flex flex-wrap gap-2">
+              <OpsStatusPill tone={analyticsView === "growth" ? "success" : "default"}>
+                {analyticsView}
+              </OpsStatusPill>
+              <OpsStatusPill tone={summaryError ? "warning" : "default"}>
+                {summaryError ? "snapshot warning" : "snapshot healthy"}
+              </OpsStatusPill>
+            </div>
+            <div className="flex flex-wrap gap-3">
             <Link
               href="/overview"
               className="rounded-2xl border border-line bg-card px-4 py-3 font-semibold"
@@ -362,10 +438,11 @@ export default function AnalyticsPage() {
             >
               Rewards
             </Link>
+            </div>
           </div>
         }
         statusBand={
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
               {(analyticsView === "growth" ? growthCards : outcomeCards).map((card) => {
                 if ("key" in card) {
@@ -394,8 +471,10 @@ export default function AnalyticsPage() {
             </div>
 
             <OpsPanel
-              title="Analytics work modes"
-              description="Keep outcomes and trends separate from campaign throughput and verification review load."
+              eyebrow="Command read"
+              title={analyticsCommandRead.title}
+              description={analyticsCommandRead.description}
+              tone="accent"
               action={
                 <SegmentToggle
                   value={analyticsView}
@@ -409,23 +488,31 @@ export default function AnalyticsPage() {
                 />
               }
             >
-              <div className="grid gap-4 md:grid-cols-3">
-                <ModeCard
-                  label="Growth"
-                  body="Funnel, revenue, retention, attribution and benchmark coverage in one internal workspace."
-                />
-                <ModeCard
-                  label="Outcomes"
-                  body="Activation, readiness, trust, claims and on-chain reliability trends."
-                />
-                <ModeCard
-                  label="Campaigns"
-                  body="Throughput, completion and confidence by campaign."
-                />
-                <ModeCard
-                  label="Verification"
-                  body="Route mix, manual review pressure and proof bottlenecks."
-                />
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <OpsSnapshotRow label="Now" value={analyticsCommandRead.now} />
+                  <OpsSnapshotRow label="Next" value={analyticsCommandRead.next} />
+                  <OpsSnapshotRow label="Watch" value={analyticsCommandRead.watch} />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-4">
+                  <ModeCard
+                    label="Growth"
+                    body="Funnel, revenue, retention, attribution and benchmark coverage in one internal workspace."
+                  />
+                  <ModeCard
+                    label="Outcomes"
+                    body="Activation, readiness, trust, claims and on-chain reliability trends."
+                  />
+                  <ModeCard
+                    label="Campaigns"
+                    body="Throughput, completion and confidence by campaign."
+                  />
+                  <ModeCard
+                    label="Verification"
+                    body="Route mix, manual review pressure and proof bottlenecks."
+                  />
+                </div>
               </div>
             </OpsPanel>
           </div>

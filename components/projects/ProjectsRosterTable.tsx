@@ -20,10 +20,12 @@ export default function ProjectsRosterTable({
       label: "Project",
       render: (project) => (
         <div className="flex items-center gap-3">
-          <span className="text-xl">{project.logo}</span>
-          <div>
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/8 bg-white/[0.03] text-xl shadow-[0_12px_30px_rgba(0,0,0,0.14)]">
+            {project.logo}
+          </span>
+          <div className="min-w-0">
             <p className="font-semibold text-text">{project.name}</p>
-            <p className="mt-1 text-xs text-sub">
+            <p className="mt-1 truncate text-xs text-sub">
               {(project.contactEmail || "No contact email") +
                 " / " +
                 (project.category || "Uncategorized")}

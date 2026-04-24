@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
@@ -221,9 +222,9 @@ export default function UsersPage() {
             <OpsPanel
               eyebrow="Contributor stream"
               title="Reputation roster"
-              description="Trust, sybil risk, XP and claim history brought together into one readable community board."
+              description="Trust, sybil risk, XP and claim history brought together into a calmer contributor rail instead of a raw list."
             >
-              <div className="grid gap-4">
+              <div className="grid gap-4 xl:grid-cols-2">
                 {filteredUsers.map((user) => (
                   <div key={user.id} className="rounded-[24px] border border-line bg-card2 p-5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -256,6 +257,12 @@ export default function UsersPage() {
                             {user.status}
                           </OpsStatusPill>
                         </div>
+                        <Link
+                          href={`/users/${user.authUserId ?? user.id}`}
+                          className="mt-4 inline-flex rounded-[16px] border border-line bg-card2 px-3 py-2 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
+                        >
+                          Open profile
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -293,7 +300,7 @@ export default function UsersPage() {
                 title="High-conviction risk queue"
                 description="Users with the highest sybil scores or the weakest trust posture surface here first."
               >
-                <div className="grid gap-4">
+                <div className="grid gap-4 xl:grid-cols-2">
                   {riskUsers.slice(0, 8).map((user) => (
                     <div key={user.id} className="rounded-[24px] border border-line bg-card2 p-5">
                       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -312,6 +319,13 @@ export default function UsersPage() {
                             <Metric label="Streak" value={user.streak} />
                           </div>
                         </div>
+
+                        <Link
+                          href={`/users/${user.authUserId ?? user.id}`}
+                          className="rounded-[16px] border border-line bg-card px-3 py-2 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
+                        >
+                          Open profile
+                        </Link>
                       </div>
                     </div>
                   ))}

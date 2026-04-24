@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { OpsMetricCard, OpsPanel, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import { IncidentStatusComposer } from "@/components/support/IncidentStatusComposer";
 import type {
   AdminServiceIncidentDetail,
@@ -105,11 +105,34 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
           </div>
         ) : incident ? (
           <div className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard label="Severity" value={incident.severity} emphasis={tone(incident.severity) === "danger" || tone(incident.severity) === "warning" ? "warning" : "default"} />
+              <OpsMetricCard label="State" value={incident.state} emphasis={incident.state === "resolved" ? "primary" : "default"} />
+              <OpsMetricCard label="Impact" value={humanize(incident.impactScope)} emphasis={tone(incident.impactScope) === "warning" || tone(incident.impactScope) === "danger" ? "warning" : "default"} />
+              <OpsMetricCard label="Updates" value={incident.updates.length} />
+            </div>
+
+            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+              <div className="max-w-2xl">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                  Incident command read
+                </p>
+                <p className="mt-2 text-sm leading-6 text-sub">
+                  Use this short read before posting updates so severity, impact and the next operator move stay obvious.
+                </p>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <OpsSnapshotRow label="Now" value={incident.publicSummary} />
+                <OpsSnapshotRow label="Next" value={incident.state === "resolved" ? "Keep the timeline consistent and close the loop" : "Publish the next internal and public status update"} />
+                <OpsSnapshotRow label="Watch" value={incident.updates.length > 0 ? `${incident.updates.length} timeline updates already shape the incident narrative` : "No incident updates have been posted yet"} />
+              </div>
+            </div>
+
             <div className="rounded-[24px] border border-line bg-card2 p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                    {incident.incidentRef} • {incident.componentLabel}
+                    {incident.incidentRef} · {incident.componentLabel}
                   </p>
                   <h2 className="mt-3 text-2xl font-extrabold text-text">{incident.title}</h2>
                   <p className="mt-3 text-sm leading-6 text-sub">{incident.publicSummary}</p>
@@ -334,7 +357,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                      {item.incidentRef} • {item.componentLabel}
+                      {item.incidentRef} · {item.componentLabel}
                     </p>
                     <h3 className="mt-3 text-lg font-extrabold text-text">{item.title}</h3>
                     <p className="mt-3 text-sm leading-6 text-sub">{item.publicSummary}</p>

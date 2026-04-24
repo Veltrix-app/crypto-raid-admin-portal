@@ -13,6 +13,7 @@ import {
   OpsMetricCard,
   OpsPanel,
   OpsPriorityLink,
+  OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
 import { fetchBusinessControlOverview } from "@/lib/billing/business-dashboard";
@@ -259,11 +260,68 @@ export default function BusinessPage() {
           </div>
         }
         statusBand={
-          <div className="grid gap-4 md:grid-cols-4">
-            <OpsMetricCard label="MRR" value={formatCurrency(overview.revenue.mrr)} emphasis="primary" />
-            <OpsMetricCard label="ARR run rate" value={formatCurrency(overview.revenue.arrRunRate)} />
-            <OpsMetricCard label="Past due exposure" value={formatCurrency(overview.collections.pastDueExposure)} emphasis={overview.collections.pastDueExposure > 0 ? "warning" : "default"} />
-            <OpsMetricCard label="Upgrade candidates" value={overview.queues.upgradeCandidates.length} emphasis={overview.queues.upgradeCandidates.length > 0 ? "warning" : "default"} />
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard label="MRR" value={formatCurrency(overview.revenue.mrr)} emphasis="primary" />
+              <OpsMetricCard label="ARR run rate" value={formatCurrency(overview.revenue.arrRunRate)} />
+              <OpsMetricCard label="Past due exposure" value={formatCurrency(overview.collections.pastDueExposure)} emphasis={overview.collections.pastDueExposure > 0 ? "warning" : "default"} />
+              <OpsMetricCard label="Upgrade candidates" value={overview.queues.upgradeCandidates.length} emphasis={overview.queues.upgradeCandidates.length > 0 ? "warning" : "default"} />
+            </div>
+
+            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div className="max-w-2xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    Commercial command read
+                  </p>
+                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                    Read revenue pressure first, then decide whether the next move is collections, activation, or expansion.
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    This cockpit should answer what is moving now, which accounts need a human move next, and where hidden billing or activation drag is building beneath the topline.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <OpsStatusPill tone={overview.collections.failedPaymentCount > 0 ? "warning" : "success"}>
+                    {overview.collections.failedPaymentCount} failed payments
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={overview.health.paidButUnderusedAccounts > 0 ? "warning" : "default"}>
+                    {overview.health.paidButUnderusedAccounts} underused paid
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={overview.queues.upgradeCandidates.length > 0 ? "warning" : "success"}>
+                    {overview.queues.upgradeCandidates.length} upgrade-ready
+                  </OpsStatusPill>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <OpsSnapshotRow
+                  label="Now"
+                  value={
+                    overview.collections.failedPaymentCount > 0
+                      ? `${overview.collections.failedPaymentCount} payment failures need billing ops attention`
+                      : "Collections look calm right now"
+                  }
+                />
+                <OpsSnapshotRow
+                  label="Next"
+                  value={
+                    highestPressureAccounts[0]
+                      ? `Open ${highestPressureAccounts[0].accountName} as the next commercial account`
+                      : "No urgent account is bubbling to the top"
+                  }
+                />
+                <OpsSnapshotRow
+                  label="Watch"
+                  value={
+                    overview.health.paidButUnderusedAccounts > 0
+                      ? `${overview.health.paidButUnderusedAccounts} paid accounts are drifting in activation`
+                      : "Activation drift is currently low"
+                  }
+                />
+              </div>
+            </div>
           </div>
         }
       >

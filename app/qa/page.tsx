@@ -5,7 +5,12 @@ import { useEffect, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
 import { LoadingState, StatePanel } from "@/components/layout/state/StatePrimitives";
-import { OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import {
+  OpsMetricCard,
+  OpsPanel,
+  OpsSnapshotRow,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import { QaReadinessBoard } from "@/components/qa/QaReadinessBoard";
 import { fetchQaOverview } from "@/lib/release/release-dashboard";
 import type { AdminQaOverview } from "@/types/entities/release";
@@ -121,6 +126,66 @@ export default function QaPage() {
                 {overview.incompleteSmoke.length} smoke pending
               </OpsStatusPill>
             </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/releases"
+                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+              >
+                Open releases
+              </Link>
+            </div>
+          </div>
+        }
+        statusBand={
+          <div className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <OpsMetricCard
+                label="Waiting on QA"
+                value={overview.releaseCandidatesWaitingOnQa.length}
+                emphasis={overview.releaseCandidatesWaitingOnQa.length > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Blocking failures"
+                value={overview.blockingChecks.length}
+                emphasis={overview.blockingChecks.length > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Smoke pending"
+                value={overview.incompleteSmoke.length}
+                emphasis={overview.incompleteSmoke.length > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Env warnings"
+                value={overview.environmentWarnings.length}
+                emphasis={overview.environmentWarnings.length > 0 ? "warning" : "default"}
+              />
+            </div>
+
+            <OpsPanel
+              eyebrow="Command read"
+              title="Keep QA in go / watch / no-go language"
+              description="The board should make one thing obvious: which candidate is active, what still blocks launch, and what still needs operator proof before anyone calls a release safe."
+              tone="accent"
+            >
+              <div className="grid gap-4 md:grid-cols-3">
+                <OpsSnapshotRow
+                  label="Now"
+                  value={
+                    overview.activeRelease
+                      ? `${overview.activeRelease.title} is the active release candidate currently under QA.`
+                      : "No active release candidate is currently moving through QA."
+                  }
+                />
+                <OpsSnapshotRow
+                  label="Next"
+                  value={`${overview.blockingChecks.length} blocking checks and ${overview.incompleteSmoke.length} smoke items still need explicit operator attention.`}
+                />
+                <OpsSnapshotRow
+                  label="Watch"
+                  value={`${overview.environmentWarnings.length} environment warnings and ${overview.deployChecks?.warningCount ?? 0} deploy hygiene warnings are still on watch.`}
+                />
+              </div>
+            </OpsPanel>
           </div>
         }
       >
@@ -129,4 +194,3 @@ export default function QaPage() {
     </AdminShell>
   );
 }
-

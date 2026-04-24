@@ -6,6 +6,7 @@ import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   DetailBadge,
   DetailHero,
+  DetailStatusRow,
   DetailMetaRow,
   DetailMetricCard,
   DetailSidebarSurface,
@@ -47,7 +48,7 @@ export default function SubmissionDetailPage() {
   const submissionStatus = currentSubmission?.status ?? "pending";
   const riskLabel =
     user?.status === "flagged"
-      ? `Watch • Sybil ${user.sybilScore}`
+      ? `Watch · Sybil ${user.sybilScore}`
       : `Trust ${user?.trustScore ?? 50}`;
   const decisionLabel =
     primaryFlag?.flagType.replace(/_/g, " ") ??
@@ -203,6 +204,15 @@ export default function SubmissionDetailPage() {
           eyebrow="Submission Review"
           title={currentSubmission.questTitle}
           description="Review the proof, the automation route and any linked flags before moving this submission forward."
+          actions={
+            <button
+              type="button"
+              onClick={() => router.push("/submissions")}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/30 hover:text-primary"
+            >
+              Back to submissions
+            </button>
+          }
           badges={
             <>
               <DetailBadge>{currentSubmission.username}</DetailBadge>
@@ -225,7 +235,8 @@ export default function SubmissionDetailPage() {
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <DetailSurface
-            title="Decision Context"
+            eyebrow="Decision context"
+            title="Decision context"
             description={decisionReason}
           >
             <div className="mt-5 grid gap-3 md:grid-cols-2">
@@ -321,7 +332,8 @@ export default function SubmissionDetailPage() {
           </DetailSurface>
 
           <DetailSurface
-            title="Moderation Actions"
+            eyebrow="Operator actions"
+            title="Moderation actions"
             description="Use these actions after checking both the proof and the automation context."
           >
             <div className="mt-6">
@@ -358,27 +370,72 @@ export default function SubmissionDetailPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-          <DetailSurface
-            title="Proof"
-            description="Review the submitted proof carefully before you confirm or reject the task."
-          >
-            <div className="mt-6 rounded-[24px] border border-line bg-card2 p-5">
-              {proofLooksLikeUrl ? (
-                <a
-                  href={currentSubmission.proof}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="break-all text-sm font-semibold text-primary underline"
-                >
-                  {currentSubmission.proof}
-                </a>
-              ) : (
-                <p className="whitespace-pre-wrap break-words text-sm text-text">
-                  {currentSubmission.proof}
-                </p>
+          <div className="space-y-6">
+            <DetailSurface
+              eyebrow="Verification pressure"
+              title="Verification pressure"
+              description="Use this short read to keep moderation pressure, route and confidence in one glance before you decide."
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                <DetailStatusRow
+                  label="Current state"
+                  value={currentSubmission.status}
+                  tone={
+                    currentSubmission.status === "approved"
+                      ? "primary"
+                      : currentSubmission.status === "rejected"
+                        ? "danger"
+                        : "warning"
+                  }
+                />
+                <DetailStatusRow
+                  label="Risk posture"
+                  value={riskLabel}
+                  tone={user?.status === "flagged" ? "danger" : "default"}
+                />
+                <DetailStatusRow
+                  label="Automation route"
+                  value={verificationResult?.route.replace(/_/g, " ") || decisionLabel}
+                  tone={verificationResult?.decisionStatus === "approved" ? "primary" : "warning"}
+                />
+                <DetailStatusRow
+                  label="Confidence"
+                  value={verificationResult ? `${verificationResult.confidenceScore}%` : "No score"}
+                  tone={
+                    verificationResult
+                      ? verificationResult.confidenceScore >= 80
+                        ? "primary"
+                        : verificationResult.confidenceScore >= 50
+                          ? "warning"
+                          : "danger"
+                      : "default"
+                  }
+                />
+              </div>
+            </DetailSurface>
+
+            <DetailSurface
+              title="Proof"
+              description="Review the submitted proof carefully before you confirm or reject the task."
+            >
+              <div className="mt-6 rounded-[24px] border border-line bg-card2 p-5">
+                {proofLooksLikeUrl ? (
+                  <a
+                    href={currentSubmission.proof}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="break-all text-sm font-semibold text-primary underline"
+                  >
+                    {currentSubmission.proof}
+                  </a>
+                ) : (
+                  <p className="whitespace-pre-wrap break-words text-sm text-text">
+                    {currentSubmission.proof}
+                  </p>
                 )}
               </div>
-          </DetailSurface>
+            </DetailSurface>
+          </div>
 
           <div className="space-y-6">
             <DetailSidebarSurface title="Submission Data">

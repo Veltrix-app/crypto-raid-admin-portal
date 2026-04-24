@@ -314,6 +314,35 @@ export default function RewardDetailPage() {
             </DetailSurface>
 
             <DetailSurface
+              eyebrow="Claim pressure"
+              title="How this reward will behave under demand"
+              description="Use this read to judge whether the reward can absorb claims cleanly or whether stock, delivery method and visibility will start creating operator drag."
+            >
+              <div className="grid gap-3 md:grid-cols-4">
+                <RewardSignalCard
+                  label="Claims"
+                  value={relatedClaims.length}
+                  hint="All claim volume currently attached to this reward."
+                />
+                <RewardSignalCard
+                  label="Pending"
+                  value={pendingClaims.length}
+                  hint="Open fulfillment or review work still waiting on an operator."
+                />
+                <RewardSignalCard
+                  label="Stock"
+                  value={reward.unlimitedStock ? "Unlimited" : reward.stock ?? "-"}
+                  hint="The current scarcity posture contributors will hit."
+                />
+                <RewardSignalCard
+                  label="Method"
+                  value={reward.claimMethod.replace(/_/g, " ")}
+                  hint="The delivery path currently configured for this reward."
+                />
+              </div>
+            </DetailSurface>
+
+            <DetailSurface
               eyebrow="Platform Core"
               title="Lifecycle, incidents and overrides"
               description="This operator rail keeps reward-side claim issues and manual pause or completion controls attached directly to the reward."
@@ -478,4 +507,22 @@ function getRewardBlueprintSummary(rewardType: string) {
     default:
       return `This reward is currently configured as ${rewardTypeLabel}. Tighten the claim method, stock logic and campaign connection so it becomes an intentional part of the reward loop.`;
   }
+}
+
+function RewardSignalCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string | number;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
+      <p className="mt-2 text-2xl font-extrabold tracking-[-0.03em] text-text">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
+    </div>
+  );
 }

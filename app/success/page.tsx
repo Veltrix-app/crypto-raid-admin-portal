@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
-import { OpsMetricCard, OpsPriorityLink, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { OpsMetricCard, OpsPriorityLink, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import { SuccessOverviewPanel } from "@/components/success/SuccessOverviewPanel";
 import { SuccessQueueTable, type SuccessQueueFilters } from "@/components/success/SuccessQueueTable";
 import type { AdminSuccessOverview } from "@/types/entities/success";
@@ -67,14 +67,72 @@ export default function SuccessPage() {
             </div>
           </div>
         }
-      >
-        <div className="grid gap-4 md:grid-cols-4">
-          <OpsMetricCard label="Accounts" value={loading ? "..." : overview?.counts.totalAccounts ?? 0} />
-          <OpsMetricCard label="Stalled" value={loading ? "..." : overview?.counts.stalled ?? 0} emphasis={(overview?.counts.stalled ?? 0) > 0 ? "warning" : "default"} />
-          <OpsMetricCard label="Expansion" value={loading ? "..." : overview?.counts.expansionReady ?? 0} emphasis={(overview?.counts.expansionReady ?? 0) > 0 ? "primary" : "default"} />
-          <OpsMetricCard label="Churn risk" value={loading ? "..." : overview?.counts.churnRisk ?? 0} emphasis={(overview?.counts.churnRisk ?? 0) > 0 ? "warning" : "default"} />
-        </div>
+        statusBand={
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard label="Accounts" value={loading ? "..." : overview?.counts.totalAccounts ?? 0} />
+              <OpsMetricCard label="Stalled" value={loading ? "..." : overview?.counts.stalled ?? 0} emphasis={(overview?.counts.stalled ?? 0) > 0 ? "warning" : "default"} />
+              <OpsMetricCard label="Expansion" value={loading ? "..." : overview?.counts.expansionReady ?? 0} emphasis={(overview?.counts.expansionReady ?? 0) > 0 ? "primary" : "default"} />
+              <OpsMetricCard label="Churn risk" value={loading ? "..." : overview?.counts.churnRisk ?? 0} emphasis={(overview?.counts.churnRisk ?? 0) > 0 ? "warning" : "default"} />
+            </div>
 
+            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div className="max-w-2xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    Success command read
+                  </p>
+                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                    Read activation drag first, then decide whether the next move is rescue, expansion, or billing alignment.
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    This cockpit works best when it answers where customers are stalling, who deserves named follow-up next, and which accounts are quietly becoming expansion or churn stories.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <OpsStatusPill tone={(overview?.counts.stalled ?? 0) > 0 ? "warning" : "success"}>
+                    {overview?.counts.stalled ?? 0} stalled
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={(overview?.counts.expansionReady ?? 0) > 0 ? "success" : "default"}>
+                    {overview?.counts.expansionReady ?? 0} expansion-ready
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={(overview?.counts.churnRisk ?? 0) > 0 ? "warning" : "default"}>
+                    {overview?.counts.churnRisk ?? 0} churn-risk
+                  </OpsStatusPill>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <OpsSnapshotRow
+                  label="Now"
+                  value={
+                    (overview?.counts.stalled ?? 0) > 0
+                      ? `${overview?.counts.stalled ?? 0} accounts are stalled in activation`
+                      : "Activation flow looks calm right now"
+                  }
+                />
+                <OpsSnapshotRow
+                  label="Next"
+                  value={
+                    topRiskAccount
+                      ? `Open ${topRiskAccount.accountName} as the next named success follow-up`
+                      : "No urgent account is bubbling to the top"
+                  }
+                />
+                <OpsSnapshotRow
+                  label="Watch"
+                  value={
+                    (overview?.counts.expansionReady ?? 0) > 0
+                      ? `${overview?.counts.expansionReady ?? 0} accounts are leaning toward expansion`
+                      : "Expansion pressure is currently modest"
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        }
+      >
         <SuccessOverviewPanel overview={overview} loading={loading} error={error} />
 
         <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">

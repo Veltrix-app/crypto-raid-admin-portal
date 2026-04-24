@@ -1,7 +1,7 @@
 "use client";
 
 import { InlineEmptyNotice } from "@/components/layout/state/StatePrimitives";
-import { OpsPanel, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { OpsMetricCard, OpsPanel, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import { formatSecurityLabel } from "@/lib/security/security-contract";
 import type { AdminSecurityAccountDetail } from "@/types/entities/security";
 
@@ -13,15 +13,45 @@ export function SecurityAccountDetail({
   return (
     <div className="space-y-6">
       <OpsPanel
+        eyebrow="Account command read"
+        title="Pressure and next move"
+        description="Use this short read before moving into member cleanup or lifecycle requests so the account security story is obvious at a glance."
+        tone="accent"
+      >
+        <div className="grid gap-3 md:grid-cols-3">
+          <OpsSnapshotRow
+            label="Now"
+            value={detail.account.weakPosture ? "Account posture still needs cleanup" : "Account posture looks healthy"}
+          />
+          <OpsSnapshotRow
+            label="Next"
+            value={
+              detail.requests.length > 0
+                ? `Review ${detail.requests.length} open lifecycle request${detail.requests.length === 1 ? "" : "s"}`
+                : "Check member posture and SSO configuration"
+            }
+          />
+          <OpsSnapshotRow
+            label="Watch"
+            value={
+              detail.members.some((member) => !member.security?.twoFactorEnabled)
+                ? "At least one member still needs 2FA"
+                : "Admin 2FA posture is currently calm"
+            }
+          />
+        </div>
+      </OpsPanel>
+
+      <OpsPanel
         eyebrow="Security account"
         title="Policy, incidents and access posture"
         description="Use this drilldown to inspect how the account is configured, who is missing security posture, and which lifecycle items still need action."
       >
         <div className="grid gap-4 md:grid-cols-4">
-          <OpsSnapshotRow label="Policy status" value={formatSecurityLabel(detail.account.policyStatus)} />
-          <OpsSnapshotRow label="Billing status" value={detail.account.billingStatus ?? "Unknown"} />
-          <OpsSnapshotRow label="Open requests" value={String(detail.account.openDataRequestCount)} />
-          <OpsSnapshotRow label="Active incidents" value={String(detail.account.activeSecurityIncidentCount)} />
+          <OpsMetricCard label="Policy status" value={formatSecurityLabel(detail.account.policyStatus)} emphasis="primary" />
+          <OpsMetricCard label="Billing status" value={detail.account.billingStatus ?? "Unknown"} />
+          <OpsMetricCard label="Open requests" value={detail.account.openDataRequestCount} emphasis={detail.account.openDataRequestCount > 0 ? "warning" : "default"} />
+          <OpsMetricCard label="Active incidents" value={detail.account.activeSecurityIncidentCount} emphasis={detail.account.activeSecurityIncidentCount > 0 ? "warning" : "default"} />
         </div>
       </OpsPanel>
 

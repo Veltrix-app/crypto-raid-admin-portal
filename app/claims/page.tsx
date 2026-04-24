@@ -4,8 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import {
   OpsFilterBar,
+  OpsMetricCard,
   OpsPanel,
   OpsSearchInput,
+  OpsSnapshotRow,
+  OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
@@ -14,7 +17,6 @@ import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import PayoutCaseDetailPanel from "@/components/payout/PayoutCaseDetailPanel";
 import PayoutCaseTimeline from "@/components/payout/PayoutCaseTimeline";
-import PayoutHealthPanel from "@/components/payout/PayoutHealthPanel";
 import PayoutQueuePanel from "@/components/payout/PayoutQueuePanel";
 import type {
   PayoutCaseDetailRecord,
@@ -274,51 +276,117 @@ export default function ClaimsPage() {
         eyebrow="Payout operations"
         title="Claims"
         description="Run the internal payout queue, clear blocked claims, retry failed campaign finalizations and keep every resolution explainable."
-      >
-        <PayoutHealthPanel
-          eyebrow="Internal posture"
-          title="Payout safety workspace"
-          description="Internal payout ops now runs on explicit payout cases, explicit escalations and explicit resolution history instead of a loose mix of claims and retry buttons."
-          metrics={[
-            {
-              label: "Open cases",
-              value: openCount,
-              emphasis: openCount > 0 ? "warning" : "default",
-            },
-            {
-              label: "High severity",
-              value: criticalCount,
-              emphasis: criticalCount > 0 ? "warning" : "default",
-            },
-            {
-              label: "Awaiting project",
-              value: awaitingProjectCount,
-              emphasis: awaitingProjectCount > 0 ? "primary" : "default",
-            },
-            {
-              label: "Retry queued",
-              value: retryQueuedCount,
-              emphasis: retryQueuedCount > 0 ? "warning" : "default",
-            },
-          ]}
-        />
+        statusBand={
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard
+                label="Open cases"
+                value={openCount}
+                emphasis={openCount > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="High severity"
+                value={criticalCount}
+                emphasis={criticalCount > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Awaiting project"
+                value={awaitingProjectCount}
+                emphasis={awaitingProjectCount > 0 ? "primary" : "default"}
+              />
+              <OpsMetricCard
+                label="Retry queued"
+                value={retryQueuedCount}
+                emphasis={retryQueuedCount > 0 ? "warning" : "default"}
+              />
+            </div>
 
+            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div className="max-w-2xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    Payout command read
+                  </p>
+                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                    Keep the queue calm, separate incidents from disputes, and make each resolution legible.
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    This workspace is no longer a mixed wall of claims and retry buttons. Treat it
+                    as a bounded operator rail: clear the right cases, keep blocked claims
+                    explainable and leave the active project surface visible while you work.
+                  </p>
+                </div>
+
+                <SegmentToggle
+                  value={mode}
+                  onChange={setMode}
+                  options={[
+                    { value: "queue", label: "Queue" },
+                    { value: "incidents", label: "Incidents" },
+                    { value: "disputes", label: "Disputes" },
+                    { value: "resolution_log", label: "Resolution log" },
+                  ]}
+                />
+              </div>
+
+              <div className="mt-5 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <ClaimsSignalCard
+                    label="Queue pressure"
+                    value={`${pendingClaims} pending claims`}
+                    hint="Fresh reviews and manual payouts still waiting for a clear operator decision."
+                    tone={pendingClaims > 0 ? "warning" : "default"}
+                  />
+                  <ClaimsSignalCard
+                    label="Inventory risk"
+                    value={`${lowInventoryRewards} low-stock rewards`}
+                    hint="Reward availability that can turn normal delivery into payout drag."
+                    tone={lowInventoryRewards > 0 ? "warning" : "default"}
+                  />
+                  <ClaimsSignalCard
+                    label="Escalation load"
+                    value={`${payoutCases.filter((row) => row.escalationState !== "none").length} escalated`}
+                    hint="Cases that already need cross-team follow-through instead of more queue churn."
+                    tone={payoutCases.some((row) => row.escalationState !== "none") ? "warning" : "default"}
+                  />
+                </div>
+
+                <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                  <div className="flex flex-wrap gap-2">
+                    <OpsStatusPill tone="default">{activeProjectName}</OpsStatusPill>
+                    <OpsStatusPill tone={mode === "incidents" || mode === "disputes" ? "warning" : "success"}>
+                      {mode.replace("_", " ")}
+                    </OpsStatusPill>
+                  </div>
+                  <div className="mt-4 grid gap-3">
+                    <OpsSnapshotRow
+                      label="Now"
+                      value={getClaimsModeRead(mode)}
+                    />
+                    <OpsSnapshotRow
+                      label="Next"
+                      value={selectedCaseId ? "Work the selected payout case" : "Choose the first visible payout case"}
+                    />
+                    <OpsSnapshotRow
+                      label="Watch"
+                      value={
+                        payoutCases.filter((row) => row.status === "blocked").length > 0
+                          ? `${payoutCases.filter((row) => row.status === "blocked").length} blocked cases`
+                          : "No blocked cases right now"
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      >
         <OpsPanel
-          eyebrow="Work modes"
-          title="Internal payout workflows"
-          description="Split the workspace by what the operator is trying to do right now: clear the review queue, resolve live incidents, coordinate disputes, or audit finished outcomes."
-          action={
-            <SegmentToggle
-              value={mode}
-              onChange={setMode}
-              options={[
-                { value: "queue", label: "Queue" },
-                { value: "incidents", label: "Incidents" },
-                { value: "disputes", label: "Disputes" },
-                { value: "resolution_log", label: "Resolution log" },
-              ]}
-            />
-          }
+          eyebrow="Workspace lanes"
+          title="How to read this payout workspace"
+          description="Each mode changes the operator question. Keep the case queue and detail rail in sync instead of treating the page like a flat backlog."
+          tone="accent"
         >
           <div className="grid gap-4 md:grid-cols-4">
             <ModeCard
@@ -341,9 +409,9 @@ export default function ClaimsPage() {
         </OpsPanel>
 
         <OpsPanel
-          eyebrow="Volume read"
-          title="Current payout mix"
-          description="A quick read on how much live pressure sits underneath the case queue."
+          eyebrow="Pressure mix"
+          title="What is bending the queue right now"
+          description="Use this shorter read to separate routine throughput from the issues that can poison fulfillment quality."
         >
           <div className="grid gap-4 md:grid-cols-4">
             <ModeCard label="Pending claims" body={`${pendingClaims} claims are still waiting for review or delivery.`} />
@@ -498,4 +566,39 @@ function ModeCard({ label, body }: { label: string; body: string }) {
       <p className="mt-2 text-sm leading-6 text-sub">{body}</p>
     </div>
   );
+}
+
+function ClaimsSignalCard({
+  label,
+  value,
+  hint,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  tone?: "default" | "warning";
+}) {
+  return (
+    <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className={`mt-3 text-lg font-extrabold ${tone === "warning" ? "text-amber-300" : "text-text"}`}>
+        {value}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
+    </div>
+  );
+}
+
+function getClaimsModeRead(mode: ClaimsMode) {
+  if (mode === "incidents") {
+    return "Separate delivery failures from normal claim traffic";
+  }
+  if (mode === "disputes") {
+    return "Keep project-input and escalation-heavy cases explicit";
+  }
+  if (mode === "resolution_log") {
+    return "Audit finished outcomes and resolution history";
+  }
+  return "Clear fresh reviews and manual payout cases first";
 }

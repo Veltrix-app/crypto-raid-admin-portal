@@ -86,6 +86,30 @@ export function CommunityOutcomesPanel({
       description="This rail keeps the page aggregate-first: automation health, captain effectiveness, cohort pressure and funnel conversion stay visible without drifting into member-level management."
     >
       <div className="space-y-5">
+        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                Outcome command read
+              </p>
+              <p className="mt-2 text-sm leading-6 text-sub">
+                Read this rail in order: execution health, captain effectiveness, then cohort and journey pressure. That keeps the panel aggregate-first instead of drifting into a member-by-member wall.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <OpsStatusPill tone={execution.automationSuccessRate >= 70 ? "success" : "warning"}>
+                Execution {formatPercent(execution.automationSuccessRate)}
+              </OpsStatusPill>
+              <OpsStatusPill tone={captainCoverage.coverageRate >= 70 ? "success" : "warning"}>
+                Coverage {formatPercent(captainCoverage.coverageRate)}
+              </OpsStatusPill>
+              <OpsStatusPill tone={unresolvedPressure > 0 ? "warning" : "default"}>
+                {unresolvedPressure} unresolved
+              </OpsStatusPill>
+            </div>
+          </div>
+        </div>
+
         <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-6">
           <OpsMetricCard
             label="Success rate"

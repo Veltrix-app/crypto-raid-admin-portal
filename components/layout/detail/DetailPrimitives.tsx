@@ -18,11 +18,15 @@ export function DetailHero({
   actions?: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-[32px] border border-white/6 bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.07),transparent_18%),linear-gradient(180deg,rgba(14,19,29,0.98),rgba(9,12,19,0.96))] p-6">
+    <section className="relative overflow-hidden rounded-[36px] border border-white/8 bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.1),transparent_18%),radial-gradient(circle_at_12%_18%,rgba(74,217,255,0.08),transparent_18%),linear-gradient(180deg,rgba(14,19,29,0.98),rgba(9,12,19,0.96))] p-6 shadow-[0_28px_90px_rgba(0,0,0,0.22)]">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.03),transparent_34%)]" />
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
         <div className="max-w-3xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">{eyebrow}</p>
-          <h1 className="mt-3 text-3xl font-extrabold tracking-[-0.03em] text-text sm:text-[2.5rem]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
+            <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_18px_rgba(186,255,59,0.55)]" />
+            {eyebrow}
+          </div>
+          <h1 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] text-text sm:text-[2.75rem]">
             {title}
           </h1>
           {description ? <p className="mt-4 max-w-2xl text-sm leading-7 text-sub">{description}</p> : null}
@@ -47,7 +51,7 @@ export function DetailMetricCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/6 bg-white/[0.03] px-4 py-4">
+    <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.9))] px-4 py-4 shadow-[0_18px_40px_rgba(0,0,0,0.14)]">
       <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">{label}</p>
       <p className="mt-3 text-2xl font-extrabold tracking-[-0.02em] text-text">{value}</p>
       {hint ? <p className="mt-2 text-sm leading-6 text-sub">{hint}</p> : null}
@@ -69,7 +73,8 @@ export function DetailSurface({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[30px] border border-white/6 bg-[linear-gradient(180deg,rgba(14,18,27,0.98),rgba(10,13,20,0.96))] p-6">
+    <section className="relative overflow-hidden rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(14,18,27,0.98),rgba(10,13,20,0.96))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.025),transparent_34%)]" />
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
           {eyebrow ? (
@@ -94,7 +99,7 @@ export function DetailSidebarSurface({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(14,18,27,0.98),rgba(10,13,20,0.96))] p-5">
+    <section className="rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(14,18,27,0.98),rgba(10,13,20,0.96))] p-5 shadow-[0_22px_70px_rgba(0,0,0,0.16)]">
       <h3 className="text-lg font-extrabold tracking-[-0.02em] text-text">{title}</h3>
       <div className="mt-4">{children}</div>
     </section>
@@ -109,7 +114,7 @@ export function DetailMetaRow({
   value: string | number;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/6 bg-white/[0.03] px-4 py-3">
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-3">
       <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">{label}</p>
       <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
     </div>
@@ -156,7 +161,7 @@ export function DetailActionTile({
   action?: ReactNode;
 }) {
   const content = (
-    <div className="rounded-[24px] border border-white/6 bg-white/[0.03] p-4 transition-colors duration-200 hover:border-primary/22 hover:bg-primary/5">
+    <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.9))] p-4 transition-all duration-200 hover:border-primary/22 hover:bg-primary/5 hover:-translate-y-0.5">
       <p className="font-bold text-text">{label}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{description}</p>
       {action ? <div className="mt-4">{action}</div> : null}

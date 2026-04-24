@@ -55,6 +55,19 @@ export default function QuestsPage() {
     : 0;
   const campaignCoverage = new Set(quests.map((quest) => quest.campaignId)).size;
 
+  const boardLeadQuests = useMemo(
+    () =>
+      [...filteredQuests]
+        .sort(
+          (a, b) =>
+            Number(b.autoApprove) - Number(a.autoApprove) ||
+            b.xp - a.xp ||
+            Number(b.status === "active") - Number(a.status === "active")
+        )
+        .slice(0, 6),
+    [filteredQuests]
+  );
+
   const verificationHeavyQuests = useMemo(
     () =>
       [...filteredQuests]
@@ -68,20 +81,20 @@ export default function QuestsPage() {
       <PortalPageFrame
         eyebrow="Quest management"
         title="Quests"
-        description="Keep quests readable as one system: a quiet inventory lane for the content itself, and a verification lane for moderation pressure and auto-clear posture."
+        description="Treat quests like a premium mission system: one calm inventory lane for the live board and one verification lane for proof friction, moderation drag and auto-clear posture."
         actions={
           <Link
             href="/quests/new"
-            className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black"
+            className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black shadow-[0_18px_40px_rgba(186,255,59,0.22)]"
           >
             New Quest
           </Link>
         }
         statusBand={
-          <div className="space-y-4">
-            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="space-y-5">
+            <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
               <OpsPanel
-                eyebrow="Current lane"
+                eyebrow="View posture"
                 title={
                   questsView === "board"
                     ? "Read the quest inventory"
@@ -89,9 +102,10 @@ export default function QuestsPage() {
                 }
                 description={
                   questsView === "board"
-                    ? "Stay in this lane when the goal is to understand the quest mix, campaign coverage and where progression value is concentrated."
-                    : "Switch here when the team needs to reason about proof flow, auto-approval and what will create moderation load."
+                    ? "Stay in board mode when the goal is to understand campaign coverage, XP weight and the shape of the contributor journey."
+                    : "Switch to verification mode when the team needs to reason about proof routes, automation and what could create moderation load."
                 }
+                tone="accent"
                 action={
                   <SegmentToggle
                     value={questsView}
@@ -116,8 +130,8 @@ export default function QuestsPage() {
                     label="Next read"
                     value={
                       questsView === "board"
-                        ? "Scan title, campaign and XP first, then open the quest that shapes the journey."
-                        : "Look at route, auto-approval and proof intensity before you judge raw volume."
+                        ? "Start with title, campaign and XP weight, then open the quest that shapes the flow most."
+                        : "Start with route and auto-approval posture before you judge raw submission volume."
                     }
                   />
                 </div>
@@ -178,20 +192,31 @@ export default function QuestsPage() {
                 <option value="custom">custom</option>
               </OpsSelect>
             </OpsFilterBar>
+
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_260px]">
+              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-3 text-sm text-sub">
+                {questsView === "board"
+                  ? "Board mode keeps the mission system readable and puts the most structurally important quests at the top."
+                  : "Verification mode pushes proof route, automation and moderation posture ahead of raw inventory."}
+              </div>
+              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-3 text-sm text-sub">
+                {autoApproveCount} quests can auto-clear low-risk traffic · {pausedCount} paused
+              </div>
+            </div>
           </div>
         }
       >
         {questsView === "board" ? (
-          <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
+          <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
             <OpsPanel
               eyebrow="Quest posture"
-              title="What the quest system is holding"
-              description="Use this side to understand where proof intensity is building and whether the quest board still feels balanced."
+              title="What the mission system is carrying"
+              description="Use this rail to understand proof intensity, paused work and how much of the board can already clear itself."
             >
               <div className="grid gap-3">
                 <OpsSnapshotRow
                   label="Auto-approval"
-                  value={`${autoApproveCount} quest${autoApproveCount === 1 ? "" : "s"} can clear low-risk traffic automatically.`}
+                  value={`${autoApproveCount} quest${autoApproveCount === 1 ? "" : "s"} can clear lower-risk traffic automatically.`}
                 />
                 <OpsSnapshotRow
                   label="Paused"
@@ -201,61 +226,48 @@ export default function QuestsPage() {
                   label="Verification drag"
                   value={`${manualCount} quest${manualCount === 1 ? "" : "s"} still depend on manual review as the primary route.`}
                 />
+                <OpsSnapshotRow
+                  label="Campaign spread"
+                  value={`${campaignCoverage} campaign${campaignCoverage === 1 ? "" : "s"} currently rely on quest mechanics.`}
+                />
               </div>
             </OpsPanel>
 
             <OpsPanel
-              eyebrow="Quest roster"
-              title="Read the quest stream"
-              description="Start with quest and campaign context, then check type, status and XP before opening the detail workspace."
+              eyebrow="Lead quests"
+              title="Open the quests shaping the journey"
+              description="This rail replaces the dense roster with cards so you can read type, campaign and proof posture in one glance."
             >
-              <div className="overflow-hidden rounded-[24px] border border-white/6 bg-white/[0.025]">
-                <div className="grid grid-cols-8 border-b border-white/6 px-5 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
-                  <div>Quest</div>
-                  <div>Project</div>
-                  <div>Campaign</div>
-                  <div>Quest type</div>
-                  <div>Status</div>
-                  <div>XP</div>
-                  <div>Auto</div>
-                  <div>Open</div>
-                </div>
-
-                {filteredQuests.map((quest) => {
+              <div className="grid gap-4">
+                {boardLeadQuests.map((quest) => {
                   const campaign = campaigns.find((item) => item.id === quest.campaignId);
                   const project = projects.find((item) => item.id === quest.projectId);
 
                   return (
-                    <div
+                    <QuestSurfaceCard
                       key={quest.id}
-                      className="grid grid-cols-8 items-center border-b border-white/6 px-5 py-4 text-sm text-text last:border-b-0"
-                    >
-                      <div>
-                        <p className="font-semibold">{quest.title}</p>
-                        <p className="mt-1 text-xs text-sub">{quest.actionLabel}</p>
-                      </div>
-                      <div>{project?.name || "-"}</div>
-                      <div>{campaign?.title || "-"}</div>
-                      <div className="capitalize">{quest.questType.replace(/_/g, " ")}</div>
-                      <div>
-                        <OpsStatusPill tone={questStatusTone(quest.status)}>{quest.status}</OpsStatusPill>
-                      </div>
-                      <div>{quest.xp}</div>
-                      <div>{quest.autoApprove ? "Yes" : "No"}</div>
-                      <div>
-                        <Link
-                          href={`/quests/${quest.id}`}
-                          className="rounded-full border border-white/6 bg-white/[0.025] px-3 py-2 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
-                        >
-                          View
-                        </Link>
-                      </div>
-                    </div>
+                      title={quest.title}
+                      description={quest.description}
+                      href={`/quests/${quest.id}`}
+                      badges={[
+                        quest.status,
+                        quest.autoApprove ? "auto approve" : null,
+                        campaign?.title || null,
+                      ]}
+                      badgeTone={questStatusTone(quest.status)}
+                      stats={[
+                        { label: "Project", value: project?.name || "-" },
+                        { label: "Quest type", value: quest.questType.replace(/_/g, " ") },
+                        { label: "XP", value: quest.xp },
+                      ]}
+                    />
                   );
                 })}
 
-                {filteredQuests.length === 0 ? (
-                  <div className="px-5 py-8 text-sm text-sub">No quests match your filters.</div>
+                {boardLeadQuests.length === 0 ? (
+                  <div className="rounded-[24px] border border-white/6 bg-white/[0.025] px-5 py-6 text-sm text-sub">
+                    No quests match the current filters.
+                  </div>
                 ) : null}
               </div>
             </OpsPanel>
@@ -263,7 +275,7 @@ export default function QuestsPage() {
         ) : null}
 
         {questsView === "verification" ? (
-          <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
+          <div className="grid gap-6 xl:grid-cols-[0.76fr_1.24fr]">
             <OpsPanel
               eyebrow="Verification pressure"
               title="What can create moderation load"
@@ -277,7 +289,7 @@ export default function QuestsPage() {
                 />
                 <OpsSnapshotRow
                   label="Auto-clear"
-                  value={`${autoApproveCount} quest${autoApproveCount === 1 ? "" : "s"} already have some lower-friction verification posture.`}
+                  value={`${autoApproveCount} quest${autoApproveCount === 1 ? "" : "s"} already have lower-friction verification posture.`}
                 />
                 <OpsSnapshotRow
                   label="What to open next"
@@ -287,28 +299,33 @@ export default function QuestsPage() {
             </OpsPanel>
 
             <OpsPanel
-              eyebrow="Verification board"
+              eyebrow="Verification rail"
               title="Open the quests that shape review posture"
-              description="These quests create the most operational leverage because they change how proof flows are cleared."
+              description="These quests create the most operational leverage because they directly change how proof flows are cleared."
             >
-              <div className="grid gap-3">
+              <div className="grid gap-4">
                 {verificationHeavyQuests.map((quest) => {
                   const campaign = campaigns.find((item) => item.id === quest.campaignId);
                   const project = projects.find((item) => item.id === quest.projectId);
+
                   return (
-                    <QuestVerificationCard
+                    <QuestSurfaceCard
                       key={quest.id}
                       title={quest.title}
                       description={quest.description}
                       href={`/quests/${quest.id}`}
-                      route={quest.verificationType.replace(/_/g, " ")}
-                      autoApprove={quest.autoApprove}
+                      badges={[
+                        quest.verificationType.replace(/_/g, " "),
+                        quest.autoApprove ? "auto approve" : null,
+                        campaign?.title || null,
+                      ]}
+                      badgeTone="default"
                       stats={[
                         { label: "Project", value: project?.name || "-" },
-                        { label: "Campaign", value: campaign?.title || "-" },
                         { label: "Quest type", value: quest.questType.replace(/_/g, " ") },
                         { label: "XP", value: quest.xp },
                       ]}
+                      accent={quest.autoApprove}
                     />
                   );
                 })}
@@ -333,36 +350,51 @@ function questStatusTone(status: string): "default" | "success" | "warning" {
   return "default";
 }
 
-function QuestVerificationCard({
+function QuestSurfaceCard({
   title,
   description,
   href,
-  route,
-  autoApprove,
+  badges,
   stats,
+  badgeTone,
+  accent = false,
 }: {
   title: string;
   description: string;
   href: string;
-  route: string;
-  autoApprove: boolean;
+  badges: Array<string | null>;
   stats: Array<{ label: string; value: string | number }>;
+  badgeTone: "default" | "success" | "warning";
+  accent?: boolean;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/6 bg-white/[0.025] p-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div
+      className={`relative overflow-hidden rounded-[28px] border p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] ${
+        accent
+          ? "border-primary/14 bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.1),transparent_22%),linear-gradient(180deg,rgba(18,24,35,0.96),rgba(10,14,22,0.94))]"
+          : "border-white/6 bg-[linear-gradient(180deg,rgba(18,24,35,0.94),rgba(11,15,23,0.92))]"
+      }`}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.03),transparent_32%)]" />
+      <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-lg font-extrabold text-text">{title}</p>
-            <OpsStatusPill tone="default">{route}</OpsStatusPill>
-            {autoApprove ? <OpsStatusPill tone="success">auto approve</OpsStatusPill> : null}
+            <p className="text-xl font-extrabold tracking-[-0.03em] text-text">{title}</p>
+            {badges.filter(Boolean).map((badge, index) => (
+              <OpsStatusPill
+                key={`${title}-${badge}`}
+                tone={index === 0 ? badgeTone : "default"}
+              >
+                {badge}
+              </OpsStatusPill>
+            ))}
           </div>
-          <p className="mt-3 text-sm leading-6 text-sub">{description}</p>
-          <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-sub">{description}</p>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
             {stats.map((stat) => (
               <div
                 key={`${title}-${stat.label}`}
-                className="rounded-[20px] border border-white/6 bg-white/[0.02] px-4 py-3"
+                className="rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-3"
               >
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
                   {stat.label}
@@ -374,7 +406,7 @@ function QuestVerificationCard({
         </div>
         <Link
           href={href}
-          className="rounded-full border border-white/6 bg-white/[0.025] px-4 py-3 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
+          className="rounded-full border border-white/8 bg-white/[0.035] px-4 py-3 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
         >
           Open
         </Link>

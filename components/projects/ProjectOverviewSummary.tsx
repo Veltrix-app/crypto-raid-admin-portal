@@ -33,7 +33,7 @@ export default function ProjectOverviewSummary({
           {metrics.map((metric) => (
             <div
               key={metric.label}
-              className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4"
+              className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.9))] px-4 py-4 shadow-[0_18px_40px_rgba(0,0,0,0.14)]"
             >
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
                 {metric.label}

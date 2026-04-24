@@ -54,6 +54,16 @@ export default function RaidsPage() {
     : 0;
   const totalParticipants = raids.reduce((sum, raid) => sum + raid.participants, 0);
   const platformCoverage = new Set(raids.map((raid) => raid.platform)).size;
+  const livePressureCount = activeCount + scheduledCount;
+
+  const boardLeadRaids = useMemo(
+    () =>
+      [...filteredRaids]
+        .sort((a, b) => b.rewardXp - a.rewardXp || b.participants - a.participants)
+        .slice(0, 6),
+    [filteredRaids]
+  );
+
   const liveRaids = useMemo(
     () =>
       [...filteredRaids]
@@ -67,26 +77,27 @@ export default function RaidsPage() {
       <PortalPageFrame
         eyebrow="Raid management"
         title="Raids"
-        description="Keep raid pressure understandable: one quiet inventory lane for the full roster, and one live lane for the posts and pushes that need coordination now."
+        description="Run raid pressure like a premium coordination layer: one calm board for the full roster and one live rail for the pushes that need operator attention now."
         actions={
           <Link
             href="/raids/new"
-            className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black"
+            className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black shadow-[0_18px_40px_rgba(186,255,59,0.22)]"
           >
             New Raid
           </Link>
         }
         statusBand={
-          <div className="space-y-4">
-            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="space-y-5">
+            <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
               <OpsPanel
-                eyebrow="Current lane"
+                eyebrow="View posture"
                 title={raidsView === "board" ? "Read the raid inventory" : "Read live pressure"}
                 description={
                   raidsView === "board"
-                    ? "Stay in this lane when the goal is to understand the roster across campaigns, platforms and communities."
-                    : "Switch here when the team is actively steering live or scheduled raids and needs a shorter decision path."
+                    ? "Stay in board mode when the goal is to understand the full raid roster across campaigns, communities and target platforms."
+                    : "Switch to live mode when the team is actively steering visible pressure and needs the shortest possible path to the raids that matter."
                 }
+                tone="accent"
                 action={
                   <SegmentToggle
                     value={raidsView}
@@ -111,8 +122,8 @@ export default function RaidsPage() {
                     label="Next read"
                     value={
                       raidsView === "board"
-                        ? "Scan community, campaign and reward pressure before opening detail."
-                        : "Look at participation and target quality before deciding what needs real-time support."
+                        ? "Start with community, target and reward pressure before you open detail."
+                        : "Open the raids with the biggest participant weight or the sharpest target surface first."
                     }
                   />
                 </div>
@@ -121,9 +132,10 @@ export default function RaidsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <OpsMetricCard label="Active" value={activeCount} emphasis="primary" />
                 <OpsMetricCard
-                  label="Scheduled"
-                  value={scheduledCount}
-                  emphasis={scheduledCount > 0 ? "primary" : "default"}
+                  label="Live pressure"
+                  value={livePressureCount}
+                  emphasis={livePressureCount > 0 ? "warning" : "default"}
+                  sub="Active and scheduled raids still shape visible coordination load."
                 />
                 <OpsMetricCard label="Participants" value={totalParticipants} />
                 <OpsMetricCard label="Avg reward XP" value={avgRewardXp} />
@@ -166,15 +178,26 @@ export default function RaidsPage() {
                 <option value="custom">custom</option>
               </OpsSelect>
             </OpsFilterBar>
+
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_260px]">
+              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-3 text-sm text-sub">
+                {raidsView === "board"
+                  ? "Board mode keeps the roster readable and highlights which raids carry the heaviest visible pressure."
+                  : "Live mode strips the system back to raids that actually need coordination, escalation or timing decisions."}
+              </div>
+              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-3 text-sm text-sub">
+                {endedCount} ended raids now belong to historical context, not the active decision path
+              </div>
+            </div>
           </div>
         }
       >
         {raidsView === "board" ? (
-          <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
+          <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
             <OpsPanel
               eyebrow="Raid posture"
               title="What the raid system is carrying"
-              description="Use this side to understand where attention is concentrated before you drop into a single raid."
+              description="Use this rail to understand where attention is concentrated, what is queued next and how much of the board is historical context."
             >
               <div className="grid gap-3">
                 <OpsSnapshotRow
@@ -186,64 +209,47 @@ export default function RaidsPage() {
                   value={`${scheduledCount} scheduled raid${scheduledCount === 1 ? "" : "s"} still need timing and target confidence.`}
                 />
                 <OpsSnapshotRow
-                  label="Ended"
-                  value={`${endedCount} raid${endedCount === 1 ? "" : "s"} can be treated as historical context instead of live work.`}
+                  label="Historical"
+                  value={`${endedCount} ended raid${endedCount === 1 ? "" : "s"} can be treated as context instead of live work.`}
+                />
+                <OpsSnapshotRow
+                  label="Participant load"
+                  value={`${totalParticipants.toLocaleString()} total participants are currently distributed across the raid board.`}
                 />
               </div>
             </OpsPanel>
 
             <OpsPanel
-              eyebrow="Raid roster"
-              title="Read the raid stream"
-              description="Start with title and community, then check campaign, platform and reward pressure before opening detail."
+              eyebrow="Lead raids"
+              title="Open the raids shaping visible pressure"
+              description="This rail replaces the dense roster with cards so you can read target, community and reward pressure in one glance."
             >
-              <div className="overflow-hidden rounded-[24px] border border-white/6 bg-white/[0.025]">
-                <div className="grid grid-cols-8 border-b border-white/6 px-5 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
-                  <div>Raid</div>
-                  <div>Project</div>
-                  <div>Campaign</div>
-                  <div>Platform</div>
-                  <div>Status</div>
-                  <div>Reward XP</div>
-                  <div>Participants</div>
-                  <div>Open</div>
-                </div>
-
-                {filteredRaids.map((raid) => {
+              <div className="grid gap-4">
+                {boardLeadRaids.map((raid) => {
                   const campaign = campaigns.find((item) => item.id === raid.campaignId);
                   const project = projects.find((item) => item.id === raid.projectId);
 
                   return (
-                    <div
+                    <RaidSurfaceCard
                       key={raid.id}
-                      className="grid grid-cols-8 items-center border-b border-white/6 px-5 py-4 text-sm text-text last:border-b-0"
-                    >
-                      <div>
-                        <p className="font-semibold">{raid.title}</p>
-                        <p className="mt-1 text-xs text-sub">{raid.community}</p>
-                      </div>
-                      <div>{project?.name || "-"}</div>
-                      <div>{campaign?.title || "-"}</div>
-                      <div className="capitalize">{raid.platform}</div>
-                      <div>
-                        <OpsStatusPill tone={raidStatusTone(raid.status)}>{raid.status}</OpsStatusPill>
-                      </div>
-                      <div>{raid.rewardXp}</div>
-                      <div>{raid.participants}</div>
-                      <div>
-                        <Link
-                          href={`/raids/${raid.id}`}
-                          className="rounded-full border border-white/6 bg-white/[0.025] px-3 py-2 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
-                        >
-                          View
-                        </Link>
-                      </div>
-                    </div>
+                      title={raid.title}
+                      description={raid.target}
+                      href={`/raids/${raid.id}`}
+                      badgeTone={raidStatusTone(raid.status)}
+                      badges={[raid.status, raid.platform, campaign?.title || null]}
+                      stats={[
+                        { label: "Project", value: project?.name || "-" },
+                        { label: "Community", value: raid.community },
+                        { label: "Reward XP", value: raid.rewardXp },
+                      ]}
+                    />
                   );
                 })}
 
-                {filteredRaids.length === 0 ? (
-                  <div className="px-5 py-8 text-sm text-sub">No raids match your filters.</div>
+                {boardLeadRaids.length === 0 ? (
+                  <div className="rounded-[24px] border border-white/6 bg-white/[0.025] px-5 py-6 text-sm text-sub">
+                    No raids match the current filters.
+                  </div>
                 ) : null}
               </div>
             </OpsPanel>
@@ -251,7 +257,7 @@ export default function RaidsPage() {
         ) : null}
 
         {raidsView === "live" ? (
-          <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
+          <div className="grid gap-6 xl:grid-cols-[0.76fr_1.24fr]">
             <OpsPanel
               eyebrow="Live pressure"
               title="What needs coordination first"
@@ -269,34 +275,35 @@ export default function RaidsPage() {
                 />
                 <OpsSnapshotRow
                   label="What to open next"
-                  value="Prioritize the raids with the biggest participant weight or the most visible target surface."
+                  value="Prioritize the raids with the highest participant weight or the most visible target surface."
                 />
               </div>
             </OpsPanel>
 
             <OpsPanel
-              eyebrow="Live board"
+              eyebrow="Live rail"
               title="Open the raids that shape visible pressure"
-              description="These raids carry the most immediate coordination value, so they get the shortest reading path."
+              description="These raids carry the shortest operator reading path because they change public momentum fastest."
             >
-              <div className="grid gap-3">
+              <div className="grid gap-4">
                 {liveRaids.map((raid) => {
                   const campaign = campaigns.find((item) => item.id === raid.campaignId);
                   const project = projects.find((item) => item.id === raid.projectId);
+
                   return (
-                    <RaidLiveCard
+                    <RaidSurfaceCard
                       key={raid.id}
                       title={raid.title}
                       description={raid.target}
                       href={`/raids/${raid.id}`}
-                      status={raid.status}
-                      platform={raid.platform}
+                      badgeTone={raidStatusTone(raid.status)}
+                      badges={[raid.status, raid.platform, campaign?.title || null]}
                       stats={[
                         { label: "Project", value: project?.name || "-" },
-                        { label: "Campaign", value: campaign?.title || "-" },
                         { label: "Reward XP", value: raid.rewardXp },
                         { label: "Participants", value: raid.participants },
                       ]}
+                      accent={raid.status === "active"}
                     />
                   );
                 })}
@@ -321,36 +328,51 @@ function raidStatusTone(status: string): "default" | "success" | "warning" {
   return "default";
 }
 
-function RaidLiveCard({
+function RaidSurfaceCard({
   title,
   description,
   href,
-  status,
-  platform,
+  badges,
   stats,
+  badgeTone,
+  accent = false,
 }: {
   title: string;
   description: string;
   href: string;
-  status: string;
-  platform: string;
+  badges: Array<string | null>;
   stats: Array<{ label: string; value: string | number }>;
+  badgeTone: "default" | "success" | "warning";
+  accent?: boolean;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/6 bg-white/[0.025] p-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div
+      className={`relative overflow-hidden rounded-[28px] border p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] ${
+        accent
+          ? "border-primary/14 bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.1),transparent_22%),linear-gradient(180deg,rgba(18,24,35,0.96),rgba(10,14,22,0.94))]"
+          : "border-white/6 bg-[linear-gradient(180deg,rgba(18,24,35,0.94),rgba(11,15,23,0.92))]"
+      }`}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.03),transparent_32%)]" />
+      <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-lg font-extrabold text-text">{title}</p>
-            <OpsStatusPill tone={status === "active" ? "success" : "warning"}>{status}</OpsStatusPill>
-            <OpsStatusPill tone="default">{platform}</OpsStatusPill>
+            <p className="text-xl font-extrabold tracking-[-0.03em] text-text">{title}</p>
+            {badges.filter(Boolean).map((badge, index) => (
+              <OpsStatusPill
+                key={`${title}-${badge}`}
+                tone={index === 0 ? badgeTone : "default"}
+              >
+                {badge}
+              </OpsStatusPill>
+            ))}
           </div>
-          <p className="mt-3 text-sm leading-6 text-sub">{description}</p>
-          <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-sub">{description}</p>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
             {stats.map((stat) => (
               <div
                 key={`${title}-${stat.label}`}
-                className="rounded-[20px] border border-white/6 bg-white/[0.02] px-4 py-3"
+                className="rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-3"
               >
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
                   {stat.label}
@@ -362,7 +384,7 @@ function RaidLiveCard({
         </div>
         <Link
           href={href}
-          className="rounded-full border border-white/6 bg-white/[0.025] px-4 py-3 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
+          className="rounded-full border border-white/8 bg-white/[0.035] px-4 py-3 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
         >
           Open
         </Link>

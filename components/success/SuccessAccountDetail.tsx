@@ -58,6 +58,34 @@ export function SuccessAccountDetail({
 
   return (
     <div className="space-y-6">
+      <OpsPanel
+        eyebrow="Account command read"
+        title="Pressure and next move"
+        description="Use this short read before you start adding notes or tasks so the account story is obvious at a glance."
+        tone="accent"
+      >
+        <div className="grid gap-3 md:grid-cols-3">
+          <OpsSnapshotRow
+            label="Now"
+            value={detail.blockers[0] ?? "No dominant blocker is active right now."}
+          />
+          <OpsSnapshotRow
+            label="Next"
+            value={detail.nextBestActionLabel ?? "Continue workspace activation"}
+          />
+          <OpsSnapshotRow
+            label="Watch"
+            value={
+              detail.successHealthState === "expansion_ready"
+                ? "Expansion pressure is building"
+                : detail.successHealthState === "churn_risk"
+                  ? "Keep churn posture under watch"
+                  : "No severe success drift is visible"
+            }
+          />
+        </div>
+      </OpsPanel>
+
       <div className="grid gap-4 md:grid-cols-4">
         <OpsMetricCard label="Workspace" value={detail.accountName} emphasis="primary" />
         <OpsMetricCard

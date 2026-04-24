@@ -45,6 +45,31 @@ export function LeadDetailPanel({
       description="Keep the commercial narrative, qualification posture and next buyer move on the lead itself."
       tone="accent"
     >
+      <div className="mb-6 grid gap-3 md:grid-cols-3">
+        <OpsSnapshotRow
+          label="Now"
+          value={detail.intentSummary || "No intent summary captured yet."}
+        />
+        <OpsSnapshotRow
+          label="Next"
+          value={
+            detail.tasks.some((task) => task.status !== "resolved" && task.status !== "canceled")
+              ? "Clear the next open follow-up task"
+              : "Advance qualification and commercial narrative"
+          }
+        />
+        <OpsSnapshotRow
+          label="Watch"
+          value={
+            detail.latestEnterpriseRequest
+              ? "Enterprise requirements are already in play"
+              : detail.latestDemoRequest
+                ? "Demo intent is active"
+                : "No structured buyer request captured yet"
+          }
+        />
+      </div>
+
       <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
         <div className="space-y-3">
           <OpsSnapshotRow label="Contact" value={`${detail.contactName} | ${detail.contactEmail}`} />

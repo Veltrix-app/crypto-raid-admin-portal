@@ -6,6 +6,7 @@ import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   DetailBadge,
   DetailHero,
+  DetailStatusRow,
   DetailMetaRow,
   DetailMetricCard,
   DetailSidebarSurface,
@@ -158,6 +159,14 @@ export default function UserDetailPage() {
           eyebrow="Contributor Detail"
           title={currentUser.username}
           description="Trust, contribution and fulfillment signals for this contributor across the current workspace surfaces."
+          actions={
+            <a
+              href="/users"
+              className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/30 hover:text-primary"
+            >
+              Back to users
+            </a>
+          }
           badges={
             <>
               <DetailBadge tone={currentUser.status === "flagged" ? "danger" : currentUser.status === "active" ? "primary" : "warning"}>
@@ -206,6 +215,24 @@ export default function UserDetailPage() {
                   : "This contributor currently looks stable. Focus on maintaining progression and reward clarity."
             }
           >
+            <div className="grid gap-3 md:grid-cols-2">
+              <DetailStatusRow
+                label="Contributor state"
+                value={currentUser.status}
+                tone={currentUser.status === "flagged" ? "danger" : "primary"}
+              />
+              <DetailStatusRow
+                label="Trust posture"
+                value={trustPosture}
+                tone={
+                  currentUser.status === "flagged"
+                    ? "danger"
+                    : currentUser.trustScore >= 70
+                      ? "primary"
+                      : "warning"
+                }
+              />
+            </div>
             <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
               <p className="text-sm leading-7 text-sub">
                 Latest trust snapshot score:{" "}

@@ -6,6 +6,7 @@ import AdminShell from "@/components/layout/shell/AdminShell";
 import {
   DetailBadge,
   DetailHero,
+  DetailStatusRow,
   DetailMetaRow,
   DetailMetricCard,
   DetailSidebarSurface,
@@ -47,7 +48,7 @@ export default function ClaimDetailPage() {
   const primaryFlag = linkedFlags[0];
   const riskLabel =
     user?.status === "flagged"
-      ? `Watch • Sybil ${user.sybilScore}`
+      ? `Watch · Sybil ${user.sybilScore}`
       : `Trust ${user?.trustScore ?? 50}`;
   const decisionLabel =
     primaryFlag?.flagType.replace(/_/g, " ") ??
@@ -125,6 +126,15 @@ export default function ClaimDetailPage() {
           eyebrow="Claim Review"
           title={currentClaim.rewardTitle}
           description="Review the claim, its risk posture and the delivery complexity before moving fulfillment forward."
+          actions={
+            <button
+              type="button"
+              onClick={() => router.push("/claims")}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/30 hover:text-primary"
+            >
+              Back to claims
+            </button>
+          }
           badges={
             <>
               <DetailBadge>{currentClaim.username}</DetailBadge>
@@ -149,7 +159,8 @@ export default function ClaimDetailPage() {
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <DetailSurface
-            title="Claim Decision Context"
+            eyebrow="Decision context"
+            title="Claim decision context"
             description={decisionReason}
           >
             <p className="mt-4 text-sm leading-6 text-sub">{decisionReason}</p>
@@ -189,7 +200,8 @@ export default function ClaimDetailPage() {
           </DetailSurface>
 
           <DetailSurface
-            title="Claim Actions"
+            eyebrow="Operator actions"
+            title="Claim actions"
             description="Update fulfillment state after checking both delivery complexity and risk."
           >
             <div className="mt-6">
@@ -234,27 +246,64 @@ export default function ClaimDetailPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-          <DetailSurface
-            title="Claim Data"
-            description="Core payout, claimant and review metadata for this claim."
-          >
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <DetailMetaRow label="Claim ID" value={currentClaim.id} />
-              <DetailMetaRow label="Auth User ID" value={currentClaim.authUserId || "-"} />
-              <DetailMetaRow label="Reward ID" value={currentClaim.rewardId} />
-              <DetailMetaRow label="Reward Type" value={currentClaim.rewardType || "-"} />
-              <DetailMetaRow
-                label="Reward Cost"
-                value={typeof currentClaim.rewardCost === "number" ? `${currentClaim.rewardCost} XP` : "-"}
-              />
-              <DetailMetaRow label="Project ID" value={currentClaim.projectId || "-"} />
-              <DetailMetaRow label="Campaign ID" value={currentClaim.campaignId || "-"} />
-              <DetailMetaRow label="Created At" value={formatDate(currentClaim.createdAt)} />
-              <DetailMetaRow label="Reviewed By" value={currentClaim.reviewedByAuthUserId || "-"} />
-              <DetailMetaRow label="Updated At" value={currentClaim.updatedAt ? formatDate(currentClaim.updatedAt) : "-"} />
-              <DetailMetaRow label="Reviewed At" value={currentClaim.reviewedAt ? formatDate(currentClaim.reviewedAt) : "-"} />
-            </div>
-          </DetailSurface>
+          <div className="space-y-6">
+            <DetailSurface
+              eyebrow="Pressure read"
+              title="Claim pressure"
+              description="Use this short read before you move the fulfillment state. It keeps route, risk and value in one operator glance."
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                <DetailStatusRow
+                  label="Fulfillment route"
+                  value={claimMethod.replace(/_/g, " ")}
+                  tone={claimMethod === "manual_fulfillment" ? "warning" : "primary"}
+                />
+                <DetailStatusRow
+                  label="Current state"
+                  value={currentClaim.status}
+                  tone={
+                    currentClaim.status === "fulfilled"
+                      ? "primary"
+                      : currentClaim.status === "rejected"
+                        ? "danger"
+                        : "warning"
+                  }
+                />
+                <DetailStatusRow
+                  label="Risk posture"
+                  value={riskLabel}
+                  tone={user?.status === "flagged" ? "danger" : "default"}
+                />
+                <DetailStatusRow
+                  label="Reward checkpoint"
+                  value={rewardCost >= 500 ? "High-value review" : "Standard lane"}
+                  tone={rewardCost >= 500 ? "warning" : "default"}
+                />
+              </div>
+            </DetailSurface>
+
+            <DetailSurface
+              title="Claim data"
+              description="Core payout, claimant and review metadata for this claim."
+            >
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <DetailMetaRow label="Claim ID" value={currentClaim.id} />
+                <DetailMetaRow label="Auth User ID" value={currentClaim.authUserId || "-"} />
+                <DetailMetaRow label="Reward ID" value={currentClaim.rewardId} />
+                <DetailMetaRow label="Reward Type" value={currentClaim.rewardType || "-"} />
+                <DetailMetaRow
+                  label="Reward Cost"
+                  value={typeof currentClaim.rewardCost === "number" ? `${currentClaim.rewardCost} XP` : "-"}
+                />
+                <DetailMetaRow label="Project ID" value={currentClaim.projectId || "-"} />
+                <DetailMetaRow label="Campaign ID" value={currentClaim.campaignId || "-"} />
+                <DetailMetaRow label="Created At" value={formatDate(currentClaim.createdAt)} />
+                <DetailMetaRow label="Reviewed By" value={currentClaim.reviewedByAuthUserId || "-"} />
+                <DetailMetaRow label="Updated At" value={currentClaim.updatedAt ? formatDate(currentClaim.updatedAt) : "-"} />
+                <DetailMetaRow label="Reviewed At" value={currentClaim.reviewedAt ? formatDate(currentClaim.reviewedAt) : "-"} />
+              </div>
+            </DetailSurface>
+          </div>
 
           <div className="space-y-6">
             <DetailSidebarSurface title="Fulfillment Note">

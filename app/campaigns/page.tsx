@@ -49,7 +49,7 @@ export default function CampaignsPage() {
 
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter((campaign) => {
-      const project = projects.find((p) => p.id === campaign.projectId);
+      const project = projects.find((item) => item.id === campaign.projectId);
       const term = search.toLowerCase();
       const matchesSearch =
         campaign.title.toLowerCase().includes(term) ||
@@ -75,6 +75,8 @@ export default function CampaignsPage() {
     ? Math.round(campaigns.reduce((sum, campaign) => sum + campaign.xpBudget, 0) / campaigns.length)
     : 0;
   const projectCoverage = new Set(campaigns.map((campaign) => campaign.projectId)).size;
+  const launchPressureCount = scheduledCount + draftCount + pausedCount;
+
   const launchCampaigns = useMemo(
     () =>
       filteredCampaigns
@@ -88,35 +90,49 @@ export default function CampaignsPage() {
     [filteredCampaigns]
   );
 
+  const portfolioLeadCampaigns = useMemo(
+    () =>
+      [...filteredCampaigns]
+        .sort(
+          (a, b) =>
+            Number(b.featured) - Number(a.featured) ||
+            b.xpBudget - a.xpBudget ||
+            b.participants - a.participants
+        )
+        .slice(0, 6),
+    [filteredCampaigns]
+  );
+
   return (
     <AdminShell>
       <PortalPageFrame
         eyebrow="Campaign board"
         title="Campaigns"
-        description="Keep the campaign system readable: one calmer portfolio lane for inventory, and one launch lane for the campaigns that need action now."
+        description="Run the campaign system like a premium launch rail: one calm portfolio lane for the full inventory and one launch lane for the campaigns that move the project now."
         actions={
           <Link
             href="/campaigns/new"
-            className="inline-flex rounded-full bg-primary px-5 py-3 text-sm font-black text-black"
+            className="inline-flex rounded-full bg-primary px-5 py-3 text-sm font-black text-black shadow-[0_18px_40px_rgba(186,255,59,0.22)]"
           >
             New Campaign
           </Link>
         }
         statusBand={
-          <div className="space-y-4">
-            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="space-y-5">
+            <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
               <OpsPanel
-                eyebrow="Current lane"
+                eyebrow="View posture"
                 title={
                   campaignsView === "portfolio"
                     ? "Read the full campaign portfolio"
-                    : "Focus on launch pressure"
+                    : "Read launch pressure first"
                 }
                 description={
                   campaignsView === "portfolio"
-                    ? "Use this lane when the goal is to understand project coverage, status mix and where campaign volume is sitting."
-                    : "Use this lane when the team needs to decide what ships next, what is blocked and what deserves immediate attention."
+                    ? "Use portfolio mode when the job is to understand coverage, campaign quality and how volume is distributed across projects."
+                    : "Use launch mode when the team needs a single answer to what deserves attention, what is ready to push and what is starting to drag."
                 }
+                tone="accent"
                 action={
                   <SegmentToggle
                     value={campaignsView}
@@ -135,14 +151,14 @@ export default function CampaignsPage() {
                   />
                   <OpsSnapshotRow
                     label="Projects covered"
-                    value={`${projectCoverage} projects currently have at least one campaign.`}
+                    value={`${projectCoverage} projects currently rely on campaign rails.`}
                   />
                   <OpsSnapshotRow
                     label="Next read"
                     value={
                       campaignsView === "portfolio"
-                        ? "Scan the roster, then drop into the workspace that needs momentum."
-                        : "Look at featured, active and scheduled rails before touching drafts."
+                        ? "Start with the lead cards, then open the project carrying the most launch weight."
+                        : "Open featured and active campaigns first, then decide what deserves a publish or recovery move."
                     }
                   />
                 </div>
@@ -151,11 +167,12 @@ export default function CampaignsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <OpsMetricCard label="Active" value={activeCount} emphasis="primary" />
                 <OpsMetricCard
-                  label="Scheduled"
-                  value={scheduledCount}
-                  emphasis={scheduledCount > 0 ? "primary" : "default"}
+                  label="Launch pressure"
+                  value={launchPressureCount}
+                  emphasis={launchPressureCount > 0 ? "warning" : "default"}
+                  sub="Draft, scheduled and paused campaigns still need a clear decision."
                 />
-                <OpsMetricCard label="Drafts" value={draftCount} emphasis="warning" />
+                <OpsMetricCard label="Featured" value={featuredCount} />
                 <OpsMetricCard label="Avg XP budget" value={avgBudget} />
               </div>
             </div>
@@ -197,7 +214,7 @@ export default function CampaignsPage() {
               </OpsSelect>
             </OpsFilterBar>
 
-            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_260px]">
+            <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)_260px]">
               <OpsSelect
                 value={typeFilter}
                 onChange={setTypeFilter}
@@ -213,130 +230,56 @@ export default function CampaignsPage() {
                 <option value="hybrid">hybrid</option>
               </OpsSelect>
               <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-3 text-sm text-sub">
-                {filteredCampaigns.length} campaigns in view
+                {campaignsView === "portfolio"
+                  ? "Portfolio mode keeps the system readable and helps you understand where campaign energy is concentrated."
+                  : "Launch mode filters the noise down to campaigns that change the next operator decision."}
+              </div>
+              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-3 text-sm text-sub">
+                {filteredCampaigns.length} campaigns in view ·{" "}
+                {totalParticipants.toLocaleString()} participants across the full board
               </div>
             </div>
           </div>
         }
       >
         {campaignsView === "portfolio" ? (
-          <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
+          <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
             <OpsPanel
               eyebrow="Portfolio posture"
-              title="What the campaign system is holding"
-              description="Use this side to understand where velocity is building and where the board is starting to drift."
+              title="What the campaign system is carrying"
+              description="Use this rail to understand momentum, backlog and where campaign energy is getting stuck before you open any detail workspace."
             >
               <div className="grid gap-3">
                 <OpsSnapshotRow
-                  label="Featured"
-                  value={`${featuredCount} campaign${featuredCount === 1 ? "" : "s"} are highlighted right now.`}
+                  label="Featured rail"
+                  value={`${featuredCount} campaign${featuredCount === 1 ? "" : "s"} are deliberately highlighted right now.`}
                 />
                 <OpsSnapshotRow
-                  label="Paused"
-                  value={`${pausedCount} campaign${pausedCount === 1 ? "" : "s"} are waiting for operator recovery or a new launch decision.`}
+                  label="Paused rail"
+                  value={`${pausedCount} campaign${pausedCount === 1 ? "" : "s"} are waiting for recovery, timing or a new publish decision.`}
                 />
                 <OpsSnapshotRow
-                  label="Audience"
-                  value={`${totalParticipants.toLocaleString()} participants are currently attached across the full portfolio.`}
+                  label="Audience load"
+                  value={`${totalParticipants.toLocaleString()} participants are currently attached across the campaign inventory.`}
+                />
+                <OpsSnapshotRow
+                  label="Project spread"
+                  value={`${projectCoverage} projects currently depend on campaigns as active launch rails.`}
                 />
               </div>
             </OpsPanel>
 
             <OpsPanel
-              eyebrow="Campaign roster"
-              title="Read the campaign stream"
-              description="Start with title and project context, then scan type, status and budget before opening detail."
+              eyebrow="Lead campaigns"
+              title="Open the campaigns shaping the board"
+              description="This rail is intentionally card-led so you can scan status, project and budget without reading a dense table first."
             >
-              <div className="overflow-hidden rounded-[24px] border border-white/6 bg-white/[0.025]">
-                <div className="grid grid-cols-8 border-b border-white/6 px-5 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
-                  <div>Campaign</div>
-                  <div>Project</div>
-                  <div>Type</div>
-                  <div>Status</div>
-                  <div>XP budget</div>
-                  <div>Participants</div>
-                  <div>Featured</div>
-                  <div>Open</div>
-                </div>
-
-                {filteredCampaigns.map((campaign) => {
+              <div className="grid gap-4">
+                {portfolioLeadCampaigns.map((campaign) => {
                   const project = projects.find((item) => item.id === campaign.projectId);
 
                   return (
-                    <div
-                      key={campaign.id}
-                      className="grid grid-cols-8 items-center border-b border-white/6 px-5 py-4 text-sm text-text last:border-b-0"
-                    >
-                      <div>
-                        <p className="font-semibold">{campaign.title}</p>
-                        <p className="mt-1 text-xs text-sub">{campaign.slug}</p>
-                      </div>
-                      <div>{project?.name || "-"}</div>
-                      <div className="capitalize">{campaign.campaignType.replace(/_/g, " ")}</div>
-                      <div>
-                        <OpsStatusPill tone={campaignStatusTone(campaign.status)}>
-                          {campaign.status}
-                        </OpsStatusPill>
-                      </div>
-                      <div>{campaign.xpBudget}</div>
-                      <div>{campaign.participants}</div>
-                      <div>{campaign.featured ? "Yes" : "No"}</div>
-                      <div>
-                        <Link
-                          href={`/campaigns/${campaign.id}`}
-                          className="rounded-full border border-white/6 bg-white/[0.025] px-3 py-2 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
-                        >
-                          View
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {filteredCampaigns.length === 0 ? (
-                  <div className="px-5 py-8 text-sm text-sub">
-                    No campaigns match your filters.
-                  </div>
-                ) : null}
-              </div>
-            </OpsPanel>
-          </div>
-        ) : null}
-
-        {campaignsView === "launch" ? (
-          <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
-            <OpsPanel
-              eyebrow="Launch pressure"
-              title="What deserves attention first"
-              description="Start here when you are deciding what the launch team should touch next."
-              tone="accent"
-            >
-              <div className="grid gap-3">
-                <OpsSnapshotRow
-                  label="Live now"
-                  value={`${activeCount} active campaign${activeCount === 1 ? "" : "s"} are already absorbing contributor traffic.`}
-                />
-                <OpsSnapshotRow
-                  label="Next up"
-                  value={`${scheduledCount} scheduled campaign${scheduledCount === 1 ? "" : "s"} are close enough to matter operationally.`}
-                />
-                <OpsSnapshotRow
-                  label="Backlog"
-                  value={`${draftCount} draft campaign${draftCount === 1 ? "" : "s"} still need a publish decision or more setup.`}
-                />
-              </div>
-            </OpsPanel>
-
-            <OpsPanel
-              eyebrow="Launch board"
-              title="Open the campaigns that move the system"
-              description="Featured, active and scheduled campaigns float to the top so the team can keep a single reading path."
-            >
-              <div className="grid gap-3">
-                {launchCampaigns.map((campaign) => {
-                  const project = projects.find((item) => item.id === campaign.projectId);
-                  return (
-                    <BuilderActionCard
+                    <CampaignSurfaceCard
                       key={campaign.id}
                       title={campaign.title}
                       description={campaign.shortDescription}
@@ -349,9 +292,74 @@ export default function CampaignsPage() {
                       ]}
                       stats={[
                         { label: "Type", value: campaign.campaignType.replace(/_/g, " ") },
-                        { label: "Budget", value: campaign.xpBudget },
+                        { label: "XP budget", value: campaign.xpBudget },
                         { label: "Participants", value: campaign.participants },
                       ]}
+                    />
+                  );
+                })}
+
+                {portfolioLeadCampaigns.length === 0 ? (
+                  <div className="rounded-[24px] border border-white/6 bg-white/[0.025] px-5 py-6 text-sm text-sub">
+                    No campaigns match the current filters.
+                  </div>
+                ) : null}
+              </div>
+            </OpsPanel>
+          </div>
+        ) : null}
+
+        {campaignsView === "launch" ? (
+          <div className="grid gap-6 xl:grid-cols-[0.76fr_1.24fr]">
+            <OpsPanel
+              eyebrow="Launch pressure"
+              title="What deserves launch attention first"
+              description="This lane is for deciding what goes live, what needs a recovery move and what can wait."
+              tone="accent"
+            >
+              <div className="grid gap-3">
+                <OpsSnapshotRow
+                  label="Live now"
+                  value={`${activeCount} active campaign${activeCount === 1 ? "" : "s"} are already taking contributor traffic.`}
+                />
+                <OpsSnapshotRow
+                  label="Queued next"
+                  value={`${scheduledCount} scheduled campaign${scheduledCount === 1 ? "" : "s"} are close enough to shape the next launch window.`}
+                />
+                <OpsSnapshotRow
+                  label="Backlog"
+                  value={`${draftCount} draft campaign${draftCount === 1 ? "" : "s"} still need a clear publish or archive decision.`}
+                />
+              </div>
+            </OpsPanel>
+
+            <OpsPanel
+              eyebrow="Launch rail"
+              title="Open the campaigns that move the system"
+              description="Featured, active and scheduled campaigns surface first so the team can keep one clean reading path."
+            >
+              <div className="grid gap-4">
+                {launchCampaigns.map((campaign) => {
+                  const project = projects.find((item) => item.id === campaign.projectId);
+
+                  return (
+                    <CampaignSurfaceCard
+                      key={campaign.id}
+                      title={campaign.title}
+                      description={campaign.shortDescription}
+                      href={`/campaigns/${campaign.id}`}
+                      badgeTone={campaignStatusTone(campaign.status)}
+                      badges={[
+                        campaign.status,
+                        campaign.featured ? "featured" : null,
+                        project?.name || null,
+                      ]}
+                      stats={[
+                        { label: "Type", value: campaign.campaignType.replace(/_/g, " ") },
+                        { label: "XP budget", value: campaign.xpBudget },
+                        { label: "Participants", value: campaign.participants },
+                      ]}
+                      accent={campaign.featured || campaign.status === "active"}
                     />
                   );
                 })}
@@ -376,13 +384,14 @@ function campaignStatusTone(status: string): "default" | "success" | "warning" {
   return "default";
 }
 
-function BuilderActionCard({
+function CampaignSurfaceCard({
   title,
   description,
   href,
   badges,
   stats,
   badgeTone,
+  accent = false,
 }: {
   title: string;
   description: string;
@@ -390,28 +399,36 @@ function BuilderActionCard({
   badges: Array<string | null>;
   stats: Array<{ label: string; value: string | number }>;
   badgeTone: "default" | "success" | "warning";
+  accent?: boolean;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/6 bg-white/[0.025] p-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div
+      className={`relative overflow-hidden rounded-[28px] border p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] ${
+        accent
+          ? "border-primary/14 bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.1),transparent_22%),linear-gradient(180deg,rgba(18,24,35,0.96),rgba(10,14,22,0.94))]"
+          : "border-white/6 bg-[linear-gradient(180deg,rgba(18,24,35,0.94),rgba(11,15,23,0.92))]"
+      }`}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.03),transparent_32%)]" />
+      <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-lg font-extrabold text-text">{title}</p>
-            {badges.filter(Boolean).map((badge) => (
+            <p className="text-xl font-extrabold tracking-[-0.03em] text-text">{title}</p>
+            {badges.filter(Boolean).map((badge, index) => (
               <OpsStatusPill
                 key={`${title}-${badge}`}
-                tone={badge === badges[0] ? badgeTone : "default"}
+                tone={index === 0 ? badgeTone : "default"}
               >
                 {badge}
               </OpsStatusPill>
             ))}
           </div>
-          <p className="mt-3 text-sm leading-6 text-sub">{description}</p>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-sub">{description}</p>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
             {stats.map((stat) => (
               <div
                 key={`${title}-${stat.label}`}
-                className="rounded-[20px] border border-white/6 bg-white/[0.02] px-4 py-3"
+                className="rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-3"
               >
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
                   {stat.label}
@@ -423,7 +440,7 @@ function BuilderActionCard({
         </div>
         <Link
           href={href}
-          className="rounded-full border border-white/6 bg-white/[0.025] px-4 py-3 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
+          className="rounded-full border border-white/8 bg-white/[0.035] px-4 py-3 text-sm font-semibold text-text transition hover:border-primary/24 hover:text-primary"
         >
           Open
         </Link>

@@ -95,6 +95,30 @@ export function CommunityCaptainWorkspacePanel({
       }
     >
       <div className="space-y-5">
+        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                Captain command read
+              </p>
+              <p className="mt-2 text-sm leading-6 text-sub">
+                This workspace should answer three things fast: what is urgent today, what is slipping, and what this viewer is actually allowed to move right now.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <OpsStatusPill tone={viewer.isOwner ? "success" : "default"}>
+                {viewer.role}
+              </OpsStatusPill>
+              <OpsStatusPill tone={summary.overdueCount > 0 ? "warning" : "default"}>
+                {summary.overdueCount} overdue
+              </OpsStatusPill>
+              <OpsStatusPill tone={summary.blockedCount > 0 ? "warning" : "default"}>
+                {summary.blockedCount} blocked
+              </OpsStatusPill>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-wrap gap-2">
           <OpsStatusPill tone={viewer.isOwner ? "success" : "default"}>
             Viewer role {viewer.role}

@@ -55,7 +55,12 @@ import SupportEscalationPanel from "@/components/observability/SupportEscalation
 import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
-import { OpsPanel, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import {
+  OpsMetricCard,
+  OpsPanel,
+  OpsSnapshotRow,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import { LoadingState, NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
@@ -2486,13 +2491,17 @@ export default function ProjectCommunityManagementPage() {
         <OpsPanel
           eyebrow="Community OS"
           title="Community control room"
-          description="This project-private workspace is split by operating intent. Stay in one mode at a time instead of scanning one giant mixed page."
+          description="This workspace is now arranged like a premium command deck: choose the role you are in, lock into one mode and read only the signals that matter for that intent."
+          tone="accent"
         >
           <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-5">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-sub">
                   Operating stance
+                </p>
+                <p className="mt-3 text-sm leading-6 text-sub">
+                  Switch between owner and captain mode to change the reading path without mixing strategic and execution pressure into one wall.
                 </p>
                 <div className="mt-3">
                   <SegmentToggle
@@ -2510,6 +2519,9 @@ export default function ProjectCommunityManagementPage() {
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-sub">
                   Workspace focus
                 </p>
+                <p className="mt-3 text-sm leading-6 text-sub">
+                  Use one surface at a time: operate for active execution, grow for cohorts and missions, configure for integrations, automations and control rails.
+                </p>
                 <div className="mt-3">
                   <SegmentToggle
                     value={communitySurfaceMode}
@@ -2524,30 +2536,57 @@ export default function ProjectCommunityManagementPage() {
               </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              <OpsSnapshotRow
-                label="Project scope"
-                value={project.isPublic ? "Public project surface" : "Private project surface"}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <OpsMetricCard
+                label="Active automations"
+                value={activeAutomationCount}
+                emphasis={activeAutomationCount > 0 ? "primary" : "default"}
+                sub={`${dueAutomationCount} automation${dueAutomationCount === 1 ? "" : "s"} due next.`}
               />
-              <OpsSnapshotRow
-                label="Commands"
+              <OpsMetricCard
+                label="Captain priorities"
+                value={communityCaptainWorkspace.priorities.length}
+                emphasis={communityCaptainWorkspace.priorities.length > 0 ? "warning" : "default"}
+                sub={`${communityGrowth.captains.assignments.length} captain seat${communityGrowth.captains.assignments.length === 1 ? "" : "s"} assigned.`}
+              />
+              <OpsMetricCard
+                label="Coverage rate"
+                value={`${Math.round(communityRecommendations.captainCoverage.coverageRate)}%`}
+                sub={`${communityRecommendations.captainCoverage.unassignedSeats} unassigned seats still visible.`}
+              />
+              <OpsMetricCard
+                label="Command layer"
                 value={
                   discordBotSettings.commandsEnabled
                     ? discordBotSettings.telegramCommandsEnabled
-                      ? "Discord + Telegram live"
+                      ? "Dual rail"
                       : "Discord live"
-                    : "Command layer parked"
+                    : "Parked"
                 }
-              />
-              <OpsSnapshotRow
-                label="Automations"
-                value={`${activeAutomationCount.toString()} active · ${dueAutomationCount.toString()} due`}
-              />
-              <OpsSnapshotRow
-                label="Captain coverage"
-                value={`${communityGrowth.captains.assignments.length.toString()} assigned · ${communityCaptainWorkspace.priorities.length.toString()} priorities`}
+                emphasis={discordBotSettings.commandsEnabled ? "primary" : "warning"}
+                sub={project.isPublic ? "Public project surface" : "Private project surface"}
               />
             </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-[1.1fr_0.9fr]">
+            <OpsSnapshotRow
+              label="Current read"
+              value={
+                communitySurfaceMode === "operate"
+                  ? "Execution, incidents and captain queues are the main reading path."
+                  : communitySurfaceMode === "grow"
+                    ? "Cohorts, activation boards and member movement are the main reading path."
+                    : "Integrations, automations and control rails are the main reading path."
+              }
+            />
+            <OpsSnapshotRow
+              label="Next move"
+              value={
+                communityRecommendations.recommendations[0]?.title ??
+                "No urgent owner recommendation is active right now."
+              }
+            />
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">

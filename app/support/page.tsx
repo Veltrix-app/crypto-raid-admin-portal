@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
-import { OpsMetricCard, OpsPanel, OpsPriorityLink, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { OpsMetricCard, OpsPanel, OpsPriorityLink, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import { IncidentCommandPanel } from "@/components/support/IncidentCommandPanel";
 import { SupportOverviewPanel } from "@/components/support/SupportOverviewPanel";
 import { SupportQueueTable, type SupportQueueFilters } from "@/components/support/SupportQueueTable";
@@ -116,25 +116,83 @@ export default function SupportPage() {
             </div>
           </div>
         }
-      >
-        <div className="grid gap-4 md:grid-cols-4">
-          <OpsMetricCard label="Open tickets" value={overviewLoading ? "..." : overview?.counts.totalOpen ?? 0} />
-          <OpsMetricCard
-            label="Escalated"
-            value={overviewLoading ? "..." : overview?.counts.escalated ?? 0}
-            emphasis={(overview?.counts.escalated ?? 0) > 0 ? "warning" : "default"}
-          />
-          <OpsMetricCard
-            label="Waiting on customer"
-            value={overviewLoading ? "..." : overview?.counts.waitingOnCustomer ?? 0}
-          />
-          <OpsMetricCard
-            label="Active incidents"
-            value={overviewLoading ? "..." : overview?.counts.activeIncidents ?? 0}
-            emphasis={(overview?.counts.activeIncidents ?? 0) > 0 ? "warning" : "default"}
-          />
-        </div>
+        statusBand={
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard label="Open tickets" value={overviewLoading ? "..." : overview?.counts.totalOpen ?? 0} />
+              <OpsMetricCard
+                label="Escalated"
+                value={overviewLoading ? "..." : overview?.counts.escalated ?? 0}
+                emphasis={(overview?.counts.escalated ?? 0) > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Waiting on customer"
+                value={overviewLoading ? "..." : overview?.counts.waitingOnCustomer ?? 0}
+              />
+              <OpsMetricCard
+                label="Active incidents"
+                value={overviewLoading ? "..." : overview?.counts.activeIncidents ?? 0}
+                emphasis={(overview?.counts.activeIncidents ?? 0) > 0 ? "warning" : "default"}
+              />
+            </div>
 
+            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div className="max-w-2xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    Support command read
+                  </p>
+                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                    Read queue pressure first, then decide whether the next move is ownership, escalation, or incident command.
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    This cockpit should show whether support is still a ticket problem, has become a cross-system incident, or needs a clean handoff into Business, Trust, Payouts, or On-chain ops.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <OpsStatusPill tone={(overview?.counts.activeIncidents ?? 0) > 0 ? "warning" : "success"}>
+                    {overview?.counts.activeIncidents ?? 0} incidents
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={escalatedCount > 0 ? "warning" : "default"}>
+                    {escalatedCount} escalated
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={(overview?.counts.waitingOnCustomer ?? 0) > 0 ? "default" : "success"}>
+                    {overview?.counts.waitingOnCustomer ?? 0} waiting
+                  </OpsStatusPill>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <OpsSnapshotRow
+                  label="Now"
+                  value={
+                    (overview?.counts.activeIncidents ?? 0) > 0
+                      ? `${overview?.counts.activeIncidents ?? 0} incidents are active across the support surface`
+                      : "No live incident is active right now"
+                  }
+                />
+                <OpsSnapshotRow
+                  label="Next"
+                  value={
+                    topQueueTicket
+                      ? `Claim ${topQueueTicket.ticketRef} as the next support owner move`
+                      : "The active support queue is calm"
+                  }
+                />
+                <OpsSnapshotRow
+                  label="Watch"
+                  value={
+                    escalatedCount > 0
+                      ? `${escalatedCount} queue items are already escalated`
+                      : "Escalation pressure is low"
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        }
+      >
         <SupportOverviewPanel overview={overview} loading={overviewLoading} error={overviewError} />
 
         <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">

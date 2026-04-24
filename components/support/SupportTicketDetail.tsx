@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { OpsMetricCard, OpsPanel, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import type {
   AdminSupportHandoffType,
   AdminSupportTicketDetail,
@@ -208,6 +208,42 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
           sub={ticket.assignedAdminAuthUserId ? "Operator is assigned." : "Ticket is still unclaimed."}
         />
       </div>
+
+      <OpsPanel
+        eyebrow="Ticket command read"
+        title="Pressure and next move"
+        description="Use this short read before you touch status, notes or handoffs so the ticket story is obvious at a glance."
+        tone="accent"
+      >
+        <div className="grid gap-3 md:grid-cols-3">
+          <OpsSnapshotRow
+            label="Now"
+            value={
+              ticket.linkedIncidentId
+                ? "This ticket is already tied to an active incident"
+                : ticket.waitingState !== "none"
+                  ? `Ticket is waiting on ${humanize(ticket.waitingState)}`
+                  : "Ticket is still being actively worked"
+            }
+          />
+          <OpsSnapshotRow
+            label="Next"
+            value={
+              ticket.assignedAdminAuthUserId
+                ? "Update status or create a bounded handoff"
+                : "Claim the ticket and name an owner"
+            }
+          />
+          <OpsSnapshotRow
+            label="Watch"
+            value={
+              latestPublicUpdate
+                ? "Keep customer wording aligned with the latest public update"
+                : "No customer-facing update has been posted yet"
+            }
+          />
+        </div>
+      </OpsPanel>
 
       <div className="grid gap-6 xl:grid-cols-[1.04fr_0.96fr]">
         <OpsPanel

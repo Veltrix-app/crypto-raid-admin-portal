@@ -6,7 +6,12 @@ import { useEffect, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
 import { LoadingState, StatePanel } from "@/components/layout/state/StatePrimitives";
-import { OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import {
+  OpsMetricCard,
+  OpsPanel,
+  OpsSnapshotRow,
+  OpsStatusPill,
+} from "@/components/layout/ops/OpsPrimitives";
 import { EnvironmentAuditPanel } from "@/components/releases/EnvironmentAuditPanel";
 import { ReleaseChecksPanel } from "@/components/releases/ReleaseChecksPanel";
 import { ReleaseServicesPanel } from "@/components/releases/ReleaseServicesPanel";
@@ -348,6 +353,23 @@ export default function ReleaseDetailPage() {
     );
   }
 
+  const releaseCommandRead = {
+    now:
+      detail.release.counts.blockingFailures > 0
+        ? `${detail.release.counts.blockingFailures} blocking failures are still holding this release back.`
+        : detail.release.counts.smokePending > 0
+          ? `Hard gates are clear, but ${detail.release.counts.smokePending} smoke scenarios still need proof.`
+          : "Blocking failures and smoke pressure are both currently calm on this release.",
+    next:
+      detail.release.counts.smokePending > 0
+        ? "Record the remaining smoke outcomes before you move the lifecycle toward verified."
+        : "Keep the lifecycle state and decision posture aligned so go / watch / no-go stays explicit.",
+    watch:
+      detail.release.counts.envWarnings > 0 || detail.release.counts.migrationLinks > 0
+        ? `${detail.release.counts.envWarnings} environment warnings and ${detail.release.counts.migrationLinks} linked migrations still need watch discipline.`
+        : "Environment and migration posture are currently calm for this candidate.",
+  };
+
   return (
     <AdminShell>
       <PortalPageFrame
@@ -368,34 +390,71 @@ export default function ReleaseDetailPage() {
               </OpsStatusPill>
               <OpsStatusPill>{detail.release.targetEnvironment}</OpsStatusPill>
             </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/releases"
+                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+              >
+                Back to releases
+              </Link>
+              <Link
+                href="/qa"
+                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+              >
+                Open QA
+              </Link>
+            </div>
           </div>
         }
         statusBand={
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <StatePanel
-              title={`${detail.release.counts.blockingFailures} blocking failures`}
-              description="Hard gate failures that still prevent a clean go."
-              tone={detail.release.counts.blockingFailures > 0 ? "warning" : "success"}
-            />
-            <StatePanel
-              title={`${detail.release.counts.warnings} warnings`}
-              description="Non-blocking warnings currently attached to this release."
-              tone={detail.release.counts.warnings > 0 ? "warning" : "default"}
-            />
-            <StatePanel
-              title={`${detail.release.counts.smokePending} smoke pending`}
-              description="Smoke scenarios that still need a recorded result."
-              tone={detail.release.counts.smokePending > 0 ? "warning" : "default"}
-            />
-            <StatePanel
-              title={`${detail.release.counts.envWarnings} env warnings`}
-              description="Environment audits that are still warning, critical or not reviewed."
-              tone={detail.release.counts.envWarnings > 0 ? "warning" : "default"}
-            />
-            <StatePanel
-              title={`${detail.release.counts.migrationLinks} migrations`}
-              description="Linked database changes attached to this release candidate."
-            />
+          <div className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <OpsMetricCard
+                label="Blocking failures"
+                value={detail.release.counts.blockingFailures}
+                emphasis={detail.release.counts.blockingFailures > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Warnings"
+                value={detail.release.counts.warnings}
+                emphasis={detail.release.counts.warnings > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Smoke pending"
+                value={detail.release.counts.smokePending}
+                emphasis={detail.release.counts.smokePending > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Env warnings"
+                value={detail.release.counts.envWarnings}
+                emphasis={detail.release.counts.envWarnings > 0 ? "warning" : "default"}
+              />
+              <OpsMetricCard
+                label="Linked migrations"
+                value={detail.release.counts.migrationLinks}
+                emphasis={detail.release.counts.migrationLinks > 0 ? "primary" : "default"}
+              />
+            </div>
+
+            <OpsPanel
+              eyebrow="Command read"
+              title="Keep the release story explicit"
+              description="This screen should tell you what currently blocks rollout, what still needs proof, and what still requires migration or environment discipline before the release is truly calm."
+              tone="accent"
+            >
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <OpsSnapshotRow label="Now" value={releaseCommandRead.now} />
+                  <OpsSnapshotRow label="Next" value={releaseCommandRead.next} />
+                  <OpsSnapshotRow label="Watch" value={releaseCommandRead.watch} />
+                </div>
+                <p className="text-sm leading-7 text-sub">
+                  {detail.release.summary ||
+                    detail.release.decisionNotes ||
+                    "No extra release summary has been recorded yet, so this command read is currently driven by lifecycle, checks and smoke posture only."}
+                </p>
+              </div>
+            </OpsPanel>
           </div>
         }
       >
@@ -417,4 +476,3 @@ export default function ReleaseDetailPage() {
     </AdminShell>
   );
 }
-

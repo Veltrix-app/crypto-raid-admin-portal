@@ -210,87 +210,119 @@ export default function SubmissionsPage() {
                 </div>
               </OpsFilterBar>
 
-              <OpsPanel
-                eyebrow="Review queue"
-                title="Submission stream"
-                description="Each row combines user risk, proof context and the decision route that currently explains the state."
-              >
-                <div className="overflow-hidden rounded-[24px] border border-line bg-card2">
-                  <div className="grid grid-cols-8 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
-                    <div>User</div>
-                    <div>Quest</div>
-                    <div>Campaign</div>
-                    <div>Risk</div>
-                    <div>Status</div>
-                    <div>Submitted</div>
-                    <div>Proof</div>
-                    <div>Open</div>
-                  </div>
-
-                  {filteredSubmissions.map((submission) => {
-                    const user = usersByAuthId.get(submission.userId);
-                    const linkedFlags = flagsBySubmissionId.get(submission.id) ?? [];
-                    const riskLabel =
-                      user?.status === "flagged"
-                        ? `Watch • Sybil ${user.sybilScore}`
-                        : `Trust ${user?.trustScore ?? 50}`;
-                    const decisionLabel =
-                      linkedFlags.length > 0
-                        ? linkedFlags[0].flagType.replace(/_/g, " ")
-                        : submission.status === "approved"
-                          ? "Auto-approved"
+              <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+                <OpsPanel
+                  eyebrow="Review queue"
+                  title="Submission stream"
+                  description="Each card keeps proof, user risk and the current decision route together so the queue reads like a dossier rail instead of a table wall."
+                >
+                  <div className="grid gap-4">
+                    {filteredSubmissions.map((submission) => {
+                      const user = usersByAuthId.get(submission.userId);
+                      const linkedFlags = flagsBySubmissionId.get(submission.id) ?? [];
+                      const riskLabel =
+                        user?.status === "flagged"
+                          ? `Watch · Sybil ${user.sybilScore}`
+                          : `Trust ${user?.trustScore ?? 50}`;
+                      const decisionLabel =
+                        linkedFlags.length > 0
+                          ? linkedFlags[0].flagType.replace(/_/g, " ")
+                          : submission.status === "approved"
+                            ? "Auto-approved"
+                            : submission.status === "pending"
+                              ? "Manual review"
+                              : "Validation failed";
+                      const decisionReason =
+                        linkedFlags[0]?.reason ??
+                        (submission.status === "approved"
+                          ? "Veltrix approved this submission automatically because it met the current low-risk verification rules."
                           : submission.status === "pending"
-                            ? "Manual review"
-                            : "Validation failed";
-                    const decisionReason =
-                      linkedFlags[0]?.reason ??
-                      (submission.status === "approved"
-                        ? "Veltrix approved this submission automatically because it met the current low-risk verification rules."
-                        : submission.status === "pending"
-                          ? "This submission is waiting for a reviewer because it could not be fully auto-verified."
-                          : "This submission did not meet the current verification requirements.");
+                            ? "This submission is waiting for a reviewer because it could not be fully auto-verified."
+                            : "This submission did not meet the current verification requirements.");
 
-                    return (
-                      <div
-                        key={submission.id}
-                        className="grid grid-cols-8 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
-                      >
-                        <div className="font-semibold">{submission.username}</div>
-                        <div>{submission.questTitle}</div>
-                        <div>{submission.campaignTitle}</div>
-                        <div>
-                          <div className="space-y-2">
-                            <OpsStatusPill tone={user?.status === "flagged" ? "danger" : "default"}>
-                              {riskLabel}
-                            </OpsStatusPill>
-                            <span className="block text-xs text-sub capitalize">{decisionLabel}</span>
+                      return (
+                        <div key={submission.id} className="rounded-[24px] border border-line bg-card2 p-5">
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-3">
+                                <h2 className="text-lg font-extrabold text-text">{submission.username}</h2>
+                                <OpsStatusPill tone={user?.status === "flagged" ? "danger" : "default"}>
+                                  {riskLabel}
+                                </OpsStatusPill>
+                                <OpsStatusPill
+                                  tone={
+                                    submission.status === "approved"
+                                      ? "success"
+                                      : submission.status === "rejected"
+                                        ? "danger"
+                                        : "warning"
+                                  }
+                                >
+                                  {submission.status}
+                                </OpsStatusPill>
+                              </div>
+                              <p className="mt-3 text-sm font-semibold text-text">
+                                {submission.questTitle}
+                                <span className="ml-2 text-sub">inside {submission.campaignTitle}</span>
+                              </p>
+                              <p className="mt-3 line-clamp-2 text-sm leading-6 text-sub">{decisionReason}</p>
+
+                              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                                <Metric label="Decision" value={decisionLabel} />
+                                <Metric label="Submitted" value={formatDate(submission.submittedAt)} />
+                                <Metric
+                                  label="Proof"
+                                  value={submission.proof.length > 64 ? `${submission.proof.slice(0, 64)}...` : submission.proof}
+                                />
+                              </div>
+                            </div>
+
+                            <Link
+                              href={`/submissions/${submission.id}`}
+                              className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
+                            >
+                              Open review
+                            </Link>
                           </div>
                         </div>
-                        <div className="capitalize text-primary">{submission.status}</div>
-                        <div>{formatDate(submission.submittedAt)}</div>
-                        <div className="space-y-2">
-                          <p className="truncate text-sub">{submission.proof}</p>
-                          <p className="line-clamp-2 text-xs text-sub">{decisionReason}</p>
-                        </div>
-                        <div>
-                          <Link
-                            href={`/submissions/${submission.id}`}
-                            className="rounded-xl border border-line bg-card px-3 py-2 font-semibold"
-                          >
-                            Review
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
 
-                  {filteredSubmissions.length === 0 ? (
-                    <div className="px-5 py-8 text-sm text-sub">
-                      No submissions match your filters.
-                    </div>
-                  ) : null}
-                </div>
-              </OpsPanel>
+                    {filteredSubmissions.length === 0 ? (
+                      <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
+                        No submissions match your filters.
+                      </div>
+                    ) : null}
+                  </div>
+                </OpsPanel>
+
+                <OpsPanel
+                  eyebrow="Queue posture"
+                  title="What is actually slowing review"
+                  description="Use this shorter read to decide whether the bottleneck is manual moderation, low-confidence automation or risk flags."
+                >
+                  <div className="grid gap-4">
+                    <DecisionCard
+                      label="Manual review"
+                      value={pendingCount}
+                      hint="Proof currently waiting on a human because automation could not close it."
+                      tone="warning"
+                    />
+                    <DecisionCard
+                      label="Auto-approved"
+                      value={autoApprovedCount}
+                      hint="Submissions already clearing the calm low-risk path."
+                      tone="success"
+                    />
+                    <DecisionCard
+                      label="Flagged path"
+                      value={flaggedFlowCount}
+                      hint="Submissions escalated by duplicate signals or explicit review flags."
+                      tone="danger"
+                    />
+                  </div>
+                </OpsPanel>
+              </div>
             </>
           )}
         </PortalPageFrame>
@@ -329,6 +361,15 @@ function DecisionCard({
 function SignalRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-text">{value}</p>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-2xl border border-line bg-card px-4 py-3">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>

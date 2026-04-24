@@ -321,14 +321,56 @@ export default function BusinessAccountDetailPage() {
                 {detail.account.collectionStatus.replaceAll("_", " ")}
               </OpsStatusPill>
             </div>
+            <Link
+              href="/business"
+              className="inline-flex items-center rounded-full border border-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary"
+            >
+              Back to business
+            </Link>
           </div>
         }
         statusBand={
-          <div className="grid gap-4 md:grid-cols-4">
-            <OpsMetricCard label="Plan" value={detail.account.planName} emphasis="primary" />
-            <OpsMetricCard label="Billing status" value={detail.account.billingStatus} />
-            <OpsMetricCard label="MRR contribution" value={formatCurrency(detail.account.currentMrrContribution)} emphasis={detail.account.currentMrrContribution > 0 ? "primary" : "default"} />
-            <OpsMetricCard label="Open invoices" value={detail.account.openInvoiceCount} emphasis={detail.account.openInvoiceCount > 0 ? "warning" : "default"} />
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <OpsMetricCard label="Plan" value={detail.account.planName} emphasis="primary" />
+              <OpsMetricCard label="Billing status" value={detail.account.billingStatus} />
+              <OpsMetricCard label="MRR contribution" value={formatCurrency(detail.account.currentMrrContribution)} emphasis={detail.account.currentMrrContribution > 0 ? "primary" : "default"} />
+              <OpsMetricCard label="Open invoices" value={detail.account.openInvoiceCount} emphasis={detail.account.openInvoiceCount > 0 ? "warning" : "default"} />
+            </div>
+
+            <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div className="max-w-2xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    Account command read
+                  </p>
+                  <h2 className="mt-2 text-xl font-extrabold tracking-tight text-text">
+                    Read usage and invoice pressure first, then decide whether the next move is upgrade, grace, or activation cleanup.
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-sub">
+                    This drilldown should keep commercial pressure, payment posture and the recommended operator move visible before you dive into invoices or notes.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <OpsStatusPill tone={healthTone(detail.account.commercialHealth)}>
+                    {detail.account.commercialHealth.replaceAll("_", " ")}
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={collectionTone(detail.account.collectionStatus)}>
+                    {detail.account.collectionStatus.replaceAll("_", " ")}
+                  </OpsStatusPill>
+                  <OpsStatusPill tone={detail.account.openInvoiceCount > 0 ? "warning" : "success"}>
+                    {detail.account.openInvoiceCount} open invoices
+                  </OpsStatusPill>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <OpsSnapshotRow label="Now" value={detail.workspace.recommendedAction} />
+                <OpsSnapshotRow label="Next" value={detail.workspace.nextPlan ? `Review move to ${detail.workspace.nextPlan.name}` : "Keep current plan and monitor pressure"} />
+                <OpsSnapshotRow label="Watch" value={detail.account.openInvoiceCount > 0 ? `${detail.account.openInvoiceCount} invoices still need attention` : "Invoice posture is currently calm"} />
+              </div>
+            </div>
           </div>
         }
       >

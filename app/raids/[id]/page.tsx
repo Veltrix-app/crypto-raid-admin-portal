@@ -325,6 +325,35 @@ export default function RaidDetailPage() {
             </DetailSurface>
 
             <DetailSurface
+              eyebrow="Live pressure"
+              title="How this raid will behave in motion"
+              description="Use this read to judge whether the raid can absorb visible attention cleanly or whether timing, instructions or targeting will start to wobble under load."
+            >
+              <div className="grid gap-3 md:grid-cols-4">
+                <RaidSignalCard
+                  label="Participants"
+                  value={raid.participants}
+                  hint="The visible pressure currently attached to this raid."
+                />
+                <RaidSignalCard
+                  label="Reward XP"
+                  value={raid.rewardXp}
+                  hint="The incentive weight pulling contributors into this action."
+                />
+                <RaidSignalCard
+                  label="Steps"
+                  value={raid.instructions.length}
+                  hint="Instruction count shaping how easy this raid is to complete."
+                />
+                <RaidSignalCard
+                  label="Timer"
+                  value={raid.timer || "Open"}
+                  hint="The urgency posture contributors will experience."
+                />
+              </div>
+            </DetailSurface>
+
+            <DetailSurface
               eyebrow="Platform Core"
               title="Lifecycle, incidents and overrides"
               description="This operator rail keeps raid-side delivery issues and manual pause or mute controls attached directly to the raid object."
@@ -480,5 +509,23 @@ export default function RaidDetailPage() {
         ) : null}
       </div>
     </AdminShell>
+  );
+}
+
+function RaidSignalCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string | number;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
+      <p className="mt-2 text-2xl font-extrabold tracking-[-0.03em] text-text">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
+    </div>
   );
 }
