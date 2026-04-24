@@ -1614,26 +1614,31 @@ export default function ProjectDetailPage() {
           </OpsPanel>
         ) : null}
 
-        <div className="space-y-6">
-          <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="space-y-4">
+          <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
+            <ProjectOverviewQuickActions actions={overviewQuickActions} />
+            <ProjectOverviewQueues signals={overviewSignals} />
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
             <ProjectOverviewSummary
               title={`${project.logo} ${project.name}`}
               description={
                 project.longDescription ||
                 project.description ||
-                "This overview keeps the top of the workspace focused on posture, pressure and next actions."
+                "This overview stays focused on current posture, workspace readiness and the next useful route into work."
               }
               metrics={overviewMetrics}
             />
 
             {growthSummary ? (
               <OpsPanel
-                eyebrow="Project analytics"
+                eyebrow="Launch watch"
                 title="Launch performance against peer projects"
-                description="This Phase 13 layer turns the project overview into a real performance read: current launch density, peer band and the next growth move."
+                description="Use the benchmark layer as a watch rail, not the primary opening surface."
                 tone="accent"
               >
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2">
                   <OpsMetricCard
                     label="Peer band"
                     value={growthSummary.benchmark.labelText}
@@ -1658,21 +1663,13 @@ export default function ProjectDetailPage() {
                   />
                 </div>
 
-                <div className="mt-6 space-y-3">
+                <div className="mt-4 space-y-3">
                   <OpsSnapshotRow
                     label="Peer cohort"
                     value={
                       growthSummary.benchmark.cohortLabel
                         ? `${growthSummary.benchmark.cohortLabel} (${growthSummary.benchmark.cohortSize} projects)`
                         : "Benchmark building as more comparable projects move through this lane."
-                    }
-                  />
-                  <OpsSnapshotRow
-                    label="What this means"
-                    value={
-                      growthSummary.benchmark.available
-                        ? `Median peer score: ${growthSummary.benchmark.medianValue ?? 0}. This project is currently ${growthSummary.benchmark.labelText.toLowerCase()}.`
-                        : "There is not enough cohort density yet to show a safe peer band, so this project is still helping build the benchmark set."
                     }
                   />
                   <OpsSnapshotRow
@@ -1683,9 +1680,9 @@ export default function ProjectDetailPage() {
               </OpsPanel>
             ) : (
               <OpsPanel
-                eyebrow="Workspace pulse"
+                eyebrow="Launch watch"
                 title="Keep the next move visible"
-                description="Use the first read to confirm launch pressure, connected systems and whether incidents are pulling attention away from the core workspace."
+                description="Use this side read to confirm setup posture without crowding out the main work lanes."
                 tone="accent"
               >
                 <div className="space-y-3">
@@ -1713,10 +1710,6 @@ export default function ProjectDetailPage() {
               </OpsPanel>
             )}
           </div>
-
-          <ProjectOverviewQueues signals={overviewSignals} />
-
-          <ProjectOverviewQuickActions actions={overviewQuickActions} />
 
           {showLaunchpad ? (
             <DetailSurface

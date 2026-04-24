@@ -18,23 +18,23 @@ export function OpsHero({
   aside?: ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[22px] border border-white/6 bg-[radial-gradient(circle_at_top_left,rgba(123,92,255,0.1),transparent_18%),radial-gradient(circle_at_82%_18%,rgba(74,217,255,0.07),transparent_20%),linear-gradient(180deg,rgba(10,12,16,0.995),rgba(5,7,10,0.995))] px-4 py-4.5 shadow-[0_16px_38px_rgba(0,0,0,0.2)] md:px-4.5 md:py-5">
+    <div className="relative overflow-hidden rounded-[18px] border border-white/6 bg-[linear-gradient(180deg,rgba(10,12,16,0.995),rgba(6,8,12,0.995))] px-3.5 py-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)] md:px-4 md:py-4">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/16 to-transparent" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.03),transparent_32%,transparent_68%,rgba(255,255,255,0.015))]" />
-      <div className="relative z-10 grid gap-3.5 xl:grid-cols-[minmax(0,1fr)_236px] xl:items-start">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.02),transparent_34%,transparent_68%,rgba(255,255,255,0.01))]" />
+      <div className="relative z-10 grid gap-3 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-start">
         <div className="max-w-4xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.2em] text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
             <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_18px_rgba(186,255,59,0.55)]" />
             {eyebrow}
           </div>
-          <h1 className="mt-2.5 text-[1.42rem] font-semibold tracking-[-0.04em] text-text md:text-[1.82rem] md:leading-[0.98]">
+          <h1 className="mt-2 text-[1.18rem] font-semibold tracking-[-0.03em] text-text md:text-[1.45rem] md:leading-[1]">
             {title}
           </h1>
-          <p className="mt-2 max-w-3xl text-[12px] leading-5 text-sub md:text-[0.85rem]">{description}</p>
+          <p className="mt-1.5 max-w-3xl text-[12px] leading-5 text-sub">{description}</p>
         </div>
 
         {aside ? (
-          <div className="rounded-[16px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] px-3 py-3 backdrop-blur-xl xl:justify-self-end xl:min-w-[228px]">
+          <div className="rounded-[14px] border border-white/8 bg-white/[0.03] px-3 py-2.5 backdrop-blur-xl xl:justify-self-end xl:min-w-[210px]">
             {aside}
           </div>
         ) : null}

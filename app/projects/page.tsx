@@ -79,6 +79,7 @@ function ProjectsPageContent() {
       project.status === "draft" ||
       project.status === "paused"
   );
+  const rosterProjects = boardView === "onboarding" ? onboardingProjects : filteredProjects;
   const primaryAccount = accessState?.primaryAccount ?? null;
   const primaryAccountProjectCount = primaryAccount?.projectCount ?? 0;
   const showBootstrapEmptyState =
@@ -119,7 +120,7 @@ function ProjectsPageContent() {
   }
 
   return (
-      <div className="space-y-6">
+    <div className="space-y-4">
       <ProjectsBoardHeader
         isSuperAdmin={isSuperAdmin}
         projectCount={projects.length}
@@ -138,11 +139,11 @@ function ProjectsPageContent() {
       {showBootstrapEmptyState ? (
         <OpsPanel
           eyebrow="First project bootstrap"
-          title="Create the first project from the account workspace"
-          description="A workspace can exist without projects, but the operator product really starts once the first project is created. Keep this payload intentionally small and move into Launch immediately after."
+          title="Create the first project"
+          description="Projects are the actual operating unit. Keep this first payload intentionally small and move into Launch right after creation."
           tone="accent"
         >
-          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
             <div className="space-y-4">
               {bootstrapBlock ? (
                 <PortalBillingBlockNotice
@@ -151,7 +152,7 @@ function ProjectsPageContent() {
                 />
               ) : null}
 
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-3">
                 <OpsMetricCard
                   label="Workspace"
                   value={primaryAccount?.name ?? "Workspace"}
@@ -161,7 +162,7 @@ function ProjectsPageContent() {
                 <OpsMetricCard label="Next step" value="Launch setup" />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
                     Project name
@@ -170,7 +171,7 @@ function ProjectsPageContent() {
                     value={bootstrapName}
                     onChange={(event) => setBootstrapName(event.target.value)}
                     placeholder="Veltrix Founding Campaign"
-                    className="w-full rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-4 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-[18px] border border-white/6 bg-white/[0.025] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   />
                 </label>
 
@@ -181,7 +182,7 @@ function ProjectsPageContent() {
                   <select
                     value={bootstrapChain}
                     onChange={(event) => setBootstrapChain(event.target.value)}
-                    className="w-full rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-4 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-[18px] border border-white/6 bg-white/[0.025] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   >
                     <option value="Base">Base</option>
                     <option value="Ethereum">Ethereum</option>
@@ -199,7 +200,7 @@ function ProjectsPageContent() {
                     value={bootstrapCategory}
                     onChange={(event) => setBootstrapCategory(event.target.value)}
                     placeholder="community"
-                    className="w-full rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-4 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-[18px] border border-white/6 bg-white/[0.025] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   />
                 </label>
 
@@ -212,7 +213,7 @@ function ProjectsPageContent() {
                     onChange={(event) => setBootstrapDescription(event.target.value)}
                     placeholder="What is this project launching and what kind of community is it building?"
                     rows={4}
-                    className="w-full rounded-[20px] border border-white/6 bg-white/[0.025] px-4 py-4 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-[18px] border border-white/6 bg-white/[0.025] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   />
                 </label>
               </div>
@@ -228,14 +229,14 @@ function ProjectsPageContent() {
                   type="button"
                   onClick={() => void handleBootstrapProject()}
                   disabled={bootstrappingProject || !bootstrapName.trim()}
-                  className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full bg-primary px-4 py-2.5 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {bootstrappingProject ? "Creating project..." : "Create first project"}
                 </button>
                 <button
                   type="button"
                   onClick={() => router.push("/getting-started")}
-                  className="rounded-full border border-white/6 bg-white/[0.025] px-5 py-3 text-sm font-semibold text-text"
+                  className="rounded-full border border-white/6 bg-white/[0.025] px-4 py-2.5 text-sm font-semibold text-text"
                 >
                   Back to Getting Started
                 </button>
@@ -246,7 +247,7 @@ function ProjectsPageContent() {
               <OpsPanel
                 eyebrow="Why this matters"
                 title="Projects are the operational unit"
-                description="Campaigns, quests, raids, rewards and launch readiness all hang off a project workspace. That is why the first project is the point where the portal starts to become operational software."
+                description="Campaigns, quests, raids, rewards and launch readiness all hang off a project workspace."
               >
                 <div className="space-y-3">
                   <OpsSnapshotRow
@@ -264,42 +265,6 @@ function ProjectsPageContent() {
               </OpsPanel>
             </div>
           </div>
-        </OpsPanel>
-      ) : null}
-
-      {boardView === "onboarding" ? (
-        <OpsPanel
-          eyebrow="Onboarding queue"
-          title="Workspace intake"
-          description="Review incoming projects first, then move straight into the workspace once a decision is made."
-          tone="accent"
-        >
-          <ProjectsOnboardingQueue
-            requests={pendingRequests}
-            isSuperAdmin={isSuperAdmin}
-            runningRequestId={runningRequestId}
-            onApprove={(requestId) => {
-              void (async () => {
-                setRunningRequestId(requestId);
-                try {
-                  const projectId = await approveOnboardingRequest(requestId);
-                  window.location.href = `/projects/${projectId}`;
-                } finally {
-                  setRunningRequestId(null);
-                }
-              })();
-            }}
-            onReject={(requestId) => {
-              void (async () => {
-                setRunningRequestId(requestId);
-                try {
-                  await rejectOnboardingRequest(requestId);
-                } finally {
-                  setRunningRequestId(null);
-                }
-              })();
-            }}
-          />
         </OpsPanel>
       ) : null}
 
@@ -332,26 +297,89 @@ function ProjectsPageContent() {
         </button>
       </OpsFilterBar>
 
-      <OpsPanel
-        eyebrow="Workspace roster"
-        title={boardView === "onboarding" ? "Intake-facing roster" : "Project stream"}
-        description={
-          boardView === "onboarding"
-            ? "Filtered to the projects that are most likely to need approval, setup or a recovery action next."
-            : "The active project list with status, onboarding posture and a fast route into each workspace."
-        }
-      >
-        <ProjectsRosterTable
-          projects={boardView === "onboarding" ? onboardingProjects : filteredProjects}
-          emptyState={
-            showBootstrapEmptyState
-              ? "Create the first project to turn this workspace into a real operator surface."
-              : boardView === "onboarding"
-                ? "No draft, paused or pending workspaces match your filters."
-                : "No projects match your filters."
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.26fr)_340px]">
+        <OpsPanel
+          eyebrow="Workspace roster"
+          title={boardView === "onboarding" ? "Projects needing setup attention" : "Project roster"}
+          description={
+            boardView === "onboarding"
+              ? "Draft, paused and pending workspaces stay in one compact roster so you can open the next setup task quickly."
+              : "Keep the roster as the primary surface: status, coverage and the next workspace entry all in one scan."
           }
-        />
-      </OpsPanel>
+        >
+          <ProjectsRosterTable
+            projects={rosterProjects}
+            emptyState={
+              showBootstrapEmptyState
+                ? "Create the first project to turn this workspace into a real operator surface."
+                : boardView === "onboarding"
+                  ? "No draft, paused or pending workspaces match your filters."
+                  : "No projects match your filters."
+            }
+          />
+        </OpsPanel>
+
+        <div className="space-y-4">
+          <OpsPanel
+            eyebrow="Board read"
+            title="Keep the side rail secondary"
+            description="Use this rail for intake and posture only. The roster should stay the main working surface."
+          >
+            <div className="grid gap-3">
+              <OpsSnapshotRow
+                label="Pending requests"
+                value={pendingRequests.length > 0 ? `${pendingRequests.length}` : "Queue clear"}
+              />
+              <OpsSnapshotRow
+                label="Approved / public"
+                value={`${approvedProjects} approved • ${publicProjects} public`}
+              />
+              <OpsSnapshotRow
+                label="Draft / paused"
+                value={`${draftProjects} draft • ${pausedProjects} paused`}
+              />
+            </div>
+          </OpsPanel>
+
+          <OpsPanel
+            eyebrow="Onboarding queue"
+            title="Workspace intake"
+            description={
+              pendingRequests.length > 0
+                ? "Review incoming projects here without pushing the main roster off the page."
+                : "No onboarding approvals are waiting right now."
+            }
+            tone={pendingRequests.length > 0 ? "accent" : "default"}
+          >
+            <ProjectsOnboardingQueue
+              requests={pendingRequests}
+              isSuperAdmin={isSuperAdmin}
+              runningRequestId={runningRequestId}
+              onApprove={(requestId) => {
+                void (async () => {
+                  setRunningRequestId(requestId);
+                  try {
+                    const projectId = await approveOnboardingRequest(requestId);
+                    window.location.href = `/projects/${projectId}`;
+                  } finally {
+                    setRunningRequestId(null);
+                  }
+                })();
+              }}
+              onReject={(requestId) => {
+                void (async () => {
+                  setRunningRequestId(requestId);
+                  try {
+                    await rejectOnboardingRequest(requestId);
+                  } finally {
+                    setRunningRequestId(null);
+                  }
+                })();
+              }}
+            />
+          </OpsPanel>
+        </div>
+      </div>
     </div>
   );
 }

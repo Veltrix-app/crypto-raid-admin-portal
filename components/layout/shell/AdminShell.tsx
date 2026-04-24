@@ -173,12 +173,12 @@ export default function AdminShell({ children }: Props) {
 
   return (
     <AccountEntryGuard>
-      <div className="flex min-h-screen bg-[radial-gradient(circle_at_top,rgba(123,92,255,0.08),transparent_18%),linear-gradient(180deg,rgba(4,6,8,1),rgba(3,4,6,1))] text-text">
+      <div className="flex min-h-screen bg-[#05070a] text-text">
         <AdminSidebar />
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <AdminHeader />
           <main className="flex-1 overflow-y-auto">
-            <div className="mx-auto w-full max-w-[1820px] px-4 py-6 pb-10 sm:px-6 lg:px-8">{children}</div>
+            <div className="mx-auto w-full max-w-[1760px] px-3 py-4 pb-8 sm:px-5 lg:px-6">{children}</div>
           </main>
         </div>
       </div>

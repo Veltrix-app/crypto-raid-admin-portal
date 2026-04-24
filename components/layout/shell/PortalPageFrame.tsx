@@ -21,10 +21,10 @@ export default function PortalPageFrame({
   children,
 }: PortalPageFrameProps) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <OpsHero eyebrow={eyebrow} title={title} description={description} aside={actions} />
       {statusBand ? <div>{statusBand}</div> : null}
-      <div className="space-y-5">{children}</div>
+      <div className="space-y-4">{children}</div>
     </div>
   );
 }
