@@ -65,7 +65,7 @@ export default function ProjectsBoardHeader({
             <ProjectBoardStat label="Chains" value={`${chainCount}`} />
           </div>
 
-          <div className="rounded-[16px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-2.5">
+          <div className="rounded-[14px] border border-white/[0.025] bg-white/[0.014] p-2.5">
             <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">Board mode</p>
             <div className="mt-2">
               <SegmentToggle
@@ -100,16 +100,13 @@ function ProjectBoardStat({
   value: string;
   tone?: "default" | "warning";
 }) {
+  void tone;
+
   return (
-    <div
-      className={`rounded-[14px] border px-3 py-2.5 ${
-        tone === "warning"
-          ? "border-amber-400/16 bg-amber-500/[0.07]"
-          : "border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
-      }`}
-    >
-      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-1.5 text-[13px] font-semibold text-text">{value}</p>
+    <div className="relative overflow-hidden rounded-[12px] border border-white/[0.025] bg-white/[0.014] px-3 py-2.5">
+      <div className="pointer-events-none absolute inset-x-3 top-0 h-px bg-white/[0.045]" />
+      <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1.5 text-[0.86rem] font-semibold text-text">{value}</p>
     </div>
   );
 }

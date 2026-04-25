@@ -57,9 +57,7 @@ export default function ProjectsRosterTable({
                   tone={
                     project.status === "active"
                       ? "success"
-                      : project.status === "draft"
-                        ? "warning"
-                        : "default"
+                      : "default"
                   }
                 >
                   {project.status}
@@ -119,9 +117,7 @@ export default function ProjectsRosterTable({
                   tone={
                     project.status === "active"
                       ? "success"
-                      : project.status === "draft"
-                        ? "warning"
-                        : "default"
+                      : "default"
                   }
                 >
                   {project.status}
