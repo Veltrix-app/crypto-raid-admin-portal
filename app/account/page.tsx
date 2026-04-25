@@ -19,6 +19,24 @@ import type { AdminCustomerGrowthSummary } from "@/types/entities/growth-analyti
 import type { AdminSuccessAccountSummary } from "@/types/entities/success";
 import type { PortalSecurityCurrentAccount } from "@/types/entities/security";
 
+function AccountStateTile({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string | number;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-[14px] border border-white/[0.035] bg-white/[0.018] px-3 py-2.5">
+      <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
+      <p className="mt-1.5 text-[0.92rem] font-semibold tracking-[-0.02em] text-text">{value}</p>
+      <p className="mt-1 text-[11px] leading-5 text-sub">{detail}</p>
+    </div>
+  );
+}
+
 function AccountOverviewContent() {
   const { accessState } = useAccountEntryGuard();
   const primaryAccount = accessState?.primaryAccount ?? null;
@@ -31,6 +49,18 @@ function AccountOverviewContent() {
       : primaryAccount?.projectCount
       ? "/projects"
       : "/getting-started";
+  const nextLabel =
+    primaryAccount?.firstProjectId && primaryAccount.currentStep === "open_launch_workspace"
+      ? "Open launch workspace"
+      : primaryAccount?.projectCount
+        ? "Open projects"
+        : "Continue onboarding";
+  const nextBody =
+    primaryAccount?.firstProjectId && primaryAccount.currentStep === "open_launch_workspace"
+      ? "The account is ready to hand into launch setup."
+      : primaryAccount?.projectCount
+        ? "Use the project roster as the next operating surface."
+        : "Finish the first-run account path before deeper portal work.";
 
   useEffect(() => {
     let active = true;
@@ -119,42 +149,56 @@ function AccountOverviewContent() {
       title="Account"
       description="This is the workspace layer above projects: identity, owner posture, onboarding state and the next clean route into the operational product."
       statusBand={
-        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.08fr_0.92fr]">
-          <OpsPanel
-            eyebrow="Account posture"
-            title="Read the workspace before dropping into projects"
-            description="The account layer should explain the identity, health and next move of the workspace without feeling like another dense admin dashboard."
-          >
-            <div className="grid gap-4 md:grid-cols-4">
-              <OpsMetricCard label="Workspace" value={primaryAccount.name} emphasis="primary" />
-              <OpsMetricCard label="Status" value={primaryAccount.status} />
-              <OpsMetricCard label="Role" value={primaryAccount.role} />
-              <OpsMetricCard label="Projects" value={primaryAccount.projectCount} />
+        <section className="rounded-[18px] border border-white/[0.035] bg-[linear-gradient(180deg,rgba(10,13,19,0.98),rgba(7,9,14,0.98))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+          <div className="grid gap-3 xl:items-start xl:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="max-w-3xl">
+              <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
+                Account map
+              </p>
+              <h2 className="mt-1.5 text-[0.98rem] font-semibold tracking-[-0.02em] text-text">
+                Workspace identity, access and next route
+              </h2>
+              <p className="mt-1.5 text-[12px] leading-5 text-sub">
+                This page should quickly answer who owns the workspace, what state it is in
+                and where the owner should go next.
+              </p>
             </div>
-          </OpsPanel>
 
-          <OpsPanel
-            eyebrow="Continue from account"
-            title="Use the account layer to choose the next clean route"
-            description="This page should make it obvious whether the owner should continue onboarding, open the launch workspace or move into team and security posture."
-            tone="accent"
-          >
-            <div className="space-y-3">
-              <OpsSnapshotRow label="Current step" value={primaryAccount.currentStep} />
-              <OpsSnapshotRow
-                label="First project"
-                value={primaryAccount.firstProjectName ?? "Not created yet"}
-              />
-              <OpsPriorityLink
-                href={nextHref}
-                title="Continue from the account rail"
-                body="The account layer should never feel like a dead end. It exists to hand you into the next safe operator move."
-                cta="Continue"
-                emphasis
-              />
-            </div>
-          </OpsPanel>
-        </div>
+            <Link
+              href={nextHref}
+              className="rounded-[14px] border border-white/[0.035] bg-white/[0.018] px-3 py-2.5 transition hover:border-primary/20"
+            >
+              <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-primary">
+                Next move
+              </p>
+              <p className="mt-1.5 text-[0.9rem] font-semibold text-text">{nextLabel}</p>
+              <p className="mt-1 text-[11px] leading-5 text-sub">{nextBody}</p>
+            </Link>
+          </div>
+
+          <div className="mt-3 grid gap-2.5 md:grid-cols-4">
+            <AccountStateTile
+              label="Workspace"
+              value={primaryAccount.name}
+              detail="Primary account context."
+            />
+            <AccountStateTile
+              label="Status"
+              value={primaryAccount.status}
+              detail="Account operating state."
+            />
+            <AccountStateTile
+              label="Role"
+              value={primaryAccount.role}
+              detail="Current access level."
+            />
+            <AccountStateTile
+              label="Projects"
+              value={primaryAccount.projectCount}
+              detail={primaryAccount.firstProjectName ?? "No first project yet."}
+            />
+          </div>
+        </section>
       }
     >
       <div className="grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
@@ -162,7 +206,6 @@ function AccountOverviewContent() {
           eyebrow="Identity"
           title="Workspace posture"
           description="The account owns the project collection, the onboarding rail and the first team layer. It gives the portal a stable identity even before every deeper business system is live."
-          tone="accent"
         >
           <div className="space-y-3">
             <OpsSnapshotRow label="Source" value={primaryAccount.sourceType} />
@@ -200,7 +243,7 @@ function AccountOverviewContent() {
       </div>
 
       {activationSummary ? (
-        <div className="mt-6">
+        <div>
           <SuccessActivationRail
             summary={activationSummary}
             eyebrow="Workspace activation"
@@ -211,7 +254,7 @@ function AccountOverviewContent() {
       ) : null}
 
       {securitySummary ? (
-        <div className="mt-6">
+        <div>
           <OpsPanel
             eyebrow="Security posture"
             title="Workspace access trust"
@@ -221,24 +264,23 @@ function AccountOverviewContent() {
               <OpsMetricCard
                 label="2FA"
                 value={securitySummary.userPosture?.twoFactorEnabled ? "Enabled" : "Pending"}
-                emphasis={securitySummary.userPosture?.twoFactorEnabled ? "primary" : "warning"}
+                emphasis="default"
               />
               <OpsMetricCard label="Current AAL" value={securitySummary.userPosture?.currentAal ?? "aal1"} />
               <OpsMetricCard label="Sessions" value={securitySummary.sessions.length} />
               <OpsMetricCard
                 label="SSO"
                 value={securitySummary.requiresSso ? "Required" : "Optional"}
-                emphasis={securitySummary.requiresSso ? "warning" : "default"}
+                emphasis="default"
               />
             </div>
 
-            <div className="mt-6">
+            <div className="mt-4">
               <OpsPriorityLink
                 href="/settings/security"
                 title="Open security controls"
                 body="Review current sessions, enable 2FA, configure enterprise SSO posture and manage export/delete requests from one settings module."
                 cta="Open security"
-                emphasis
               />
             </div>
           </OpsPanel>
@@ -246,18 +288,17 @@ function AccountOverviewContent() {
       ) : null}
 
       {growthSummary ? (
-        <div className="mt-6">
+        <div>
           <OpsPanel
             eyebrow="Growth analytics"
             title="How this workspace is performing against peers"
             description="Phase 13 keeps the account-facing analytics compact here: a peer label, the current growth score and the acquisition context that brought this workspace in."
-            tone="accent"
           >
             <div className="grid gap-4 md:grid-cols-4">
               <OpsMetricCard
                 label="Peer band"
                 value={growthSummary.benchmark.labelText}
-                emphasis={growthSummary.benchmark.label === "below_peer_range" ? "warning" : "primary"}
+                emphasis="default"
               />
               <OpsMetricCard
                 label="Growth score"
@@ -276,7 +317,7 @@ function AccountOverviewContent() {
               />
             </div>
 
-            <div className="mt-6 grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="mt-4 grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
               <div className="space-y-3">
                 <OpsSnapshotRow
                   label="Peer cohort"
@@ -309,7 +350,6 @@ function AccountOverviewContent() {
                 title="Use the benchmark to choose the next move"
                 body={growthSummary.recommendedMove}
                 cta="Open next move"
-                emphasis
               />
             </div>
           </OpsPanel>
