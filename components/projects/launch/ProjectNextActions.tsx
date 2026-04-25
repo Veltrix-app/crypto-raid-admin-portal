@@ -38,14 +38,14 @@ export default function ProjectNextActions({
               href={action.href}
               className={`block rounded-[15px] border px-3.5 py-3 transition-colors duration-200 ${
                 action.tone === "primary"
-                  ? "border-white/[0.055] bg-white/[0.04] hover:bg-white/[0.055]"
-                  : "border-white/[0.026] bg-white/[0.016] hover:border-white/[0.055] hover:bg-white/[0.03]"
+                  ? "border-white/[0.026] bg-white/[0.032] hover:bg-white/[0.048]"
+                  : "border-transparent bg-white/[0.014] hover:border-white/[0.028] hover:bg-white/[0.03]"
               }`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-[12px] border border-white/[0.03] bg-white/[0.018] text-sub">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-white/[0.018] text-sub">
                       {index === 0 ? <Rocket size={16} /> : <Sparkles size={16} />}
                     </div>
                     <p className="text-[13px] font-bold text-text">{action.title}</p>
@@ -69,7 +69,7 @@ export default function ProjectNextActions({
             <Link
               key={link.label}
               href={link.href}
-              className="block rounded-[15px] border border-white/[0.026] bg-white/[0.016] px-3.5 py-3 transition-colors duration-200 hover:border-white/[0.055] hover:bg-white/[0.03]"
+              className="block rounded-[15px] border border-transparent bg-white/[0.014] px-3.5 py-3 transition-colors duration-200 hover:border-white/[0.028] hover:bg-white/[0.03]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">

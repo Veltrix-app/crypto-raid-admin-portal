@@ -45,7 +45,7 @@ export default function ProjectLaunchRail({
 
   return (
     <aside className="space-y-3 xl:sticky xl:top-24">
-      <div className="overflow-hidden rounded-[18px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,19,29,0.96),rgba(9,13,21,0.96))] p-3.5">
+      <div className="overflow-hidden rounded-[18px] bg-[linear-gradient(180deg,rgba(13,19,29,0.96),rgba(9,13,21,0.96))] p-3.5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
@@ -58,12 +58,12 @@ export default function ProjectLaunchRail({
               Move through the project setup in a calm, fixed order instead of hunting through routes.
             </p>
           </div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-[12px] border border-white/[0.035] bg-white/[0.025] text-sub">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-white/[0.025] text-sub">
             <Rocket size={18} />
           </div>
         </div>
 
-        <div className="mt-3 rounded-[14px] border border-white/[0.028] bg-white/[0.018] p-3">
+        <div className="mt-3 rounded-[14px] bg-white/[0.018] p-3">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
               Completion
@@ -81,7 +81,7 @@ export default function ProjectLaunchRail({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,19,29,0.96),rgba(10,15,24,0.96))] p-2">
+      <div className="overflow-hidden rounded-[18px] bg-[linear-gradient(180deg,rgba(13,19,29,0.96),rgba(10,15,24,0.96))] p-2">
         <div className="space-y-2">
           {steps.map((step, index) => {
             const active = activeStepId === step.id;
@@ -94,8 +94,8 @@ export default function ProjectLaunchRail({
                 className={cn(
                   "w-full rounded-[14px] border px-3 py-3 text-left transition-colors duration-200",
                   active
-                    ? "border-white/[0.055] bg-white/[0.045]"
-                    : "border-white/[0.026] bg-white/[0.016] hover:border-white/[0.055] hover:bg-white/[0.03]"
+                    ? "border-white/[0.028] bg-white/[0.04]"
+                    : "border-transparent bg-white/[0.012] hover:border-white/[0.024] hover:bg-white/[0.028]"
                 )}
               >
                 <div className="flex items-start gap-4">
@@ -104,8 +104,8 @@ export default function ProjectLaunchRail({
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-[12px] border text-[11px] font-extrabold",
                         active
-                          ? "border-white/[0.06] bg-white/[0.06] text-text"
-                          : "border-white/[0.03] bg-white/[0.018] text-sub"
+                          ? "border-white/[0.03] bg-white/[0.05] text-text"
+                          : "border-transparent bg-white/[0.018] text-sub"
                       )}
                     >
                       {index + 1}

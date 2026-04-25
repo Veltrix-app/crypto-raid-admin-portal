@@ -10,58 +10,62 @@ export default function ProjectTemplateLibrary({
   sections: ProjectBuilderLibrarySection[];
 }) {
   return (
-    <div className="space-y-5">
+    <div className="grid gap-2.5 2xl:grid-cols-2">
       {sections.map((section) => (
         <div
           key={section.kind}
-          className="rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,26,38,0.92),rgba(11,16,24,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
+          className="rounded-[18px] bg-white/[0.012] p-3.5"
         >
-          <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-              {section.title}
-            </p>
-            <p className="mt-3 text-sm leading-6 text-sub">{section.description}</p>
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/[0.026] pb-3">
+            <div className="min-w-0 max-w-xl">
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary/90">
+                {section.title}
+              </p>
+              <p className="mt-1.5 text-[11px] leading-5 text-sub">{section.description}</p>
+            </div>
+            <span className="rounded-full bg-white/[0.025] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-sub">
+              {section.items.length} routes
+            </span>
           </div>
 
-          <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          <div className="mt-2.5 grid gap-1.5">
             {section.items.map((item) => (
               <Link
                 key={item.id}
                 href={item.href}
-                className="group rounded-[24px] border border-white/8 bg-black/20 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/[0.06]"
+                className="group block rounded-[14px] bg-black/20 px-3 py-2.5 transition-colors duration-200 hover:bg-white/[0.032]"
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap gap-2">
-                      <OpsStatusPill
-                        tone={item.source === "project_saved" ? "success" : "default"}
-                      >
-                        {item.source === "project_saved" ? "Saved" : "Built in"}
-                      </OpsStatusPill>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="break-words text-[13px] font-semibold text-text [overflow-wrap:anywhere]">
+                        {item.title}
+                      </p>
                       {item.fitLabel ? (
                         <OpsStatusPill tone="warning">{item.fitLabel}</OpsStatusPill>
                       ) : null}
                     </div>
-
-                    <div>
-                      <p className="text-base font-extrabold tracking-tight text-text">
-                        {item.title}
-                      </p>
-                      <p className="mt-3 text-sm leading-6 text-sub">{item.summary}</p>
-                    </div>
+                    <p className="mt-1.5 break-words text-[11px] leading-5 text-sub [overflow-wrap:anywhere]">
+                      {item.summary}
+                    </p>
                   </div>
 
-                  <span className="text-sm font-bold text-primary transition-transform duration-300 group-hover:translate-x-0.5">
-                    {item.cta}
+                  <span className="shrink-0 pt-0.5 text-[11px] font-bold text-primary transition-transform duration-200 group-hover:translate-x-0.5">
+                    {item.cta} -&gt;
                   </span>
                 </div>
 
                 {item.fitReasons?.length ? (
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <OpsStatusPill
+                      tone={item.source === "project_saved" ? "success" : "default"}
+                    >
+                      {item.source === "project_saved" ? "Saved" : "Built in"}
+                    </OpsStatusPill>
                     {item.fitReasons.slice(0, 2).map((reason) => (
                       <span
                         key={reason}
-                        className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold leading-5 text-sub"
+                        className="rounded-full bg-white/[0.022] px-2.5 py-1 text-[10px] font-semibold leading-4 text-sub"
                       >
                         {reason}
                       </span>

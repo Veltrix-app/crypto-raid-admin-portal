@@ -60,7 +60,7 @@ export default function ProjectLaunchChecklist({
     return (
       <div className="space-y-4">
         {selectedStep ? (
-          <div className="rounded-[18px] border border-primary/18 bg-[linear-gradient(180deg,rgba(186,255,59,0.06),rgba(11,16,24,0.98))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+          <div className="rounded-[16px] bg-[linear-gradient(180deg,rgba(186,255,59,0.045),rgba(11,16,24,0.98))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.12)]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-2xl">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
@@ -89,7 +89,7 @@ export default function ProjectLaunchChecklist({
                 {selectedStep.blockers.map((blocker) => (
                   <div
                     key={blocker}
-                    className="rounded-[14px] border border-white/[0.05] bg-black/20 px-3.5 py-3 text-[12px] leading-5 text-sub"
+                    className="rounded-[13px] bg-black/20 px-3.5 py-3 text-[12px] leading-5 text-sub"
                   >
                     {blocker}
                   </div>
@@ -103,7 +103,7 @@ export default function ProjectLaunchChecklist({
 
             <Link
               href={selectedStep.href}
-              className="mt-4 inline-flex items-center gap-2 rounded-[16px] border border-primary/30 bg-primary/12 px-3.5 py-2.5 text-[13px] font-bold text-primary transition hover:bg-primary/18"
+              className="mt-4 inline-flex items-center gap-2 rounded-[14px] bg-primary/12 px-3.5 py-2.5 text-[13px] font-bold text-primary transition hover:bg-primary/18"
             >
               Open step rail
               <ArrowRight size={16} />
@@ -116,10 +116,10 @@ export default function ProjectLaunchChecklist({
             <div
               key={step.id}
               className={cn(
-                "rounded-[16px] border px-3.5 py-3 transition-all duration-200",
+                "rounded-[14px] px-3.5 py-3 transition-colors duration-200",
                 step.id === activeStepId
-                  ? "border-primary/25 bg-primary/10"
-                  : "border-white/[0.05] bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))]"
+                  ? "bg-primary/[0.08]"
+                  : "bg-white/[0.014] hover:bg-white/[0.028]"
               )}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -171,7 +171,7 @@ export default function ProjectLaunchChecklist({
         {groups.map((group) => (
           <div
             key={group.id}
-            className="rounded-[16px] border border-white/[0.05] bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))] p-4"
+            className="rounded-[15px] bg-white/[0.014] p-3.5"
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-2xl">
@@ -191,7 +191,7 @@ export default function ProjectLaunchChecklist({
                 </div>
                 <p className="mt-2 text-[12px] leading-5 text-sub">{group.summary}</p>
               </div>
-              <div className="rounded-[14px] border border-white/[0.05] bg-black/20 px-3.5 py-2.5 text-right">
+              <div className="rounded-[13px] bg-black/20 px-3.5 py-2.5 text-right">
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
                   Group score
                 </p>
@@ -205,7 +205,7 @@ export default function ProjectLaunchChecklist({
               {group.signals.map((signal) => (
                 <div
                   key={signal}
-                  className="rounded-[14px] border border-white/[0.05] bg-black/20 px-3.5 py-2.5 text-[12px] text-sub"
+                  className="rounded-[13px] bg-black/20 px-3.5 py-2.5 text-[12px] text-sub"
                 >
                   {signal}
                 </div>
@@ -238,7 +238,7 @@ function IssueGroup({
   }
 
   return (
-    <div className="rounded-[18px] border border-white/[0.05] bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))] p-4">
+    <div className="rounded-[16px] bg-white/[0.014] p-3.5">
       <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>
       <h3 className="mt-2 text-[1rem] font-bold text-text">{title}</h3>
       <div className="mt-3.5 space-y-2.5">
@@ -246,7 +246,7 @@ function IssueGroup({
           <Link
             key={issue.id}
             href={issue.href}
-            className="block rounded-[14px] border border-white/[0.05] bg-black/20 px-3.5 py-3 transition hover:border-primary/25 hover:bg-white/[0.035]"
+            className="block rounded-[13px] bg-black/20 px-3.5 py-3 transition hover:bg-white/[0.035]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">

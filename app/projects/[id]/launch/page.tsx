@@ -585,26 +585,18 @@ function ProjectLaunchContent() {
             </div>
 
             <OpsPanel
-              eyebrow="Starter library"
-              title="Start from intent, not from a blank builder"
-              description="Open a proven campaign pack, a quest kit, a raid kit or a launch playbook with this project already wired in."
-            >
-              <ProjectTemplateLibrary sections={templateLibrarySections} />
-            </OpsPanel>
-
-            <OpsPanel
               eyebrow="Readiness groups"
-              title="Why the score looks the way it does"
-              description="Each group below is a high-signal read on the parts of the project that most affect launch quality."
+              title="Why the launch score looks this way"
+              description="A compact read of the signals that matter before the project goes live."
             >
-              <div className="grid gap-2.5 xl:items-start xl:grid-cols-3">
+              <div className="grid gap-2 xl:items-start xl:grid-cols-3">
                 {snapshot.readiness.groups.map((group) => (
                   <div
                     key={group.id}
-                    className="rounded-[16px] border border-white/[0.026] bg-white/[0.016] p-3.5"
+                    className="rounded-[14px] bg-white/[0.014] p-3"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="font-bold text-text">{group.title}</p>
+                      <p className="text-[13px] font-semibold text-text">{group.title}</p>
                       <OpsStatusPill
                         tone={
                           group.status === "ready"
@@ -617,13 +609,22 @@ function ProjectLaunchContent() {
                         {group.status}
                       </OpsStatusPill>
                     </div>
-                    <div className="mt-3 grid gap-2.5">
+                    <div className="mt-2.5 grid gap-1.5">
                       <OpsSnapshotRow label="Group score" value={`${group.score}/100`} />
                       <OpsSnapshotRow label="Reading" value={group.summary} />
                     </div>
                   </div>
                 ))}
               </div>
+            </OpsPanel>
+
+            <OpsPanel
+              eyebrow="Launch routes"
+              title="Pick a proven route when you need content"
+              description="Campaign packs, quest kits, raid kits and playbooks are kept secondary so the launch checklist stays the main surface."
+              className="border-white/[0.02]"
+            >
+              <ProjectTemplateLibrary sections={templateLibrarySections} />
             </OpsPanel>
 
             <div className="grid gap-3 2xl:grid-cols-2 2xl:items-start">
