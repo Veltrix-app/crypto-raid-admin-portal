@@ -1751,7 +1751,7 @@ export default function ProjectDetailPage() {
             </DetailSurface>
           ) : null}
 
-        <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr] xl:items-start">
+        <div className="grid gap-4">
           <DetailSurface
             title="Edit Project"
             description="Update how this project appears in the app and portal without leaving the workspace detail view."
@@ -1803,7 +1803,7 @@ export default function ProjectDetailPage() {
             </div>
           </DetailSurface>
 
-          <div className="space-y-4">
+          <div className="grid gap-4 xl:grid-cols-2">
             <DetailSurface
               eyebrow="Public Profile"
               title="Brand and community-facing preview"
@@ -1835,8 +1835,8 @@ export default function ProjectDetailPage() {
                         <DetailBadge>{project.isPublic ? "Public" : "Private"}</DetailBadge>
                       </div>
 
-                      <p className="mt-2 text-sm text-sub">/{project.slug || "project-slug"}</p>
-                      <p className="mt-4 text-sm leading-6 text-sub">
+                      <p className="mt-2 break-words text-sm text-sub [overflow-wrap:anywhere]">/{project.slug || "project-slug"}</p>
+                      <p className="mt-4 break-words text-sm leading-6 text-sub [overflow-wrap:anywhere]">
                         {project.description || "Add a short public description so this project feels credible from the first visit."}
                       </p>
                     </div>
@@ -1847,7 +1847,7 @@ export default function ProjectDetailPage() {
                       <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                         Long Form Narrative
                       </p>
-                      <p className="mt-3 text-sm leading-6 text-sub">{project.longDescription}</p>
+                      <p className="mt-3 break-words text-sm leading-6 text-sub [overflow-wrap:anywhere]">{project.longDescription}</p>
                     </div>
                   ) : null}
 
@@ -1925,7 +1925,7 @@ export default function ProjectDetailPage() {
               </div>
             </DetailSidebarSurface>
 
-            <DetailSidebarSurface title="On-chain Configuration">
+            <DetailSidebarSurface title="On-chain Configuration" className="xl:col-span-2">
               <div className="mt-4 space-y-4">
                 <p className="text-sm text-sub">
                   Register treasury wallets and live contracts here so AESP ingestion only scores
@@ -2348,7 +2348,7 @@ export default function ProjectDetailPage() {
               </div>
             </DetailSidebarSurface>
 
-            <DetailSidebarSurface title="Integration Readiness">
+            <DetailSidebarSurface title="Integration Readiness" className="xl:col-span-2">
               <div className="mt-4 space-y-4">
                 <DetailMetaRow
                   label="X follow verification"

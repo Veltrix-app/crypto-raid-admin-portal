@@ -2,6 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import { ReactNode } from "react";
+import { cn } from "@/lib/utils/cn";
 
 export function DetailHero({
   eyebrow,
@@ -70,15 +71,17 @@ export function DetailSurface({
   description,
   aside,
   children,
+  className,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
   aside?: ReactNode;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="relative self-start overflow-hidden rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,21,0.985),rgba(8,10,15,0.985))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+    <section className={cn("relative min-w-0 self-start overflow-hidden rounded-[20px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(12,15,21,0.985),rgba(8,10,15,0.985))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.12)]", className)}>
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.025),transparent_34%)]" />
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-start">
         <div className="max-w-2xl">
@@ -103,12 +106,14 @@ export function DetailSurface({
 export function DetailSidebarSurface({
   title,
   children,
+  className,
 }: {
   title: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="self-start rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,21,0.985),rgba(8,10,15,0.985))] p-3 shadow-[0_14px_28px_rgba(0,0,0,0.14)]">
+    <section className={cn("min-w-0 self-start rounded-[18px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(12,15,21,0.985),rgba(8,10,15,0.985))] p-3 shadow-[0_12px_24px_rgba(0,0,0,0.12)]", className)}>
       <h3 className="text-[0.84rem] font-semibold tracking-[-0.02em] text-text">{title}</h3>
       <div className="mt-2">{children}</div>
     </section>
@@ -123,9 +128,9 @@ export function DetailMetaRow({
   value: string | number;
 }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.025] px-3 py-2.5">
+    <div className="min-w-0 rounded-[14px] border border-white/[0.028] bg-white/[0.022] px-3 py-2.5">
       <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
-      <p className="mt-1 break-all text-[11px] font-semibold text-text">{value}</p>
+      <p className="mt-1 break-words text-[11px] font-semibold text-text [overflow-wrap:anywhere]">{value}</p>
     </div>
   );
 }

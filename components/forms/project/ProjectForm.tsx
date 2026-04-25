@@ -270,7 +270,7 @@ export default function ProjectForm({
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)_360px] xl:items-start">
+      <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)] xl:items-start 2xl:grid-cols-[260px_minmax(0,1fr)_340px]">
         <BuilderStepRail
           steps={steps.map((step, index) => ({
             ...step,
@@ -315,7 +315,10 @@ export default function ProjectForm({
           />
         </div>
 
-        <BuilderSidebarStack>
+        <BuilderSidebarStack
+          sticky={false}
+          className="xl:col-span-2 xl:grid xl:grid-cols-3 xl:gap-4 xl:space-y-0 2xl:col-span-1 2xl:block 2xl:space-y-4"
+        >
           <ProjectPreviewSurface values={values} />
 
           <BuilderSidebarCard title="Readiness Guide">
@@ -868,7 +871,7 @@ function SummaryPanel({
         {items.map(([label, value]) => (
           <div key={label} className="flex items-start justify-between gap-4 border-b border-white/[0.04] pb-2.5 last:border-b-0 last:pb-0">
             <p className="text-[12px] text-sub">{label}</p>
-            <p className="max-w-[60%] text-right text-[12px] font-semibold text-text">{value}</p>
+            <p className="max-w-[60%] break-words text-right text-[12px] font-semibold text-text [overflow-wrap:anywhere]">{value}</p>
           </div>
         ))}
       </div>
@@ -882,7 +885,7 @@ function ProjectPreviewSurface({
   values: Omit<AdminProject, "id">;
 }) {
   return (
-    <div className="self-start overflow-hidden rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] shadow-[0_12px_28px_rgba(0,0,0,0.16)]">
+    <div className="min-w-0 self-start overflow-hidden rounded-[20px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] shadow-[0_10px_24px_rgba(0,0,0,0.13)]">
       <div
         className="h-40 bg-gradient-to-br from-primary/15 via-card to-card2"
         style={
@@ -918,7 +921,7 @@ function ProjectPreviewSurface({
           </div>
         </div>
 
-        <p className="mt-3 text-[12px] leading-5 text-sub">
+        <p className="mt-3 break-words text-[12px] leading-5 text-sub [overflow-wrap:anywhere]">
           {values.description || "Short public description will appear here."}
         </p>
 

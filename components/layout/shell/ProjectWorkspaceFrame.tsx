@@ -40,20 +40,20 @@ export default function ProjectWorkspaceFrame({
 
   return (
     <div className="space-y-4">
-      <section className="relative overflow-hidden rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.99))] px-4 py-4 shadow-[0_16px_38px_rgba(0,0,0,0.16)] md:px-5">
+      <section className="relative overflow-hidden rounded-[20px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.99))] px-4 py-4 shadow-[0_14px_32px_rgba(0,0,0,0.13)] md:px-5">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.02),transparent_34%)]" />
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 max-w-4xl">
-            <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
+            <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-sub">
               Project workspace
             </p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              <h1 className="text-[1.15rem] font-semibold tracking-[-0.03em] text-text md:text-[1.35rem]">
+              <h1 className="min-w-0 break-words text-[1.15rem] font-semibold tracking-[-0.03em] text-text [overflow-wrap:anywhere] md:text-[1.35rem]">
                 {projectName}
               </h1>
               <OpsStatusPill tone="default">{projectChain}</OpsStatusPill>
               {healthPills.map((pill) => (
-                <OpsStatusPill key={pill.label} tone={pill.tone}>
+                <OpsStatusPill key={pill.label} tone={pill.tone === "danger" ? "danger" : "default"}>
                   {pill.label}
                 </OpsStatusPill>
               ))}
@@ -63,7 +63,7 @@ export default function ProjectWorkspaceFrame({
             </p>
           </div>
 
-          <div className="rounded-[14px] border border-white/[0.05] bg-white/[0.025] px-3 py-2.5">
+          <div className="rounded-[14px] border border-white/[0.032] bg-white/[0.022] px-3 py-2.5">
             <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-sub">Focus</p>
             <p className="mt-1 text-[12px] font-semibold text-text">
               Keep the next operator move visible.
@@ -71,7 +71,7 @@ export default function ProjectWorkspaceFrame({
           </div>
         </div>
 
-        <div className="mt-4 border-t border-white/[0.04] pt-3 overflow-x-auto">
+        <div className="mt-4 overflow-x-auto border-t border-white/[0.028] pt-3">
           <div className="inline-flex min-w-full gap-1.5">
             {PROJECT_WORKSPACE_TABS.map((tab) => {
               const href = getProjectWorkspaceHref(projectId, tab.slug);
@@ -84,8 +84,8 @@ export default function ProjectWorkspaceFrame({
                   className={cn(
                     "rounded-[12px] px-3 py-2 text-[12px] font-semibold transition",
                     active
-                      ? "bg-primary text-black shadow-[0_10px_24px_rgba(186,255,59,0.18)]"
-                      : "border border-transparent bg-white/[0.018] text-sub hover:border-white/[0.07] hover:bg-white/[0.035] hover:text-text"
+                      ? "bg-white/[0.085] text-text shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)]"
+                      : "border border-transparent bg-white/[0.014] text-sub hover:border-white/[0.05] hover:bg-white/[0.03] hover:text-text"
                   )}
                 >
                   {tab.label}

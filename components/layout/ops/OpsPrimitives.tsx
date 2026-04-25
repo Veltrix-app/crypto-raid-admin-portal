@@ -63,7 +63,7 @@ export function OpsPanel({
   return (
     <section
       className={cx(
-        "relative self-start overflow-hidden rounded-[22px] border p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]",
+        "relative min-w-0 self-start overflow-hidden rounded-[22px] border p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.13)]",
         tone === "accent"
           ? "border-white/[0.035] bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.028),transparent_22%),radial-gradient(circle_at_88%_14%,rgba(74,217,255,0.025),transparent_20%),linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
           : "border-white/[0.028] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]",
@@ -73,12 +73,12 @@ export function OpsPanel({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.055] to-transparent" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.02),transparent_34%)]" />
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-3.5">
-        <div className="max-w-2xl">
+        <div className="min-w-0 max-w-2xl">
           {eyebrow ? (
             <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary/90">{eyebrow}</p>
           ) : null}
-          <h2 className="mt-1.5 text-[0.92rem] font-semibold tracking-[-0.02em] text-text sm:text-[0.98rem]">{title}</h2>
-          {description ? <p className="mt-1.5 text-[12px] leading-5 text-sub">{description}</p> : null}
+          <h2 className="mt-1.5 break-words text-[0.92rem] font-semibold tracking-[-0.02em] text-text [overflow-wrap:anywhere] sm:text-[0.98rem]">{title}</h2>
+          {description ? <p className="mt-1.5 break-words text-[12px] leading-5 text-sub [overflow-wrap:anywhere]">{description}</p> : null}
         </div>
         {action}
       </div>
@@ -133,7 +133,7 @@ export function OpsSnapshotRow({ label, value }: { label: string; value: string 
   return (
     <div className="rounded-[14px] border border-white/[0.024] bg-white/[0.014] px-3 py-2.5">
       <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
-      <p className="mt-1.5 text-[12px] font-semibold leading-5 text-text">{value}</p>
+      <p className="mt-1.5 break-words text-[12px] font-semibold leading-5 text-text [overflow-wrap:anywhere]">{value}</p>
     </div>
   );
 }

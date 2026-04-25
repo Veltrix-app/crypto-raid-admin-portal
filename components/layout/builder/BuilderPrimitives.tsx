@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils/cn";
 
 export function BuilderHero({
   eyebrow,
@@ -241,8 +242,26 @@ export function BuilderBottomNav({
   );
 }
 
-export function BuilderSidebarStack({ children }: { children: ReactNode }) {
-  return <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">{children}</aside>;
+export function BuilderSidebarStack({
+  children,
+  className,
+  sticky = true,
+}: {
+  children: ReactNode;
+  className?: string;
+  sticky?: boolean;
+}) {
+  return (
+    <aside
+      className={cn(
+        "min-w-0 space-y-4",
+        sticky ? "xl:sticky xl:top-24 xl:self-start" : "xl:self-start",
+        className
+      )}
+    >
+      {children}
+    </aside>
+  );
 }
 
 export function BuilderSidebarCard({
@@ -253,7 +272,7 @@ export function BuilderSidebarCard({
   children: ReactNode;
 }) {
   return (
-    <div className="relative self-start overflow-hidden rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,17,24,0.97),rgba(9,11,16,0.96))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)] transition-colors duration-200 hover:border-white/[0.08]">
+    <div className="relative min-w-0 self-start overflow-hidden rounded-[20px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,17,24,0.97),rgba(9,11,16,0.96))] p-3.5 shadow-[0_10px_24px_rgba(0,0,0,0.13)] transition-colors duration-200 hover:border-white/[0.055]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]" />
       <div className="flex items-center gap-3">
         <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">{title}</p>
