@@ -18,12 +18,12 @@ export function OpsHero({
   aside?: ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(10,12,16,0.995),rgba(6,8,12,0.995))] px-3.5 py-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)] md:px-4 md:py-4">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+    <div className="relative overflow-hidden rounded-[18px] border border-white/[0.025] bg-[linear-gradient(180deg,rgba(10,12,16,0.995),rgba(6,8,12,0.995))] px-3.5 py-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)] md:px-4 md:py-4">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.055] to-transparent" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.02),transparent_34%,transparent_68%,rgba(255,255,255,0.01))]" />
       <div className="relative z-10 grid gap-3 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-start">
         <div className="max-w-4xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.05] bg-white/[0.025] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.035] bg-white/[0.02] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
             <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_18px_rgba(186,255,59,0.55)]" />
             {eyebrow}
           </div>
@@ -34,7 +34,7 @@ export function OpsHero({
         </div>
 
         {aside ? (
-          <div className="rounded-[14px] border border-white/[0.05] bg-white/[0.025] px-3 py-2.5 backdrop-blur-xl xl:justify-self-end xl:min-w-[210px]">
+          <div className="rounded-[14px] border border-white/[0.035] bg-white/[0.02] px-3 py-2.5 backdrop-blur-xl xl:justify-self-end xl:min-w-[210px]">
             {aside}
           </div>
         ) : null}
@@ -65,12 +65,12 @@ export function OpsPanel({
       className={cx(
         "relative self-start overflow-hidden rounded-[22px] border p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]",
         tone === "accent"
-          ? "border-primary/[0.1] bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.06),transparent_22%),radial-gradient(circle_at_88%_14%,rgba(74,217,255,0.045),transparent_20%),linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
-          : "border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]",
+          ? "border-white/[0.035] bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.028),transparent_22%),radial-gradient(circle_at_88%_14%,rgba(74,217,255,0.025),transparent_20%),linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
+          : "border-white/[0.028] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]",
         className
       )}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.055] to-transparent" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.02),transparent_34%)]" />
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-3.5">
         <div className="max-w-2xl">
@@ -104,20 +104,20 @@ export function OpsMetricCard({
       className={cx(
         "relative overflow-hidden rounded-[14px] border px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.1)]",
         emphasis === "primary"
-          ? "border-white/[0.04] bg-white/[0.024]"
+          ? "border-white/[0.026] bg-white/[0.02]"
           : emphasis === "warning"
-            ? "border-white/[0.04] bg-white/[0.022]"
-            : "border-white/[0.035] bg-white/[0.018]"
+            ? "border-white/[0.026] bg-white/[0.02]"
+            : "border-white/[0.024] bg-white/[0.016]"
       )}
     >
       <div
         className={cx(
           "pointer-events-none absolute inset-x-3 top-0 h-px",
           emphasis === "primary"
-            ? "bg-primary/30"
+            ? "bg-primary/18"
             : emphasis === "warning"
-              ? "bg-amber-300/24"
-              : "bg-white/[0.055]"
+              ? "bg-amber-300/14"
+              : "bg-white/[0.035]"
         )}
       />
       <div className="relative z-10">
@@ -131,7 +131,7 @@ export function OpsMetricCard({
 
 export function OpsSnapshotRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.018] px-3 py-2.5">
+    <div className="rounded-[14px] border border-white/[0.024] bg-white/[0.014] px-3 py-2.5">
       <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-1.5 text-[12px] font-semibold leading-5 text-text">{value}</p>
     </div>

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import {
   OpsMetricCard,
   OpsPanel,
@@ -33,6 +32,15 @@ type MetricSummary = {
   }>;
 };
 
+type AnalyticsView = "growth" | "outcomes" | "campaigns" | "verification";
+
+const analyticsViewOptions: Array<{ value: AnalyticsView; label: string }> = [
+  { value: "growth", label: "Growth" },
+  { value: "outcomes", label: "Outcomes" },
+  { value: "campaigns", label: "Campaigns" },
+  { value: "verification", label: "Verification" },
+];
+
 export default function AnalyticsPage() {
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const quests = useAdminPortalStore((s) => s.quests);
@@ -47,11 +55,7 @@ export default function AnalyticsPage() {
   const [platformSummary, setPlatformSummary] = useState<MetricSummary | null>(null);
   const [projectSummary, setProjectSummary] = useState<MetricSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
-  const [analyticsView, setAnalyticsView] = useState<
-    "growth" | "outcomes" | "campaigns" | "verification"
-  >(
-    "growth"
-  );
+  const [analyticsView, setAnalyticsView] = useState<AnalyticsView>("growth");
 
   useEffect(() => {
     let active = true;
@@ -265,11 +269,11 @@ export default function AnalyticsPage() {
 
   type OutcomeCard = {
     key: string;
-    emphasis: "default" | "primary" | "warning";
+    emphasis: "default" | "warning";
   };
 
   const outcomeCards: OutcomeCard[] = [
-    { key: "member_activation_rate", emphasis: "primary" },
+    { key: "member_activation_rate", emphasis: "default" },
     { key: "linked_readiness_rate", emphasis: "default" },
     { key: "reward_claim_conversion_rate", emphasis: "default" },
     { key: "automation_health_score", emphasis: "default" },
@@ -293,7 +297,7 @@ export default function AnalyticsPage() {
       label: "Visits",
       value:
         growthOverview?.funnel.find((stage) => stage.stage === "anonymous_visit")?.value ?? 0,
-      emphasis: "primary" as const,
+      emphasis: "default" as const,
       sub: "Top-of-funnel signal",
     },
     {
@@ -302,7 +306,7 @@ export default function AnalyticsPage() {
         growthOverview?.funnel.find((stage) => stage.stage === "paid_converted")?.value ?? 0,
       emphasis:
         (growthOverview?.funnel.find((stage) => stage.stage === "paid_converted")?.value ?? 0) > 0
-          ? ("primary" as const)
+          ? ("default" as const)
           : ("default" as const),
       sub: "Current paid accounts",
     },
@@ -321,10 +325,7 @@ export default function AnalyticsPage() {
     {
       label: "Expansion ready",
       value: growthOverview?.revenue.expansionReadyAccounts ?? 0,
-      emphasis:
-        (growthOverview?.revenue.expansionReadyAccounts ?? 0) > 0
-          ? ("primary" as const)
-          : ("default" as const),
+      emphasis: "default" as const,
       sub: "Accounts with scale posture",
     },
     {
@@ -408,42 +409,9 @@ export default function AnalyticsPage() {
         eyebrow="Outcome board"
         title="Analytics"
         description="Use Analytics for outcomes and trends, not live triage: launch and health pressure lives in Overview, while campaign and verification intelligence stay available here."
-        actions={
-          <div className="space-y-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">Decision routes</p>
-            <div className="flex flex-wrap gap-2">
-              <OpsStatusPill tone={analyticsView === "growth" ? "success" : "default"}>
-                {analyticsView}
-              </OpsStatusPill>
-              <OpsStatusPill tone={summaryError ? "warning" : "default"}>
-                {summaryError ? "snapshot warning" : "snapshot healthy"}
-              </OpsStatusPill>
-            </div>
-            <div className="flex flex-wrap gap-3">
-            <Link
-              href="/overview"
-              className="rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
-            >
-              Overview
-            </Link>
-            <Link
-              href="/analytics/engagement"
-              className="rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
-            >
-              Engagement
-            </Link>
-            <Link
-              href="/analytics/rewards"
-              className="rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
-            >
-              Rewards
-            </Link>
-            </div>
-          </div>
-        }
         statusBand={
           <div className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+            <div className="grid gap-2.5 md:grid-cols-3 xl:grid-cols-6">
               {(analyticsView === "growth" ? growthCards : outcomeCards).map((card) => {
                 if ("key" in card) {
                   const metric = platformMetricMap.get(card.key);
@@ -474,28 +442,18 @@ export default function AnalyticsPage() {
               eyebrow="Command read"
               title={analyticsCommandRead.title}
               description={analyticsCommandRead.description}
-              tone="accent"
               action={
-                <SegmentToggle
-                  value={analyticsView}
-                  onChange={setAnalyticsView}
-                  options={[
-                    { value: "growth", label: "Growth" },
-                    { value: "outcomes", label: "Outcomes" },
-                    { value: "campaigns", label: "Campaigns" },
-                    { value: "verification", label: "Verification" },
-                  ]}
-                />
+                <AnalyticsViewSwitch value={analyticsView} onChange={setAnalyticsView} />
               }
             >
-              <div className="space-y-3">
-                <div className="grid gap-3 lg:grid-cols-3">
+              <div className="space-y-2.5">
+                <div className="grid gap-2.5 lg:grid-cols-3">
                   <OpsSnapshotRow label="Now" value={analyticsCommandRead.now} />
                   <OpsSnapshotRow label="Next" value={analyticsCommandRead.next} />
                   <OpsSnapshotRow label="Watch" value={analyticsCommandRead.watch} />
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
                   <ModeCard
                     label="Growth"
                     body="Funnel, revenue, retention, attribution and benchmark coverage in one internal workspace."
@@ -513,15 +471,28 @@ export default function AnalyticsPage() {
                     body="Route mix, manual review pressure and proof bottlenecks."
                   />
                 </div>
+
+                <div className="flex flex-wrap gap-2 border-t border-white/[0.025] pt-2.5">
+                  <SoftRouteLink href="/overview" label="Overview" />
+                  <SoftRouteLink href="/analytics/engagement" label="Engagement" />
+                  <SoftRouteLink href="/analytics/rewards" label="Rewards" />
+                  <OpsStatusPill tone="default">
+                    {summaryError ? "snapshot job pending" : "snapshot route ready"}
+                  </OpsStatusPill>
+                </div>
               </div>
             </OpsPanel>
           </div>
         }
       >
         {summaryError ? (
-          <OpsPanel eyebrow="Summary error" title="Analytics summaries could not load" description={summaryError}>
+          <OpsPanel
+            eyebrow="Snapshot route"
+            title="Outcome snapshots are still warming up"
+            description={summaryError}
+          >
             <p className="text-sm leading-6 text-sub">
-              Verification and campaign intelligence still render from live portal data, but the new snapshot-backed outcome board needs the Phase 7 metric job to be healthy.
+              Verification and campaign intelligence still render from live portal data. The snapshot-backed outcome board stays visible as context, but it should not dominate the page when the metric job is catching up.
             </p>
           </OpsPanel>
         ) : null}
@@ -533,27 +504,16 @@ export default function AnalyticsPage() {
                 eyebrow="Growth funnel"
                 title="Visit to retained revenue"
                 description="Top-of-funnel is event-led, while workspace progression is snapshot-backed. Together they show whether traffic is actually turning into durable accounts."
-                tone="accent"
               >
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
                   {(growthOverview?.funnel ?? []).slice(0, 10).map((stage) => (
                     <div
                       key={stage.stage}
-                      className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3.5 py-3.5"
+                      className="rounded-[16px] border border-white/[0.025] bg-white/[0.018] px-3.5 py-3"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-[13px] font-bold text-text">{stage.label}</p>
-                        <OpsStatusPill
-                          tone={
-                            stage.dataSource === "events"
-                              ? "default"
-                              : stage.dataSource === "blended"
-                                ? "warning"
-                                : "success"
-                          }
-                        >
-                          {stage.dataSource}
-                        </OpsStatusPill>
+                        <OpsStatusPill tone="default">{stage.dataSource}</OpsStatusPill>
                       </div>
                       <p className="mt-2.5 text-[1.18rem] font-extrabold tracking-tight text-text">
                         {stage.value.toLocaleString()}
@@ -577,7 +537,6 @@ export default function AnalyticsPage() {
                   <OpsMetricCard
                     label="MRR"
                     value={formatCurrencyValue(growthOverview?.revenue.mrr ?? 0)}
-                    emphasis="primary"
                   />
                   <OpsMetricCard
                     label="Active paid"
@@ -594,11 +553,6 @@ export default function AnalyticsPage() {
                   <OpsMetricCard
                     label="Expansion ready"
                     value={growthOverview?.revenue.expansionReadyAccounts ?? 0}
-                    emphasis={
-                      (growthOverview?.revenue.expansionReadyAccounts ?? 0) > 0
-                        ? "primary"
-                        : "default"
-                    }
                   />
                   <OpsMetricCard
                     label="Churn risk"
@@ -645,11 +599,11 @@ export default function AnalyticsPage() {
                   {(growthOverview?.retention.cohorts ?? []).map((cohort) => (
                     <div
                       key={cohort.cohortLabel}
-                      className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3.5 py-3.5"
+                      className="rounded-[16px] border border-white/[0.025] bg-white/[0.018] px-3.5 py-3"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="font-semibold text-text">{cohort.cohortLabel}</p>
-                        <OpsStatusPill tone="success">{cohort.retainedRate}% retained</OpsStatusPill>
+                          <OpsStatusPill tone="default">{cohort.retainedRate}% retained</OpsStatusPill>
                       </div>
                       <p className="mt-3 text-sm leading-6 text-sub">
                         {cohort.retainedCount} of {cohort.accountCount} accounts stayed active long
@@ -670,13 +624,11 @@ export default function AnalyticsPage() {
                     growthOverview?.attribution.sources.map((source) => (
                       <div
                         key={source.source}
-                        className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3.5 py-3.5"
+                        className="rounded-[16px] border border-white/[0.025] bg-white/[0.018] px-3.5 py-3"
                       >
                         <div className="flex items-center justify-between gap-3">
                           <p className="font-semibold text-text">{source.source}</p>
-                          <OpsStatusPill
-                            tone={source.paidConversions > 0 ? "success" : "default"}
-                          >
+                          <OpsStatusPill tone="default">
                             {source.paidConversions} paid
                           </OpsStatusPill>
                         </div>
@@ -712,7 +664,6 @@ export default function AnalyticsPage() {
                     } / ${
                       growthOverview?.benchmarkCoverage.workspaceAccountsMeasured ?? 0
                     }`}
-                    emphasis="primary"
                   />
                   <OpsMetricCard
                     label="Project peer bands"
@@ -752,7 +703,6 @@ export default function AnalyticsPage() {
                 eyebrow="Platform outcomes"
                 title="Core trend posture"
                 description={`Latest platform snapshot: ${platformSummary?.latestSnapshotDate ?? "missing"}.`}
-                tone="accent"
               >
                 <EngagementChart
                   items={[
@@ -803,7 +753,7 @@ export default function AnalyticsPage() {
                     ].map((key) => {
                       const metric = projectMetricMap.get(key);
                       return (
-                        <div key={key} className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-3.5">
+                        <div key={key} className="rounded-[16px] border border-white/[0.025] bg-white/[0.018] p-3.5">
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-sm font-bold text-text">{metric?.label ?? humanize(key)}</p>
                             <OpsStatusPill
@@ -870,9 +820,9 @@ export default function AnalyticsPage() {
             title="Campaign operations snapshot"
             description="A denser owner-facing read on throughput, approvals and confidence by campaign."
           >
-            <div className="grid gap-4 xl:items-start xl:grid-cols-3">
-              {campaignHealth.slice(0, 6).map((campaign) => (
-                <div key={campaign.id} className="rounded-[20px] border border-white/[0.04] bg-white/[0.03] p-4">
+                <div className="grid gap-3 xl:items-start xl:grid-cols-3">
+                  {campaignHealth.slice(0, 6).map((campaign) => (
+                <div key={campaign.id} className="rounded-[18px] border border-white/[0.025] bg-white/[0.018] p-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-bold text-text">{campaign.title}</p>
@@ -932,8 +882,8 @@ export default function AnalyticsPage() {
               title="Quest review load"
               description="These quests are creating the most moderator drag right now."
             >
-              <div className="overflow-hidden rounded-[20px] border border-white/[0.04] bg-white/[0.03]">
-                <div className="grid grid-cols-7 border-b border-white/[0.04] px-4 py-3.5 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
+              <div className="overflow-hidden rounded-[18px] border border-white/[0.025] bg-white/[0.018]">
+                <div className="grid grid-cols-7 border-b border-white/[0.025] px-4 py-3.5 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
                   <div>Quest</div>
                   <div>Verification</div>
                   <div>Submissions</div>
@@ -946,7 +896,7 @@ export default function AnalyticsPage() {
                 {questReviewLoad.map((quest) => (
                   <div
                     key={quest.id}
-                    className="grid grid-cols-7 items-center border-b border-white/[0.04] px-4 py-3.5 text-[13px] text-text last:border-b-0"
+                    className="grid grid-cols-7 items-center border-b border-white/[0.025] px-4 py-3.5 text-[13px] text-text last:border-b-0"
                   >
                     <div className="font-semibold">{quest.title}</div>
                     <div className="capitalize">{humanize(quest.verificationType)}</div>
@@ -995,10 +945,52 @@ function formatCurrencyValue(value: number) {
   }).format(value);
 }
 
+function AnalyticsViewSwitch({
+  value,
+  onChange,
+}: {
+  value: AnalyticsView;
+  onChange: (next: AnalyticsView) => void;
+}) {
+  return (
+    <div className="inline-flex flex-wrap gap-1 rounded-[14px] border border-white/[0.025] bg-white/[0.016] p-1">
+      {analyticsViewOptions.map((option) => {
+        const active = option.value === value;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            className={`rounded-[11px] px-2.5 py-1.5 text-[11px] font-semibold transition ${
+              active
+                ? "bg-white/[0.08] text-text"
+                : "text-sub hover:bg-white/[0.04] hover:text-text"
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function SoftRouteLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+    >
+      {label}
+    </Link>
+  );
+}
+
 function ModeCard({ label, body }: { label: string; body: string }) {
   return (
-    <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3 py-3">
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{label}</p>
+    <div className="rounded-[16px] border border-white/[0.025] bg-white/[0.016] px-3 py-2.5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">{label}</p>
       <p className="mt-1.5 text-[11px] leading-5 text-sub">{body}</p>
     </div>
   );
@@ -1014,7 +1006,7 @@ function LinkRow({
   body: string;
 }) {
   return (
-    <Link href={href} className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3.5 py-3 transition hover:border-primary/40">
+    <Link href={href} className="rounded-[16px] border border-white/[0.025] bg-white/[0.016] px-3.5 py-3 transition hover:border-white/[0.08]">
       <p className="text-[13px] font-bold text-text">{title}</p>
       <p className="mt-1.5 text-[11px] leading-5 text-sub">{body}</p>
     </Link>
@@ -1031,10 +1023,10 @@ function RouteRow({
   share: number;
 }) {
   return (
-    <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3 py-2.5">
+    <div className="rounded-[16px] border border-white/[0.025] bg-white/[0.016] px-3 py-2.5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-text">{label}</p>
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
           {value} ({share}%)
         </span>
       </div>
@@ -1050,7 +1042,7 @@ function SnapshotStat({
   value: number;
 }) {
   return (
-    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.03] px-3 py-2.5">
+    <div className="rounded-[14px] border border-white/[0.025] bg-white/[0.016] px-3 py-2.5">
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-1 text-[0.92rem] font-extrabold text-text">{value}</p>
     </div>
