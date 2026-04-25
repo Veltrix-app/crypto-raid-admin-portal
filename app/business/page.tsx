@@ -12,7 +12,6 @@ import {
 import {
   OpsMetricCard,
   OpsPanel,
-  OpsPriorityLink,
   OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
@@ -46,86 +45,6 @@ function formatDateLabel(value: string | null) {
     month: "short",
     year: "numeric",
   }).format(date);
-}
-
-function healthTone(value: BusinessControlAccountSummary["commercialHealth"]) {
-  switch (value) {
-    case "blocked":
-      return "danger";
-    case "payment_risk":
-    case "upgrade_ready":
-      return "warning";
-    case "churn_risk":
-    case "watching":
-      return "default";
-    default:
-      return "success";
-  }
-}
-
-function collectionTone(value: BusinessControlAccountSummary["collectionStatus"]) {
-  switch (value) {
-    case "payment_failed":
-    case "action_required":
-      return "warning";
-    case "renewing_soon":
-      return "default";
-    case "refunded":
-      return "danger";
-    default:
-      return "success";
-  }
-}
-
-function QueueList({
-  title,
-  description,
-  accounts,
-  emptyTitle,
-  emptyDescription,
-}: {
-  title: string;
-  description: string;
-  accounts: BusinessControlAccountSummary[];
-  emptyTitle: string;
-  emptyDescription: string;
-}) {
-  return (
-    <OpsPanel eyebrow="Queue" title={title} description={description}>
-      {accounts.length ? (
-        <div className="space-y-3">
-          {accounts.slice(0, 5).map((account) => (
-            <Link
-              key={account.accountId}
-              href={`/business/accounts/${account.accountId}`}
-              className="block rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-3.5 transition hover:border-primary/30"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-[13px] font-bold text-text">{account.accountName}</p>
-                  <p className="mt-1.5 text-[12px] leading-5 text-sub">
-                    {account.planName} | {account.billingStatus} | next window{" "}
-                    {formatDateLabel(account.nextBillingAt)}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <OpsStatusPill tone={healthTone(account.commercialHealth)}>
-                    {account.commercialHealth.replaceAll("_", " ")}
-                  </OpsStatusPill>
-                  <OpsStatusPill tone={collectionTone(account.collectionStatus)}>
-                    {account.collectionStatus.replaceAll("_", " ")}
-                  </OpsStatusPill>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <InlineEmptyNotice title={emptyTitle} description={emptyDescription} />
-      )}
-    </OpsPanel>
-  );
 }
 
 export default function BusinessPage() {
@@ -177,6 +96,16 @@ export default function BusinessPage() {
     () => overview?.accounts.slice(0, 8) ?? [],
     [overview?.accounts]
   );
+  const billingOpsAccounts = useMemo(() => {
+    if (!overview) return [];
+
+    return overview.queues.failedPayments.concat(
+      overview.queues.pastDueAndGrace.filter(
+        (account) =>
+          !overview.queues.failedPayments.some((failed) => failed.accountId === account.accountId)
+      )
+    );
+  }, [overview]);
 
   if (role !== "super_admin") {
     return (
@@ -239,239 +168,282 @@ export default function BusinessPage() {
         eyebrow="Business control"
         title="Business"
         description="Run the commercial machine from one internal cockpit: revenue posture, billing ops, collections and the accounts that need attention next."
-        actions={
-          <div className="space-y-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
-              Veltrix internal
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <OpsStatusPill tone="success">{overview.revenue.activePaidAccounts} paid</OpsStatusPill>
-              <OpsStatusPill tone="default">{overview.revenue.trialingAccounts} trialing</OpsStatusPill>
-              <OpsStatusPill tone="warning">
-                {overview.collections.failedPaymentCount} failed payments
-              </OpsStatusPill>
-            </div>
-            <Link
-              href="/qa"
-              className="inline-flex items-center rounded-full border border-white/12 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
-            >
-              QA board
-            </Link>
-          </div>
-        }
         statusBand={
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-4">
-              <OpsMetricCard label="MRR" value={formatCurrency(overview.revenue.mrr)} emphasis="primary" />
+            <div className="grid gap-2.5 md:grid-cols-4">
+              <OpsMetricCard label="MRR" value={formatCurrency(overview.revenue.mrr)} />
               <OpsMetricCard label="ARR run rate" value={formatCurrency(overview.revenue.arrRunRate)} />
-              <OpsMetricCard label="Past due exposure" value={formatCurrency(overview.collections.pastDueExposure)} emphasis={overview.collections.pastDueExposure > 0 ? "warning" : "default"} />
-              <OpsMetricCard label="Upgrade candidates" value={overview.queues.upgradeCandidates.length} emphasis={overview.queues.upgradeCandidates.length > 0 ? "warning" : "default"} />
+              <OpsMetricCard label="Past due exposure" value={formatCurrency(overview.collections.pastDueExposure)} />
+              <OpsMetricCard label="Upgrade candidates" value={overview.queues.upgradeCandidates.length} />
             </div>
 
-            <div className="rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="max-w-xl">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-                    Commercial command read
-                  </p>
-                  <h2 className="mt-1.5 text-[0.94rem] font-semibold tracking-tight text-text">
-                    Read revenue pressure first, then decide whether the next move is collections, activation, or expansion.
-                  </h2>
-                  <p className="mt-1.5 max-w-2xl text-[11px] leading-5 text-sub">
-                    This cockpit should answer what is moving now, which accounts need a human move next, and where hidden billing or activation drag is building beneath the topline.
-                  </p>
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <OpsPanel
+                eyebrow="Commercial command read"
+                title="Read revenue pressure first, then choose collections, activation, or expansion."
+                description="This page should answer what is moving now, which account needs a human move next, and where hidden billing or activation drag is building beneath the topline."
+              >
+                <div className="grid gap-2.5 lg:grid-cols-3">
+                  <OpsSnapshotRow
+                    label="Now"
+                    value={
+                      overview.collections.failedPaymentCount > 0
+                        ? `${overview.collections.failedPaymentCount} payment failures need billing ops attention`
+                        : "Collections look calm right now"
+                    }
+                  />
+                  <OpsSnapshotRow
+                    label="Next"
+                    value={
+                      highestPressureAccounts[0]
+                        ? `Open ${highestPressureAccounts[0].accountName} as the next commercial account`
+                        : "No urgent account is bubbling to the top"
+                    }
+                  />
+                  <OpsSnapshotRow
+                    label="Watch"
+                    value={
+                      overview.health.paidButUnderusedAccounts > 0
+                        ? `${overview.health.paidButUnderusedAccounts} paid accounts are drifting in activation`
+                        : "Activation drift is currently low"
+                    }
+                  />
                 </div>
+              </OpsPanel>
 
-                <div className="flex flex-wrap gap-2">
-                  <OpsStatusPill tone={overview.collections.failedPaymentCount > 0 ? "warning" : "success"}>
-                    {overview.collections.failedPaymentCount} failed payments
-                  </OpsStatusPill>
-                  <OpsStatusPill tone={overview.health.paidButUnderusedAccounts > 0 ? "warning" : "default"}>
-                    {overview.health.paidButUnderusedAccounts} underused paid
-                  </OpsStatusPill>
-                  <OpsStatusPill tone={overview.queues.upgradeCandidates.length > 0 ? "warning" : "success"}>
-                    {overview.queues.upgradeCandidates.length} upgrade-ready
-                  </OpsStatusPill>
+              <OpsPanel
+                eyebrow="Business routes"
+                title="Internal board"
+                description="Keep related operator routes close without turning the hero into a badge wall."
+              >
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <OpsStatusPill tone="default">{overview.revenue.activePaidAccounts} paid</OpsStatusPill>
+                    <OpsStatusPill tone="default">{overview.revenue.trialingAccounts} trialing</OpsStatusPill>
+                    <OpsStatusPill tone="default">
+                      {overview.collections.failedPaymentCount} failed payments
+                    </OpsStatusPill>
+                  </div>
+                  <Link
+                    href="/qa"
+                    className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+                  >
+                    QA board
+                  </Link>
                 </div>
-              </div>
-
-              <div className="mt-3.5 grid gap-2.5 lg:grid-cols-3">
-                <OpsSnapshotRow
-                  label="Now"
-                  value={
-                    overview.collections.failedPaymentCount > 0
-                      ? `${overview.collections.failedPaymentCount} payment failures need billing ops attention`
-                      : "Collections look calm right now"
-                  }
-                />
-                <OpsSnapshotRow
-                  label="Next"
-                  value={
-                    highestPressureAccounts[0]
-                      ? `Open ${highestPressureAccounts[0].accountName} as the next commercial account`
-                      : "No urgent account is bubbling to the top"
-                  }
-                />
-                <OpsSnapshotRow
-                  label="Watch"
-                  value={
-                    overview.health.paidButUnderusedAccounts > 0
-                      ? `${overview.health.paidButUnderusedAccounts} paid accounts are drifting in activation`
-                      : "Activation drift is currently low"
-                  }
-                />
-              </div>
+              </OpsPanel>
             </div>
           </div>
         }
       >
-        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.02fr_0.98fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_380px]">
           <OpsPanel
-            eyebrow="Revenue overview"
-            title="Commercial mix"
-            description="Track the high-level commercial posture before drilling into queues or individual accounts."
+            eyebrow="Commercial model"
+            title="Revenue, plan mix and collection read"
+            description="Keep the money view together first: revenue posture, collection movement and plan distribution."
           >
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <OpsMetricCard label="Active paid" value={overview.revenue.activePaidAccounts} />
-              <OpsMetricCard label="Trialing" value={overview.revenue.trialingAccounts} />
-              <OpsMetricCard label="Free" value={overview.revenue.freeAccounts} />
-              <OpsMetricCard label="New conversions" value={overview.revenue.newConversions} />
-              <OpsMetricCard label="Upgrades" value={overview.revenue.upgrades} />
-              <OpsMetricCard label="Churned" value={overview.revenue.churnedAccounts} emphasis={overview.revenue.churnedAccounts > 0 ? "warning" : "default"} />
-            </div>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {overview.planMix.map((entry) => (
-                <div key={entry.planId} className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3.5 py-3.5">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{entry.label}</p>
-                  <p className="mt-2 text-[1.02rem] font-extrabold text-text">{entry.count}</p>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div>
+                <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
+                  Revenue mix
+                </p>
+                <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+                  <OpsMetricCard label="Active paid" value={overview.revenue.activePaidAccounts} />
+                  <OpsMetricCard label="Trialing" value={overview.revenue.trialingAccounts} />
+                  <OpsMetricCard label="Free" value={overview.revenue.freeAccounts} />
+                  <OpsMetricCard label="New conversions" value={overview.revenue.newConversions} />
+                  <OpsMetricCard label="Upgrades" value={overview.revenue.upgrades} />
+                  <OpsMetricCard label="Churned" value={overview.revenue.churnedAccounts} />
                 </div>
-              ))}
+              </div>
+
+              <div className="space-y-2.5">
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
+                  Collections
+                </p>
+                <OpsMetricCard label="Gross collected" value={formatCurrency(overview.collections.grossCollectedThisMonth)} />
+                <OpsMetricCard label="Refunds" value={formatCurrency(overview.collections.refundTotalThisMonth)} />
+                <OpsMetricCard label="Net collected" value={formatCurrency(overview.collections.netCollectedThisMonth)} />
+                <OpsMetricCard label="Upcoming renewals" value={overview.collections.upcomingRenewals} />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
+                Plan mix
+              </p>
+              <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
+                {overview.planMix.map((entry) => (
+                  <div key={entry.planId} className="rounded-[14px] border border-white/[0.025] bg-white/[0.014] px-3 py-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{entry.label}</p>
+                    <p className="mt-1.5 text-[0.96rem] font-semibold text-text">{entry.count}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </OpsPanel>
 
           <OpsPanel
-            eyebrow="Collections snapshot"
-            title="Cash and renewal pressure"
-            description="See what collected this month, where money is at risk and which renewals are close."
-            tone="accent"
+            eyebrow="Queue rail"
+            title="Where the team acts next"
+            description="Collections and upgrade pressure belong in one action rail, not two competing dashboards."
           >
-            <div className="grid gap-4 md:grid-cols-2">
-              <OpsMetricCard label="Gross collected" value={formatCurrency(overview.collections.grossCollectedThisMonth)} />
-              <OpsMetricCard label="Refunds" value={formatCurrency(overview.collections.refundTotalThisMonth)} emphasis={overview.collections.refundTotalThisMonth > 0 ? "warning" : "default"} />
-              <OpsMetricCard label="Net collected" value={formatCurrency(overview.collections.netCollectedThisMonth)} emphasis="primary" />
-              <OpsMetricCard label="Upcoming renewals" value={overview.collections.upcomingRenewals} />
+            <div className="space-y-3">
+              <QueueSummary
+                title="Billing ops"
+                count={billingOpsAccounts.length}
+                body={
+                  billingOpsAccounts.length
+                    ? "Payment or past-due accounts need a commercial follow-up."
+                    : "No failed payments or past-due accounts need immediate follow-up."
+                }
+              />
+              <QueueSummary
+                title="Upgrade pressure"
+                count={overview.queues.upgradeCandidates.length}
+                body={
+                  overview.queues.upgradeCandidates.length
+                    ? "Accounts are near plan ceilings and may need an expansion move."
+                    : "No account is pressing hard into plan limits right now."
+                }
+              />
+
+              <div className="space-y-2.5 border-t border-white/[0.025] pt-3">
+                {overview.queues.upgradeCandidates.slice(0, 4).map((account) => (
+                  <AccountMiniRow key={account.accountId} account={account} />
+                ))}
+                {overview.queues.upgradeCandidates.length === 0 ? (
+                  <p className="text-[12px] leading-5 text-sub">
+                    Upgrade pressure will appear here as accounts move closer to commercial limits.
+                  </p>
+                ) : null}
+              </div>
             </div>
           </OpsPanel>
         </div>
 
-        <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
-          <QueueList
-            title="Billing ops queue"
-            description="Accounts where collections or subscription posture need direct intervention."
-            accounts={overview.queues.failedPayments.concat(
-              overview.queues.pastDueAndGrace.filter(
-                (account) =>
-                  !overview.queues.failedPayments.some(
-                    (failed) => failed.accountId === account.accountId
-                  )
-              )
-            )}
-            emptyTitle="Billing ops queue is clear"
-            emptyDescription="There are no failed payments or past-due accounts needing immediate billing follow-up."
-          />
-
-          <QueueList
-            title="Upgrade pressure"
-            description="Accounts already near or past plan limits and most likely to hit Upgrade now / Pay and continue."
-            accounts={overview.queues.upgradeCandidates}
-            emptyTitle="No upgrade pressure right now"
-            emptyDescription="No account is currently pushing hard enough into plan ceilings to require immediate commercial follow-up."
-          />
-        </div>
-
-        <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_380px]">
           <OpsPanel
             eyebrow="Account health"
-            title="Activation and underuse"
-            description="Catch accounts that are paying but not activating, or that never made it through the first meaningful setup steps."
+            title="Activation, underuse and limit pressure"
+            description="This is the operating read after revenue: who is paying but not moving, and where limits are tightening."
           >
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <OpsMetricCard label="No first project" value={overview.health.accountsWithoutFirstProject} emphasis={overview.health.accountsWithoutFirstProject > 0 ? "warning" : "default"} />
-              <OpsMetricCard label="No live campaign" value={overview.health.accountsWithoutFirstLiveCampaign} emphasis={overview.health.accountsWithoutFirstLiveCampaign > 0 ? "warning" : "default"} />
-              <OpsMetricCard label="Paid but underused" value={overview.health.paidButUnderusedAccounts} emphasis={overview.health.paidButUnderusedAccounts > 0 ? "warning" : "default"} />
-              <OpsMetricCard label="Grace state" value={overview.health.graceStateAccounts} />
-              <OpsMetricCard label="Blocked by entitlement" value={overview.health.accountsBlockedByEntitlement} emphasis={overview.health.accountsBlockedByEntitlement > 0 ? "warning" : "default"} />
-              <OpsMetricCard label="Enterprise review" value={overview.health.enterpriseReviewAccounts} />
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div>
+                <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
+                  Health
+                </p>
+                <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+                  <OpsMetricCard label="No first project" value={overview.health.accountsWithoutFirstProject} />
+                  <OpsMetricCard label="No live campaign" value={overview.health.accountsWithoutFirstLiveCampaign} />
+                  <OpsMetricCard label="Paid but underused" value={overview.health.paidButUnderusedAccounts} />
+                  <OpsMetricCard label="Grace state" value={overview.health.graceStateAccounts} />
+                  <OpsMetricCard label="Blocked entitlement" value={overview.health.accountsBlockedByEntitlement} />
+                  <OpsMetricCard label="Enterprise review" value={overview.health.enterpriseReviewAccounts} />
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
+                  Limit pressure
+                </p>
+                <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+                  <OpsMetricCard label="Projects" value={overview.growthPressure.nearProjectLimit} />
+                  <OpsMetricCard label="Campaigns" value={overview.growthPressure.nearCampaignLimit} />
+                  <OpsMetricCard label="Quests" value={overview.growthPressure.nearQuestLimit} />
+                  <OpsMetricCard label="Raids" value={overview.growthPressure.nearRaidLimit} />
+                  <OpsMetricCard label="Seats" value={overview.growthPressure.nearSeatLimit} />
+                  <OpsMetricCard label="Providers" value={overview.growthPressure.nearProviderLimit} />
+                </div>
+              </div>
             </div>
           </OpsPanel>
 
           <OpsPanel
-            eyebrow="Pressure map"
-            title="Where limits are tightening"
-            description="A quick count of accounts crossing the warning threshold on each commercial limit."
+            eyebrow="Accounts"
+            title="Next look"
+            description="The first accounts the commercial team should open in this operating window."
           >
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <OpsMetricCard label="Projects" value={overview.growthPressure.nearProjectLimit} />
-              <OpsMetricCard label="Campaigns" value={overview.growthPressure.nearCampaignLimit} />
-              <OpsMetricCard label="Quests" value={overview.growthPressure.nearQuestLimit} />
-              <OpsMetricCard label="Raids" value={overview.growthPressure.nearRaidLimit} />
-              <OpsMetricCard label="Seats" value={overview.growthPressure.nearSeatLimit} />
-              <OpsMetricCard label="Providers" value={overview.growthPressure.nearProviderLimit} />
-            </div>
+            {highestPressureAccounts.length ? (
+              <div className="space-y-2.5">
+                {highestPressureAccounts.map((account) => (
+                  <AccountMiniRow key={account.accountId} account={account} showUsage />
+                ))}
+              </div>
+            ) : (
+              <InlineEmptyNotice
+                title="No accounts need review"
+                description="The commercial queues are currently quiet and there are no accounts bubbling up into the first review set."
+              />
+            )}
           </OpsPanel>
         </div>
-
-        <OpsPanel
-          eyebrow="Accounts"
-          title="Accounts needing the next look"
-          description="The first rows here are the most urgent commercial accounts in the current operating window."
-        >
-          {highestPressureAccounts.length ? (
-            <div className="space-y-3">
-              {highestPressureAccounts.map((account) => (
-                <Link
-                  key={account.accountId}
-                  href={`/business/accounts/${account.accountId}`}
-                  className="block rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-3.5 transition hover:border-primary/30"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <p className="text-sm font-bold text-text">{account.accountName}</p>
-                        <OpsStatusPill tone={healthTone(account.commercialHealth)}>
-                          {account.commercialHealth.replaceAll("_", " ")}
-                        </OpsStatusPill>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-sub">
-                        {account.planName} | {account.billingStatus} | renewal {formatDateLabel(account.nextBillingAt)}
-                      </p>
-                    </div>
-
-                    <div className="grid min-w-[260px] gap-2 text-right text-sm text-sub md:grid-cols-2">
-                      <p>
-                        Projects {account.usage.projects}/{account.limits.projects}
-                      </p>
-                      <p>
-                        Campaigns {account.usage.activeCampaigns}/{account.limits.campaigns}
-                      </p>
-                      <p>
-                        Seats {account.usage.billableSeats}/{account.limits.seats}
-                      </p>
-                      <p>{formatCurrency(account.currentMrrContribution)} MRR</p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <InlineEmptyNotice
-              title="No accounts need review"
-              description="The commercial queues are currently quiet and there are no accounts bubbling up into the first review set."
-            />
-          )}
-        </OpsPanel>
       </PortalPageFrame>
     </AdminShell>
+  );
+}
+
+function QueueSummary({
+  title,
+  count,
+  body,
+}: {
+  title: string;
+  count: number;
+  body: string;
+}) {
+  return (
+    <div className="rounded-[16px] border border-white/[0.025] bg-white/[0.014] px-3 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[13px] font-semibold text-text">{title}</p>
+          <p className="mt-1 text-[11px] leading-5 text-sub">{body}</p>
+        </div>
+        <span className="rounded-full border border-white/[0.025] bg-white/[0.018] px-2.5 py-1 text-[10px] font-bold text-sub">
+          {count}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function AccountMiniRow({
+  account,
+  showUsage = false,
+}: {
+  account: BusinessControlAccountSummary;
+  showUsage?: boolean;
+}) {
+  return (
+    <Link
+      href={`/business/accounts/${account.accountId}`}
+      className="block rounded-[16px] border border-white/[0.025] bg-white/[0.014] px-3 py-3 transition hover:border-white/[0.08]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-[13px] font-semibold text-text">{account.accountName}</p>
+          <p className="mt-1 text-[11px] leading-5 text-sub">
+            {account.planName} | {account.billingStatus} | renewal{" "}
+            {formatDateLabel(account.nextBillingAt)}
+          </p>
+        </div>
+        <OpsStatusPill tone="default">{account.commercialHealth.replaceAll("_", " ")}</OpsStatusPill>
+      </div>
+
+      {showUsage ? (
+        <div className="mt-3 grid gap-2 border-t border-white/[0.025] pt-3 text-[11px] text-sub sm:grid-cols-2">
+          <p>
+            Projects {account.usage.projects}/{account.limits.projects}
+          </p>
+          <p>
+            Campaigns {account.usage.activeCampaigns}/{account.limits.campaigns}
+          </p>
+          <p>
+            Seats {account.usage.billableSeats}/{account.limits.seats}
+          </p>
+          <p>{formatCurrency(account.currentMrrContribution)} MRR</p>
+        </div>
+      ) : null}
+    </Link>
   );
 }
