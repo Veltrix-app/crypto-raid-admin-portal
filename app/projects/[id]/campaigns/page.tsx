@@ -3,18 +3,16 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
-import { FolderPlus, Swords, Target } from "lucide-react";
+import { ArrowUpRight, FolderPlus, Swords, Target } from "lucide-react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
-import OpsTable, { type OpsTableColumn } from "@/components/layout/ops/OpsTable";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
 import ProjectTemplateLibrary from "@/components/projects/templates/ProjectTemplateLibrary";
 import { buildProjectBuilderLibrary } from "@/lib/templates/project-builder-library";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
-import type { AdminCampaign } from "@/types/entities/campaign";
 
 export default function ProjectCampaignsPage() {
   const params = useParams<{ id: string }>();
@@ -83,46 +81,12 @@ export default function ProjectCampaignsPage() {
     ),
   });
 
-  const columns: OpsTableColumn<AdminCampaign>[] = [
-    {
-      key: "title",
-      label: "Campaign",
-      render: (campaign) => (
-        <div>
-          <p className="font-semibold text-text">{campaign.title}</p>
-          <p className="mt-1 text-xs text-sub">{campaign.shortDescription || "No short description yet."}</p>
-        </div>
-      ),
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (campaign) => (
-        <OpsStatusPill tone={campaign.status === "active" ? "success" : "default"}>
-          {campaign.status}
-        </OpsStatusPill>
-      ),
-    },
-    {
-      key: "participants",
-      label: "Participants",
-      render: (campaign) => campaign.participants.toLocaleString(),
-    },
-    {
-      key: "budget",
-      label: "XP budget",
-      render: (campaign) => campaign.xpBudget.toLocaleString(),
-    },
-    {
-      key: "open",
-      label: "Open",
-      render: (campaign) => (
-        <Link href={`/campaigns/${campaign.id}`} className="font-semibold text-primary">
-          View
-        </Link>
-      ),
-    },
-  ];
+  const activeCampaigns = projectCampaigns.filter((campaign) => campaign.status === "active");
+  const totalParticipants = projectCampaigns.reduce(
+    (sum, campaign) => sum + campaign.participants,
+    0
+  );
+  const totalXpBudget = projectCampaigns.reduce((sum, campaign) => sum + campaign.xpBudget, 0);
 
   return (
     <AdminShell>
@@ -138,69 +102,131 @@ export default function ProjectCampaignsPage() {
           operatorIncidentCount: 0,
         })}
       >
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
-          <OpsPanel
-            eyebrow="Campaign board"
-            title="Project campaigns"
-            description="Scan the campaign roster, then jump straight into Campaign Studio, Quest Studio or the next raid builder without losing project context."
-            action={
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href={`/campaigns/new?projectId=${project.id}&source=campaign-board`}
-                  className="inline-flex items-center gap-2 rounded-[14px] bg-primary px-3.5 py-2.5 text-[12px] font-bold text-black"
-                >
-                  <FolderPlus size={15} />
-                  Campaign Studio
-                </Link>
-                <Link
-                  href={`/quests/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
-                  className="inline-flex items-center gap-2 rounded-[14px] border border-white/[0.03] bg-white/[0.018] px-3.5 py-2.5 text-[12px] font-bold text-text transition hover:border-white/[0.06]"
-                >
-                  <Target size={15} />
-                  Quest Studio
-                </Link>
-                <Link
-                  href={`/raids/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
-                  className="inline-flex items-center gap-2 rounded-[14px] border border-white/[0.03] bg-white/[0.018] px-3.5 py-2.5 text-[12px] font-bold text-text transition hover:border-white/[0.06]"
-                >
-                  <Swords size={15} />
-                  Raid Builder
-                </Link>
-              </div>
-            }
-          >
-            <div className="grid gap-2.5 md:grid-cols-4">
-              <OpsMetricCard label="Campaigns" value={projectCampaigns.length} />
-              <OpsMetricCard
-                label="Active"
-                value={projectCampaigns.filter((campaign) => campaign.status === "active").length}
-                emphasis="primary"
-              />
-              <OpsMetricCard label="Quests" value={projectQuests.length} />
-              <OpsMetricCard label="Raids" value={projectRaids.length} />
+        <OpsPanel
+          eyebrow="Campaign board"
+          title="Project campaigns"
+          description="Scan the campaign lanes first, then jump into Campaign Studio, Quest Studio or Raid Builder without losing project context."
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/campaigns/new?projectId=${project.id}&source=campaign-board`}
+                className="inline-flex items-center gap-2 rounded-[14px] bg-primary px-3.5 py-2.5 text-[12px] font-bold text-black"
+              >
+                <FolderPlus size={15} />
+                Campaign Studio
+              </Link>
+              <Link
+                href={`/quests/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
+                className="inline-flex items-center gap-2 rounded-[14px] bg-white/[0.018] px-3.5 py-2.5 text-[12px] font-bold text-text transition hover:bg-white/[0.035]"
+              >
+                <Target size={15} />
+                Quest Studio
+              </Link>
+              <Link
+                href={`/raids/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
+                className="inline-flex items-center gap-2 rounded-[14px] bg-white/[0.018] px-3.5 py-2.5 text-[12px] font-bold text-text transition hover:bg-white/[0.035]"
+              >
+                <Swords size={15} />
+                Raid Builder
+              </Link>
             </div>
-          </OpsPanel>
-
-          <OpsPanel
-            eyebrow="Starter library"
-            title="Campaign packs and quest kits"
-            description="Start from saved project variants instead of jumping into blank creation flows."
-          >
-            <ProjectTemplateLibrary sections={templateLibrarySections} />
-          </OpsPanel>
-        </div>
+          }
+        >
+          <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
+            <OpsMetricCard label="Campaigns" value={projectCampaigns.length} />
+            <OpsMetricCard label="Active" value={activeCampaigns.length} emphasis="primary" />
+            <OpsMetricCard label="Participants" value={totalParticipants.toLocaleString()} />
+            <OpsMetricCard label="XP budget" value={totalXpBudget.toLocaleString()} />
+          </div>
+        </OpsPanel>
 
         <OpsPanel
-          eyebrow="Campaign roster"
-          title="Current campaign lanes"
-          description="Use this route to scan project momentum first, then move into campaign detail or open the next studio from the same workspace."
+          eyebrow="Campaign lanes"
+          title="Current campaigns"
+          description="A clean project-level roster: status, reach and next edit action in one scan."
         >
-          <OpsTable
-            columns={columns}
-            rows={projectCampaigns}
-            getRowKey={(campaign) => campaign.id}
-            emptyState="No campaigns exist for this project yet."
-          />
+          {projectCampaigns.length > 0 ? (
+            <div className="grid gap-2.5 lg:grid-cols-2 2xl:grid-cols-3">
+              {projectCampaigns.map((campaign) => (
+                <article
+                  key={campaign.id}
+                  className="group rounded-[16px] bg-white/[0.014] p-3.5 transition-colors duration-200 hover:bg-white/[0.028]"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <OpsStatusPill tone={campaign.status === "active" ? "success" : "default"}>
+                          {campaign.status}
+                        </OpsStatusPill>
+                        <span className="rounded-full bg-white/[0.02] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-sub">
+                          {campaign.campaignType.replaceAll("_", " ")}
+                        </span>
+                      </div>
+                      <h3 className="mt-3 break-words text-[0.98rem] font-semibold tracking-[-0.02em] text-text [overflow-wrap:anywhere]">
+                        {campaign.title}
+                      </h3>
+                      <p className="mt-1.5 line-clamp-2 break-words text-[12px] leading-5 text-sub [overflow-wrap:anywhere]">
+                        {campaign.shortDescription || "No short description yet."}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/campaigns/${campaign.id}`}
+                      className="rounded-full bg-white/[0.026] p-2 text-sub transition group-hover:bg-primary/15 group-hover:text-primary"
+                      aria-label={`Open ${campaign.title}`}
+                    >
+                      <ArrowUpRight size={15} />
+                    </Link>
+                  </div>
+
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    <div className="rounded-[12px] bg-black/20 px-3 py-2">
+                      <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-sub">
+                        Participants
+                      </p>
+                      <p className="mt-1 text-[12px] font-semibold text-text">
+                        {campaign.participants.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="rounded-[12px] bg-black/20 px-3 py-2">
+                      <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-sub">
+                        Completion
+                      </p>
+                      <p className="mt-1 text-[12px] font-semibold text-text">
+                        {campaign.completionRate}%
+                      </p>
+                    </div>
+                    <div className="rounded-[12px] bg-black/20 px-3 py-2">
+                      <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-sub">
+                        XP budget
+                      </p>
+                      <p className="mt-1 text-[12px] font-semibold text-text">
+                        {campaign.xpBudget.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold text-sub">
+                    <span>{campaign.visibility}</span>
+                    <Link href={`/campaigns/${campaign.id}`} className="text-primary">
+                      Open campaign
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[16px] bg-white/[0.014] px-4 py-5 text-sm text-sub">
+              No campaigns exist for this project yet. Start with Campaign Studio or use a route below.
+            </div>
+          )}
+        </OpsPanel>
+
+        <OpsPanel
+          eyebrow="Starter routes"
+          title="Campaign packs and quest kits"
+          description="Use proven routes after the roster, not as a side rail that steals the page layout."
+        >
+          <ProjectTemplateLibrary sections={templateLibrarySections} layout="wide" />
         </OpsPanel>
 
       </ProjectWorkspaceFrame>

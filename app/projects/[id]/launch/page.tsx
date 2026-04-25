@@ -624,7 +624,7 @@ function ProjectLaunchContent() {
               description="Campaign packs, quest kits, raid kits and playbooks are kept secondary so the launch checklist stays the main surface."
               className="border-white/[0.02]"
             >
-              <ProjectTemplateLibrary sections={templateLibrarySections} />
+              <ProjectTemplateLibrary sections={templateLibrarySections} layout="wide" />
             </OpsPanel>
 
             <div className="grid gap-3 2xl:grid-cols-2 2xl:items-start">

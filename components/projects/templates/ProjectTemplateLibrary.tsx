@@ -6,11 +6,13 @@ import type { ProjectBuilderLibrarySection } from "@/lib/templates/project-build
 
 export default function ProjectTemplateLibrary({
   sections,
+  layout = "stack",
 }: {
   sections: ProjectBuilderLibrarySection[];
+  layout?: "stack" | "wide";
 }) {
   return (
-    <div className="grid gap-2.5 2xl:grid-cols-2">
+    <div className={layout === "wide" ? "grid gap-2.5 2xl:grid-cols-2" : "grid gap-2.5"}>
       {sections.map((section) => (
         <div
           key={section.kind}
