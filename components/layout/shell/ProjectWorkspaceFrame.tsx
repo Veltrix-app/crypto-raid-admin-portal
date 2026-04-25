@@ -71,8 +71,8 @@ export default function ProjectWorkspaceFrame({
           </div>
         </div>
 
-        <div className="mt-4 overflow-x-auto border-t border-white/[0.028] pt-3">
-          <div className="inline-flex min-w-full gap-1.5">
+        <div className="mt-3 overflow-x-auto border-t border-white/[0.024] pt-2.5">
+          <div className="inline-flex min-w-full gap-1">
             {PROJECT_WORKSPACE_TABS.map((tab) => {
               const href = getProjectWorkspaceHref(projectId, tab.slug);
               const active = isWorkspaceTabActive(pathname, projectId, tab);
@@ -82,10 +82,10 @@ export default function ProjectWorkspaceFrame({
                   key={tab.slug || "overview"}
                   href={href}
                   className={cn(
-                    "rounded-[12px] px-3 py-2 text-[12px] font-semibold transition",
+                    "rounded-[11px] px-3 py-2 text-[12px] font-semibold transition",
                     active
-                      ? "bg-white/[0.085] text-text shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)]"
-                      : "border border-transparent bg-white/[0.014] text-sub hover:border-white/[0.05] hover:bg-white/[0.03] hover:text-text"
+                      ? "bg-white/[0.072] text-text shadow-[inset_0_0_0_1px_rgba(255,255,255,0.032)]"
+                      : "border border-transparent bg-transparent text-sub hover:border-white/[0.04] hover:bg-white/[0.022] hover:text-text"
                   )}
                 >
                   {tab.label}

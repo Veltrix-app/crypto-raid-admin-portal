@@ -261,42 +261,43 @@ export default function ProjectTrustPage() {
           ]}
         />
 
-        <OpsPanel
-          eyebrow="Access posture"
-          title="Current trust visibility"
-          description="Project trust is deliberately permissioned. Owners decide what other teammates can inspect and which actions they may run."
-        >
-          <div className="flex flex-wrap gap-3">
-            {(trustAccess?.visibilityPermissions ?? ["trust_summary"]).map((permission) => (
-              <OpsStatusPill key={permission}>{permission.replace(/_/g, " ")}</OpsStatusPill>
-            ))}
-            {(trustAccess?.actionPermissions ?? []).map((permission) => (
-              <OpsStatusPill key={permission} tone="warning">
-                {permission.replace(/_/g, " ")}
-              </OpsStatusPill>
-            ))}
-          </div>
-          {summaryOnly ? (
-            <p className="mt-4 text-sm leading-6 text-sub">
-              This account is currently in summary-only mode. The owner can explicitly grant case
-              list visibility or action scopes if this teammate should work trust cases.
-            </p>
-          ) : null}
-        </OpsPanel>
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-start">
+          <OpsPanel
+            eyebrow="Access posture"
+            title="Current trust visibility"
+            description="Owners decide what teammates can inspect and which trust actions they may run."
+          >
+            <div className="flex flex-wrap gap-2">
+              {(trustAccess?.visibilityPermissions ?? ["trust_summary"]).map((permission) => (
+                <OpsStatusPill key={permission}>{permission.replace(/_/g, " ")}</OpsStatusPill>
+              ))}
+              {(trustAccess?.actionPermissions ?? []).map((permission) => (
+                <OpsStatusPill key={permission} tone="warning">
+                  {permission.replace(/_/g, " ")}
+                </OpsStatusPill>
+              ))}
+            </div>
+            {summaryOnly ? (
+              <p className="mt-3 text-sm leading-6 text-sub">
+                Summary-only mode is active. The owner can grant case visibility or action scopes when this teammate should work trust cases.
+              </p>
+            ) : null}
+          </OpsPanel>
 
-        <ProjectTrustPermissionsPanel
-          projectId={project.id}
-          teamMembers={teamMembers}
-          canManage={canManagePermissions}
-        />
+          <ProjectTrustPermissionsPanel
+            projectId={project.id}
+            teamMembers={teamMembers}
+            canManage={canManagePermissions}
+          />
+        </div>
 
         {loadError ? (
-          <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.02] px-5 py-5 text-sm text-rose-300">
+          <div className="rounded-[16px] border border-rose-500/20 bg-rose-500/10 px-4 py-4 text-sm text-rose-300">
             {loadError}
           </div>
         ) : null}
 
-        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid gap-3 xl:items-start xl:grid-cols-[1.08fr_0.92fr]">
           <ProjectTrustCasesPanel
             rows={trustCases}
             loading={loadingCases}
@@ -309,7 +310,7 @@ export default function ProjectTrustPage() {
             }
           />
 
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             <ProjectTrustCaseDetailPanel
               trustCase={summaryOnly ? null : trustCaseDetail}
               loading={loadingDetail}

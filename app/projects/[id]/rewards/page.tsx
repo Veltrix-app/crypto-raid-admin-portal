@@ -126,7 +126,7 @@ export default function ProjectRewardsPage() {
           title="Project rewards"
           description="Track reward inventory, claim pressure and the items that shape this workspace’s payout posture."
         >
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-2.5 md:grid-cols-4">
             <OpsMetricCard label="Rewards" value={projectRewards.length} />
             <OpsMetricCard
               label="Claimable"

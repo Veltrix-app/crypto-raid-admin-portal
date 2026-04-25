@@ -22,7 +22,7 @@ export default function OnchainHealthPanel({
 }) {
   return (
     <OpsPanel eyebrow={eyebrow} title={title} description={description}>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
           <OpsMetricCard
             key={metric.label}

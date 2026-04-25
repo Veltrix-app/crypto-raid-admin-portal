@@ -26,9 +26,9 @@ export default function OpsTable<T>({
   rowClassName,
 }: OpsTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-[22px] border border-white/6 bg-[linear-gradient(180deg,rgba(13,18,27,0.94),rgba(10,14,21,0.92))]">
+    <div className="overflow-x-auto overflow-y-hidden rounded-[18px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,18,27,0.92),rgba(10,14,21,0.9))]">
       <div
-        className="grid gap-3 border-b border-white/6 px-4 py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] text-sub"
+        className="grid min-w-[680px] gap-3 border-b border-white/[0.028] px-3.5 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-sub"
         style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
       >
         {columns.map((column) => (
@@ -43,13 +43,13 @@ export default function OpsTable<T>({
           <div
             key={getRowKey(row)}
             className={cn(
-              "grid gap-3 border-b border-white/6 px-4 py-3.5 text-sm text-text last:border-b-0",
+              "grid min-w-[680px] gap-3 border-b border-white/[0.026] px-3.5 py-3 text-[13px] text-text last:border-b-0",
               rowClassName
             )}
             style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
           >
             {columns.map((column) => (
-              <div key={column.key} className={cn("min-w-0", column.className)}>
+              <div key={column.key} className={cn("min-w-0 break-words [overflow-wrap:anywhere]", column.className)}>
                 {column.render(row)}
               </div>
             ))}

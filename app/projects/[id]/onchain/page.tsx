@@ -442,35 +442,35 @@ export default function ProjectOnchainPage() {
           ]}
         />
 
-        <OpsPanel
-          eyebrow="Access posture"
-          title="Current on-chain visibility"
-          description="Project on-chain resolution is deliberately permissioned. Owners decide what other teammates can inspect and which project-safe recovery actions they may run."
-        >
-          <div className="flex flex-wrap gap-3">
-            {(onchainAccess?.visibilityPermissions ?? ["onchain_summary"]).map((permission) => (
-              <OpsStatusPill key={permission}>{permission.replace(/_/g, " ")}</OpsStatusPill>
-            ))}
-            {(onchainAccess?.actionPermissions ?? []).map((permission) => (
-              <OpsStatusPill key={permission} tone="warning">
-                {permission.replace(/_/g, " ")}
-              </OpsStatusPill>
-            ))}
-          </div>
-          {summaryOnly ? (
-            <p className="mt-4 text-sm leading-6 text-sub">
-              This account is currently in summary-only mode. The owner can explicitly grant case
-              visibility or project-safe on-chain actions if this teammate should help with
-              recovery work.
-            </p>
-          ) : null}
-        </OpsPanel>
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-start">
+          <OpsPanel
+            eyebrow="Access posture"
+            title="Current on-chain visibility"
+            description="Owners decide what teammates can inspect and which recovery actions they may run."
+          >
+            <div className="flex flex-wrap gap-2">
+              {(onchainAccess?.visibilityPermissions ?? ["onchain_summary"]).map((permission) => (
+                <OpsStatusPill key={permission}>{permission.replace(/_/g, " ")}</OpsStatusPill>
+              ))}
+              {(onchainAccess?.actionPermissions ?? []).map((permission) => (
+                <OpsStatusPill key={permission} tone="warning">
+                  {permission.replace(/_/g, " ")}
+                </OpsStatusPill>
+              ))}
+            </div>
+            {summaryOnly ? (
+              <p className="mt-3 text-sm leading-6 text-sub">
+                Summary-only mode is active. The owner can grant case visibility or project-safe on-chain actions when this teammate should help with recovery.
+              </p>
+            ) : null}
+          </OpsPanel>
 
-        <ProjectOnchainPermissionsPanel
-          projectId={project.id}
-          teamMembers={teamMembers}
-          canManage={canManagePermissions}
-        />
+          <ProjectOnchainPermissionsPanel
+            projectId={project.id}
+            teamMembers={teamMembers}
+            canManage={canManagePermissions}
+          />
+        </div>
 
         {loadError ? (
           <div className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-5 py-5 text-sm text-rose-300">
@@ -478,7 +478,7 @@ export default function ProjectOnchainPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid gap-3 xl:items-start xl:grid-cols-[1.08fr_0.92fr]">
           <ProjectOnchainCasesPanel
             rows={onchainCases}
             loading={loadingCases}
@@ -491,7 +491,7 @@ export default function ProjectOnchainPage() {
             }
           />
 
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             <ProjectOnchainCaseDetailPanel
               onchainCase={summaryOnly ? null : onchainCaseDetail}
               loading={loadingDetail}
@@ -528,7 +528,7 @@ export default function ProjectOnchainPage() {
             ) : null
           }
         >
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-2.5 md:grid-cols-4">
             <OpsMetricCard label="Wallets" value={wallets.length} />
             <OpsMetricCard label="Assets" value={assets.length} />
             <OpsMetricCard
@@ -545,7 +545,7 @@ export default function ProjectOnchainPage() {
           {notice ? <p className="mt-4 text-sm text-primary">{notice}</p> : null}
         </OpsPanel>
 
-        <div className="grid gap-4 xl:items-start xl:grid-cols-2">
+        <div className="grid gap-3 xl:items-start xl:grid-cols-2">
           <OpsPanel
             eyebrow="Treasury and ops wallets"
             title="Registered wallets"

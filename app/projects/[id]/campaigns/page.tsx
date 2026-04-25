@@ -138,47 +138,57 @@ export default function ProjectCampaignsPage() {
           operatorIncidentCount: 0,
         })}
       >
-        <OpsPanel
-          eyebrow="Campaign board"
-          title="Project campaigns"
-          description="Scan the campaign roster, then jump straight into Campaign Studio, Quest Studio or the next raid builder without losing project context."
-          action={
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href={`/campaigns/new?projectId=${project.id}&source=campaign-board`}
-                className="inline-flex items-center gap-2 rounded-[18px] bg-primary px-4 py-3 font-bold text-black"
-              >
-                <FolderPlus size={16} />
-                Open Campaign Studio
-              </Link>
-              <Link
-                href={`/quests/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
-                className="inline-flex items-center gap-2 rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 font-bold text-text transition hover:border-primary/35"
-              >
-                <Target size={16} />
-                Open Quest Studio
-              </Link>
-              <Link
-                href={`/raids/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
-                className="inline-flex items-center gap-2 rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 font-bold text-text transition hover:border-primary/35"
-              >
-                <Swords size={16} />
-                Open Raid Builder
-              </Link>
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
+          <OpsPanel
+            eyebrow="Campaign board"
+            title="Project campaigns"
+            description="Scan the campaign roster, then jump straight into Campaign Studio, Quest Studio or the next raid builder without losing project context."
+            action={
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={`/campaigns/new?projectId=${project.id}&source=campaign-board`}
+                  className="inline-flex items-center gap-2 rounded-[14px] bg-primary px-3.5 py-2.5 text-[12px] font-bold text-black"
+                >
+                  <FolderPlus size={15} />
+                  Campaign Studio
+                </Link>
+                <Link
+                  href={`/quests/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
+                  className="inline-flex items-center gap-2 rounded-[14px] border border-white/[0.03] bg-white/[0.018] px-3.5 py-2.5 text-[12px] font-bold text-text transition hover:border-white/[0.06]"
+                >
+                  <Target size={15} />
+                  Quest Studio
+                </Link>
+                <Link
+                  href={`/raids/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
+                  className="inline-flex items-center gap-2 rounded-[14px] border border-white/[0.03] bg-white/[0.018] px-3.5 py-2.5 text-[12px] font-bold text-text transition hover:border-white/[0.06]"
+                >
+                  <Swords size={15} />
+                  Raid Builder
+                </Link>
+              </div>
+            }
+          >
+            <div className="grid gap-2.5 md:grid-cols-4">
+              <OpsMetricCard label="Campaigns" value={projectCampaigns.length} />
+              <OpsMetricCard
+                label="Active"
+                value={projectCampaigns.filter((campaign) => campaign.status === "active").length}
+                emphasis="primary"
+              />
+              <OpsMetricCard label="Quests" value={projectQuests.length} />
+              <OpsMetricCard label="Raids" value={projectRaids.length} />
             </div>
-          }
-        >
-          <div className="grid gap-4 md:grid-cols-4">
-            <OpsMetricCard label="Campaigns" value={projectCampaigns.length} />
-            <OpsMetricCard
-              label="Active"
-              value={projectCampaigns.filter((campaign) => campaign.status === "active").length}
-              emphasis="primary"
-            />
-            <OpsMetricCard label="Quests" value={projectQuests.length} />
-            <OpsMetricCard label="Raids" value={projectRaids.length} />
-          </div>
-        </OpsPanel>
+          </OpsPanel>
+
+          <OpsPanel
+            eyebrow="Starter library"
+            title="Campaign packs and quest kits"
+            description="Start from saved project variants instead of jumping into blank creation flows."
+          >
+            <ProjectTemplateLibrary sections={templateLibrarySections} />
+          </OpsPanel>
+        </div>
 
         <OpsPanel
           eyebrow="Campaign roster"
@@ -193,13 +203,6 @@ export default function ProjectCampaignsPage() {
           />
         </OpsPanel>
 
-        <OpsPanel
-          eyebrow="Starter library"
-          title="Campaign packs, quest kits and raid starters"
-          description="Start from saved project variants or intent-first starters instead of jumping straight into blank creation flows."
-        >
-          <ProjectTemplateLibrary sections={templateLibrarySections} />
-        </OpsPanel>
       </ProjectWorkspaceFrame>
     </AdminShell>
   );

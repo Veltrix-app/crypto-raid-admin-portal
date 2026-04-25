@@ -460,13 +460,13 @@ function ProjectLaunchContent() {
           </OpsPanel>
         ) : null}
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-start">
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
           <OpsPanel
             eyebrow="Project launch workspace"
             title={`Bring ${project.name} from setup into launch posture`}
             description="This workspace should keep onboarding, readiness, first content and launch pressure on one calm spine instead of scattering setup across the portal."
           >
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-2.5 md:grid-cols-3">
               <OpsSnapshotRow
                 label="Workspace view"
                 value={view === "setup" ? "Setup posture" : "Launch posture"}
@@ -486,9 +486,8 @@ function ProjectLaunchContent() {
             eyebrow="Workspace focus"
             title="Choose the launch reading mode"
             description="Setup mode keeps the sequence visible. Launch mode keeps blockers and readiness pressure in view for go-live decisions."
-            tone="accent"
           >
-            <div className="space-y-4">
+            <div className="space-y-3">
               <SegmentToggle value={view} options={[...VIEW_OPTIONS]} onChange={setView} />
               <div className="flex flex-wrap gap-2">
                 <OpsStatusPill tone="default">{snapshot.onboarding.completedSteps}/{snapshot.onboarding.totalSteps} setup steps complete</OpsStatusPill>
@@ -504,7 +503,7 @@ function ProjectLaunchContent() {
           </OpsPanel>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[300px,minmax(0,1fr)] xl:items-start">
+        <div className="grid gap-3 xl:grid-cols-[260px,minmax(0,1fr)] xl:items-start">
           <ProjectLaunchRail
             steps={snapshot.onboarding.steps}
             activeStepId={activeStepId}
@@ -512,7 +511,7 @@ function ProjectLaunchContent() {
             onSelect={setActiveStepId}
           />
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <ProjectLaunchScorecard
               score={snapshot.readiness.score}
               tier={snapshot.readiness.tier}
@@ -524,7 +523,7 @@ function ProjectLaunchContent() {
               activeOverrides={snapshot.readiness.ops.activeOverrides}
             />
 
-            <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)] 2xl:items-start">
+            <div className="grid gap-3 2xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] 2xl:items-start">
               <OpsPanel
                 eyebrow={view === "setup" ? "Setup checklist" : "Launch checklist"}
                 title={
@@ -598,11 +597,11 @@ function ProjectLaunchContent() {
               title="Why the score looks the way it does"
               description="Each group below is a high-signal read on the parts of the project that most affect launch quality."
             >
-              <div className="grid gap-4 xl:items-start xl:grid-cols-3">
+              <div className="grid gap-2.5 xl:items-start xl:grid-cols-3">
                 {snapshot.readiness.groups.map((group) => (
                   <div
                     key={group.id}
-                    className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] p-4"
+                    className="rounded-[16px] border border-white/[0.026] bg-white/[0.016] p-3.5"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-bold text-text">{group.title}</p>
@@ -618,7 +617,7 @@ function ProjectLaunchContent() {
                         {group.status}
                       </OpsStatusPill>
                     </div>
-                    <div className="mt-4 grid gap-3">
+                    <div className="mt-3 grid gap-2.5">
                       <OpsSnapshotRow label="Group score" value={`${group.score}/100`} />
                       <OpsSnapshotRow label="Reading" value={group.summary} />
                     </div>
@@ -627,7 +626,7 @@ function ProjectLaunchContent() {
               </div>
             </OpsPanel>
 
-            <div className="grid gap-4 2xl:grid-cols-2 2xl:items-start">
+            <div className="grid gap-3 2xl:grid-cols-2 2xl:items-start">
               <OpsPanel
                 eyebrow="Incident board"
                 title="Open launch incidents"

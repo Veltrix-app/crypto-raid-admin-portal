@@ -2492,18 +2492,17 @@ export default function ProjectCommunityManagementPage() {
           eyebrow="Community OS"
           title="Community control room"
           description="This workspace is now arranged like a premium command deck: choose the role you are in, lock into one mode and read only the signals that matter for that intent."
-          tone="accent"
         >
-          <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-5">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-start">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-sub">
                   Operating stance
                 </p>
-                <p className="mt-3 text-sm leading-6 text-sub">
+                <p className="mt-2 text-sm leading-6 text-sub">
                   Switch between owner and captain mode to change the reading path without mixing strategic and execution pressure into one wall.
                 </p>
-                <div className="mt-3">
+                <div className="mt-2.5">
                   <SegmentToggle
                     value={communityViewMode}
                     options={[
@@ -2519,10 +2518,10 @@ export default function ProjectCommunityManagementPage() {
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-sub">
                   Workspace focus
                 </p>
-                <p className="mt-3 text-sm leading-6 text-sub">
+                <p className="mt-2 text-sm leading-6 text-sub">
                   Use one surface at a time: operate for active execution, grow for cohorts and missions, configure for integrations, automations and control rails.
                 </p>
-                <div className="mt-3">
+                <div className="mt-2.5">
                   <SegmentToggle
                     value={communitySurfaceMode}
                     options={[
@@ -2536,7 +2535,7 @@ export default function ProjectCommunityManagementPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2.5 sm:grid-cols-2">
               <OpsMetricCard
                 label="Active automations"
                 value={activeAutomationCount}
@@ -2569,7 +2568,7 @@ export default function ProjectCommunityManagementPage() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="mt-3 grid gap-2.5 md:grid-cols-2 xl:grid-cols-[1.1fr_0.9fr]">
             <OpsSnapshotRow
               label="Current read"
               value={
@@ -2589,7 +2588,7 @@ export default function ProjectCommunityManagementPage() {
             />
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             <OpsStatusPill tone="success">{project.chain}</OpsStatusPill>
             <OpsStatusPill tone="default">
               {project.isPublic ? "Public surface" : "Private surface"}
@@ -2669,8 +2668,8 @@ export default function ProjectCommunityManagementPage() {
           title="Project incidents and manual overrides"
           description="Community OS now surfaces project-scoped incidents, override posture and operator history in the same workspace where the team already runs commands, automations and pushes."
         >
-          <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
-            <div className="space-y-4">
+          <div className="grid gap-3 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
+            <div className="space-y-3">
               {projectOps.error ? (
                 <div className="rounded-[22px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
                   {projectOps.error}
@@ -2716,7 +2715,7 @@ export default function ProjectCommunityManagementPage() {
         {communitySurfaceMode === "operate" ? (
           <>
             <div
-              className={`grid gap-4 xl:items-start ${
+              className={`grid gap-3 xl:items-start ${
                 communityViewMode === "captain"
                   ? "xl:grid-cols-[1.1fr_0.9fr]"
                   : "xl:grid-cols-[0.95fr_1.05fr]"
@@ -2749,7 +2748,7 @@ export default function ProjectCommunityManagementPage() {
               />
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
+            <div className="grid gap-3 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
               <CommunityCommandsPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}
@@ -2806,7 +2805,7 @@ export default function ProjectCommunityManagementPage() {
               readinessWatch={communityMembers.readinessWatch}
             />
 
-            <div className="grid gap-4 xl:grid-cols-[1fr_1fr] xl:items-start">
+            <div className="grid gap-3 xl:grid-cols-[1fr_1fr] xl:items-start">
               <CommunityMissionsPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}
@@ -2852,7 +2851,7 @@ export default function ProjectCommunityManagementPage() {
               />
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
+            <div className="grid gap-3 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
               <CommunityAutomationsPanel
                 settings={discordBotSettings}
                 runningAutomationAction={runningAutomationAction}
@@ -2868,7 +2867,7 @@ export default function ProjectCommunityManagementPage() {
               />
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+            <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
               <CommunityCohortsPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}
@@ -2958,7 +2957,7 @@ export default function ProjectCommunityManagementPage() {
               onSendTestPush={(provider) => void sendIntegrationTestPush(provider)}
             />
 
-            <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+            <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
               <CommunityRanksPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}
@@ -2983,7 +2982,7 @@ export default function ProjectCommunityManagementPage() {
               />
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+            <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
               <CommunityAutomationCenterPanel
                 automations={communityAutomations}
                 automationRuns={communityAutomationRuns}
@@ -3018,7 +3017,7 @@ export default function ProjectCommunityManagementPage() {
               />
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+            <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
               <CommunityCaptainsPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}

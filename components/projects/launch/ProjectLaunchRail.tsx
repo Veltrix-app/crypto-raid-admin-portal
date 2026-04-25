@@ -45,25 +45,25 @@ export default function ProjectLaunchRail({
 
   return (
     <aside className="space-y-3 xl:sticky xl:top-24">
-      <div className="overflow-hidden rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,19,29,0.98),rgba(9,13,21,0.98))] p-3.5">
+      <div className="overflow-hidden rounded-[18px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,19,29,0.96),rgba(9,13,21,0.96))] p-3.5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
               Launch rail
             </p>
-            <h2 className="mt-2 text-[1rem] font-bold text-text">
+            <h2 className="mt-1.5 text-[0.96rem] font-semibold text-text">
               Setup spine
             </h2>
             <p className="mt-2 text-[12px] leading-5 text-sub">
               Move through the project setup in a calm, fixed order instead of hunting through routes.
             </p>
           </div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-[12px] border border-primary/20 bg-primary/10 text-primary">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[12px] border border-white/[0.035] bg-white/[0.025] text-sub">
             <Rocket size={18} />
           </div>
         </div>
 
-        <div className="mt-3 rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3">
+        <div className="mt-3 rounded-[14px] border border-white/[0.028] bg-white/[0.018] p-3">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
               Completion
@@ -74,14 +74,14 @@ export default function ProjectLaunchRail({
           </div>
           <div className="mt-3.5 h-2 rounded-full bg-white/8">
             <div
-              className="h-full rounded-full bg-primary shadow-[0_0_24px_rgba(186,255,59,0.35)]"
+              className="h-full rounded-full bg-[linear-gradient(90deg,rgba(186,255,59,0.72),rgba(102,255,198,0.82))] shadow-[0_0_18px_rgba(186,255,59,0.18)]"
               style={{ width: `${completionPercent}%` }}
             />
           </div>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,19,29,0.98),rgba(10,15,24,0.98))] p-2">
+      <div className="overflow-hidden rounded-[18px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,19,29,0.96),rgba(10,15,24,0.96))] p-2">
         <div className="space-y-2">
           {steps.map((step, index) => {
             const active = activeStepId === step.id;
@@ -94,8 +94,8 @@ export default function ProjectLaunchRail({
                 className={cn(
                   "w-full rounded-[14px] border px-3 py-3 text-left transition-colors duration-200",
                   active
-                    ? "border-primary/24 bg-primary/8"
-                    : "border-white/[0.04] bg-white/[0.018] hover:border-white/[0.08] hover:bg-white/[0.035]"
+                    ? "border-white/[0.055] bg-white/[0.045]"
+                    : "border-white/[0.026] bg-white/[0.016] hover:border-white/[0.055] hover:bg-white/[0.03]"
                 )}
               >
                 <div className="flex items-start gap-4">
@@ -104,8 +104,8 @@ export default function ProjectLaunchRail({
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-[12px] border text-[11px] font-extrabold",
                         active
-                          ? "border-primary/24 bg-primary/10 text-primary"
-                          : "border-white/[0.04] bg-white/[0.02] text-text"
+                          ? "border-white/[0.06] bg-white/[0.06] text-text"
+                          : "border-white/[0.03] bg-white/[0.018] text-sub"
                       )}
                     >
                       {index + 1}
