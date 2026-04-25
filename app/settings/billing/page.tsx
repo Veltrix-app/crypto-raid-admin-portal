@@ -13,7 +13,6 @@ import {
 import {
   OpsMetricCard,
   OpsPanel,
-  OpsPriorityLink,
   OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
@@ -51,19 +50,6 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-function usagePressureTone(pressure: PortalBillingUsageItem["pressure"]) {
-  switch (pressure) {
-    case "blocked":
-      return "danger";
-    case "upgrade_recommended":
-      return "warning";
-    case "watching":
-      return "default";
-    default:
-      return "success";
-  }
-}
-
 function usagePressureLabel(pressure: PortalBillingUsageItem["pressure"]) {
   switch (pressure) {
     case "blocked":
@@ -87,17 +73,6 @@ function overallPressureLabel(pressure: PortalCustomerBillingWorkspace["overallP
       return "Healthy but growing";
     default:
       return "Capacity looks comfortable";
-  }
-}
-
-function paymentMethodTone(status?: string) {
-  switch (status) {
-    case "requires_attention":
-      return "warning";
-    case "ready":
-      return "success";
-    default:
-      return "default";
   }
 }
 
@@ -147,37 +122,202 @@ function invoiceStatusTone(status: string) {
 
 function UsageRow({ item }: { item: PortalBillingUsageItem }) {
   return (
-    <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+    <div className="rounded-[16px] border border-white/[0.025] bg-white/[0.014] p-3.5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-xl">
           <div className="flex items-center gap-3">
-            <p className="text-sm font-bold text-text">{item.label}</p>
-            <OpsStatusPill tone={usagePressureTone(item.pressure)}>
+            <p className="text-[13px] font-semibold text-text">{item.label}</p>
+            <OpsStatusPill tone="default">
               {usagePressureLabel(item.pressure)}
             </OpsStatusPill>
           </div>
-          <p className="mt-2 text-sm leading-6 text-sub">{item.hint}</p>
+          <p className="mt-1.5 text-[11px] leading-5 text-sub">{item.hint}</p>
         </div>
-        <p className="text-lg font-extrabold text-text">
+        <p className="text-[13px] font-semibold text-text">
           {item.current} / {item.limit}
         </p>
       </div>
 
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-card">
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
         <div
           className={`h-full rounded-full ${
             item.pressure === "blocked"
-              ? "bg-rose-400"
+              ? "bg-rose-300/70"
               : item.pressure === "upgrade_recommended"
-                ? "bg-amber-300"
+                ? "bg-primary/70"
                 : item.pressure === "watching"
-                  ? "bg-primary/80"
-                  : "bg-emerald-400"
+                  ? "bg-white/35"
+                  : "bg-emerald-300/55"
           }`}
           style={{ width: `${item.percent}%` }}
         />
       </div>
     </div>
+  );
+}
+
+type BillingPlan = PortalCustomerBillingWorkspace["plans"][number];
+
+function formatPlanPrice(plan: BillingPlan) {
+  if (plan.isEnterprise) {
+    return "Custom";
+  }
+
+  if (plan.priceMonthly === 0) {
+    return "Free";
+  }
+
+  return `${formatCurrency(plan.priceMonthly)}/mo`;
+}
+
+function planHref(plan: BillingPlan, workspace: PortalCustomerBillingWorkspace) {
+  if (plan.isEnterprise) {
+    return workspace.supportUrl;
+  }
+
+  return `${workspace.pricingUrl}&plan=${plan.id}`;
+}
+
+function PlanCard({
+  plan,
+  workspace,
+  isCurrent,
+  isNext,
+}: {
+  plan: BillingPlan;
+  workspace: PortalCustomerBillingWorkspace;
+  isCurrent: boolean;
+  isNext: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-[18px] border p-3.5 ${
+        isNext
+          ? "border-primary/24 bg-[linear-gradient(180deg,rgba(186,255,59,0.055),rgba(10,13,19,0.98))]"
+          : "border-white/[0.025] bg-white/[0.014]"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[1rem] font-semibold tracking-[-0.02em] text-text">{plan.name}</p>
+            <OpsStatusPill tone="default">
+              {isCurrent ? "Current" : isNext ? "Recommended" : "Available"}
+            </OpsStatusPill>
+          </div>
+          <p className="mt-2 text-[1.35rem] font-semibold tracking-[-0.04em] text-text">
+            {formatPlanPrice(plan)}
+          </p>
+        </div>
+
+        {!isCurrent ? (
+          <a
+            href={planHref(plan, workspace)}
+            className={`rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] transition ${
+              isNext
+                ? "bg-primary text-black hover:brightness-105"
+                : "border border-white/[0.04] text-sub hover:border-white/[0.08] hover:text-text"
+            }`}
+          >
+            {plan.isEnterprise ? "Contact" : isNext ? "Upgrade" : "Review"}
+          </a>
+        ) : null}
+      </div>
+
+      <div className="mt-4 grid gap-2 text-[11px] text-sub sm:grid-cols-2">
+        <p>Projects: {plan.projectsLimit}</p>
+        <p>Campaigns: {plan.campaignsLimit}</p>
+        <p>Quests: {plan.questsLimit}</p>
+        <p>Raids: {plan.raidsLimit}</p>
+        <p>Providers: {plan.providersLimit}</p>
+        <p>Seats: {plan.includedBillableSeats}</p>
+      </div>
+    </div>
+  );
+}
+
+function BillingUpgradeHero({
+  workspace,
+  nextBillingDate,
+  openInvoiceCount,
+}: {
+  workspace: PortalCustomerBillingWorkspace;
+  nextBillingDate: string | null;
+  openInvoiceCount: number;
+}) {
+  const currentPlan = workspace.currentPlan;
+  const nextPlan = workspace.nextPlan;
+  const upgradeHref = workspace.upgradeUrl ?? workspace.pricingUrl;
+  const cta = nextPlan ? (nextPlan.isEnterprise ? "Talk to sales" : "Upgrade now") : "View plans";
+
+  return (
+    <section className="overflow-hidden rounded-[22px] border border-white/[0.028] bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.08),transparent_24%),linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.99))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.2)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-stretch">
+        <div>
+          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary/90">
+            Recommended upgrade path
+          </p>
+          <h2 className="mt-2 max-w-3xl text-[1.35rem] font-semibold tracking-[-0.04em] text-text md:text-[1.7rem]">
+            {nextPlan
+              ? `${workspace.accountName} can unlock more room with ${nextPlan.name}.`
+              : `${workspace.accountName} is on the right plan for now.`}
+          </h2>
+          <p className="mt-2 max-w-3xl text-[12px] leading-5 text-sub">
+            {workspace.recommendedAction}
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2.5">
+            <a
+              href={upgradeHref}
+              className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-black transition hover:brightness-105"
+            >
+              {cta}
+            </a>
+            <a
+              href={workspace.pricingUrl}
+              className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-[12px] font-bold text-sub transition hover:border-white/[0.08] hover:text-text"
+            >
+              Compare plans
+            </a>
+          </div>
+        </div>
+
+        <div className="grid gap-2.5 rounded-[18px] border border-white/[0.025] bg-white/[0.014] p-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+              Current
+            </span>
+            <span className="text-[13px] font-semibold text-text">
+              {currentPlan?.name ?? "Free"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+              Next best
+            </span>
+            <span className="text-[13px] font-semibold text-text">
+              {nextPlan?.name ?? "No upgrade needed"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+              Renewal
+            </span>
+            <span className="text-[13px] font-semibold text-text">
+              {formatDateLabel(nextBillingDate ?? undefined)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+              Invoices
+            </span>
+            <span className="text-[13px] font-semibold text-text">
+              {openInvoiceCount ? `${openInvoiceCount} open` : "Clean"}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -308,41 +448,33 @@ function SettingsBillingContent() {
       healthPills={[
         {
           label: workspace.currentPlan?.name ?? "No plan",
-          tone: workspace.currentPlan ? "default" : "warning",
+          tone: "default",
         },
         {
           label: overallPressureLabel(workspace.overallPressure),
-          tone:
-            workspace.overallPressure === "blocked"
-              ? "danger"
-              : workspace.overallPressure === "upgrade_recommended"
-                ? "warning"
-                : workspace.overallPressure === "watching"
-                  ? "default"
-                  : "success",
+          tone: "default",
         },
         {
           label: paymentMethodLabel(workspace.billingProfile?.paymentMethodStatus),
-          tone: paymentMethodTone(workspace.billingProfile?.paymentMethodStatus),
+          tone: "default",
         },
       ]}
     >
-      <div className="grid gap-4 md:grid-cols-4">
+      <BillingUpgradeHero
+        workspace={workspace}
+        nextBillingDate={nextBillingDate}
+        openInvoiceCount={openInvoiceCount}
+      />
+
+      <div className="grid gap-2.5 md:grid-cols-4">
         <OpsMetricCard
           label="Current plan"
           value={workspace.currentPlan?.name ?? "Free"}
-          emphasis="primary"
         />
         <OpsMetricCard
           label="Subscription"
           value={subscriptionLabel(workspace.subscription?.status)}
           sub={`Next window: ${formatDateLabel(nextBillingDate ?? undefined)}`}
-          emphasis={
-            workspace.subscription?.status === "past_due" ||
-            workspace.subscription?.status === "canceled"
-              ? "warning"
-              : "default"
-          }
         />
         <OpsMetricCard
           label="Open invoices"
@@ -352,7 +484,6 @@ function SettingsBillingContent() {
               ? "There is invoice follow-up waiting."
               : "Collections look clean right now."
           }
-          emphasis={openInvoiceCount ? "warning" : "default"}
         />
         <OpsMetricCard
           label="Billable seats"
@@ -361,74 +492,47 @@ function SettingsBillingContent() {
               ? `${workspace.entitlements.currentBillableSeats} / ${workspace.entitlements.includedBillableSeats}`
               : "0 / 0"
           }
-          emphasis={
-            workspace.usage.find((item) => item.key === "seats")?.pressure === "upgrade_recommended" ||
-            workspace.usage.find((item) => item.key === "seats")?.pressure === "blocked"
-              ? "warning"
-              : "default"
-          }
         />
       </div>
 
-      <div className="grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
+      <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_390px]">
         <OpsPanel
-          eyebrow="Usage overview"
-          title="Capacity posture"
-          description="Track exactly where this workspace is pushing into plan ceilings before a builder flow or invite action gets blocked."
+          eyebrow="Plan ladder"
+          title="Pick the plan that keeps campaigns moving"
+          description="Plans are shown before invoices because this is the upgrade decision surface: choose the next growth ceiling first, then validate usage pressure."
         >
-          <div className="space-y-4">
-            {workspace.usage.map((item) => (
-              <UsageRow key={item.key} item={item} />
+          <div className="grid gap-3 xl:grid-cols-2">
+            {workspace.plans.map((plan) => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                workspace={workspace}
+                isCurrent={plan.id === workspace.currentPlan?.id}
+                isNext={plan.id === workspace.nextPlan?.id}
+              />
             ))}
           </div>
         </OpsPanel>
 
         <div className="space-y-4">
-          <OpsPriorityLink
-            href={workspace.upgradeUrl ?? workspace.pricingUrl}
-            title={
-              workspace.nextPlan
-                ? `Move to ${workspace.nextPlan.name}`
-                : "Open pricing workspace"
-            }
-            body={workspace.recommendedAction}
-            cta={
-              workspace.nextPlan
-                ? workspace.nextPlan.isEnterprise
-                  ? "Talk to us"
-                  : "Upgrade now"
-                : "View pricing"
-            }
-            emphasis={workspace.overallPressure !== "comfortable"}
-          />
+          <OpsPanel
+            eyebrow="Capacity proof"
+            title="What is pushing the upgrade"
+            description="Usage explains why a plan change matters before the workspace hits a hard limit."
+          >
+            <div className="space-y-2.5">
+              {workspace.usage.map((item) => (
+                <UsageRow key={item.key} item={item} />
+              ))}
+            </div>
+          </OpsPanel>
 
           <OpsPanel
-            eyebrow="Posture summary"
-            title="Billing signal"
-            description="A fast commercial read on whether the current plan, payment posture and renewal window still fit the workspace."
-            tone="accent"
+            eyebrow="Billing signal"
+            title="Account readiness"
+            description="Keep payment and renewal context close to the upgrade action."
           >
-            <div className="space-y-3">
-              <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-bold text-text">Commercial posture</p>
-                  <OpsStatusPill
-                    tone={
-                      workspace.overallPressure === "blocked"
-                        ? "danger"
-                        : workspace.overallPressure === "upgrade_recommended"
-                          ? "warning"
-                          : workspace.overallPressure === "watching"
-                            ? "default"
-                            : "success"
-                    }
-                  >
-                    {overallPressureLabel(workspace.overallPressure)}
-                  </OpsStatusPill>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-sub">{workspace.recommendedAction}</p>
-              </div>
-
+            <div className="space-y-2.5">
               <OpsSnapshotRow
                 label="Subscription status"
                 value={subscriptionLabel(workspace.subscription?.status)}
@@ -443,17 +547,10 @@ function SettingsBillingContent() {
               />
             </div>
           </OpsPanel>
-
-          <SupportSurfaceContextPanel
-            title="Billing-linked support handoffs"
-            description="Tickets land here once generic support becomes invoice follow-up, payment method recovery or commercial account work."
-            handoffType="billing"
-            customerAccountId={workspace.accountId}
-          />
         </div>
       </div>
 
-      <div className="grid gap-4 xl:items-start xl:grid-cols-[1.02fr_0.98fr]">
+      <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_0.9fr]">
         <OpsPanel
           eyebrow="Invoice history"
           title="Recent invoices"
@@ -464,7 +561,7 @@ function SettingsBillingContent() {
               {workspace.invoices.map((invoice) => (
                 <div
                   key={invoice.id}
-                  className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4"
+                  className="rounded-[16px] border border-white/[0.025] bg-white/[0.014] p-3.5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -498,7 +595,7 @@ function SettingsBillingContent() {
                           href={invoice.hostedInvoiceUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
+                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
                         >
                           Open hosted invoice
                         </a>
@@ -508,7 +605,7 @@ function SettingsBillingContent() {
                           href={invoice.invoicePdfUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
+                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
                         >
                           Open PDF
                         </a>
@@ -526,71 +623,12 @@ function SettingsBillingContent() {
           )}
         </OpsPanel>
 
-        <OpsPanel
-          eyebrow="Plan ladder"
-          title="Available tiers"
-          description="See the current plan plus the next self-serve or enterprise route this workspace can grow into."
-        >
-          <div className="space-y-3">
-            {workspace.plans.map((plan) => {
-              const isCurrent = plan.id === workspace.currentPlan?.id;
-              const isNext = plan.id === workspace.nextPlan?.id;
-
-              return (
-                <div
-                  key={plan.id}
-                  className={`rounded-[22px] border p-4 ${
-                    isCurrent
-                      ? "border-primary bg-primary/10"
-                      : isNext
-                        ? "border-amber-300/40 bg-amber-300/10"
-                        : "border-white/[0.04] bg-white/[0.025]"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <p className="text-lg font-extrabold text-text">{plan.name}</p>
-                        <OpsStatusPill
-                          tone={isCurrent ? "success" : isNext ? "warning" : "default"}
-                        >
-                          {isCurrent ? "Current" : isNext ? "Next" : "Available"}
-                        </OpsStatusPill>
-                      </div>
-                      <p className="mt-2 text-sm text-sub">
-                        {plan.isEnterprise
-                          ? "Custom commercial posture"
-                          : `${formatCurrency(plan.priceMonthly)}/month`}
-                      </p>
-                    </div>
-
-                    {!isCurrent ? (
-                      <a
-                        href={
-                          plan.isEnterprise
-                            ? workspace.supportUrl
-                            : `${workspace.pricingUrl}&plan=${plan.id}`
-                        }
-                        className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
-                      >
-                        {plan.isEnterprise ? "Contact enterprise" : "Review plan"}
-                      </a>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-4 grid gap-2 text-sm text-sub md:grid-cols-2">
-                    <p>Projects: {plan.projectsLimit}</p>
-                    <p>Campaigns: {plan.campaignsLimit}</p>
-                    <p>Quests: {plan.questsLimit}</p>
-                    <p>Raids: {plan.raidsLimit}</p>
-                    <p>Providers: {plan.providersLimit}</p>
-                    <p>Billable seats: {plan.includedBillableSeats}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </OpsPanel>
+        <SupportSurfaceContextPanel
+          title="Billing-linked support handoffs"
+          description="Tickets land here once generic support becomes invoice follow-up, payment method recovery or commercial account work."
+          handoffType="billing"
+          customerAccountId={workspace.accountId}
+        />
       </div>
     </WorkspaceSettingsFrame>
   );
