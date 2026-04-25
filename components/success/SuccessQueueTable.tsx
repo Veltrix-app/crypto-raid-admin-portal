@@ -91,7 +91,7 @@ export function SuccessQueueTable({
 
       <div className="space-y-3">
         {loading ? (
-          <div className="rounded-[22px] border border-line bg-card2 px-4 py-4 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.025] bg-white/[0.014] px-4 py-4 text-sm text-sub">
             Loading success queue...
           </div>
         ) : filteredAccounts.length ? (
@@ -99,7 +99,7 @@ export function SuccessQueueTable({
             <Link
               key={account.accountId}
               href={`/success/accounts/${account.accountId}`}
-              className="block rounded-[22px] border border-line bg-card2 px-4 py-4 transition hover:border-primary/30 hover:bg-primary/8"
+              className="block rounded-[18px] border border-white/[0.025] bg-white/[0.014] px-4 py-4 transition hover:border-white/[0.08]"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -110,9 +110,7 @@ export function SuccessQueueTable({
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <OpsStatusPill>{humanizeSuccessValue(account.workspaceHealthState)}</OpsStatusPill>
-                  <OpsStatusPill
-                    tone={account.successHealthState === "churn_risk" ? "warning" : account.successHealthState === "expansion_ready" ? "success" : "default"}
-                  >
+                  <OpsStatusPill tone="default">
                     {humanizeSuccessValue(account.successHealthState)}
                   </OpsStatusPill>
                 </div>
@@ -120,7 +118,7 @@ export function SuccessQueueTable({
             </Link>
           ))
         ) : (
-          <div className="rounded-[22px] border border-line bg-card2 px-4 py-4 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.025] bg-white/[0.014] px-4 py-4 text-sm text-sub">
             No accounts match the current filters.
           </div>
         )}

@@ -116,120 +116,86 @@ export default function SecurityPage() {
         eyebrow="Security control"
         title="Security"
         description="Run trust, compliance and enterprise identity posture from one internal workspace."
-        actions={
-          <div className="space-y-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">Veltrix internal</p>
-            <div className="flex flex-wrap gap-2">
-              <OpsStatusPill tone={overview.counts.weakPostureAccounts > 0 ? "warning" : "success"}>
-                {overview.counts.weakPostureAccounts} weak accounts
-              </OpsStatusPill>
-              <OpsStatusPill tone={overview.counts.openDataRequests > 0 ? "warning" : "default"}>
-                {overview.counts.openDataRequests} open requests
-              </OpsStatusPill>
-            </div>
-            <Link
-              href="/releases"
-              className="inline-flex items-center rounded-full border border-white/12 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
-            >
-              Releases
-            </Link>
-          </div>
-        }
         statusBand={
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-4">
-              <OpsMetricCard
-                label="Weak posture"
-                value={overview.counts.weakPostureAccounts}
-                emphasis={overview.counts.weakPostureAccounts > 0 ? "warning" : "default"}
-              />
-              <OpsMetricCard
-                label="Open requests"
-                value={overview.counts.openDataRequests}
-                emphasis={overview.counts.openDataRequests > 0 ? "warning" : "default"}
-              />
-              <OpsMetricCard
-                label="Active incidents"
-                value={overview.queues.securityIncidents.length}
-                emphasis={overview.queues.securityIncidents.length > 0 ? "warning" : "default"}
-              />
-              <OpsMetricCard
-                label="SSO accounts"
-                value={overview.counts.enterpriseHardenedAccounts}
-                emphasis={overview.counts.enterpriseHardenedAccounts > 0 ? "primary" : "default"}
-              />
+            <div className="grid gap-2.5 md:grid-cols-4">
+              <OpsMetricCard label="Weak posture" value={overview.counts.weakPostureAccounts} />
+              <OpsMetricCard label="Open requests" value={overview.counts.openDataRequests} />
+              <OpsMetricCard label="Active incidents" value={overview.queues.securityIncidents.length} />
+              <OpsMetricCard label="SSO accounts" value={overview.counts.enterpriseHardenedAccounts} />
             </div>
 
-            <div className="rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="max-w-xl">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-                    Security command read
-                  </p>
-                  <h2 className="mt-1.5 text-[0.94rem] font-semibold tracking-tight text-text">
-                    Read weak posture first, then decide whether the next move is policy cleanup, request handling, or incident control.
-                  </h2>
-                  <p className="mt-1.5 max-w-2xl text-[11px] leading-5 text-sub">
-                    This cockpit should tell you what is fragile, what is audit-sensitive, and where enterprise trust can erode if response timing slips.
-                  </p>
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <OpsPanel
+                eyebrow="Security command read"
+                title="Read weak posture first, then choose policy cleanup, request handling, or incident control."
+                description="This cockpit should tell you what is fragile, what is audit-sensitive, and where enterprise trust can erode if response timing slips."
+              >
+                <div className="grid gap-2.5 lg:grid-cols-3">
+                  <OpsSnapshotRow
+                    label="Now"
+                    value={
+                      overview.counts.weakPostureAccounts > 0
+                        ? `${overview.counts.weakPostureAccounts} accounts still need trust posture cleanup`
+                        : "Account posture looks calm right now"
+                    }
+                  />
+                  <OpsSnapshotRow
+                    label="Next"
+                    value={
+                      overview.queues.dataRequests.length > 0
+                        ? `Review ${overview.queues.dataRequests.length} open export or delete requests`
+                        : "No urgent request queue is waiting"
+                    }
+                  />
+                  <OpsSnapshotRow
+                    label="Watch"
+                    value={
+                      overview.queues.securityIncidents.length > 0
+                        ? `${overview.queues.securityIncidents.length} security incidents or postmortem items are open`
+                        : "No active security incidents are open"
+                    }
+                  />
                 </div>
+              </OpsPanel>
 
-                <div className="flex flex-wrap gap-2">
-                  <OpsStatusPill tone={overview.counts.weakPostureAccounts > 0 ? "warning" : "success"}>
-                    {overview.counts.weakPostureAccounts} weak posture
-                  </OpsStatusPill>
-                  <OpsStatusPill tone={overview.counts.openDataRequests > 0 ? "warning" : "default"}>
-                    {overview.counts.openDataRequests} requests
-                  </OpsStatusPill>
-                  <OpsStatusPill tone={overview.queues.securityIncidents.length > 0 ? "warning" : "success"}>
-                    {overview.queues.securityIncidents.length} incidents
-                  </OpsStatusPill>
+              <OpsPanel
+                eyebrow="Security routes"
+                title="Internal board"
+                description="Keep release and trust routes nearby without overloading the hero."
+              >
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <OpsStatusPill tone="default">{overview.counts.weakPostureAccounts} weak posture</OpsStatusPill>
+                    <OpsStatusPill tone="default">{overview.counts.openDataRequests} requests</OpsStatusPill>
+                    <OpsStatusPill tone="default">{overview.queues.securityIncidents.length} incidents</OpsStatusPill>
+                  </div>
+                  <Link
+                    href="/releases"
+                    className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+                  >
+                    Releases
+                  </Link>
                 </div>
-              </div>
-
-              <div className="mt-3.5 grid gap-2.5 lg:grid-cols-3">
-                <OpsSnapshotRow
-                  label="Now"
-                  value={
-                    overview.counts.weakPostureAccounts > 0
-                      ? `${overview.counts.weakPostureAccounts} accounts still need trust posture cleanup`
-                      : "Account posture looks calm right now"
-                  }
-                />
-                <OpsSnapshotRow
-                  label="Next"
-                  value={
-                    overview.queues.dataRequests.length > 0
-                      ? `Review ${overview.queues.dataRequests.length} open export or delete requests`
-                      : "No urgent request queue is waiting"
-                  }
-                />
-                <OpsSnapshotRow
-                  label="Watch"
-                  value={
-                    overview.queues.securityIncidents.length > 0
-                      ? `${overview.queues.securityIncidents.length} security incidents or postmortem items are open`
-                      : "No active security incidents are open"
-                  }
-                />
-              </div>
+              </OpsPanel>
             </div>
           </div>
         }
       >
-        <div className="space-y-4">
-          <SecurityOverviewPanel overview={overview} />
-
-          <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[390px_minmax(0,1fr)]">
+          <div className="space-y-4">
+            <SecurityOverviewPanel overview={overview} />
             <SecurityQueueTable
               title="Weak posture accounts"
               description="Accounts that still need 2FA, SSO or policy cleanup before they look enterprise-ready."
               accounts={overview.queues.weakPosture}
             />
-            <ComplianceControlsPanel controls={overview.controls} />
           </div>
 
-          <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
+          <ComplianceControlsPanel controls={overview.controls} />
+        </div>
+
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
             <OpsPanel
               eyebrow="Request queue"
               title="Data lifecycle pressure"
@@ -238,11 +204,10 @@ export default function SecurityPage() {
                   ? `${overview.queues.dataRequests.length} export/delete requests currently need review.`
                   : "No export or delete requests currently need review."
               }
-              tone={overview.queues.dataRequests.length ? "accent" : "default"}
             >
-              <div className="grid gap-4 md:grid-cols-2">
-                <OpsMetricCard label="Open requests" value={overview.counts.openDataRequests} emphasis={overview.counts.openDataRequests > 0 ? "warning" : "default"} />
-                <OpsMetricCard label="Hardened accounts" value={overview.counts.enterpriseHardenedAccounts} emphasis={overview.counts.enterpriseHardenedAccounts > 0 ? "primary" : "default"} />
+              <div className="grid gap-2.5 md:grid-cols-2">
+                <OpsMetricCard label="Open requests" value={overview.counts.openDataRequests} />
+                <OpsMetricCard label="Hardened accounts" value={overview.counts.enterpriseHardenedAccounts} />
               </div>
             </OpsPanel>
             <OpsPanel
@@ -253,14 +218,12 @@ export default function SecurityPage() {
                   ? `${overview.queues.securityIncidents.length} active security incidents or postmortem items are open.`
                   : "No active security incidents are currently open."
               }
-              tone={overview.queues.securityIncidents.length ? "accent" : "default"}
             >
-              <div className="grid gap-4 md:grid-cols-2">
-                <OpsMetricCard label="Active incidents" value={overview.queues.securityIncidents.length} emphasis={overview.queues.securityIncidents.length > 0 ? "warning" : "default"} />
-                <OpsMetricCard label="Weak posture accounts" value={overview.counts.weakPostureAccounts} emphasis={overview.counts.weakPostureAccounts > 0 ? "warning" : "default"} />
+              <div className="grid gap-2.5 md:grid-cols-2">
+                <OpsMetricCard label="Active incidents" value={overview.queues.securityIncidents.length} />
+                <OpsMetricCard label="Weak posture accounts" value={overview.counts.weakPostureAccounts} />
               </div>
             </OpsPanel>
-          </div>
         </div>
       </PortalPageFrame>
     </AdminShell>

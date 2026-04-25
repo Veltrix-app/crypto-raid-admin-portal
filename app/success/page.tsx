@@ -61,7 +61,7 @@ export default function SuccessPage() {
               {overview?.counts.totalAccounts ?? 0} tracked accounts
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <OpsStatusPill tone={(overview?.counts.stalled ?? 0) > 0 ? "warning" : "success"}>
+              <OpsStatusPill tone="default">
                 {(overview?.counts.stalled ?? 0) > 0 ? "Stalled accounts present" : "Activation rail clear"}
               </OpsStatusPill>
             </div>
@@ -71,15 +71,15 @@ export default function SuccessPage() {
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-4">
               <OpsMetricCard label="Accounts" value={loading ? "..." : overview?.counts.totalAccounts ?? 0} />
-              <OpsMetricCard label="Stalled" value={loading ? "..." : overview?.counts.stalled ?? 0} emphasis={(overview?.counts.stalled ?? 0) > 0 ? "warning" : "default"} />
-              <OpsMetricCard label="Expansion" value={loading ? "..." : overview?.counts.expansionReady ?? 0} emphasis={(overview?.counts.expansionReady ?? 0) > 0 ? "primary" : "default"} />
-              <OpsMetricCard label="Churn risk" value={loading ? "..." : overview?.counts.churnRisk ?? 0} emphasis={(overview?.counts.churnRisk ?? 0) > 0 ? "warning" : "default"} />
+              <OpsMetricCard label="Stalled" value={loading ? "..." : overview?.counts.stalled ?? 0} />
+              <OpsMetricCard label="Expansion" value={loading ? "..." : overview?.counts.expansionReady ?? 0} />
+              <OpsMetricCard label="Churn risk" value={loading ? "..." : overview?.counts.churnRisk ?? 0} />
             </div>
 
-            <div className="rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
+            <div className="rounded-[20px] border border-white/[0.025] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.16)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-xl">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sub">
                     Success command read
                   </p>
                   <h2 className="mt-1.5 text-[0.94rem] font-semibold tracking-tight text-text">
@@ -91,13 +91,13 @@ export default function SuccessPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <OpsStatusPill tone={(overview?.counts.stalled ?? 0) > 0 ? "warning" : "success"}>
+                  <OpsStatusPill tone="default">
                     {overview?.counts.stalled ?? 0} stalled
                   </OpsStatusPill>
-                  <OpsStatusPill tone={(overview?.counts.expansionReady ?? 0) > 0 ? "success" : "default"}>
+                  <OpsStatusPill tone="default">
                     {overview?.counts.expansionReady ?? 0} expansion-ready
                   </OpsStatusPill>
-                  <OpsStatusPill tone={(overview?.counts.churnRisk ?? 0) > 0 ? "warning" : "default"}>
+                  <OpsStatusPill tone="default">
                     {overview?.counts.churnRisk ?? 0} churn-risk
                   </OpsStatusPill>
                 </div>
@@ -153,7 +153,6 @@ export default function SuccessPage() {
                   : "The queue is clear right now."
               }
               cta={topRiskAccount ? "Open account" : "Queue clear"}
-              emphasis={Boolean(topRiskAccount)}
             />
 
             <OpsPriorityLink
