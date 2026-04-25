@@ -84,12 +84,12 @@ function ReleaseLifecyclePanel({
       title="Release state and decision posture"
       description="Keep the release lifecycle explicit and capture the human reasoning behind go, watch or no-go."
     >
-      <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 xl:items-start xl:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)]">
         <div className="space-y-3">
           <select
             value={state}
             onChange={(event) => setState(event.target.value as typeof state)}
-            className="w-full rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
+            className="w-full rounded-[18px] border border-white/[0.04] bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
           >
             <option value="draft">Draft</option>
             <option value="ready_for_review">Ready for review</option>
@@ -117,14 +117,14 @@ function ReleaseLifecyclePanel({
             onChange={(event) => setSummary(event.target.value)}
             rows={4}
             placeholder="Release summary"
-            className="w-full rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+            className="w-full rounded-[18px] border border-white/[0.04] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
           />
           <textarea
             value={decisionNotes}
             onChange={(event) => setDecisionNotes(event.target.value)}
             rows={4}
             placeholder="Decision notes"
-            className="w-full rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+            className="w-full rounded-[18px] border border-white/[0.04] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
           />
         </div>
 
@@ -134,14 +134,14 @@ function ReleaseLifecyclePanel({
             onChange={(event) => setBlockerSummary(event.target.value)}
             rows={4}
             placeholder="Blocker summary"
-            className="w-full rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+            className="w-full rounded-[18px] border border-white/[0.04] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
           />
           <textarea
             value={rollbackNotes}
             onChange={(event) => setRollbackNotes(event.target.value)}
             rows={4}
             placeholder="Rollback or mitigation notes"
-            className="w-full rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+            className="w-full rounded-[18px] border border-white/[0.04] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
           />
         </div>
       </div>
@@ -201,17 +201,17 @@ function MigrationLinkPanel({
       title="Migration linkage"
       description="Attach the migration to this release and keep the review/run posture explicit instead of carrying it in side-channel memory."
     >
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_220px_220px_auto]">
+      <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1.1fr)_220px_220px_auto]">
         <input
           value={migrationFilename}
           onChange={(event) => setMigrationFilename(event.target.value)}
           placeholder="Migration filename"
-          className="rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+          className="rounded-[18px] border border-white/[0.04] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
         />
         <select
           value={reviewState}
           onChange={(event) => setReviewState(event.target.value as typeof reviewState)}
-          className="rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
+          className="rounded-[18px] border border-white/[0.04] bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
         >
           <option value="not_reviewed">Not reviewed</option>
           <option value="reviewed">Reviewed</option>
@@ -220,7 +220,7 @@ function MigrationLinkPanel({
         <select
           value={runState}
           onChange={(event) => setRunState(event.target.value as typeof runState)}
-          className="rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
+          className="rounded-[18px] border border-white/[0.04] bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
         >
           <option value="pending">Pending</option>
           <option value="not_needed">Not needed</option>
@@ -242,7 +242,7 @@ function MigrationLinkPanel({
         onChange={(event) => setMitigationNotes(event.target.value)}
         rows={4}
         placeholder="Mitigation or rollback notes for this migration"
-        className="mt-4 w-full rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+        className="mt-4 w-full rounded-[18px] border border-white/[0.04] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
       />
     </OpsPanel>
   );
@@ -458,7 +458,7 @@ export default function ReleaseDetailPage() {
           </div>
         }
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           <ReleaseLifecyclePanel detail={detail} onUpdated={setDetail} />
           <MigrationLinkPanel detail={detail} onUpdated={setDetail} />
           <ReleaseServicesPanel releaseId={detail.release.id} services={detail.services} onUpdated={setDetail} />

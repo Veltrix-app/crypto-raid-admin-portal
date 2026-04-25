@@ -291,12 +291,12 @@ export default function ProjectTrustPage() {
         />
 
         {loadError ? (
-          <div className="rounded-[24px] border border-line bg-card px-5 py-5 text-sm text-rose-300">
+          <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.02] px-5 py-5 text-sm text-rose-300">
             {loadError}
           </div>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
           <ProjectTrustCasesPanel
             rows={trustCases}
             loading={loadingCases}
@@ -309,7 +309,7 @@ export default function ProjectTrustPage() {
             }
           />
 
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             <ProjectTrustCaseDetailPanel
               trustCase={summaryOnly ? null : trustCaseDetail}
               loading={loadingDetail}

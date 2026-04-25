@@ -98,7 +98,7 @@ function QueueList({
             <Link
               key={account.accountId}
               href={`/business/accounts/${account.accountId}`}
-              className="block rounded-[18px] border border-white/6 bg-white/[0.03] p-3.5 transition hover:border-primary/30"
+              className="block rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-3.5 transition hover:border-primary/30"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -268,7 +268,7 @@ export default function BusinessPage() {
               <OpsMetricCard label="Upgrade candidates" value={overview.queues.upgradeCandidates.length} emphasis={overview.queues.upgradeCandidates.length > 0 ? "warning" : "default"} />
             </div>
 
-            <div className="rounded-[20px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
+            <div className="rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-xl">
                   <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
@@ -325,7 +325,7 @@ export default function BusinessPage() {
           </div>
         }
       >
-        <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.02fr_0.98fr]">
           <OpsPanel
             eyebrow="Revenue overview"
             title="Commercial mix"
@@ -342,7 +342,7 @@ export default function BusinessPage() {
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {overview.planMix.map((entry) => (
-                <div key={entry.planId} className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3.5 py-3.5">
+                <div key={entry.planId} className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3.5 py-3.5">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{entry.label}</p>
                   <p className="mt-2 text-[1.02rem] font-extrabold text-text">{entry.count}</p>
                 </div>
@@ -365,7 +365,7 @@ export default function BusinessPage() {
           </OpsPanel>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
           <QueueList
             title="Billing ops queue"
             description="Accounts where collections or subscription posture need direct intervention."
@@ -390,7 +390,7 @@ export default function BusinessPage() {
           />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
           <OpsPanel
             eyebrow="Account health"
             title="Activation and underuse"
@@ -433,7 +433,7 @@ export default function BusinessPage() {
                 <Link
                   key={account.accountId}
                   href={`/business/accounts/${account.accountId}`}
-                  className="block rounded-[18px] border border-white/6 bg-white/[0.03] p-3.5 transition hover:border-primary/30"
+                  className="block rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-3.5 transition hover:border-primary/30"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>

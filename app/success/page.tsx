@@ -76,7 +76,7 @@ export default function SuccessPage() {
               <OpsMetricCard label="Churn risk" value={loading ? "..." : overview?.counts.churnRisk ?? 0} emphasis={(overview?.counts.churnRisk ?? 0) > 0 ? "warning" : "default"} />
             </div>
 
-            <div className="rounded-[20px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
+            <div className="rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-xl">
                   <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
@@ -135,7 +135,7 @@ export default function SuccessPage() {
       >
         <SuccessOverviewPanel overview={overview} loading={loading} error={error} />
 
-        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.08fr_0.92fr]">
           <SuccessQueueTable
             accounts={overview?.accounts ?? []}
             filters={filters}
@@ -143,7 +143,7 @@ export default function SuccessPage() {
             onFiltersChange={setFilters}
           />
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <OpsPriorityLink
               href={topRiskAccount ? `/success/accounts/${topRiskAccount.accountId}` : "/success"}
               title="Open the next account that needs a named owner"

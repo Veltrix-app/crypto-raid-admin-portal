@@ -756,7 +756,7 @@ function NewCampaignPageContent() {
   function renderWorkspaceContextEditor() {
     if (!selectedTemplate) {
       return (
-        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+        <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-5">
           <p className="text-sm leading-7 text-sub">
             Pick a playbook first so Veltrix can show which workspace links and brand fields the
             campaign needs.
@@ -767,7 +767,7 @@ function NewCampaignPageContent() {
 
     return (
       <div className="space-y-5">
-        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+        <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-5">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
             Workspace context usage
           </p>
@@ -792,7 +792,7 @@ function NewCampaignPageContent() {
         </div>
 
         {currentMissingContextFields.length > 0 ? (
-          <div className="rounded-[24px] border border-white/8 bg-black/20 p-5">
+          <div className="rounded-[18px] border border-white/[0.04] bg-black/20 p-5">
             <div className="grid gap-4 md:grid-cols-2">
               {editableContextFields.map((field) => (
                 <label key={field} className="block">
@@ -811,7 +811,7 @@ function NewCampaignPageContent() {
                         [field as EditableProjectContextField]: event.target.value,
                       }))
                     }
-                    className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                    className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
                     placeholder={`Add ${formatProjectFieldLabel(field)}`}
                   />
                 </label>
@@ -835,7 +835,7 @@ function NewCampaignPageContent() {
             </div>
           </div>
         ) : (
-          <div className="rounded-[24px] border border-emerald-500/30 bg-emerald-500/10 p-5">
+          <div className="rounded-[18px] border border-emerald-500/30 bg-emerald-500/10 p-5">
             <p className="text-sm leading-7 text-emerald-100">
               All required workspace fields are already present. This campaign can move into the
               generated journey with a clean autofill posture.
@@ -980,7 +980,7 @@ function NewCampaignPageContent() {
       case "raid_pressure":
         return (
           <div className="space-y-5">
-            <div className="rounded-[24px] border border-amber-400/20 bg-amber-500/[0.06] p-5">
+            <div className="rounded-[18px] border border-amber-400/20 bg-amber-500/[0.06] p-5">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-300">
                 Raid layer
               </p>
@@ -1009,7 +1009,7 @@ function NewCampaignPageContent() {
       case "launch_posture":
         return (
           <div className="space-y-5">
-            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+            <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-5">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                 Launch watch
               </p>
@@ -1079,7 +1079,7 @@ function NewCampaignPageContent() {
   function renderStudioCore() {
     if (currentStep === "template") {
       return (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <BuilderStepHeader
             eyebrow={`Step ${currentStepIndex + 1}`}
             title="Start from a complete playbook"
@@ -1096,7 +1096,7 @@ function NewCampaignPageContent() {
           />
 
           {savedProjectTemplates.length > 0 ? (
-            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+            <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-4">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                 Saved project templates
               </p>
@@ -1104,7 +1104,7 @@ function NewCampaignPageContent() {
                 {savedProjectTemplates.map((template) => (
                   <div
                     key={template.id}
-                    className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4"
+                    className="rounded-[16px] border border-white/[0.04] bg-black/20 px-4 py-4"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -1165,7 +1165,7 @@ function NewCampaignPageContent() {
 
     if (currentStep === "custom") {
       return (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <BuilderStepHeader
             eyebrow={`Step ${currentStepIndex + 1}`}
             title="Shape your custom playbook"
@@ -1174,13 +1174,13 @@ function NewCampaignPageContent() {
             totalSteps={builderSteps.length}
           />
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+          <div className="grid gap-4 lg:items-start lg:grid-cols-2">
+            <label className="block rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-4">
               <span className="mb-2 block text-sm font-semibold text-text">Campaign title</span>
               <input
                 value={campaignTitleDraft}
                 onChange={(event) => setCampaignTitleDraft(event.target.value)}
-                className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
                 placeholder="Chainwars Custom Sprint"
               />
               <p className="mt-3 text-sm leading-6 text-sub">
@@ -1189,14 +1189,14 @@ function NewCampaignPageContent() {
               </p>
             </label>
 
-            <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+            <label className="block rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-4">
               <span className="mb-2 block text-sm font-semibold text-text">
                 Short campaign hook
               </span>
               <input
                 value={customPlaybookSummary}
                 onChange={(event) => setCustomPlaybookSummary(event.target.value)}
-                className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
                 placeholder="A custom campaign for holders, community and launch traffic"
               />
               <p className="mt-3 text-sm leading-6 text-sub">
@@ -1205,13 +1205,13 @@ function NewCampaignPageContent() {
             </label>
           </div>
 
-          <label className="block rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+          <label className="block rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-4">
             <span className="mb-2 block text-sm font-semibold text-text">Internal direction</span>
             <textarea
               value={customPlaybookGoal}
               onChange={(event) => setCustomPlaybookGoal(event.target.value)}
               rows={5}
-              className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
               placeholder="Describe the flow you want to build: what should users do first, what should this campaign unlock, and what kind of reward logic should it support?"
             />
             <p className="mt-3 text-sm leading-6 text-sub">
@@ -1225,7 +1225,7 @@ function NewCampaignPageContent() {
 
     if (currentStep === "autofill") {
       return (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <BuilderStepHeader
             eyebrow={`Step ${currentStepIndex + 1}`}
             title="Patch the workspace before the campaign wires itself"
@@ -1240,7 +1240,7 @@ function NewCampaignPageContent() {
 
     if (currentStep === "flow") {
       return (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <BuilderStepHeader
             eyebrow={`Step ${currentStepIndex + 1}`}
             title="Tune the campaign storyboard"
@@ -1255,7 +1255,7 @@ function NewCampaignPageContent() {
             onSelect={setSelectedStoryboardBlockId}
           />
 
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_320px]">
             <div>{renderFlowBlockWorkspace()}</div>
             <CampaignStoryboardInspector block={selectedStoryboardBlock}>
               {renderFlowInspectorChildren()}
@@ -1266,7 +1266,7 @@ function NewCampaignPageContent() {
     }
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <BuilderStepHeader
           eyebrow="Campaign Studio Launch"
           title="Lock the launch posture and generate the campaign"
@@ -1281,9 +1281,9 @@ function NewCampaignPageContent() {
           onSelect={setSelectedStoryboardBlockId}
         />
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-5">
-            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+            <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-4">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                 Save this variant
               </p>
@@ -1293,7 +1293,7 @@ function NewCampaignPageContent() {
                   <input
                     value={savedTemplateName}
                     onChange={(event) => setSavedTemplateName(event.target.value)}
-                    className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                    className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
                     placeholder="Chainwars launch variant"
                   />
                 </label>
@@ -1302,7 +1302,7 @@ function NewCampaignPageContent() {
                   <input
                     value={savedTemplateDescription}
                     onChange={(event) => setSavedTemplateDescription(event.target.value)}
-                    className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+                    className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
                     placeholder="For launch pushes with quote-post proof"
                   />
                 </label>
@@ -1321,7 +1321,7 @@ function NewCampaignPageContent() {
             </div>
 
             {generationMessage ? (
-              <div className="rounded-[22px] border border-primary/25 bg-primary/10 px-4 py-4 text-sm text-primary">
+              <div className="rounded-[16px] border border-primary/25 bg-primary/10 px-4 py-4 text-sm text-primary">
                 {generationMessage}
               </div>
             ) : null}
@@ -1406,9 +1406,9 @@ function NewCampaignPageContent() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {entrySourceLabel ? (
-          <div className="rounded-[24px] border border-primary/20 bg-primary/10 p-4 text-sm leading-7 text-primary">
+          <div className="rounded-[18px] border border-primary/20 bg-primary/10 p-4 text-sm leading-7 text-primary">
             <span className="font-semibold text-white">{entrySourceLabel}</span> handed this campaign into the studio with project context already loaded.
             {returnHref ? (
               <>
@@ -1464,16 +1464,16 @@ function NewCampaignPageContent() {
               }
               context={
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text">
+                  <span className="rounded-full border border-white/[0.04] bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text">
                     {selectedProject?.name || "No workspace"}
                   </span>
-                  <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                  <span className="rounded-full border border-white/[0.04] bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
                     {selectedTemplate?.label || "Playbook not selected"}
                   </span>
-                  <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                  <span className="rounded-full border border-white/[0.04] bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
                     {includedQuestDrafts.length} quests
                   </span>
-                  <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                  <span className="rounded-full border border-white/[0.04] bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
                     {includedRewardDrafts.length} rewards
                   </span>
                 </div>
@@ -1552,7 +1552,7 @@ function NewCampaignPageContent() {
                     {studioLens === "launch" || currentStep === "launch" ? (
                       <CampaignLaunchPreview preview={launchPreview} />
                     ) : (
-                      <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+                      <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.03] p-4">
                         <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                           Mission map
                         </p>
@@ -1586,7 +1586,7 @@ function NewCampaignPageContent() {
               />
             </>
           }
-          canvasClassName="space-y-6"
+          canvasClassName="space-y-4"
         >
           {renderStudioCore()}
         </StudioShell>
@@ -1653,7 +1653,7 @@ function SuccessCampaignModal({
 }) {
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4 backdrop-blur-md">
-      <div className="w-full max-w-2xl rounded-[26px] border border-primary/20 bg-[linear-gradient(180deg,rgba(16,20,28,0.98),rgba(8,10,16,0.98))] p-5 shadow-[0_26px_80px_rgba(0,0,0,0.38)]">
+      <div className="w-full max-w-2xl rounded-[20px] border border-primary/20 bg-[linear-gradient(180deg,rgba(16,20,28,0.98),rgba(8,10,16,0.98))] p-5 shadow-[0_26px_80px_rgba(0,0,0,0.38)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
@@ -1684,7 +1684,7 @@ function SuccessCampaignModal({
           <PreviewStat label="Next move" value="Review and publish" />
         </div>
 
-        <div className="mt-6 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+        <div className="mt-6 rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-4">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
             Next step
           </p>
@@ -1731,12 +1731,12 @@ function TemplateOptionCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-[26px] border text-left transition ${
+      className={`rounded-[20px] border text-left transition ${
         featured ? "p-6" : "p-4"
       } ${
         active
           ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))] shadow-[0_18px_36px_rgba(0,0,0,0.24)]"
-          : "border-white/8 bg-white/[0.03] hover:border-white/14 hover:bg-white/[0.05]"
+          : "border-white/[0.04] bg-white/[0.03] hover:border-white/[0.08] hover:bg-white/[0.05]"
       }`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1813,8 +1813,8 @@ function CampaignPreviewSurface({
   missingContext: number;
 }) {
   return (
-    <div className="overflow-hidden rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
-      <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(6,8,12,0.82))] p-4">
+    <div className="overflow-hidden rounded-[16px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
+      <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(6,8,12,0.82))] p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-xl">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -1825,7 +1825,7 @@ function CampaignPreviewSurface({
             </h3>
             <p className="mt-3 text-sm leading-7 text-sub">{summary}</p>
           </div>
-          <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3">
+          <div className="rounded-[20px] border border-white/[0.04] bg-black/20 px-4 py-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
               Template fit
             </p>
@@ -1836,7 +1836,7 @@ function CampaignPreviewSurface({
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-          <div className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4">
+          <div className="rounded-[16px] border border-white/[0.04] bg-black/20 px-4 py-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
               Member moment
             </p>
@@ -1844,7 +1844,7 @@ function CampaignPreviewSurface({
               Contributors enter a guided launch lane with quests, rewards and a clear reason to act now.
             </p>
           </div>
-          <div className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4">
+          <div className="rounded-[16px] border border-white/[0.04] bg-black/20 px-4 py-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
               Context pressure
             </p>
@@ -1872,7 +1872,7 @@ function PreviewStat({
   value: string | number;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 shadow-[0_12px_28px_rgba(0,0,0,0.12)] transition duration-200 hover:-translate-y-0.5 hover:bg-white/[0.05]">
+    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.03] p-4 shadow-[0_12px_28px_rgba(0,0,0,0.12)] transition duration-200 hover:-translate-y-0.5 hover:bg-white/[0.05]">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
         {label}
       </p>
@@ -1899,7 +1899,7 @@ function CampaignStepNavigator({
   onSelect: (step: BuilderStepId) => void;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
+    <div className="rounded-[16px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
       <div className="grid gap-3 xl:grid-cols-4">
         {steps.map((step, index) => {
           const active = step.id === currentStep;
@@ -1910,10 +1910,10 @@ function CampaignStepNavigator({
             key={step.id}
             type="button"
             onClick={() => onSelect(step.id)}
-              className={`rounded-[22px] border px-4 py-4 text-left transition ${
+              className={`rounded-[16px] border px-4 py-4 text-left transition ${
                 active
                   ? "border-primary/35 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))]"
-                  : "border-white/8 bg-white/[0.03] hover:bg-white/[0.05]"
+                  : "border-white/[0.04] bg-white/[0.03] hover:bg-white/[0.05]"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -1968,7 +1968,7 @@ function TemplateQuestCard({
   ) => void;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_rgba(0,0,0,0.22)]">
+    <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_rgba(0,0,0,0.22)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-text">
@@ -2027,7 +2027,7 @@ function TemplateQuestCard({
           <input
             value={item.draft.title}
             onChange={(event) => onEdit(item.key, "title", event.target.value)}
-            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -2042,7 +2042,7 @@ function TemplateQuestCard({
             onChange={(event) =>
               onEdit(item.key, "xp", Number(event.target.value || 0))
             }
-            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -2056,7 +2056,7 @@ function TemplateQuestCard({
               onEdit(item.key, "description", event.target.value)
             }
             rows={3}
-            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -2069,7 +2069,7 @@ function TemplateQuestCard({
             onChange={(event) =>
               onEdit(item.key, "actionLabel", event.target.value)
             }
-            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -2082,13 +2082,13 @@ function TemplateQuestCard({
             onChange={(event) =>
               onEdit(item.key, "actionUrl", event.target.value)
             }
-            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
             placeholder="https://..."
           />
         </label>
       </div>
       ) : (
-        <div className="mt-4 rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
+        <div className="mt-4 rounded-[20px] border border-white/[0.04] bg-black/20 px-4 py-4">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
             Quick read
           </p>
@@ -2125,7 +2125,7 @@ function TemplateRewardCard({
   ) => void;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_rgba(0,0,0,0.22)]">
+    <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_rgba(0,0,0,0.22)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-text">{item.draft.title}</p>
@@ -2176,7 +2176,7 @@ function TemplateRewardCard({
           <input
             value={item.draft.title}
             onChange={(event) => onEdit(item.key, "title", event.target.value)}
-            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -2191,7 +2191,7 @@ function TemplateRewardCard({
             onChange={(event) =>
               onEdit(item.key, "cost", Number(event.target.value || 0))
             }
-            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
           />
         </label>
 
@@ -2205,12 +2205,12 @@ function TemplateRewardCard({
               onEdit(item.key, "description", event.target.value)
             }
             rows={3}
-            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.04] bg-black/20 px-4 py-3 outline-none"
           />
         </label>
       </div>
       ) : (
-        <div className="mt-4 rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
+        <div className="mt-4 rounded-[20px] border border-white/[0.04] bg-black/20 px-4 py-4">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
             Quick read
           </p>
@@ -2232,7 +2232,7 @@ function TemplateMeta({
   value: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
+    <div className="rounded-[20px] border border-white/[0.04] bg-black/20 px-4 py-4">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
         {label}
       </p>
@@ -2251,7 +2251,7 @@ function TemplateMetaCard({
   value: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
+    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.03] px-4 py-4">
       <p className="text-sm font-bold text-text">{title}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{description}</p>
       <p className="mt-3 break-all text-sm font-semibold text-text">{value}</p>

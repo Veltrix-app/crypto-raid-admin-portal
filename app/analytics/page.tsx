@@ -422,19 +422,19 @@ export default function AnalyticsPage() {
             <div className="flex flex-wrap gap-3">
             <Link
               href="/overview"
-              className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
+              className="rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
             >
               Overview
             </Link>
             <Link
               href="/analytics/engagement"
-              className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
+              className="rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
             >
               Engagement
             </Link>
             <Link
               href="/analytics/rewards"
-              className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
+              className="rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-text transition hover:border-primary/30 hover:text-primary"
             >
               Rewards
             </Link>
@@ -527,8 +527,8 @@ export default function AnalyticsPage() {
         ) : null}
 
         {analyticsView === "growth" ? (
-          <div className="space-y-6">
-            <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="space-y-4">
+            <div className="grid gap-4 xl:items-start xl:grid-cols-[1.08fr_0.92fr]">
               <OpsPanel
                 eyebrow="Growth funnel"
                 title="Visit to retained revenue"
@@ -539,7 +539,7 @@ export default function AnalyticsPage() {
                   {(growthOverview?.funnel ?? []).slice(0, 10).map((stage) => (
                     <div
                       key={stage.stage}
-                      className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3.5 py-3.5"
+                      className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3.5 py-3.5"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-[13px] font-bold text-text">{stage.label}</p>
@@ -613,7 +613,7 @@ export default function AnalyticsPage() {
               </OpsPanel>
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+            <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
               <OpsPanel
                 eyebrow="Retention"
                 title="Cohort durability"
@@ -645,7 +645,7 @@ export default function AnalyticsPage() {
                   {(growthOverview?.retention.cohorts ?? []).map((cohort) => (
                     <div
                       key={cohort.cohortLabel}
-                      className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3.5 py-3.5"
+                      className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3.5 py-3.5"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="font-semibold text-text">{cohort.cohortLabel}</p>
@@ -670,7 +670,7 @@ export default function AnalyticsPage() {
                     growthOverview?.attribution.sources.map((source) => (
                       <div
                         key={source.source}
-                        className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3.5 py-3.5"
+                        className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3.5 py-3.5"
                       >
                         <div className="flex items-center justify-between gap-3">
                           <p className="font-semibold text-text">{source.source}</p>
@@ -698,7 +698,7 @@ export default function AnalyticsPage() {
               </OpsPanel>
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+            <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
               <OpsPanel
                 eyebrow="Benchmarks"
                 title="Peer coverage"
@@ -747,7 +747,7 @@ export default function AnalyticsPage() {
 
         {analyticsView === "outcomes" ? (
           <>
-            <div className="grid gap-6 xl:grid-cols-2">
+            <div className="grid gap-4 xl:items-start xl:grid-cols-2">
               <OpsPanel
                 eyebrow="Platform outcomes"
                 title="Core trend posture"
@@ -781,7 +781,7 @@ export default function AnalyticsPage() {
               </OpsPanel>
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
               <OpsPanel
                 eyebrow="Workspace lens"
                 title="Active project outcome read"
@@ -803,7 +803,7 @@ export default function AnalyticsPage() {
                     ].map((key) => {
                       const metric = projectMetricMap.get(key);
                       return (
-                        <div key={key} className="rounded-[18px] border border-white/6 bg-white/[0.03] p-3.5">
+                        <div key={key} className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-3.5">
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-sm font-bold text-text">{metric?.label ?? humanize(key)}</p>
                             <OpsStatusPill
@@ -870,9 +870,9 @@ export default function AnalyticsPage() {
             title="Campaign operations snapshot"
             description="A denser owner-facing read on throughput, approvals and confidence by campaign."
           >
-            <div className="grid gap-4 xl:grid-cols-3">
+            <div className="grid gap-4 xl:items-start xl:grid-cols-3">
               {campaignHealth.slice(0, 6).map((campaign) => (
-                <div key={campaign.id} className="rounded-[20px] border border-white/6 bg-white/[0.03] p-4">
+                <div key={campaign.id} className="rounded-[20px] border border-white/[0.04] bg-white/[0.03] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-bold text-text">{campaign.title}</p>
@@ -899,7 +899,7 @@ export default function AnalyticsPage() {
         ) : null}
 
         {analyticsView === "verification" ? (
-          <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid gap-4 xl:items-start xl:grid-cols-[0.9fr_1.1fr]">
             <OpsPanel
               eyebrow="Route monitor"
               title="Verification route mix"
@@ -932,8 +932,8 @@ export default function AnalyticsPage() {
               title="Quest review load"
               description="These quests are creating the most moderator drag right now."
             >
-              <div className="overflow-hidden rounded-[20px] border border-white/6 bg-white/[0.03]">
-                <div className="grid grid-cols-7 border-b border-white/6 px-4 py-3.5 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
+              <div className="overflow-hidden rounded-[20px] border border-white/[0.04] bg-white/[0.03]">
+                <div className="grid grid-cols-7 border-b border-white/[0.04] px-4 py-3.5 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
                   <div>Quest</div>
                   <div>Verification</div>
                   <div>Submissions</div>
@@ -946,7 +946,7 @@ export default function AnalyticsPage() {
                 {questReviewLoad.map((quest) => (
                   <div
                     key={quest.id}
-                    className="grid grid-cols-7 items-center border-b border-white/6 px-4 py-3.5 text-[13px] text-text last:border-b-0"
+                    className="grid grid-cols-7 items-center border-b border-white/[0.04] px-4 py-3.5 text-[13px] text-text last:border-b-0"
                   >
                     <div className="font-semibold">{quest.title}</div>
                     <div className="capitalize">{humanize(quest.verificationType)}</div>
@@ -997,7 +997,7 @@ function formatCurrencyValue(value: number) {
 
 function ModeCard({ label, body }: { label: string; body: string }) {
   return (
-    <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3 py-3">
+    <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3 py-3">
       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{label}</p>
       <p className="mt-1.5 text-[11px] leading-5 text-sub">{body}</p>
     </div>
@@ -1014,7 +1014,7 @@ function LinkRow({
   body: string;
 }) {
   return (
-    <Link href={href} className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3.5 py-3 transition hover:border-primary/40">
+    <Link href={href} className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3.5 py-3 transition hover:border-primary/40">
       <p className="text-[13px] font-bold text-text">{title}</p>
       <p className="mt-1.5 text-[11px] leading-5 text-sub">{body}</p>
     </Link>
@@ -1031,7 +1031,7 @@ function RouteRow({
   share: number;
 }) {
   return (
-    <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3 py-2.5">
+    <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.03] px-3 py-2.5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-text">{label}</p>
         <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
@@ -1050,7 +1050,7 @@ function SnapshotStat({
   value: number;
 }) {
   return (
-    <div className="rounded-[16px] border border-white/6 bg-white/[0.03] px-3 py-2.5">
+    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.03] px-3 py-2.5">
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-1 text-[0.92rem] font-extrabold text-text">{value}</p>
     </div>

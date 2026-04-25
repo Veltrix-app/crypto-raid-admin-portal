@@ -301,14 +301,14 @@ export default function OverviewPage() {
           </div>
         }
         statusBand={
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.16fr)_320px]">
+          <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1.16fr)_320px]">
             <OverviewTopCard
               label="Control read"
               title={nowSummary.title}
               body={nowSummary.body}
               tone="primary"
             >
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_292px]">
+              <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_292px]">
                 <div className="space-y-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <OverviewState
@@ -341,7 +341,7 @@ export default function OverviewPage() {
                           className={`rounded-[18px] border px-3.5 py-3 transition hover:border-primary/26 ${
                             item.emphasis
                               ? "border-primary/18 bg-primary/[0.08]"
-                              : "border-white/6 bg-white/[0.025]"
+                              : "border-white/[0.04] bg-white/[0.02]"
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -359,7 +359,7 @@ export default function OverviewPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2.5 rounded-[20px] border border-white/8 bg-white/[0.03] p-3.5">
+                <div className="space-y-2.5 rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
                     Workspace snapshot
                   </p>
@@ -389,7 +389,7 @@ export default function OverviewPage() {
               title={currentModeCopy.title}
               body={currentModeCopy.body}
             >
-              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-3">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3">
                 <SegmentToggle
                   value={overviewMode}
                   onChange={setOverviewMode}
@@ -445,7 +445,7 @@ export default function OverviewPage() {
               <OpsMetricCard label="Linked readiness" value={`${linkedReadinessRate}%`} />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
               <LaunchHealthBoard
                 activeProjects={activeProjects}
                 launchReadyProjects={launchReadyProjects}
@@ -486,7 +486,7 @@ export default function OverviewPage() {
               </OpsPanel>
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
               <OpsPanel
                 eyebrow="Workspace state"
                 title="Quick state on the active project"
@@ -556,7 +556,7 @@ export default function OverviewPage() {
               <OpsMetricCard label="Active overrides" value={activeOverrideCount} />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
               <ProviderHealthPanel
                 providerFailureCount={providerFailureCount}
                 automationFailureCount={automationFailureCount}
@@ -573,7 +573,7 @@ export default function OverviewPage() {
               />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
               <DeployCheckPanel />
               <RunbookRail
                 surface="deploy"
@@ -591,8 +591,8 @@ export default function OverviewPage() {
             ) : null}
           </>
         ) : (
-          <div className="space-y-6">
-            <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="space-y-4">
+            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
               <OpsPanel
                 eyebrow="Escalation routing"
                 title="Route pressure into the exact workspace that should own it"
@@ -646,7 +646,7 @@ export default function OverviewPage() {
               </OpsPanel>
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
               <SupportEscalationPanel
                 title="Cross-surface support escalations"
                 description="Keep named ownership, waiting state and the next action visible whenever a failure crosses queue boundaries or repeats."
@@ -692,7 +692,7 @@ function OverviewTopCard({
       className={`relative overflow-hidden rounded-[22px] border p-4 shadow-[0_22px_70px_rgba(0,0,0,0.18)] ${
         tone === "primary"
           ? "border-primary/14 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.1),transparent_22%),linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.98))]"
-          : "border-white/6 bg-[linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.98))]"
+          : "border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.98))]"
       }`}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/16 to-transparent" />
@@ -709,7 +709,7 @@ function OverviewTopCard({
 
 function OverviewState({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] border border-white/6 bg-white/[0.02] px-4 py-3.5">
+    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>
@@ -730,7 +730,7 @@ function OverviewWatchSignal({
       className={`rounded-[22px] border px-4 py-4 ${
         tone === "warning"
           ? "border-amber-400/16 bg-amber-500/[0.07]"
-          : "border-white/6 bg-white/[0.02]"
+          : "border-white/[0.04] bg-white/[0.02]"
       }`}
     >
         <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>

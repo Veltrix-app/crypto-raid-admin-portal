@@ -154,7 +154,7 @@ export default function UserDetailPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <DetailHero
           eyebrow="Contributor Detail"
           title={currentUser.username}
@@ -187,7 +187,7 @@ export default function UserDetailPage() {
           }
         />
 
-        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
           <DetailSurface
             eyebrow="Trust Posture"
             title={trustPosture}
@@ -233,8 +233,8 @@ export default function UserDetailPage() {
                 }
               />
             </div>
-            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-              <p className="text-sm leading-7 text-sub">
+            <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+              <p className="text-[12px] leading-5 text-sub">
                 Latest trust snapshot score:{" "}
                 <span className="font-semibold text-text">
                   {latestTrustSnapshot ? latestTrustSnapshot.score : currentUser.trustScore}
@@ -266,7 +266,7 @@ export default function UserDetailPage() {
               <button
                 onClick={() => handleTrustAction("clear_watch", "Wallet watch cleared from contributor detail operator read.")}
                 disabled={activeTrustAction === "clear"}
-                className="rounded-2xl border border-line bg-card px-4 py-3 font-bold text-sub disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 font-bold text-sub disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Clear watch
               </button>
@@ -281,7 +281,7 @@ export default function UserDetailPage() {
           </DetailSurface>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr] xl:items-start">
           <DetailSurface
             title="Activity Snapshot"
             description="Recent contribution and reward behavior tied to this contributor."
@@ -299,7 +299,7 @@ export default function UserDetailPage() {
             </div>
           </DetailSurface>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <DetailSidebarSurface title="Reputation Markers">
               <div className="space-y-4">
                 <DetailMetaRow label="Contribution Tier" value={currentUser.contributionTier} />
@@ -317,7 +317,7 @@ export default function UserDetailPage() {
                     label="Captured"
                     value={new Date(latestTrustSnapshot.created_at).toLocaleString()}
                   />
-                  <div className="rounded-2xl border border-line bg-card px-4 py-3">
+                  <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Reasons</p>
                     <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">
                       {JSON.stringify(latestTrustSnapshot.reasons ?? {}, null, 2)}
@@ -346,15 +346,15 @@ export default function UserDetailPage() {
               {userReviewFlags.length > 0 ? (
                 <div className="space-y-4">
                   {userReviewFlags.map((flag) => (
-                    <div key={flag.id} className="rounded-2xl border border-line bg-card px-4 py-3">
+                    <div key={flag.id} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-line px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+                        <span className="rounded-full border border-white/[0.05] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
                           {flag.flagType.replace(/_/g, " ")}
                         </span>
-                        <span className="rounded-full border border-line px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                        <span className="rounded-full border border-white/[0.05] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
                           {flag.status}
                         </span>
-                        <span className="rounded-full border border-line px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                        <span className="rounded-full border border-white/[0.05] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
                           {flag.severity}
                         </span>
                       </div>

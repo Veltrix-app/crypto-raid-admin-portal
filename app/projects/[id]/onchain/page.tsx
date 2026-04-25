@@ -473,12 +473,12 @@ export default function ProjectOnchainPage() {
         />
 
         {loadError ? (
-          <div className="rounded-[24px] border border-rose-500/30 bg-rose-500/10 px-5 py-5 text-sm text-rose-300">
+          <div className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-5 py-5 text-sm text-rose-300">
             {loadError}
           </div>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
           <ProjectOnchainCasesPanel
             rows={onchainCases}
             loading={loadingCases}
@@ -491,7 +491,7 @@ export default function ProjectOnchainPage() {
             }
           />
 
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             <ProjectOnchainCaseDetailPanel
               onchainCase={summaryOnly ? null : onchainCaseDetail}
               loading={loadingDetail}
@@ -545,7 +545,7 @@ export default function ProjectOnchainPage() {
           {notice ? <p className="mt-4 text-sm text-primary">{notice}</p> : null}
         </OpsPanel>
 
-        <div className="grid gap-6 xl:grid-cols-2">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-2">
           <OpsPanel
             eyebrow="Treasury and ops wallets"
             title="Registered wallets"

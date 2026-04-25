@@ -121,7 +121,7 @@ export default function ClaimDetailPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <DetailHero
           eyebrow="Claim Review"
           title={currentClaim.rewardTitle}
@@ -157,7 +157,7 @@ export default function ClaimDetailPage() {
           }
         />
 
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.1fr_0.9fr]">
           <DetailSurface
             eyebrow="Decision context"
             title="Claim decision context"
@@ -179,13 +179,13 @@ export default function ClaimDetailPage() {
             </div>
 
             {linkedFlags.length > 0 ? (
-              <div className="mt-5 rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+              <div className="mt-5 rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                   Linked Flags
                 </p>
                 <div className="mt-3 space-y-3">
                   {linkedFlags.map((flag) => (
-                    <div key={flag.id} className="rounded-2xl border border-line bg-card px-4 py-3">
+                    <div key={flag.id} className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <DetailBadge>{flag.flagType.replace(/_/g, " ")}</DetailBadge>
                         <DetailBadge tone="warning">{flag.severity}</DetailBadge>
@@ -211,7 +211,7 @@ export default function ClaimDetailPage() {
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
                   rows={4}
-                  className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                  className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 outline-none"
                   placeholder="Capture payout checks, delivery decisions or rejection context."
                 />
               </label>
@@ -245,8 +245,8 @@ export default function ClaimDetailPage() {
           </DetailSurface>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-          <div className="space-y-6">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.4fr_0.8fr]">
+          <div className="space-y-4">
             <DetailSurface
               eyebrow="Pressure read"
               title="Claim pressure"
@@ -305,7 +305,7 @@ export default function ClaimDetailPage() {
             </DetailSurface>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <DetailSidebarSurface title="Fulfillment Note">
               {currentClaim.fulfillmentNotes ? (
                 <p className="mt-2 text-sm text-sub">{currentClaim.fulfillmentNotes}</p>
@@ -333,7 +333,7 @@ export default function ClaimDetailPage() {
             <DetailSidebarSurface title="Audit Trail">
               <div className="mt-4 space-y-3">
                 {auditLogs.map((log) => (
-                  <div key={log.id} className="rounded-2xl border border-line bg-card2 p-4">
+                  <div key={log.id} className="rounded-2xl border border-white/[0.04] bg-white/[0.025] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-bold capitalize text-text">
                         {log.action.replace(/_/g, " ")}
@@ -389,7 +389,7 @@ function DecisionCard({
         : "bg-amber-500/15 text-amber-300";
 
   return (
-    <div className="rounded-2xl border border-line bg-card2 p-4">
+    <div className="rounded-2xl border border-white/[0.04] bg-white/[0.025] p-4">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <div className="mt-3">
         <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${toneClass}`}>

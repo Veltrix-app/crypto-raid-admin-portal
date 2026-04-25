@@ -224,7 +224,7 @@ export default function UsersPage() {
               title="Reputation roster"
               description="Trust, sybil risk, XP and claim history brought together into a calmer contributor rail instead of a raw list."
             >
-              <div className="grid gap-4 xl:grid-cols-2">
+              <div className="grid gap-4 xl:items-start xl:grid-cols-2">
                 {filteredUsers.map((user) => (
                   <div key={user.id} className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -300,7 +300,7 @@ export default function UsersPage() {
                 title="High-conviction risk queue"
                 description="Users with the highest sybil scores or the weakest trust posture surface here first."
               >
-                <div className="grid gap-4 xl:grid-cols-2">
+                <div className="grid gap-4 xl:items-start xl:grid-cols-2">
                   {riskUsers.slice(0, 8).map((user) => (
                     <div key={user.id} className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
                       <div className="flex flex-wrap items-start justify-between gap-4">

@@ -147,7 +147,7 @@ function invoiceStatusTone(status: string) {
 
 function UsageRow({ item }: { item: PortalBillingUsageItem }) {
   return (
-    <div className="rounded-[22px] border border-line bg-card2 p-4">
+    <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-xl">
           <div className="flex items-center gap-3">
@@ -370,7 +370,7 @@ function SettingsBillingContent() {
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <div className="grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
         <OpsPanel
           eyebrow="Usage overview"
           title="Capacity posture"
@@ -383,7 +383,7 @@ function SettingsBillingContent() {
           </div>
         </OpsPanel>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <OpsPriorityLink
             href={workspace.upgradeUrl ?? workspace.pricingUrl}
             title={
@@ -409,7 +409,7 @@ function SettingsBillingContent() {
             tone="accent"
           >
             <div className="space-y-3">
-              <div className="rounded-[22px] border border-line bg-card2 p-4">
+              <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-bold text-text">Commercial posture</p>
                   <OpsStatusPill
@@ -453,7 +453,7 @@ function SettingsBillingContent() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+      <div className="grid gap-4 xl:items-start xl:grid-cols-[1.02fr_0.98fr]">
         <OpsPanel
           eyebrow="Invoice history"
           title="Recent invoices"
@@ -464,7 +464,7 @@ function SettingsBillingContent() {
               {workspace.invoices.map((invoice) => (
                 <div
                   key={invoice.id}
-                  className="rounded-[22px] border border-line bg-card2 p-4"
+                  className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -498,7 +498,7 @@ function SettingsBillingContent() {
                           href={invoice.hostedInvoiceUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center rounded-full border border-line px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
+                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
                         >
                           Open hosted invoice
                         </a>
@@ -508,7 +508,7 @@ function SettingsBillingContent() {
                           href={invoice.invoicePdfUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center rounded-full border border-line px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
+                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
                         >
                           Open PDF
                         </a>
@@ -544,7 +544,7 @@ function SettingsBillingContent() {
                       ? "border-primary bg-primary/10"
                       : isNext
                         ? "border-amber-300/40 bg-amber-300/10"
-                        : "border-line bg-card2"
+                        : "border-white/[0.04] bg-white/[0.025]"
                   }`}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
@@ -571,7 +571,7 @@ function SettingsBillingContent() {
                             ? workspace.supportUrl
                             : `${workspace.pricingUrl}&plan=${plan.id}`
                         }
-                        className="inline-flex items-center rounded-full border border-line px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
+                        className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
                       >
                         {plan.isEnterprise ? "Contact enterprise" : "Review plan"}
                       </a>

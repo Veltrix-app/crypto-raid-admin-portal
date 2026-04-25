@@ -80,7 +80,7 @@ export default function SubmissionsPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <PortalPageFrame
           eyebrow="Submission review board"
           title="Submissions"

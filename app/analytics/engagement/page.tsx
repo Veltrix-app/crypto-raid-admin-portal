@@ -17,7 +17,7 @@ export default function AnalyticsEngagementPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
             Engagement Analytics
@@ -48,7 +48,7 @@ export default function AnalyticsEngagementPage() {
         </div>
 
         <div className="grid gap-5 xl:grid-cols-2">
-          <div className="rounded-[22px] border border-line bg-card p-5">
+          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">Campaign Completion</h2>
             <p className="mt-2 text-sm text-sub">
               Which campaigns are actually converting activity into completion.
@@ -63,7 +63,7 @@ export default function AnalyticsEngagementPage() {
             </div>
           </div>
 
-          <div className="rounded-[22px] border border-line bg-card p-5">
+          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">Raid Participation</h2>
             <p className="mt-2 text-sm text-sub">
               Social pushes that are pulling the strongest immediate response.
@@ -79,7 +79,7 @@ export default function AnalyticsEngagementPage() {
           </div>
         </div>
 
-        <div className="rounded-[22px] border border-line bg-card p-5">
+        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
           <h2 className="text-[1.08rem] font-extrabold text-text">Quest Activity</h2>
           <p className="mt-2 text-sm text-sub">
             Submission volume per quest shows where contributors spend their actual effort.
@@ -103,7 +103,7 @@ function MetricCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-line bg-card p-4">
+    <div className="rounded-[20px] border border-white/[0.04] bg-white/[0.02] p-4">
       <p className="text-sm text-sub">{label}</p>
       <p className="mt-1.5 text-[1.4rem] font-extrabold text-text">{value}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>

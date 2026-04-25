@@ -385,7 +385,7 @@ function ProjectLaunchContent() {
           action={
             <Link
               href="/projects"
-              className="rounded-[18px] border border-line bg-card2 px-4 py-3 text-sm font-bold text-text"
+              className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm font-bold text-text"
             >
               Back to projects
             </Link>
@@ -428,7 +428,7 @@ function ProjectLaunchContent() {
             action={
               <Link
                 href={`/projects/${project.id}`}
-                className="rounded-[18px] border border-line bg-card2 px-4 py-3 text-sm font-bold text-text"
+                className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm font-bold text-text"
               >
                 Back to project overview
               </Link>
@@ -598,11 +598,11 @@ function ProjectLaunchContent() {
               title="Why the score looks the way it does"
               description="Each group below is a high-signal read on the parts of the project that most affect launch quality."
             >
-              <div className="grid gap-4 xl:grid-cols-3">
+              <div className="grid gap-4 xl:items-start xl:grid-cols-3">
                 {snapshot.readiness.groups.map((group) => (
                   <div
                     key={group.id}
-                    className="rounded-[24px] border border-white/6 bg-white/[0.025] p-4"
+                    className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] p-4"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-bold text-text">{group.title}</p>

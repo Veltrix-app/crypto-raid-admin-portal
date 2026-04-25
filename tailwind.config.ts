@@ -13,7 +13,7 @@ const config: Config = {
         bg: "#07090D",
         card: "#0E1218",
         card2: "#121821",
-        line: "#1F2937",
+        line: "rgba(255, 255, 255, 0.055)",
         text: "#F8FAFC",
         sub: "#94A3B8",
         primary: "#C6FF00",

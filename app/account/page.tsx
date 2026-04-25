@@ -119,7 +119,7 @@ function AccountOverviewContent() {
       title="Account"
       description="This is the workspace layer above projects: identity, owner posture, onboarding state and the next clean route into the operational product."
       statusBand={
-        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.08fr_0.92fr]">
           <OpsPanel
             eyebrow="Account posture"
             title="Read the workspace before dropping into projects"
@@ -157,7 +157,7 @@ function AccountOverviewContent() {
         </div>
       }
     >
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <div className="grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
         <OpsPanel
           eyebrow="Identity"
           title="Workspace posture"
@@ -175,7 +175,7 @@ function AccountOverviewContent() {
           </div>
         </OpsPanel>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <OpsPanel
             eyebrow="Team"
             title="Workspace members and invites"
@@ -276,7 +276,7 @@ function AccountOverviewContent() {
               />
             </div>
 
-            <div className="mt-6 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="mt-6 grid gap-4 xl:items-start xl:grid-cols-[1.05fr_0.95fr]">
               <div className="space-y-3">
                 <OpsSnapshotRow
                   label="Peer cohort"

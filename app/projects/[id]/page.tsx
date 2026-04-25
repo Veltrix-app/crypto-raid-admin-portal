@@ -1615,12 +1615,12 @@ export default function ProjectDetailPage() {
         ) : null}
 
         <div className="space-y-4">
-          <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
+          <div className="grid gap-4 xl:items-start xl:grid-cols-[1.12fr_0.88fr]">
             <ProjectOverviewQuickActions actions={overviewQuickActions} />
             <ProjectOverviewQueues signals={overviewSignals} />
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="grid gap-4 xl:items-start xl:grid-cols-[1.08fr_0.92fr]">
             <ProjectOverviewSummary
               title={`${project.logo} ${project.name}`}
               description={
@@ -1718,12 +1718,12 @@ export default function ProjectDetailPage() {
               description="This checklist keeps a newly approved project moving from onboarding into a campaign-ready workspace."
               aside={<DetailMetricCard label="Progress" value={`${completedLaunchpadSteps}/4`} />}
             >
-              <div id="project-launchpad" className="mt-6 grid gap-4 xl:grid-cols-2">
+              <div id="project-launchpad" className="mt-6 grid gap-4 xl:items-start xl:grid-cols-2">
               {launchpadSteps.map((step) => (
                 <Link
                   key={step.title}
                   href={step.href}
-                  className="rounded-2xl border border-line bg-card2 p-5 transition hover:border-primary/40"
+                  className="rounded-2xl border border-white/[0.04] bg-white/[0.025] p-5 transition hover:border-primary/40"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -1803,14 +1803,14 @@ export default function ProjectDetailPage() {
             </div>
           </DetailSurface>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <DetailSurface
               eyebrow="Public Profile"
               title="Brand and community-facing preview"
               description="This is how the workspace reads when someone lands on it from discovery or a campaign entry point."
               aside={<DetailMetricCard label="Readiness" value={`${completedPublicReadiness}/${publicProfileReadiness.length}`} />}
             >
-              <div className="mt-5 overflow-hidden rounded-2xl border border-line bg-card2">
+              <div className="mt-5 overflow-hidden rounded-2xl border border-white/[0.04] bg-white/[0.025]">
                 <div className="h-36 bg-gradient-to-br from-primary/20 via-card to-card2">
                   {project.bannerUrl ? (
                     <img
@@ -1823,7 +1823,7 @@ export default function ProjectDetailPage() {
 
                 <div className="p-5">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-line bg-card text-[1.5rem]">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/[0.04] bg-white/[0.02] text-[1.5rem]">
                       {project.logo || "🚀"}
                     </div>
 
@@ -1843,7 +1843,7 @@ export default function ProjectDetailPage() {
                   </div>
 
                   {project.longDescription ? (
-                    <div className="mt-5 rounded-2xl border border-line bg-card px-4 py-4">
+                    <div className="mt-5 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-4">
                       <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                         Long Form Narrative
                       </p>
@@ -1889,7 +1889,7 @@ export default function ProjectDetailPage() {
               {project.bannerUrl ? (
                 <div className="mt-6">
                   <p className="mb-2 text-sm font-semibold text-text">Banner Preview</p>
-                  <div className="overflow-hidden rounded-2xl border border-line bg-card2">
+                  <div className="overflow-hidden rounded-2xl border border-white/[0.04] bg-white/[0.025]">
                     <img
                       src={project.bannerUrl}
                       alt={`${project.name} banner`}
@@ -1942,12 +1942,12 @@ export default function ProjectDetailPage() {
                 <button
                   onClick={() => void runProjectOnchainSync()}
                   disabled={syncingProviderFeed}
-                  className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-sub transition hover:border-primary/40 hover:text-text disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm font-bold text-sub transition hover:border-primary/40 hover:text-text disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {syncingProviderFeed ? "Running provider sync..." : "Run provider sync for this project"}
                 </button>
 
-                <div className="rounded-[24px] border border-line bg-card2 p-4">
+                <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.025] p-4">
                   <p className="text-sm font-bold text-text">Project wallets</p>
                   <p className="mt-2 text-sm text-sub">
                     Add treasury, operations, rewards or LP wallets that belong to this project.
@@ -1960,7 +1960,7 @@ export default function ProjectDetailPage() {
                           setWalletForm((current) => ({ ...current, label: event.target.value }))
                         }
                         placeholder="Wallet label"
-                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       />
                       <select
                         value={walletForm.walletType}
@@ -1970,7 +1970,7 @@ export default function ProjectDetailPage() {
                             walletType: event.target.value,
                           }))
                         }
-                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       >
                         <option value="treasury">Treasury</option>
                         <option value="operations">Operations</option>
@@ -1987,7 +1987,7 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder="0x... wallet address"
-                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                     />
                     <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
                       <input
@@ -1996,9 +1996,9 @@ export default function ProjectDetailPage() {
                           setWalletForm((current) => ({ ...current, chain: event.target.value }))
                         }
                         placeholder="Chain (evm)"
-                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       />
-                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text">
                         <span>Active</span>
                         <input
                           type="checkbox"
@@ -2024,7 +2024,7 @@ export default function ProjectDetailPage() {
                         projectWallets.map((wallet) => (
                           <div
                             key={wallet.id}
-                            className="rounded-2xl border border-line bg-card px-4 py-3"
+                            className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3"
                           >
                             <div className="flex items-start justify-between gap-4">
                               <div className="min-w-0">
@@ -2047,7 +2047,7 @@ export default function ProjectDetailPage() {
                           </div>
                         ))
                       ) : (
-                        <div className="rounded-2xl border border-dashed border-line bg-card px-4 py-4 text-sm text-sub">
+                        <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-4 text-sm text-sub">
                           No project wallets registered yet.
                         </div>
                       )}
@@ -2055,7 +2055,7 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[24px] border border-line bg-card2 p-4">
+                <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.025] p-4">
                   <p className="text-sm font-bold text-text">Tracked assets</p>
                   <p className="mt-2 text-sm text-sub">
                     Register the token, NFT or LP contracts that on-chain scoring should accept.
@@ -2070,7 +2070,7 @@ export default function ProjectDetailPage() {
                           setAssetForm((current) => ({ ...current, symbol: event.target.value }))
                         }
                         placeholder="Asset symbol"
-                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       />
                       <select
                         value={assetForm.assetType}
@@ -2080,7 +2080,7 @@ export default function ProjectDetailPage() {
                             assetType: event.target.value,
                           }))
                         }
-                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       >
                         <option value="token">Token</option>
                         <option value="nft">NFT</option>
@@ -2097,7 +2097,7 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder="0x... contract address"
-                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                     />
                     <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
                       <input
@@ -2106,7 +2106,7 @@ export default function ProjectDetailPage() {
                           setAssetForm((current) => ({ ...current, chain: event.target.value }))
                         }
                         placeholder="Chain (evm)"
-                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       />
                       <input
                         value={assetForm.decimals}
@@ -2117,9 +2117,9 @@ export default function ProjectDetailPage() {
                           }))
                         }
                         placeholder="Decimals"
-                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       />
-                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text">
                         <span>Active</span>
                         <input
                           type="checkbox"
@@ -2143,7 +2143,7 @@ export default function ProjectDetailPage() {
                           }))
                         }
                         placeholder="Start block on Base"
-                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       />
                       <input
                         value={assetForm.holdThresholdHours}
@@ -2154,11 +2154,11 @@ export default function ProjectDetailPage() {
                           }))
                         }
                         placeholder="Hold threshold hours"
-                        className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       />
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text">
                         <span>Track contract calls</span>
                         <input
                           type="checkbox"
@@ -2171,7 +2171,7 @@ export default function ProjectDetailPage() {
                           }
                         />
                       </label>
-                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                      <label className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text">
                         <span>Enable hold tracking</span>
                         <input
                           type="checkbox"
@@ -2194,7 +2194,7 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder={"Market maker addresses (one per line)\n0x..."}
-                      className="min-h-[110px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
+                      className="min-h-[110px] w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
                     />
                     <textarea
                       value={assetForm.stakingContractAddressesText}
@@ -2205,7 +2205,7 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder={"Staking contract addresses (one per line)\n0x..."}
-                      className="min-h-[110px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
+                      className="min-h-[110px] w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
                     />
                     <textarea
                       value={assetForm.lpContractAddressesText}
@@ -2216,7 +2216,7 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder={"LP contract addresses (one per line)\n0x..."}
-                      className="min-h-[110px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
+                      className="min-h-[110px] w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
                     />
                     <textarea
                       value={assetForm.allowedFunctionsText}
@@ -2227,7 +2227,7 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder={"Allowed function selectors (one per line)\n0xa694fc3a"}
-                      className="min-h-[110px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
+                      className="min-h-[110px] w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
                     />
                     <textarea
                       value={assetForm.metadataJson}
@@ -2238,7 +2238,7 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder={`{\n  "netUsdDeltaHint": 1200,\n  "notes": "Optional advanced overrides only"\n}`}
-                      className="min-h-[180px] w-full rounded-2xl border border-line bg-card px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
+                      className="min-h-[180px] w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 font-mono text-xs text-text outline-none transition focus:border-primary/50"
                     />
                     <p className="text-xs text-sub">
                       Advanced metadata merges on top of the Base sync fields above. Existing
@@ -2261,7 +2261,7 @@ export default function ProjectDetailPage() {
                           setAssetForm(createDefaultAssetForm());
                           setOnchainNotice("Cleared the Base sync editor.");
                         }}
-                        className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-sub transition hover:border-primary/40 hover:text-text"
+                        className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm font-bold text-sub transition hover:border-primary/40 hover:text-text"
                       >
                         Clear editor
                       </button>
@@ -2269,7 +2269,7 @@ export default function ProjectDetailPage() {
                     <div className="grid gap-3">
                       {projectAssets.length > 0 ? (
                         projectAssets.map((asset) => (
-                          <div key={asset.id} className="rounded-2xl border border-line bg-card px-4 py-3">
+                          <div key={asset.id} className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3">
                             <div className="flex items-start justify-between gap-4">
                               <div className="min-w-0">
                                 <p className="font-bold text-text">{asset.symbol}</p>
@@ -2281,7 +2281,7 @@ export default function ProjectDetailPage() {
                                   {asset.is_active ? "active" : "inactive"}
                                 </p>
                                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                                  <div className="rounded-2xl border border-line bg-card2 px-3 py-2">
+                                  <div className="rounded-2xl border border-white/[0.04] bg-white/[0.025] px-3 py-2">
                                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
                                       Sync status
                                     </p>
@@ -2289,7 +2289,7 @@ export default function ProjectDetailPage() {
                                       {readAssetSyncState(asset).lastSyncStatus}
                                     </p>
                                   </div>
-                                  <div className="rounded-2xl border border-line bg-card2 px-3 py-2">
+                                  <div className="rounded-2xl border border-white/[0.04] bg-white/[0.025] px-3 py-2">
                                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
                                       Last synced block
                                     </p>
@@ -2309,7 +2309,7 @@ export default function ProjectDetailPage() {
                                   </p>
                                 ) : null}
                                 {asset.metadata && Object.keys(asset.metadata).length > 0 ? (
-                                  <pre className="mt-3 whitespace-pre-wrap break-all rounded-2xl border border-line bg-card2 p-3 text-[11px] text-sub">
+                                  <pre className="mt-3 whitespace-pre-wrap break-all rounded-2xl border border-white/[0.04] bg-white/[0.025] p-3 text-[11px] text-sub">
                                     {JSON.stringify(asset.metadata, null, 2)}
                                   </pre>
                                 ) : null}
@@ -2317,7 +2317,7 @@ export default function ProjectDetailPage() {
                               <div className="flex flex-col gap-2">
                                 <button
                                   onClick={() => loadAssetIntoEditor(asset)}
-                                  className="rounded-full border border-line bg-card2 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-sub transition hover:border-primary/40 hover:text-text"
+                                  className="rounded-full border border-white/[0.04] bg-white/[0.025] px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-sub transition hover:border-primary/40 hover:text-text"
                                 >
                                   Edit sync rules
                                 </button>
@@ -2332,7 +2332,7 @@ export default function ProjectDetailPage() {
                           </div>
                         ))
                       ) : (
-                        <div className="rounded-2xl border border-dashed border-line bg-card px-4 py-4 text-sm text-sub">
+                        <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-4 text-sm text-sub">
                           No on-chain assets registered yet.
                         </div>
                       )}
@@ -2392,7 +2392,7 @@ export default function ProjectDetailPage() {
                   label="Telegram group"
                   value={project.telegramUrl || "No Telegram URL on project yet"}
                 />
-                <div className="rounded-[24px] border border-line bg-card2 p-4">
+                <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.025] p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-sm font-bold text-text">Discord integration config</p>
@@ -2415,7 +2415,7 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder="Discord guild ID"
-                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                     />
                     <input
                       value={discordIntegrationConfig.serverId}
@@ -2426,9 +2426,9 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder="Optional legacy server ID"
-                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                     />
-                    <div className="rounded-2xl border border-line bg-card p-4">
+                    <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4">
                       <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                         Community Push Settings
                       </p>
@@ -2443,7 +2443,7 @@ export default function ProjectDetailPage() {
                                 scopeMode: event.target.value as PushScopeMode,
                               }))
                             }
-                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                            className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                           >
                             <option value="project_only">Only this project</option>
                             <option value="selected_projects">Selected projects</option>
@@ -2452,14 +2452,14 @@ export default function ProjectDetailPage() {
                           </select>
                         </label>
                         {discordPushSettings.scopeMode === "selected_projects" ? (
-                          <div className="space-y-2 rounded-2xl border border-line bg-card p-4">
+                          <div className="space-y-2 rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4">
                             <p className="text-sm font-semibold text-text">Allowed projects</p>
                             <div className="grid gap-2">
                               {selectableProjects.length > 0 ? (
                                 selectableProjects.map((candidate) => (
                                   <label
                                     key={candidate.id}
-                                    className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text"
+                                    className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text"
                                   >
                                     <span>{candidate.name}</span>
                                     <input
@@ -2487,14 +2487,14 @@ export default function ProjectDetailPage() {
                           </div>
                         ) : null}
                         {discordPushSettings.scopeMode === "selected_campaigns" ? (
-                          <div className="space-y-2 rounded-2xl border border-line bg-card p-4">
+                          <div className="space-y-2 rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4">
                             <p className="text-sm font-semibold text-text">Allowed campaigns</p>
                             <div className="grid gap-2">
                               {campaigns.length > 0 ? (
                                 campaigns.map((candidate) => (
                                   <label
                                     key={candidate.id}
-                                    className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text"
+                                    className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text"
                                   >
                                     <span>
                                       {candidate.title}
@@ -2536,7 +2536,7 @@ export default function ProjectDetailPage() {
                                 deliveryMode: event.target.value as PushDeliveryMode,
                               }))
                             }
-                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                            className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                           >
                             <option value="broadcast">Broadcast everything that matches</option>
                             <option value="priority_only">High-priority only</option>
@@ -2551,7 +2551,7 @@ export default function ProjectDetailPage() {
                             }))
                           }
                           placeholder="Target Discord channel ID"
-                          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                         />
                         <input
                           value={discordPushSettings.targetThreadId}
@@ -2562,7 +2562,7 @@ export default function ProjectDetailPage() {
                             }))
                           }
                           placeholder="Optional Discord thread ID"
-                          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                         />
                         <div className="grid gap-3 sm:grid-cols-2">
                           {[
@@ -2574,7 +2574,7 @@ export default function ProjectDetailPage() {
                           ].map(([key, label]) => (
                             <label
                               key={key}
-                              className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text"
+                              className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text"
                             >
                               <span>{label}</span>
                               <input
@@ -2593,7 +2593,7 @@ export default function ProjectDetailPage() {
                           ))}
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                          <label className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text">
                             <span>Featured only</span>
                             <input
                               type="checkbox"
@@ -2606,7 +2606,7 @@ export default function ProjectDetailPage() {
                               }
                             />
                           </label>
-                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                          <label className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text">
                             <span>Live only</span>
                             <input
                               type="checkbox"
@@ -2629,7 +2629,7 @@ export default function ProjectDetailPage() {
                             }))
                           }
                           placeholder="Minimum XP threshold (optional)"
-                          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                         />
                       </div>
                     </div>
@@ -2646,20 +2646,20 @@ export default function ProjectDetailPage() {
                       <button
                         onClick={() => void sendIntegrationTestPush("discord")}
                         disabled={testingIntegration === "discord"}
-                        className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {testingIntegration === "discord"
                           ? "Sending Discord test..."
                           : "Send Discord test push"}
                       </button>
                     </div>
-                    <div className="rounded-2xl border border-line bg-card p-4">
+                    <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4">
                       <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                         Community Bot Controls
                       </p>
                       <div className="mt-4 grid gap-3">
                         <div className="grid gap-3 sm:grid-cols-2">
-                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text">
+                          <label className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text">
                             <span>Commands enabled</span>
                             <input
                               type="checkbox"
@@ -2672,7 +2672,7 @@ export default function ProjectDetailPage() {
                               }
                             />
                           </label>
-                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text">
+                          <label className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text">
                             <span>Rank sync enabled</span>
                             <input
                               type="checkbox"
@@ -2685,7 +2685,7 @@ export default function ProjectDetailPage() {
                               }
                             />
                           </label>
-                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text">
+                          <label className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text">
                             <span>Leaderboards enabled</span>
                             <input
                               type="checkbox"
@@ -2698,7 +2698,7 @@ export default function ProjectDetailPage() {
                               }
                             />
                           </label>
-                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text">
+                          <label className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text">
                             <span>Raid ops rail</span>
                             <input
                               type="checkbox"
@@ -2723,7 +2723,7 @@ export default function ProjectDetailPage() {
                                   rankSource: event.target.value as DiscordRankSource,
                                 }))
                               }
-                              className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                              className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                             >
                               <option value="project_xp">Project XP</option>
                               <option value="global_xp">Global XP</option>
@@ -2741,7 +2741,7 @@ export default function ProjectDetailPage() {
                                   leaderboardScope: event.target.value as DiscordLeaderboardScope,
                                 }))
                               }
-                              className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                              className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                             >
                               <option value="project">This project community</option>
                               <option value="global">Global Veltrix board</option>
@@ -2758,7 +2758,7 @@ export default function ProjectDetailPage() {
                                     event.target.value as DiscordLeaderboardPeriod,
                                 }))
                               }
-                              className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                              className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                             >
                               <option value="weekly">Weekly</option>
                               <option value="monthly">Monthly</option>
@@ -2776,7 +2776,7 @@ export default function ProjectDetailPage() {
                                     event.target.value as DiscordLeaderboardCadence,
                                 }))
                               }
-                              className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                              className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                             >
                               <option value="manual">Manual only</option>
                               <option value="daily">Daily</option>
@@ -2794,7 +2794,7 @@ export default function ProjectDetailPage() {
                               }))
                             }
                             placeholder="Leaderboard channel ID (optional override)"
-                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                            className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                           />
                           <input
                             value={discordBotSettings.leaderboardTopN}
@@ -2805,10 +2805,10 @@ export default function ProjectDetailPage() {
                               }))
                             }
                             placeholder="Leaderboard top N"
-                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                            className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                           />
                         </div>
-                        <div className="rounded-2xl border border-line bg-card2 p-4">
+                        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.025] p-4">
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <p className="text-sm font-semibold text-text">Quick ladders</p>
@@ -2816,7 +2816,7 @@ export default function ProjectDetailPage() {
                                 Load a starter rail, then paste the Discord role IDs that belong to each step.
                               </p>
                             </div>
-                            <span className="rounded-full border border-line bg-card px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-sub">
+                            <span className="rounded-full border border-white/[0.04] bg-white/[0.02] px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-sub">
                               Replaces current draft
                             </span>
                           </div>
@@ -2825,7 +2825,7 @@ export default function ProjectDetailPage() {
                               <button
                                 key={preset.id}
                                 onClick={() => loadDiscordRankPreset(preset)}
-                                className="rounded-2xl border border-line bg-card p-4 text-left transition hover:border-primary/40 hover:text-primary"
+                                className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4 text-left transition hover:border-primary/40 hover:text-primary"
                               >
                                 <div className="flex items-center justify-between gap-3">
                                   <p className="text-sm font-bold text-text">{preset.title}</p>
@@ -2843,15 +2843,15 @@ export default function ProjectDetailPage() {
                             ))}
                           </div>
                           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                            <div className="rounded-2xl border border-line bg-card px-4 py-3 text-sm text-sub">
+                            <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-sub">
                               <span className="font-semibold text-text">Configured rules:</span>{" "}
                               {discordRankRules.length}
                             </div>
-                            <div className="rounded-2xl border border-line bg-card px-4 py-3 text-sm text-sub">
+                            <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-sub">
                               <span className="font-semibold text-text">Sources:</span>{" "}
                               {summarizeDiscordRankSources(discordRankRules)}
                             </div>
-                            <div className="rounded-2xl border border-line bg-card px-4 py-3 text-sm text-sub">
+                            <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-sub">
                               <span className="font-semibold text-text">Missing role IDs:</span>{" "}
                               {
                                 discordRankRules.filter((rule) => rule.discordRoleId.trim().length === 0)
@@ -2860,7 +2860,7 @@ export default function ProjectDetailPage() {
                             </div>
                           </div>
                         </div>
-                        <div className="rounded-2xl border border-line bg-card2 p-4">
+                        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.025] p-4">
                           <div className="flex items-center justify-between gap-3">
                             <div>
                               <p className="text-sm font-semibold text-text">Rank rules</p>
@@ -2878,7 +2878,7 @@ export default function ProjectDetailPage() {
                                   },
                                 ])
                               }
-                              className="rounded-2xl border border-line bg-card px-3 py-2 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
+                              className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-3 py-2 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
                             >
                               Add rank rule
                             </button>
@@ -2888,7 +2888,7 @@ export default function ProjectDetailPage() {
                               discordRankRules.map((rule, index) => (
                                 <div
                                   key={rule.id ?? `discord-rank-rule-${index}`}
-                                  className="grid gap-3 rounded-2xl border border-line bg-card p-4"
+                                  className="grid gap-3 rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4"
                                 >
                                   <div className="grid gap-3 sm:grid-cols-2">
                                     <select
@@ -2906,7 +2906,7 @@ export default function ProjectDetailPage() {
                                           )
                                         )
                                       }
-                                      className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                                      className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                                     >
                                       <option value="project_xp">Project XP</option>
                                       <option value="global_xp">Global XP</option>
@@ -2925,7 +2925,7 @@ export default function ProjectDetailPage() {
                                         )
                                       }
                                       placeholder="Threshold"
-                                      className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                                      className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                                     />
                                     <input
                                       value={rule.discordRoleId}
@@ -2939,7 +2939,7 @@ export default function ProjectDetailPage() {
                                         )
                                       }
                                       placeholder="Discord role ID"
-                                      className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                                      className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                                     />
                                     <input
                                       value={rule.label}
@@ -2953,7 +2953,7 @@ export default function ProjectDetailPage() {
                                         )
                                       }
                                       placeholder="Role label"
-                                      className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                                      className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                                     />
                                   </div>
                                   <button
@@ -2988,7 +2988,7 @@ export default function ProjectDetailPage() {
                           <button
                             onClick={() => void runDiscordBotAction("command_sync")}
                             disabled={runningDiscordBotAction === "command_sync"}
-                            className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {runningDiscordBotAction === "command_sync"
                               ? "Syncing commands..."
@@ -2997,7 +2997,7 @@ export default function ProjectDetailPage() {
                           <button
                             onClick={() => void runDiscordBotAction("rank_sync")}
                             disabled={runningDiscordBotAction === "rank_sync"}
-                            className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {runningDiscordBotAction === "rank_sync"
                               ? "Syncing ranks..."
@@ -3006,7 +3006,7 @@ export default function ProjectDetailPage() {
                           <button
                             onClick={() => void runDiscordBotAction("leaderboard_post")}
                             disabled={runningDiscordBotAction === "leaderboard_post"}
-                            className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {runningDiscordBotAction === "leaderboard_post"
                               ? "Posting leaderboard..."
@@ -3014,13 +3014,13 @@ export default function ProjectDetailPage() {
                           </button>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-sub">
+                          <div className="rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-sub">
                             <span className="font-semibold text-text">Last rank sync:</span>{" "}
                             {discordBotSettings.lastRankSyncAt
                               ? new Date(discordBotSettings.lastRankSyncAt).toLocaleString()
                               : "Never"}
                           </div>
-                          <div className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-sub">
+                          <div className="rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-sub">
                             <span className="font-semibold text-text">Last leaderboard post:</span>{" "}
                             {discordBotSettings.lastLeaderboardPostedAt
                               ? new Date(discordBotSettings.lastLeaderboardPostedAt).toLocaleString()
@@ -3032,7 +3032,7 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[24px] border border-line bg-card2 p-4">
+                <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.025] p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-sm font-bold text-text">Telegram integration config</p>
@@ -3055,7 +3055,7 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder="Telegram chat ID"
-                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                     />
                     <input
                       value={telegramIntegrationConfig.groupId}
@@ -3066,9 +3066,9 @@ export default function ProjectDetailPage() {
                         }))
                       }
                       placeholder="Optional legacy group ID"
-                      className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                      className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                     />
-                    <div className="rounded-2xl border border-line bg-card p-4">
+                    <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4">
                       <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                         Community Push Settings
                       </p>
@@ -3083,7 +3083,7 @@ export default function ProjectDetailPage() {
                                 scopeMode: event.target.value as PushScopeMode,
                               }))
                             }
-                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                            className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                           >
                             <option value="project_only">Only this project</option>
                             <option value="selected_projects">Selected projects</option>
@@ -3092,14 +3092,14 @@ export default function ProjectDetailPage() {
                           </select>
                         </label>
                         {telegramPushSettings.scopeMode === "selected_projects" ? (
-                          <div className="space-y-2 rounded-2xl border border-line bg-card p-4">
+                          <div className="space-y-2 rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4">
                             <p className="text-sm font-semibold text-text">Allowed projects</p>
                             <div className="grid gap-2">
                               {selectableProjects.length > 0 ? (
                                 selectableProjects.map((candidate) => (
                                   <label
                                     key={candidate.id}
-                                    className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text"
+                                    className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text"
                                   >
                                     <span>{candidate.name}</span>
                                     <input
@@ -3127,14 +3127,14 @@ export default function ProjectDetailPage() {
                           </div>
                         ) : null}
                         {telegramPushSettings.scopeMode === "selected_campaigns" ? (
-                          <div className="space-y-2 rounded-2xl border border-line bg-card p-4">
+                          <div className="space-y-2 rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4">
                             <p className="text-sm font-semibold text-text">Allowed campaigns</p>
                             <div className="grid gap-2">
                               {campaigns.length > 0 ? (
                                 campaigns.map((candidate) => (
                                   <label
                                     key={candidate.id}
-                                    className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text"
+                                    className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm text-text"
                                   >
                                     <span>
                                       {candidate.title}
@@ -3176,7 +3176,7 @@ export default function ProjectDetailPage() {
                                 deliveryMode: event.target.value as PushDeliveryMode,
                               }))
                             }
-                            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                            className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                           >
                             <option value="broadcast">Broadcast everything that matches</option>
                             <option value="priority_only">High-priority only</option>
@@ -3191,7 +3191,7 @@ export default function ProjectDetailPage() {
                             }))
                           }
                           placeholder="Target Telegram chat ID for pushes"
-                          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                         />
                         <div className="grid gap-3 sm:grid-cols-2">
                           {[
@@ -3203,7 +3203,7 @@ export default function ProjectDetailPage() {
                           ].map(([key, label]) => (
                             <label
                               key={key}
-                              className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text"
+                              className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text"
                             >
                               <span>{label}</span>
                               <input
@@ -3222,7 +3222,7 @@ export default function ProjectDetailPage() {
                           ))}
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                          <label className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text">
                             <span>Featured only</span>
                             <input
                               type="checkbox"
@@ -3235,7 +3235,7 @@ export default function ProjectDetailPage() {
                               }
                             />
                           </label>
-                          <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+                          <label className="flex items-center justify-between rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text">
                             <span>Live only</span>
                             <input
                               type="checkbox"
@@ -3258,7 +3258,7 @@ export default function ProjectDetailPage() {
                             }))
                           }
                           placeholder="Minimum XP threshold (optional)"
-                          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                         />
                       </div>
                     </div>
@@ -3275,7 +3275,7 @@ export default function ProjectDetailPage() {
                       <button
                         onClick={() => void sendIntegrationTestPush("telegram")}
                         disabled={testingIntegration === "telegram"}
-                        className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {testingIntegration === "telegram"
                           ? "Sending Telegram test..."
@@ -3331,7 +3331,7 @@ export default function ProjectDetailPage() {
             <DetailSidebarSurface title="Public Profile Readiness">
               <div className="mt-4 space-y-3">
                 {publicProfileReadiness.map((item) => (
-                  <div key={item.label} className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                  <div key={item.label} className="rounded-[16px] border border-white/[0.04] bg-white/[0.03] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-bold text-text">{item.label}</p>
                       <span
@@ -3362,7 +3362,7 @@ export default function ProjectDetailPage() {
                   relatedCampaigns.map((campaign) => (
                     <div
                       key={campaign.id}
-                      className="rounded-2xl border border-line bg-card2 px-4 py-3"
+                      className="rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3"
                     >
                       <div className="flex items-center justify-between gap-4">
                         <div className="min-w-0">
@@ -3376,7 +3376,7 @@ export default function ProjectDetailPage() {
 
                         <button
                           onClick={() => router.push(`/campaigns/${campaign.id}`)}
-                          className="rounded-xl border border-line px-3 py-2 font-semibold"
+                          className="rounded-xl border border-white/[0.04] px-3 py-2 font-semibold"
                         >
                           Open
                         </button>
@@ -3384,7 +3384,7 @@ export default function ProjectDetailPage() {
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-line bg-card2 p-5">
+                  <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.025] p-5">
                     <p className="text-sm font-semibold text-text">
                       No campaigns linked yet.
                     </p>

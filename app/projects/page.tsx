@@ -297,7 +297,7 @@ function ProjectsPageContent() {
         </button>
       </OpsFilterBar>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.26fr)_340px]">
+      <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1.26fr)_340px]">
         <OpsPanel
           eyebrow="Workspace roster"
           title={boardView === "onboarding" ? "Projects needing setup attention" : "Project roster"}

@@ -153,14 +153,14 @@ export default function ProjectCampaignsPage() {
               </Link>
               <Link
                 href={`/quests/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
-                className="inline-flex items-center gap-2 rounded-[18px] border border-line bg-card2 px-4 py-3 font-bold text-text transition hover:border-primary/35"
+                className="inline-flex items-center gap-2 rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 font-bold text-text transition hover:border-primary/35"
               >
                 <Target size={16} />
                 Open Quest Studio
               </Link>
               <Link
                 href={`/raids/new?projectId=${project.id}${primaryCampaignId ? `&campaignId=${primaryCampaignId}` : ""}&source=campaign-board`}
-                className="inline-flex items-center gap-2 rounded-[18px] border border-line bg-card2 px-4 py-3 font-bold text-text transition hover:border-primary/35"
+                className="inline-flex items-center gap-2 rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 font-bold text-text transition hover:border-primary/35"
               >
                 <Swords size={16} />
                 Open Raid Builder

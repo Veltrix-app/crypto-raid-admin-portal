@@ -191,7 +191,7 @@ export default function QuestDetailPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <DetailHero
           eyebrow="Quest Detail"
           title={quest.title}
@@ -274,7 +274,7 @@ export default function QuestDetailPage() {
           </div>
         ) : null}
 
-        <div className="rounded-[22px] border border-white/6 bg-white/[0.025] p-4">
+        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
@@ -304,7 +304,7 @@ export default function QuestDetailPage() {
               aside={<DetailMetricCard label="Pending reviews" value={pendingSubmissions.length} />}
             >
               <div className="space-y-3">
-                <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+                <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] px-4 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -394,9 +394,9 @@ export default function QuestDetailPage() {
               title="Lifecycle, incidents and overrides"
               description="This operator rail keeps quest verification issues and manual pause or retry controls attached directly to the quest."
             >
-              <div className="mt-5 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+              <div className="mt-4 grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
                 <div className="space-y-4">
-                  <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                  <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
@@ -434,7 +434,7 @@ export default function QuestDetailPage() {
         ) : null}
 
         {questView === "configure" ? (
-          <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+          <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr] xl:items-start">
             <DetailSurface
               title="Edit Quest"
               description="Update quest logic, verification and timing without leaving the detail workspace."
@@ -487,7 +487,7 @@ export default function QuestDetailPage() {
               </div>
             </DetailSurface>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <DetailSidebarSurface title="Quest Settings">
                 <div className="mt-4 space-y-4">
                   <DetailMetaRow label="Quest Type" value={quest.questType} />
@@ -542,7 +542,7 @@ export default function QuestDetailPage() {
               <DetailSidebarSurface title="Operator History">
                 <div className="mt-4 space-y-3">
                   {questOps.audits.slice(0, 4).map((audit) => (
-                    <div key={audit.id} className="rounded-2xl border border-line bg-card2 px-4 py-3">
+                    <div key={audit.id} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
                       <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                         {audit.action_type.replace(/_/g, " ")}
                       </p>
@@ -604,7 +604,7 @@ function QuestSignalCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-white/6 bg-white/[0.025] px-3.5 py-3.5">
+    <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-3.5 py-3.5">
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-2 text-[1.18rem] font-extrabold tracking-[-0.03em] text-text">{value}</p>
       <p className="mt-2 text-[11px] leading-5 text-sub">{hint}</p>

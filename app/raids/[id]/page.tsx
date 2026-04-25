@@ -165,7 +165,7 @@ export default function RaidDetailPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <DetailHero
           eyebrow="Raid Detail"
           title={raid.title}
@@ -248,7 +248,7 @@ export default function RaidDetailPage() {
           </div>
         ) : null}
 
-        <div className="rounded-[22px] border border-white/6 bg-white/[0.025] p-4">
+        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
@@ -278,7 +278,7 @@ export default function RaidDetailPage() {
               aside={<DetailMetricCard label="Progress" value={`${raid.progress}%`} />}
             >
               <div className="space-y-3">
-                <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+                <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] px-4 py-4">
                   <p className="text-sm leading-7 text-sub">{raid.target}</p>
                 </div>
                 {readinessItems.map((item) => (
@@ -358,9 +358,9 @@ export default function RaidDetailPage() {
               title="Lifecycle, incidents and overrides"
               description="This operator rail keeps raid-side delivery issues and manual pause or mute controls attached directly to the raid object."
             >
-              <div className="mt-5 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+              <div className="mt-4 grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
                 <div className="space-y-4">
-                  <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                  <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
@@ -398,7 +398,7 @@ export default function RaidDetailPage() {
         ) : null}
 
         {raidView === "configure" ? (
-          <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+          <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr] xl:items-start">
             <DetailSurface
               title="Edit Raid"
               description="Update raid target, instructions, verification and timing without leaving the detail workspace."
@@ -447,7 +447,7 @@ export default function RaidDetailPage() {
               </div>
             </DetailSurface>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <DetailSidebarSurface title="Raid Settings">
                 <div className="mt-4 space-y-4">
                   <DetailMetaRow label="Community" value={raid.community || "-"} />
@@ -466,7 +466,7 @@ export default function RaidDetailPage() {
                     raid.instructions.map((step, index) => (
                       <div
                         key={`${raid.id}-${index}`}
-                        className="rounded-2xl border border-line bg-card2 px-4 py-3"
+                        className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5"
                       >
                         <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
                           Step {index + 1}
@@ -483,7 +483,7 @@ export default function RaidDetailPage() {
               <DetailSidebarSurface title="Operator History">
                 <div className="mt-4 space-y-3">
                   {raidOps.audits.slice(0, 4).map((audit) => (
-                    <div key={audit.id} className="rounded-2xl border border-line bg-card2 px-4 py-3">
+                    <div key={audit.id} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
                       <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                         {audit.action_type.replace(/_/g, " ")}
                       </p>
@@ -522,7 +522,7 @@ function RaidSignalCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-white/6 bg-white/[0.025] px-3.5 py-3.5">
+    <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-3.5 py-3.5">
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-2 text-[1.18rem] font-extrabold tracking-[-0.03em] text-text">{value}</p>
       <p className="mt-2 text-[11px] leading-5 text-sub">{hint}</p>

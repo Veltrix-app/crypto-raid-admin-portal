@@ -53,7 +53,7 @@ export default function NewProjectPage() {
           </div>
         }
       >
-        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.15fr_0.85fr]">
           <OpsPanel
             eyebrow="Project intake"
             title="Core project setup"
@@ -92,7 +92,7 @@ export default function NewProjectPage() {
             />
           </OpsPanel>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <OpsPanel
               eyebrow="Readiness guide"
               title="What a strong intake includes"

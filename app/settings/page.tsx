@@ -100,7 +100,7 @@ export default function SettingsPage() {
               <Link
                 key={item.title}
                 href={item.href}
-                className="rounded-[24px] border border-line bg-card2 p-5 transition hover:border-primary/35 hover:-translate-y-0.5"
+                className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] p-5 transition hover:border-primary/35 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
@@ -115,7 +115,7 @@ export default function SettingsPage() {
           </div>
         </OpsPanel>
 
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-4 xl:items-start xl:grid-cols-[1.1fr_0.9fr]">
           <OpsPanel
             eyebrow="Configuration priorities"
             title="What still deserves cleanup"

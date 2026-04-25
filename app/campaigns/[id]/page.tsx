@@ -392,7 +392,7 @@ export default function CampaignDetailPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <DetailHero
           eyebrow="Campaign Detail"
           title={campaign.title}
@@ -490,7 +490,7 @@ export default function CampaignDetailPage() {
           </div>
         ) : null}
 
-        <div className="rounded-[22px] border border-white/6 bg-white/[0.025] p-4">
+        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
@@ -514,7 +514,7 @@ export default function CampaignDetailPage() {
 
         {campaignView === "operate" ? (
           <>
-            <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
           <DetailSurface
             eyebrow="Campaign posture"
             title="Keep this campaign launchable"
@@ -609,9 +609,9 @@ export default function CampaignDetailPage() {
           title="Lifecycle, incidents and overrides"
           description="This operator rail keeps the campaign's runtime incidents, manual overrides and explicit lifecycle state in one place."
         >
-          <div className="mt-5 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="mt-4 grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
             <div className="space-y-4">
-              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
@@ -650,7 +650,7 @@ export default function CampaignDetailPage() {
         ) : null}
 
         {campaignView === "configure" ? (
-          <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+          <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr] xl:items-start">
           <DetailSurface
             title="Edit Campaign"
             description="Tighten the hook, structure and timing without leaving the detail view."
@@ -699,7 +699,7 @@ export default function CampaignDetailPage() {
             </div>
           </DetailSurface>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <DetailSidebarSurface title="Campaign Assets">
               <div className="mt-4 space-y-4">
                 <DetailMetaRow label="Slug" value={campaign.slug || "-"} />
@@ -812,7 +812,7 @@ export default function CampaignDetailPage() {
                         ? "border border-rose-500/30 bg-rose-500/10 text-rose-200"
                         : finalizeMessage.tone === "success"
                           ? "border border-primary/30 bg-primary/10 text-primary"
-                          : "border border-line bg-card2 text-sub"
+                          : "border border-white/[0.04] bg-white/[0.02] text-sub"
                     }`}
                   >
                     {finalizeMessage.text}
@@ -838,7 +838,7 @@ export default function CampaignDetailPage() {
             <DetailSidebarSurface title="Operator History">
               <div className="mt-4 space-y-3">
                 {campaignOps.audits.slice(0, 4).map((audit) => (
-                  <div key={audit.id} className="rounded-2xl border border-line bg-card2 px-4 py-3">
+                  <div key={audit.id} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                       {audit.action_type.replace(/_/g, " ")}
                     </p>
@@ -896,7 +896,7 @@ function AnalyticsStat({
   hint: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-white/6 bg-white/[0.025] p-3.5">
+    <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] p-3.5">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-[1.18rem] font-extrabold text-text">{value}</p>
       <p className="mt-2 text-[11px] leading-5 text-sub">{hint}</p>

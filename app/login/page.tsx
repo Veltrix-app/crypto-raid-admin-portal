@@ -92,7 +92,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-6">
-      <div className="w-full max-w-md rounded-[26px] border border-line bg-card p-6 shadow-neon">
+      <div className="w-full max-w-md rounded-[20px] border border-white/[0.04] bg-white/[0.02] p-6 shadow-neon">
         <div className="mb-6 flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
             <ShieldCheck size={26} />
@@ -121,7 +121,7 @@ export default function LoginPage() {
                 autoComplete="one-time-code"
                 value={totpCode}
                 onChange={(e) => setTotpCode(e.target.value)}
-                className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none transition focus:border-primary/40"
+                className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 outline-none transition focus:border-primary/40"
                 placeholder="123456"
                 required
               />
@@ -147,7 +147,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none transition focus:border-primary/40"
+                  className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 outline-none transition focus:border-primary/40"
                   placeholder="admin@project.com"
                   required
                 />
@@ -159,7 +159,7 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none transition focus:border-primary/40"
+                  className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 outline-none transition focus:border-primary/40"
                   required
                 />
               </div>
@@ -176,7 +176,7 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-5 rounded-[24px] border border-white/10 bg-card2 p-4">
+            <div className="mt-5 rounded-[18px] border border-white/10 bg-card2 p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/12 bg-black/20 text-text">
                   <Building2 className="h-5 w-5" />

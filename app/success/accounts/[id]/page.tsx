@@ -99,7 +99,7 @@ export default function SuccessAccountPage({ params }: PageProps) {
                 <OpsMetricCard label="Blockers" value={detail.blockers.length} emphasis={detail.blockers.length > 0 ? "warning" : "default"} />
               </div>
 
-              <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] px-4 py-4 shadow-[0_12px_42px_rgba(0,0,0,0.22)]">
+              <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] px-4 py-4 shadow-[0_12px_42px_rgba(0,0,0,0.22)]">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="max-w-xl">
                     <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
@@ -125,7 +125,7 @@ export default function SuccessAccountPage({ params }: PageProps) {
         }
       >
         {loading ? (
-          <div className="rounded-[22px] border border-line bg-card2 px-4 py-4 text-sm text-sub">
+          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] px-4 py-4 text-sm text-sub">
             Loading success account...
           </div>
         ) : error ? (

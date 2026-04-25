@@ -21,7 +21,7 @@ export default function AnalyticsUsersPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
             User Analytics
@@ -34,7 +34,7 @@ export default function AnalyticsUsersPage() {
         </div>
 
         <div className="grid gap-5 xl:grid-cols-2">
-          <div className="rounded-[22px] border border-line bg-card p-5">
+          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">User Snapshot</h2>
             <div className="mt-5">
               <ActivityChart
@@ -49,7 +49,7 @@ export default function AnalyticsUsersPage() {
             </div>
           </div>
 
-          <div className="rounded-[22px] border border-line bg-card p-5">
+          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">Contribution Tiers</h2>
             <div className="mt-5">
               <ActivityChart items={topTiers.map((item) => ({ label: item.label, value: item.value }))} />
@@ -57,10 +57,10 @@ export default function AnalyticsUsersPage() {
           </div>
         </div>
 
-        <div className="rounded-[22px] border border-line bg-card p-5">
+        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
           <h2 className="text-[1.08rem] font-extrabold text-text">Top Contributors</h2>
-          <div className="mt-4 overflow-hidden rounded-[18px] border border-line bg-card2">
-            <div className="grid grid-cols-6 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
+          <div className="mt-4 overflow-hidden rounded-[18px] border border-white/[0.04] bg-white/[0.025]">
+            <div className="grid grid-cols-6 border-b border-white/[0.04] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
               <div>User</div>
               <div>Tier</div>
               <div>XP</div>
@@ -76,7 +76,7 @@ export default function AnalyticsUsersPage() {
               .map((user) => (
                 <div
                   key={user.id}
-                  className="grid grid-cols-6 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
+                  className="grid grid-cols-6 items-center border-b border-white/[0.035] px-4 py-3 text-[12px] text-text last:border-b-0"
                 >
                   <div className="font-semibold">{user.username}</div>
                   <div className="capitalize">{user.contributionTier}</div>

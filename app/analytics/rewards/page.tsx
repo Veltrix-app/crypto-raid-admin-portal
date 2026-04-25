@@ -30,7 +30,7 @@ export default function AnalyticsRewardsPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
             Reward Analytics
@@ -61,14 +61,14 @@ export default function AnalyticsRewardsPage() {
         </div>
 
         <div className="grid gap-5 xl:grid-cols-2">
-          <div className="rounded-[22px] border border-line bg-card p-5">
+          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">Reward Demand</h2>
             <div className="mt-5">
               <RewardsChart items={rewardClaims} />
             </div>
           </div>
 
-          <div className="rounded-[22px] border border-line bg-card p-5">
+          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">Value Bands</h2>
             <div className="mt-5">
               <RewardsChart items={rewardCostBands} />
@@ -76,10 +76,10 @@ export default function AnalyticsRewardsPage() {
           </div>
         </div>
 
-        <div className="rounded-[22px] border border-line bg-card p-5">
+        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
           <h2 className="text-[1.08rem] font-extrabold text-text">Fulfillment Pressure</h2>
-          <div className="mt-4 overflow-hidden rounded-[18px] border border-line bg-card2">
-            <div className="grid grid-cols-5 border-b border-line px-5 py-4 text-xs font-bold uppercase tracking-[0.18em] text-sub">
+          <div className="mt-4 overflow-hidden rounded-[18px] border border-white/[0.04] bg-white/[0.025]">
+            <div className="grid grid-cols-5 border-b border-white/[0.04] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
               <div>Reward</div>
               <div>Type</div>
               <div>Claims</div>
@@ -98,7 +98,7 @@ export default function AnalyticsRewardsPage() {
               .map((reward) => (
                 <div
                   key={reward.id}
-                  className="grid grid-cols-5 items-center border-b border-line/60 px-5 py-4 text-sm text-text last:border-b-0"
+                  className="grid grid-cols-5 items-center border-b border-white/[0.035] px-4 py-3 text-[12px] text-text last:border-b-0"
                 >
                   <div className="font-semibold">{reward.title}</div>
                   <div className="capitalize">{reward.rewardType}</div>
@@ -124,7 +124,7 @@ function MetricCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-line bg-card p-4">
+    <div className="rounded-[20px] border border-white/[0.04] bg-white/[0.02] p-4">
       <p className="text-sm text-sub">{label}</p>
       <p className="mt-1.5 text-[1.4rem] font-extrabold text-text">{value}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
