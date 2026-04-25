@@ -13,30 +13,32 @@ type QueueSignal = {
 
 export default function ProjectOverviewQueues({
   signals,
+  className,
 }: {
   signals: QueueSignal[];
+  className?: string;
 }) {
   return (
     <OpsPanel
       eyebrow="Watch"
       title="Project pressure and watchpoints"
       description="Keep the queues in peripheral view without letting them overpower the main workspace actions."
-      tone="accent"
+      className={className}
     >
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-2.5">
         {signals.map((signal) => (
           <Link
             key={signal.label}
             href={signal.href}
-            className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.9))] p-4 shadow-[0_14px_30px_rgba(0,0,0,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/24"
+            className="rounded-[15px] border border-white/[0.026] bg-white/[0.018] p-3 shadow-[0_8px_18px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/18"
           >
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[13px] font-bold text-text">{signal.label}</p>
                   <OpsStatusPill tone={signal.tone ?? "default"}>{signal.value}</OpsStatusPill>
                 </div>
-                <p className="mt-2 text-[12px] leading-5 text-sub">{signal.description}</p>
+                <p className="mt-1.5 break-words text-[12px] leading-5 text-sub [overflow-wrap:anywhere]">{signal.description}</p>
               </div>
             </div>
           </Link>

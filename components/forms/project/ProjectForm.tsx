@@ -270,7 +270,7 @@ export default function ProjectForm({
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)] xl:items-start 2xl:grid-cols-[260px_minmax(0,1fr)_340px]">
+      <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)] xl:items-start">
         <BuilderStepRail
           steps={steps.map((step, index) => ({
             ...step,
@@ -317,7 +317,7 @@ export default function ProjectForm({
 
         <BuilderSidebarStack
           sticky={false}
-          className="xl:col-span-2 xl:grid xl:grid-cols-3 xl:gap-4 xl:space-y-0 2xl:col-span-1 2xl:block 2xl:space-y-4"
+          className="xl:col-span-2 xl:grid xl:grid-cols-4 xl:gap-4 xl:space-y-0"
         >
           <ProjectPreviewSurface values={values} />
 
@@ -885,7 +885,7 @@ function ProjectPreviewSurface({
   values: Omit<AdminProject, "id">;
 }) {
   return (
-    <div className="min-w-0 self-start overflow-hidden rounded-[20px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] shadow-[0_10px_24px_rgba(0,0,0,0.13)]">
+    <div className="min-w-0 self-start overflow-hidden rounded-[20px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] shadow-[0_10px_24px_rgba(0,0,0,0.13)] xl:col-span-2">
       <div
         className="h-40 bg-gradient-to-br from-primary/15 via-card to-card2"
         style={

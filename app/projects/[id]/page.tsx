@@ -1614,101 +1614,101 @@ export default function ProjectDetailPage() {
           </OpsPanel>
         ) : null}
 
-        <div className="space-y-4">
-          <div className="grid gap-4 xl:items-start xl:grid-cols-[1.12fr_0.88fr]">
-            <ProjectOverviewQuickActions actions={overviewQuickActions} />
-            <ProjectOverviewQueues signals={overviewSignals} />
-          </div>
+        <div className="space-y-3">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+            <div className="min-w-0 space-y-3">
+              <ProjectOverviewSummary
+                title={`${project.logo} ${project.name}`}
+                description={
+                  project.longDescription ||
+                  project.description ||
+                  "This overview stays focused on current posture, workspace readiness and the next useful route into work."
+                }
+                metrics={overviewMetrics}
+              />
+              <ProjectOverviewQuickActions actions={overviewQuickActions} />
+            </div>
 
-          <div className="grid gap-4 xl:items-start xl:grid-cols-[1.08fr_0.92fr]">
-            <ProjectOverviewSummary
-              title={`${project.logo} ${project.name}`}
-              description={
-                project.longDescription ||
-                project.description ||
-                "This overview stays focused on current posture, workspace readiness and the next useful route into work."
-              }
-              metrics={overviewMetrics}
-            />
+            <div className="min-w-0 space-y-3">
+              <ProjectOverviewQueues signals={overviewSignals} />
 
-            {growthSummary ? (
-              <OpsPanel
-                eyebrow="Launch watch"
-                title="Launch performance against peer projects"
-                description="Use the benchmark layer as a watch rail, not the primary opening surface."
-                tone="accent"
-              >
-                <div className="grid gap-3 md:grid-cols-2">
-                  <OpsMetricCard
-                    label="Peer band"
-                    value={growthSummary.benchmark.labelText}
-                    emphasis={
-                      growthSummary.benchmark.label === "below_peer_range" ? "warning" : "primary"
-                    }
-                  />
-                  <OpsMetricCard
-                    label="Launch score"
-                    value={growthSummary.benchmark.currentValue}
-                    sub={growthSummary.benchmark.cohortLabel ?? "Benchmark building"}
-                  />
-                  <OpsMetricCard
-                    label="Live quests"
-                    value={growthSummary.liveQuestCount}
-                    sub={`${growthSummary.activeCampaignCount} active campaigns`}
-                  />
-                  <OpsMetricCard
-                    label="Providers"
-                    value={growthSummary.providerCount}
-                    sub={`${growthSummary.visibleRewardCount} visible rewards`}
-                  />
-                </div>
+              {growthSummary ? (
+                <OpsPanel
+                  eyebrow="Launch watch"
+                  title="Launch performance against peer projects"
+                  description="Use the benchmark layer as a watch rail, not the primary opening surface."
+                >
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    <OpsMetricCard
+                      label="Peer band"
+                      value={growthSummary.benchmark.labelText}
+                      emphasis={
+                        growthSummary.benchmark.label === "below_peer_range" ? "warning" : "primary"
+                      }
+                    />
+                    <OpsMetricCard
+                      label="Launch score"
+                      value={growthSummary.benchmark.currentValue}
+                      sub={growthSummary.benchmark.cohortLabel ?? "Benchmark building"}
+                    />
+                    <OpsMetricCard
+                      label="Live quests"
+                      value={growthSummary.liveQuestCount}
+                      sub={`${growthSummary.activeCampaignCount} active campaigns`}
+                    />
+                    <OpsMetricCard
+                      label="Providers"
+                      value={growthSummary.providerCount}
+                      sub={`${growthSummary.visibleRewardCount} visible rewards`}
+                    />
+                  </div>
 
-                <div className="mt-4 space-y-3">
-                  <OpsSnapshotRow
-                    label="Peer cohort"
-                    value={
-                      growthSummary.benchmark.cohortLabel
-                        ? `${growthSummary.benchmark.cohortLabel} (${growthSummary.benchmark.cohortSize} projects)`
-                        : "Benchmark building as more comparable projects move through this lane."
-                    }
-                  />
-                  <OpsSnapshotRow
-                    label="Recommended next move"
-                    value={growthSummary.recommendedMove}
-                  />
-                </div>
-              </OpsPanel>
-            ) : (
-              <OpsPanel
-                eyebrow="Launch watch"
-                title="Keep the next move visible"
-                description="Use this side read to confirm setup posture without crowding out the main work lanes."
-                tone="accent"
-              >
-                <div className="space-y-3">
-                  <OpsSnapshotRow
-                    label="Launchpad"
-                    value={
-                      showLaunchpad
-                        ? `${completedLaunchpadSteps}/4 setup steps ready`
-                        : "Launch setup is in a healthy place."
-                    }
-                  />
-                  <OpsSnapshotRow
-                    label="Connected systems"
-                    value={`${connectedSystemCount}/3 integrations live`}
-                  />
-                  <OpsSnapshotRow
-                    label="Operator incidents"
-                    value={
-                      operatorIncidentCount > 0
-                        ? `${operatorIncidentCount} incidents need ownership`
-                        : "No active operator incidents logged."
-                    }
-                  />
-                </div>
-              </OpsPanel>
-            )}
+                  <div className="mt-3 space-y-2.5">
+                    <OpsSnapshotRow
+                      label="Peer cohort"
+                      value={
+                        growthSummary.benchmark.cohortLabel
+                          ? `${growthSummary.benchmark.cohortLabel} (${growthSummary.benchmark.cohortSize} projects)`
+                          : "Benchmark building as more comparable projects move through this lane."
+                      }
+                    />
+                    <OpsSnapshotRow
+                      label="Recommended next move"
+                      value={growthSummary.recommendedMove}
+                    />
+                  </div>
+                </OpsPanel>
+              ) : (
+                <OpsPanel
+                  eyebrow="Launch watch"
+                  title="Keep the next move visible"
+                  description="Use this side read to confirm setup posture without crowding out the main work lanes."
+                >
+                  <div className="space-y-2.5">
+                    <OpsSnapshotRow
+                      label="Launchpad"
+                      value={
+                        showLaunchpad
+                          ? `${completedLaunchpadSteps}/4 setup steps ready`
+                          : "Launch setup is in a healthy place."
+                      }
+                    />
+                    <OpsSnapshotRow
+                      label="Connected systems"
+                      value={`${connectedSystemCount}/3 integrations live`}
+                    />
+                    <OpsSnapshotRow
+                      label="Operator incidents"
+                      value={
+                        operatorIncidentCount > 0
+                          ? `${operatorIncidentCount} incidents need ownership`
+                          : "No active operator incidents logged."
+                      }
+                    />
+                  </div>
+                </OpsPanel>
+              )}
+            </div>
           </div>
 
           {showLaunchpad ? (
@@ -1756,7 +1756,7 @@ export default function ProjectDetailPage() {
             title="Edit Project"
             description="Update how this project appears in the app and portal without leaving the workspace detail view."
           >
-            <div className="mt-6">
+            <div className="mt-3">
               <ProjectForm
                 initialValues={{
                   name: project.name,

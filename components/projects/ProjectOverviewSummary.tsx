@@ -12,28 +12,30 @@ type ProjectOverviewSummaryProps = {
   title: string;
   description: string;
   metrics: ProjectOverviewMetric[];
+  className?: string;
 };
 
 export default function ProjectOverviewSummary({
   title,
   description,
   metrics,
+  className,
 }: ProjectOverviewSummaryProps) {
   return (
-    <OpsPanel eyebrow="Overview" title={title} description={description}>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <OpsPanel eyebrow="Overview" title={title} description={description} className={className}>
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
           {metrics.map((metric) => (
             <div
               key={metric.label}
-              className="rounded-[16px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.9))] px-3 py-2.5 shadow-[0_12px_26px_rgba(0,0,0,0.12)]"
+              className="min-w-0 rounded-[14px] border border-white/[0.026] bg-white/[0.018] px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.1)]"
             >
               <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">
                 {metric.label}
               </p>
-              <p className="mt-1.5 text-[0.92rem] font-extrabold tracking-[-0.03em] text-text">
+              <p className="mt-1.5 break-words text-[0.92rem] font-semibold tracking-[-0.03em] text-text [overflow-wrap:anywhere]">
                 {metric.value}
               </p>
-              <p className="mt-1 text-[11px] leading-5 text-sub">{metric.sublabel}</p>
+              <p className="mt-1 break-words text-[11px] leading-5 text-sub [overflow-wrap:anywhere]">{metric.sublabel}</p>
             </div>
           ))}
       </div>
