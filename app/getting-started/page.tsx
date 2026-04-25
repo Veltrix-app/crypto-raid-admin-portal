@@ -8,9 +8,27 @@ import AccountOnboardingChecklist from "@/components/accounts/AccountOnboardingC
 import ReceivedWorkspaceInvitesCard from "@/components/accounts/ReceivedWorkspaceInvitesCard";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import { SuccessActivationRail } from "@/components/success/SuccessActivationRail";
-import { OpsMetricCard, OpsPanel, OpsPriorityLink, OpsSnapshotRow } from "@/components/layout/ops/OpsPrimitives";
+import { OpsPanel, OpsSnapshotRow } from "@/components/layout/ops/OpsPrimitives";
 import { fetchCurrentPortalAccountActivation } from "@/lib/success/account-activation";
 import type { AdminSuccessAccountSummary } from "@/types/entities/success";
+
+function OnboardingStateTile({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string | number;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-[14px] border border-white/[0.035] bg-white/[0.018] px-3 py-2.5">
+      <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
+      <p className="mt-1.5 text-[0.92rem] font-semibold tracking-[-0.02em] text-text">{value}</p>
+      <p className="mt-1 text-[11px] leading-5 text-sub">{detail}</p>
+    </div>
+  );
+}
 
 function GettingStartedContent() {
   const { accessState } = useAccountEntryGuard();
@@ -50,74 +68,45 @@ function GettingStartedContent() {
       title="Getting Started"
       description="This workspace keeps the first-run path calm: create the account layer, create the first project, then move directly into launch operations."
       statusBand={
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-start">
-          <OpsPanel
-            eyebrow="Onboarding posture"
-            title="Keep the first-run path obvious"
-            description="One quick read: workspace, current step and whether a project already exists."
-          >
-            <div className="grid gap-3 md:grid-cols-3">
-              <OpsMetricCard
-                label="Workspace"
-                value={primaryAccount?.name ?? "Pending"}
-                emphasis={primaryAccount ? "primary" : "warning"}
-              />
-              <OpsMetricCard
-                label="Current step"
-                value={primaryAccount?.currentStep ?? "create_workspace"}
-                emphasis="warning"
-              />
-              <OpsMetricCard
-                label="Projects"
-                value={primaryAccount?.projectCount ?? 0}
-                emphasis={primaryAccount?.projectCount ? "primary" : "default"}
-              />
+        <section className="rounded-[18px] border border-white/[0.035] bg-[linear-gradient(180deg,rgba(10,13,19,0.98),rgba(7,9,14,0.98))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+          <div className="grid gap-3 xl:items-start xl:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="max-w-3xl">
+              <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
+                Onboarding map
+              </p>
+              <h2 className="mt-1.5 text-[0.98rem] font-semibold tracking-[-0.02em] text-text">
+                One clean path into launch
+              </h2>
+              <p className="mt-1.5 text-[12px] leading-5 text-sub">
+                This page should read like a guided spine: account status, project handoff,
+                checklist, then activation truth. No separate islands.
+              </p>
             </div>
-          </OpsPanel>
 
-          <OpsPanel
-            eyebrow="Next move"
-            title={
-              primaryAccount?.firstProjectId && primaryAccount.currentStep === "open_launch_workspace"
-                ? "Open the launch workspace"
-                : primaryAccount?.projectCount
-                  ? "Create or open the next project"
-                  : primaryAccount
-                    ? "Create the first project"
-                    : "Create the workspace account"
-            }
-            description={
-              primaryAccount?.firstProjectId && primaryAccount.currentStep === "open_launch_workspace"
-                ? "The account layer is in place. The next clean handoff is launch setup inside the first project."
-                : primaryAccount?.projectCount
-                  ? "The account layer exists, so the next move is inside the project roster and launch flow."
-                  : primaryAccount
-                    ? "The workspace now exists above projects. The next move is to create the first operational project."
-                    : "This session is authenticated, but still needs the workspace account that sits above every project."
-            }
-            tone="accent"
-          >
-            <div className="space-y-3">
-              <OpsSnapshotRow
-                label="First project"
-                value={primaryAccount?.firstProjectName ?? "Not created yet"}
-              />
-              <OpsPriorityLink
-                href={
-                  primaryAccount?.firstProjectId && primaryAccount.currentStep === "open_launch_workspace"
-                    ? `/projects/${primaryAccount.firstProjectId}/launch`
-                    : primaryAccount
-                      ? "/projects"
-                      : "/getting-started"
-                }
-                title="Continue on the onboarding spine"
-                body="This page should always hand you to the next safe operator move instead of leaving you to browse the full portal tree."
-                cta="Continue"
-                emphasis
-              />
-            </div>
-          </OpsPanel>
-        </div>
+            <OpsSnapshotRow
+              label="First project"
+              value={primaryAccount?.firstProjectName ?? "Not created yet"}
+            />
+          </div>
+
+          <div className="mt-3 grid gap-2.5 md:grid-cols-3">
+            <OnboardingStateTile
+              label="Workspace"
+              value={primaryAccount?.name ?? "Pending"}
+              detail={primaryAccount ? "Account layer exists." : "Create the workspace account first."}
+            />
+            <OnboardingStateTile
+              label="Current step"
+              value={primaryAccount?.currentStep ?? "create_workspace"}
+              detail="This determines the next safe operator move."
+            />
+            <OnboardingStateTile
+              label="Projects"
+              value={primaryAccount?.projectCount ?? 0}
+              detail={primaryAccount?.projectCount ? "Project handoff is available." : "No operational project yet."}
+            />
+          </div>
+        </section>
       }
     >
       {accessState?.overview?.needsWorkspaceBootstrap || accessState?.overview?.invites?.length ? (

@@ -5,7 +5,6 @@ import { ArrowUpRight, CheckCircle2, Circle, Clock3 } from "lucide-react";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import {
   OpsPanel,
-  OpsPriorityLink,
   OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
@@ -63,31 +62,39 @@ export default function AccountOnboardingChecklist() {
   });
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
-        <OpsPanel
-          eyebrow="Getting started checklist"
-          title="Move from account setup into launch operations"
-          description="This stays intentionally calm: one clean sequence, one next move, no buried settings or portal sprawl."
+    <OpsPanel
+      eyebrow="Getting started checklist"
+      title="Move from account setup into launch operations"
+      description="This is the operational spine: complete the ordered steps, then use the single next move on the right."
+      action={
+        <Link
+          href={nextAction.href}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-3.5 py-2 text-[12px] font-black text-black transition hover:brightness-105"
         >
-          <div className="space-y-2.5">
+          {nextAction.label}
+          <ArrowUpRight size={13} />
+        </Link>
+      }
+    >
+      <div className="grid gap-3 xl:items-start xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="grid gap-2.5">
             {checklist.map((item) => (
               <div
                 key={item.id}
-                className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5"
+                className="rounded-[14px] border border-white/[0.035] bg-white/[0.018] px-3 py-2.5"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
                     <div className="mt-0.5">
                       {item.status === "complete" ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-300/90" />
                       ) : item.status === "active" ? (
-                        <Clock3 className="h-4 w-4 text-amber-300" />
+                        <Clock3 className="h-4 w-4 text-amber-300/90" />
                       ) : (
                         <Circle className="h-4 w-4 text-sub" />
                       )}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[13px] font-bold text-text">{item.label}</p>
                       <p className="mt-1.5 text-[12px] leading-5 text-sub">{item.description}</p>
                     </div>
@@ -106,66 +113,35 @@ export default function AccountOnboardingChecklist() {
                 </div>
               </div>
             ))}
-          </div>
-        </OpsPanel>
+        </div>
 
-        <div className="space-y-4">
-          <OpsPanel
-            eyebrow="Next move"
-            title={nextAction.label}
-            description={nextAction.body}
-            tone="accent"
-            action={
-              <Link
-                href={nextAction.href}
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105"
-              >
-                Open
-                <ArrowUpRight size={14} />
-              </Link>
-            }
-          >
-            <div className="space-y-3">
-              <OpsSnapshotRow
-                label="Current step"
-                value={primaryAccount?.currentStep ?? "create_workspace"}
-              />
-              <OpsSnapshotRow
-                label="Workspace status"
-                value={
-                  primaryAccount
-                    ? `${primaryAccount.status} / ${primaryAccount.role}`
-                    : "Not created yet"
-                }
-              />
-            </div>
-          </OpsPanel>
-
-          {primaryAccount?.currentStep === "invite_team" ? (
-            <OpsPanel
-              eyebrow="Workspace team"
-              title="Team setup is still open"
-              description="Invite management now lives on its own account surface, so the owner can add the first teammate without leaving the onboarding rail."
-            >
-              <OpsPriorityLink
-                href="/account/team"
-                title="Open team and invites"
-                body="Send the first invite, review current members and keep workspace roles simple while the deeper grant model comes later."
-                cta="Open team"
-                emphasis
-              />
-            </OpsPanel>
-          ) : null}
-
-          <OpsPriorityLink
-            href={nextAction.href}
-            title="Continue"
-            body="The portal now keeps a dedicated first-run rail alive until the account is far enough along to operate like a mature workspace."
-            cta="Continue"
-            emphasis
+        <div className="grid gap-2.5">
+          <OpsSnapshotRow
+            label="Next move"
+            value={nextAction.body}
           />
+          <OpsSnapshotRow
+            label="Current step"
+            value={primaryAccount?.currentStep ?? "create_workspace"}
+          />
+          <OpsSnapshotRow
+            label="Workspace status"
+            value={
+              primaryAccount
+                ? `${primaryAccount.status} / ${primaryAccount.role}`
+                : "Not created yet"
+            }
+          />
+          {primaryAccount?.currentStep === "invite_team" ? (
+            <Link
+              href="/account/team"
+              className="rounded-[14px] border border-white/[0.035] bg-white/[0.018] px-3 py-2.5 text-[12px] font-semibold text-primary transition hover:border-primary/20"
+            >
+              Open team and invites
+            </Link>
+          ) : null}
         </div>
       </div>
-    </div>
+    </OpsPanel>
   );
 }

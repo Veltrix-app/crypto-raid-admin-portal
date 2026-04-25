@@ -102,19 +102,27 @@ export function OpsMetricCard({
   return (
     <div
       className={cx(
-        "relative overflow-hidden rounded-[16px] border px-3 py-3 shadow-[0_10px_20px_rgba(0,0,0,0.12)]",
+        "relative overflow-hidden rounded-[14px] border px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.1)]",
         emphasis === "primary"
-          ? "border-primary/16 bg-[linear-gradient(180deg,rgba(186,255,59,0.1),rgba(11,14,20,0.98))]"
+          ? "border-white/[0.04] bg-white/[0.024]"
           : emphasis === "warning"
-            ? "border-amber-400/16 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(11,14,20,0.98))]"
-            : "border-white/[0.04] bg-[linear-gradient(180deg,rgba(14,18,26,0.96),rgba(9,12,18,0.96))]"
+            ? "border-white/[0.04] bg-white/[0.022]"
+            : "border-white/[0.035] bg-white/[0.018]"
       )}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_42%)]" />
+      <div
+        className={cx(
+          "pointer-events-none absolute inset-x-3 top-0 h-px",
+          emphasis === "primary"
+            ? "bg-primary/30"
+            : emphasis === "warning"
+              ? "bg-amber-300/24"
+              : "bg-white/[0.055]"
+        )}
+      />
       <div className="relative z-10">
         <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
-        <p className="mt-2 text-[1.14rem] font-semibold tracking-[-0.03em] text-text">{value}</p>
+        <p className="mt-1.5 text-[0.96rem] font-semibold tracking-[-0.02em] text-text">{value}</p>
         {sub ? <p className="mt-1 text-[11px] leading-5 text-sub">{sub}</p> : null}
       </div>
     </div>

@@ -51,26 +51,26 @@ export function SuccessActivationRail({
 }) {
   return (
     <OpsPanel eyebrow={eyebrow} title={title} description={description}>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-2.5 md:grid-cols-3">
         <OpsMetricCard
           label="Stage"
           value={humanizeSuccessValue(summary.activation.activationStage)}
-          emphasis={summary.workspaceHealthState === "live" ? "primary" : "default"}
+          emphasis="default"
         />
         <OpsMetricCard
           label="Workspace health"
           value={humanizeSuccessValue(summary.workspaceHealthState)}
-          emphasis={summary.workspaceHealthState === "stalled" ? "warning" : "default"}
+          emphasis="default"
         />
         <OpsMetricCard
           label="Blockers"
           value={summary.blockers.length}
-          emphasis={summary.blockers.length > 0 ? "warning" : "primary"}
+          emphasis={summary.blockers.length > 0 ? "warning" : "default"}
         />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-        <div className="space-y-4">
+      <div className="mt-4 grid gap-3 xl:items-start xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <OpsStatusPill tone={toneForWorkspaceHealth(summary.workspaceHealthState)}>
               {humanizeSuccessValue(summary.workspaceHealthState)}
@@ -108,7 +108,6 @@ export function SuccessActivationRail({
             "The activation rail already has enough progress to keep moving with light-touch guidance."
           }
           cta="Open next move"
-          emphasis
         />
       </div>
     </OpsPanel>
