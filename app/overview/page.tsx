@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import AdminShell from "@/components/layout/shell/AdminShell";
@@ -301,95 +300,22 @@ export default function OverviewPage() {
           </div>
         }
         statusBand={
-          <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1.16fr)_320px]">
-            <OverviewTopCard
-              label="Control read"
-              title={nowSummary.title}
-              body={nowSummary.body}
-              tone="primary"
-            >
-              <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_292px]">
-                <div className="space-y-4">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <OverviewState
-                      label="Campaigns in motion"
-                      value={workspaceCampaigns.length > 0 ? `${workspaceCampaigns.length}` : "None yet"}
-                    />
-                    <OverviewState
-                      label="Claims in motion"
-                      value={highPriorityClaims > 0 ? `${highPriorityClaims}` : "Low"}
-                    />
-                    <OverviewState
-                      label="Pending invites"
-                      value={pendingInvites > 0 ? `${pendingInvites}` : "Stable"}
-                    />
-                    <OverviewState
-                      label="Launch-ready projects"
-                      value={launchReadyProjects > 0 ? `${launchReadyProjects}` : "Not yet"}
-                    />
-                  </div>
-
-                  <div className="space-y-2.5">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-                      Next lanes
-                    </p>
-                    <div className="grid gap-2.5">
-                      {controlPriorities.map((item) => (
-                        <a
-                          key={item.title}
-                          href={item.href}
-                          className={`rounded-[18px] border px-3.5 py-3 transition hover:border-primary/26 ${
-                            item.emphasis
-                              ? "border-primary/18 bg-primary/[0.08]"
-                              : "border-white/[0.04] bg-white/[0.02]"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="text-[13px] font-semibold text-text">{item.title}</p>
-                              <p className="mt-1.5 text-[12px] leading-5 text-sub">{item.body}</p>
-                            </div>
-                            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
-                              {item.cta}
-                            </span>
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2.5 rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-                    Workspace snapshot
-                  </p>
-                  <OverviewWatchSignal
-                    label="Workspace"
-                    value={activeProject?.name || activeMembership?.projectName || "Workspace"}
-                  />
-                  <OverviewWatchSignal
-                    label="Reward inventory"
-                    value={workspaceRewards.length > 0 ? `${workspaceRewards.length}` : "Low"}
-                  />
-                  <OverviewWatchSignal
-                    label="Team size"
-                    value={`${workspaceMembers.length}`}
-                  />
-                  <OverviewWatchSignal
-                    label="Activation"
-                    value={`${activationRate}%`}
-                    tone={activationRate < 50 ? "warning" : "default"}
-                  />
-                </div>
+          <section className="rounded-[18px] border border-white/[0.035] bg-[linear-gradient(180deg,rgba(10,13,19,0.98),rgba(7,9,14,0.98))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+            <div className="grid gap-3 xl:items-start xl:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="max-w-3xl">
+                <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
+                  Command map
+                </p>
+                <h2 className="mt-1.5 text-[0.98rem] font-semibold tracking-[-0.02em] text-text">
+                  {nowSummary.title}
+                </h2>
+                <p className="mt-1.5 text-[12px] leading-5 text-sub">{nowSummary.body}</p>
               </div>
-            </OverviewTopCard>
 
-            <OverviewTopCard
-              label="Signal rail"
-              title={currentModeCopy.title}
-              body={currentModeCopy.body}
-            >
-              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3">
+              <div className="rounded-[14px] border border-white/[0.035] bg-white/[0.018] p-2.5">
+                <p className="mb-2 text-[8px] font-bold uppercase tracking-[0.16em] text-sub">
+                  Focus
+                </p>
                 <SegmentToggle
                   value={overviewMode}
                   onChange={setOverviewMode}
@@ -400,7 +326,61 @@ export default function OverviewPage() {
                   ]}
                 />
               </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+            </div>
+
+            <div className="mt-3 grid gap-3 xl:items-start xl:grid-cols-[minmax(0,1fr)_300px]">
+              <div className="space-y-3">
+                <div className="grid gap-2.5 sm:grid-cols-4">
+                  <OverviewState
+                    label="Campaigns"
+                    value={workspaceCampaigns.length > 0 ? `${workspaceCampaigns.length}` : "None"}
+                  />
+                  <OverviewState
+                    label="Claims"
+                    value={highPriorityClaims > 0 ? `${highPriorityClaims}` : "Low"}
+                  />
+                  <OverviewState
+                    label="Invites"
+                    value={pendingInvites > 0 ? `${pendingInvites}` : "Stable"}
+                  />
+                  <OverviewState
+                    label="Launch-ready"
+                    value={launchReadyProjects > 0 ? `${launchReadyProjects}` : "Not yet"}
+                  />
+                </div>
+
+                <div className="grid gap-2.5">
+                  {controlPriorities.map((item) => (
+                    <a
+                      key={item.title}
+                      href={item.href}
+                      className="rounded-[14px] border border-white/[0.035] bg-white/[0.018] px-3 py-2.5 transition hover:border-primary/18"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[12px] font-semibold text-text">{item.title}</p>
+                          <p className="mt-1 text-[11px] leading-5 text-sub">{item.body}</p>
+                        </div>
+                        <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.14em] text-primary">
+                          {item.cta}
+                        </span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <div>
+                  <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-primary">
+                    {currentModeCopy.title}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-5 text-sub">{currentModeCopy.body}</p>
+                </div>
+                <OverviewWatchSignal
+                  label="Workspace"
+                  value={activeProject?.name || activeMembership?.projectName || "Workspace"}
+                />
                 {watchSignals.map((signal) => (
                   <OverviewWatchSignal
                     key={signal.label}
@@ -410,19 +390,22 @@ export default function OverviewPage() {
                   />
                 ))}
               </div>
-            </OverviewTopCard>
-          </div>
+            </div>
+          </section>
         }
       >
         {healthError ? (
-          <OpsPanel eyebrow="Health error" title="Ops health could not load" description={healthError}>
-            <div className="grid gap-4 md:grid-cols-2">
+          <OpsPanel
+            eyebrow="Health route"
+            title="Live ops health is unavailable"
+            description={healthError}
+          >
+            <div className="grid gap-3 md:grid-cols-2">
               <OpsPriorityLink
                 href="/analytics"
                 title="Open analytics"
                 body="The trend board is still available while the live health route is being checked."
                 cta="Open analytics"
-                emphasis
               />
               <OpsPriorityLink
                 href="/onchain"
@@ -460,7 +443,6 @@ export default function OverviewPage() {
                 eyebrow="Next inside the workspace"
                 title="Keep the active workspace moving"
                 description="When launch posture is the focus, use the active workspace as the next exact place to push work forward."
-                tone="accent"
               >
                 <div className="grid gap-4">
                   <OpsPriorityLink
@@ -634,7 +616,6 @@ export default function OverviewPage() {
                 eyebrow="Workspace context"
                 title="Keep the active workspace in sight while you route incidents"
                 description="Escalations should still stay anchored to the workspace the operator is most likely to jump back into."
-                tone="accent"
               >
                 <div className="grid gap-3">
                   <OverviewState label="Campaigns in motion" value={`${workspaceCampaigns.length}`} />
@@ -674,44 +655,11 @@ export default function OverviewPage() {
   );
 }
 
-function OverviewTopCard({
-  label,
-  title,
-  body,
-  children,
-  tone = "default",
-}: {
-  label: string;
-  title: string;
-  body: string;
-  children: ReactNode;
-  tone?: "default" | "primary";
-}) {
-  return (
-    <section
-      className={`relative overflow-hidden rounded-[22px] border p-4 shadow-[0_22px_70px_rgba(0,0,0,0.18)] ${
-        tone === "primary"
-          ? "border-primary/14 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.1),transparent_22%),linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.98))]"
-          : "border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.98))]"
-      }`}
-    >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/16 to-transparent" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.025),transparent_34%)]" />
-      <div className="relative z-10">
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">{label}</p>
-        <h2 className="mt-3 text-[1.15rem] font-semibold tracking-[-0.03em] text-text sm:text-[1.3rem]">{title}</h2>
-        <p className="mt-3 text-sm leading-6 text-sub">{body}</p>
-        <div className="mt-5">{children}</div>
-      </div>
-    </section>
-  );
-}
-
 function OverviewState({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
-      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-text">{value}</p>
+    <div className="rounded-[12px] border border-white/[0.035] bg-white/[0.016] px-3 py-2.5">
+      <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1.5 text-[0.86rem] font-semibold text-text">{value}</p>
     </div>
   );
 }
@@ -727,14 +675,14 @@ function OverviewWatchSignal({
 }) {
   return (
     <div
-      className={`rounded-[22px] border px-4 py-4 ${
+      className={`rounded-[12px] border px-3 py-2.5 ${
         tone === "warning"
-          ? "border-amber-400/16 bg-amber-500/[0.07]"
-          : "border-white/[0.04] bg-white/[0.02]"
+          ? "border-amber-300/[0.12] bg-white/[0.018]"
+          : "border-white/[0.035] bg-white/[0.016]"
       }`}
     >
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-text">{value}</p>
+      <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1.5 text-[0.86rem] font-semibold text-text">{value}</p>
     </div>
   );
 }
