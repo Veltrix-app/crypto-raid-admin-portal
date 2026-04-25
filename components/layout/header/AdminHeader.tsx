@@ -20,7 +20,7 @@ export default function AdminHeader() {
   const pageMeta = getPortalPageMetadata(pathname, activeProject?.projectName);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/6 bg-[#06080b]/92 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-white/[0.04] bg-[#06080b]/92 backdrop-blur-xl">
       <div className="mx-auto w-full max-w-[1760px] px-3 py-2.5 sm:px-5 lg:px-6">
         <div className="grid gap-2.5 xl:grid-cols-[minmax(0,1fr)_minmax(220px,300px)_auto] xl:items-center">
           <div className="min-w-0">
@@ -29,7 +29,7 @@ export default function AdminHeader() {
                 {pageMeta.eyebrow}
               </p>
               {primaryAccount ? (
-                <span className="rounded-full border border-white/8 bg-white/[0.03] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-sub">
+                <span className="rounded-full border border-white/[0.05] bg-white/[0.025] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-sub">
                   {primaryAccount.name}
                 </span>
               ) : null}
@@ -44,7 +44,7 @@ export default function AdminHeader() {
             </div>
           </div>
 
-          <label className="flex min-w-0 items-center gap-2.5 rounded-full border border-white/8 bg-white/[0.03] px-3 py-2">
+          <label className="flex min-w-0 items-center gap-2.5 rounded-full border border-white/[0.05] bg-white/[0.025] px-3 py-2">
             <Search size={14} className="text-sub" />
             <input
               placeholder="Search portal..."
@@ -55,7 +55,7 @@ export default function AdminHeader() {
 
           <div className="flex flex-wrap items-center justify-end gap-3">
             {memberships.length > 0 ? (
-              <div className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-2">
+              <div className="rounded-full border border-white/[0.05] bg-white/[0.025] px-3 py-2">
                 <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-sub">
                   Workspace
                 </p>
@@ -79,13 +79,13 @@ export default function AdminHeader() {
             ) : null}
 
             <button
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-sub transition hover:border-white/12 hover:bg-white/[0.05] hover:text-text"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.05] bg-white/[0.025] text-sub transition hover:border-white/10 hover:bg-white/[0.045] hover:text-text"
               aria-label="Notifications"
             >
               <Bell size={14} />
             </button>
 
-            <div className="flex items-center gap-2.5 rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5">
+            <div className="flex items-center gap-2.5 rounded-full border border-white/[0.05] bg-white/[0.025] px-3 py-1.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-[10px] font-black uppercase text-primary">
                 {identityLabel.slice(0, 2)}
               </div>
@@ -107,7 +107,7 @@ export default function AdminHeader() {
                 logout();
                 router.push("/login");
               }}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-sub transition hover:border-rose-400/20 hover:bg-rose-400/10 hover:text-text"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.05] bg-white/[0.025] text-sub transition hover:border-rose-400/20 hover:bg-rose-400/10 hover:text-text"
               aria-label="Log out"
             >
               <LogOut size={14} />

@@ -65,7 +65,7 @@ export default function ProjectsBoardHeader({
             <ProjectBoardStat label="Chains" value={`${chainCount}`} />
           </div>
 
-          <div className="rounded-[16px] border border-white/6 bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-2.5">
+          <div className="rounded-[16px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-2.5">
             <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">Board mode</p>
             <div className="mt-2">
               <SegmentToggle
@@ -105,7 +105,7 @@ function ProjectBoardStat({
       className={`rounded-[14px] border px-3 py-2.5 ${
         tone === "warning"
           ? "border-amber-400/16 bg-amber-500/[0.07]"
-          : "border-white/6 bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
+          : "border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
       }`}
     >
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>

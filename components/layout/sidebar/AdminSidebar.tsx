@@ -22,7 +22,7 @@ export default function AdminSidebar() {
     : GLOBAL_NAV_ITEMS.filter((item) => !item.superAdminOnly || role === "super_admin");
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[74px] shrink-0 border-r border-white/6 bg-[linear-gradient(180deg,rgba(8,10,14,0.99),rgba(5,7,10,0.995))] px-2 py-3 lg:flex lg:flex-col">
+    <aside className="sticky top-0 hidden h-screen w-[74px] shrink-0 border-r border-white/[0.04] bg-[linear-gradient(180deg,rgba(8,10,14,0.99),rgba(5,7,10,0.995))] px-2 py-3 lg:flex lg:flex-col">
       <Link
         href="/overview"
         className="mx-auto flex h-10 w-10 items-center justify-center rounded-[14px] border border-primary/18 bg-[linear-gradient(180deg,rgba(186,255,59,0.14),rgba(255,255,255,0.02))] text-primary shadow-[0_12px_30px_rgba(0,0,0,0.2)]"
@@ -76,7 +76,7 @@ export default function AdminSidebar() {
 
       <div className="space-y-2.5">
         <div
-          className="rounded-[14px] border border-white/6 bg-white/[0.03] px-2 py-2.5 text-center"
+          className="rounded-[14px] border border-white/[0.045] bg-white/[0.025] px-2 py-2.5 text-center"
           title={activeWorkspace?.projectName || accessState?.primaryAccount?.name || "Workspace"}
         >
           <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-sub">WS</p>

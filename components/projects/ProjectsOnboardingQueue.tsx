@@ -32,7 +32,7 @@ export default function ProjectsOnboardingQueue({
         const busy = runningRequestId === request.id;
 
         return (
-          <div key={request.id} className="rounded-[18px] border border-white/6 bg-white/[0.025] p-4">
+          <div key={request.id} className="rounded-[18px] border border-white/[0.04] bg-white/[0.02] p-4">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
