@@ -297,21 +297,18 @@ export default function RewardForm({
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="space-y-6">
-        <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
-            <BuilderStepRail
-              steps={rewardBuilderSteps.map((step, index) => ({
-                ...step,
-                eyebrow: `Step ${index + 1}`,
-                complete: stepCompletion[step.id],
-              }))}
-              currentStep={currentStep}
-              onSelect={setCurrentStep}
-            />
-          </div>
+      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)_360px] xl:items-start">
+        <BuilderStepRail
+          steps={rewardBuilderSteps.map((step, index) => ({
+            ...step,
+            eyebrow: `Step ${index + 1}`,
+            complete: stepCompletion[step.id],
+          }))}
+          currentStep={currentStep}
+          onSelect={setCurrentStep}
+        />
 
-        <div className="space-y-5 rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-5 shadow-[0_22px_58px_rgba(0,0,0,0.2)]">
+        <div className="space-y-4 rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
           <BuilderStepHeader
             eyebrow={`Step ${currentStepIndex + 1}`}
             title={currentStepMeta.label}
@@ -336,10 +333,10 @@ export default function RewardForm({
                 key={rewardType}
                 type="button"
                 onClick={() => applyPreset(rewardType)}
-                className={`rounded-[24px] border p-4 text-left transition ${
+                className={`rounded-[16px] border p-3.5 text-left transition ${
                   isActive
-                    ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))]"
-                    : "border-line bg-card2 hover:border-primary/40"
+                    ? "border-primary/24 bg-[linear-gradient(135deg,rgba(199,255,0,0.08),rgba(255,255,255,0.025))]"
+                    : "border-white/[0.04] bg-white/[0.02] hover:border-primary/20"
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -356,7 +353,7 @@ export default function RewardForm({
           })}
         </div>
 
-        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+        <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">{activePreset.label}</p>
@@ -594,7 +591,7 @@ export default function RewardForm({
           </Field>
         </div>
 
-        <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-sm text-sub">
+        <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5 text-[12px] leading-5 text-sub">
           <span className="font-semibold text-text">Builder hint:</span> keep the cost and rarity aligned with the effort of the quests that unlock this reward. The stronger the reward, the more important it is to make fulfillment and stock rules explicit.
         </div>
       </div>
@@ -674,7 +671,7 @@ export default function RewardForm({
 
         <div className="grid gap-4 md:grid-cols-2">
           {readinessItems.map((item) => (
-            <div key={item.label} className="rounded-2xl border border-line bg-card2 p-4">
+            <div key={item.label} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-bold text-text">{item.label}</p>
                 <span
@@ -685,7 +682,7 @@ export default function RewardForm({
                   {item.complete ? "Ready" : "Needs work"}
                 </span>
               </div>
-              <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
+              <p className="mt-2 text-[12px] text-sub capitalize">{item.value}</p>
             </div>
           ))}
         </div>
@@ -707,7 +704,6 @@ export default function RewardForm({
             }
           />
         </div>
-        </div>
 
         <BuilderSidebarStack>
           <BuilderSidebarCard title="Reward Preview">
@@ -725,7 +721,7 @@ export default function RewardForm({
           <BuilderSidebarCard title="Readiness Guide">
             <div className="space-y-2">
               {readinessItems.map((item) => (
-                <div key={item.label} className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+                <div key={item.label} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
                     <span
@@ -736,7 +732,7 @@ export default function RewardForm({
                       {item.complete ? "Ready" : "Needs work"}
                     </span>
                   </div>
-                  <p className="mt-3 text-sm text-sub capitalize">{item.value}</p>
+                  <p className="mt-2 text-[12px] text-sub capitalize">{item.value}</p>
                 </div>
               ))}
             </div>
@@ -771,18 +767,18 @@ function RewardPreviewSurface({
   visible: boolean;
 }) {
   return (
-      <div className="overflow-hidden rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
+    <div className="overflow-hidden rounded-[16px] border border-white/[0.04] bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.08),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-3.5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-xl">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
             {preset.label}
           </p>
-        <h3 className="mt-3 text-[1.45rem] font-extrabold tracking-[-0.03em] text-text">
+          <h3 className="mt-2 text-[1.05rem] font-semibold tracking-[-0.03em] text-text">
             {title}
           </h3>
-          <p className="mt-3 text-sm leading-7 text-sub">{description}</p>
+          <p className="mt-2 text-[12px] leading-5 text-sub">{description}</p>
         </div>
-        <span className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3 text-sm font-bold text-text">
+        <span className="rounded-[14px] border border-white/[0.04] bg-black/20 px-3 py-2 text-[12px] font-bold text-text">
           {cost} XP
         </span>
       </div>
@@ -800,19 +796,19 @@ function RewardPreviewSurface({
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+        <div className="rounded-[14px] border border-white/[0.04] bg-black/20 px-3 py-2.5">
+          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">
             Claim state
           </p>
-          <p className="mt-2 text-sm font-semibold text-text">
+          <p className="mt-1.5 text-[12px] font-semibold text-text">
             {claimable ? "Claimable" : "Auto-granted / gated"}
           </p>
         </div>
-        <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
+        <div className="rounded-[14px] border border-white/[0.04] bg-black/20 px-3 py-2.5">
+          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">
             Visibility
           </p>
-          <p className="mt-2 text-sm font-semibold text-text">
+          <p className="mt-1.5 text-[12px] font-semibold text-text">
             {visible ? "Visible in app" : "Hidden from app"}
           </p>
         </div>
@@ -830,7 +826,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-semibold tracking-[-0.01em] text-text">{label}</span>
+      <span className="mb-2 block text-[12px] font-semibold tracking-[-0.01em] text-text">{label}</span>
       {children}
     </label>
   );
@@ -846,8 +842,8 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-4">
-      <span className="text-sm font-semibold text-text">{label}</span>
+    <label className="flex items-center justify-between rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+      <span className="text-[12px] font-semibold text-text">{label}</span>
       <input
         type="checkbox"
         checked={checked}

@@ -49,7 +49,7 @@ export default function ProjectLaunchScorecard({
       action={<OpsStatusPill tone={toneForTier(tier)}>{labelForTier(tier)}</OpsStatusPill>}
       tone={tier === "blocked" ? "accent" : "default"}
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <OpsMetricCard
           label="Launch score"
           value={score}
@@ -80,7 +80,7 @@ export default function ProjectLaunchScorecard({
         />
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
         <SignalCard
           icon={<Gauge size={16} />}
           title="Readiness tier"
@@ -111,12 +111,12 @@ function SignalCard({
   body: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5">
       <div className="flex items-center gap-3 text-primary">
         {icon}
-        <p className="font-bold text-text">{title}</p>
+        <p className="text-[13px] font-bold text-text">{title}</p>
       </div>
-      <p className="mt-3 text-sm leading-6 text-sub">{body}</p>
+      <p className="mt-2 text-[12px] leading-5 text-sub">{body}</p>
     </div>
   );
 }

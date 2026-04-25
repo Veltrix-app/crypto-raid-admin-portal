@@ -32,26 +32,26 @@ export default function ProjectNextActions({
         description="These are the clearest moves to close readiness gaps without bouncing through the portal."
         tone="accent"
       >
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {actions.map((action, index) => (
             <Link
               key={`${action.title}:${action.href}`}
               href={action.href}
-              className={`block rounded-[24px] border px-5 py-5 transition-colors duration-200 ${
+              className={`block rounded-[16px] border px-3.5 py-3.5 transition-colors duration-200 ${
                 action.tone === "primary"
                   ? "border-primary/24 bg-primary/8 hover:bg-primary/10"
-                  : "border-white/6 bg-white/[0.025] hover:border-white/12 hover:bg-white/[0.04]"
+                  : "border-white/[0.04] bg-white/[0.02] hover:border-white/[0.08] hover:bg-white/[0.035]"
               }`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/6 bg-white/[0.025] text-primary">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-[12px] border border-white/[0.04] bg-white/[0.02] text-primary">
                       {index === 0 ? <Rocket size={16} /> : <Sparkles size={16} />}
                     </div>
-                    <p className="font-bold text-text">{action.title}</p>
+                    <p className="text-[13px] font-bold text-text">{action.title}</p>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-sub">{action.summary}</p>
+                  <p className="mt-2 text-[12px] leading-5 text-sub">{action.summary}</p>
                 </div>
                 <ArrowUpRight className="shrink-0 text-sub" size={16} />
               </div>
@@ -70,15 +70,15 @@ export default function ProjectNextActions({
             <Link
               key={link.label}
               href={link.href}
-              className="block rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4 transition-colors duration-200 hover:border-primary/20 hover:bg-white/[0.04]"
+              className="block rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5 transition-colors duration-200 hover:border-primary/20 hover:bg-white/[0.035]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
                     <FolderPlus size={16} className="text-primary" />
-                    <p className="font-bold text-text">{link.label}</p>
+                    <p className="text-[13px] font-bold text-text">{link.label}</p>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-sub">{link.description}</p>
+                  <p className="mt-2 text-[12px] leading-5 text-sub">{link.description}</p>
                 </div>
                 <ArrowUpRight className="shrink-0 text-sub" size={16} />
               </div>

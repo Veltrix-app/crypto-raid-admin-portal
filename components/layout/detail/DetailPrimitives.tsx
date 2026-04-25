@@ -19,7 +19,7 @@ export function DetailHero({
   actions?: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-[22px] border border-white/[0.04] bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.06),transparent_18%),radial-gradient(circle_at_12%_18%,rgba(74,217,255,0.045),transparent_18%),linear-gradient(180deg,rgba(11,14,20,0.985),rgba(7,9,14,0.985))] p-3.5 shadow-[0_16px_42px_rgba(0,0,0,0.16)]">
+    <section className="relative self-start overflow-hidden rounded-[22px] border border-white/[0.04] bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.06),transparent_18%),radial-gradient(circle_at_12%_18%,rgba(74,217,255,0.045),transparent_18%),linear-gradient(180deg,rgba(11,14,20,0.985),rgba(7,9,14,0.985))] p-3.5 shadow-[0_16px_42px_rgba(0,0,0,0.16)]">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.03),transparent_34%)]" />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
         <div className="max-w-3xl">
@@ -78,7 +78,7 @@ export function DetailSurface({
   children: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,21,0.985),rgba(8,10,15,0.985))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+    <section className="relative self-start overflow-hidden rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,21,0.985),rgba(8,10,15,0.985))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.025),transparent_34%)]" />
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-start">
         <div className="max-w-2xl">
@@ -108,7 +108,7 @@ export function DetailSidebarSurface({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,21,0.985),rgba(8,10,15,0.985))] p-3 shadow-[0_14px_28px_rgba(0,0,0,0.14)]">
+    <section className="self-start rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,21,0.985),rgba(8,10,15,0.985))] p-3 shadow-[0_14px_28px_rgba(0,0,0,0.14)]">
       <h3 className="text-[0.84rem] font-semibold tracking-[-0.02em] text-text">{title}</h3>
       <div className="mt-2">{children}</div>
     </section>

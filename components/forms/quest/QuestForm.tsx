@@ -503,7 +503,7 @@ export default function QuestForm({
 
   return (
     <form
-      className="space-y-6"
+      className="space-y-4"
       onSubmit={async (e) => {
         e.preventDefault();
         setSubmitting(true);
@@ -556,10 +556,10 @@ export default function QuestForm({
             }
             context={
               <div className="flex flex-wrap gap-2">
-                <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text">
+                <span className="rounded-full border border-white/[0.04] bg-black/20 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-text">
                   {selectedProject?.name || "No workspace"}
                 </span>
-                <span className="rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub">
+                <span className="rounded-full border border-white/[0.04] bg-black/20 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
                   {filteredCampaigns.find((campaign) => campaign.id === values.campaignId)?.title ||
                     "No campaign"}
                 </span>
@@ -795,7 +795,7 @@ export default function QuestForm({
                 </Field>
               </div>
 
-              <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-sm text-sub">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5 text-[12px] leading-5 text-sub">
                 <span className="font-semibold text-text">Studio hint:</span> this is the point where the quest becomes real for the member. Make the title, subcopy and CTA feel like one clean action, not three unrelated fields.
               </div>
               {entrySourceLabel ? (
@@ -1036,7 +1036,7 @@ export default function QuestForm({
                 ) : null}
               </div>
 
-              <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-sm text-sub">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5 text-[12px] leading-5 text-sub">
                 <span className="font-semibold text-text">Studio hint:</span> XP is not just a reward number. It signals how important the mission is inside the lane, so use it to create pressure and hierarchy, not only payout.
               </div>
             </div>
@@ -1052,7 +1052,7 @@ export default function QuestForm({
                 <QuestMemberPreview preview={memberPreview} />
               </StudioPreviewCard>
 
-              <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-sm leading-7 text-sub">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5 text-[12px] leading-5 text-sub">
                 The strongest quest builders make the member experience obvious before launch. If this card feels confusing here, it will feel confusing in the app too.
               </div>
             </div>
@@ -1098,7 +1098,7 @@ export default function QuestForm({
                 </Field>
               </div>
 
-              <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-sm leading-7 text-sub">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5 text-[12px] leading-5 text-sub">
                 This save will route you into the quest detail surface, where you can still operate and configure the mission after the first launch pass.
               </div>
             </div>
@@ -1137,7 +1137,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-semibold tracking-[-0.01em] text-text">
+      <span className="mb-2 block text-[12px] font-semibold tracking-[-0.01em] text-text">
         {label}
       </span>
       {children}
@@ -1155,8 +1155,8 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-4">
-      <span className="pr-4 text-sm font-semibold text-text">{label}</span>
+    <label className="flex items-center justify-between rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+      <span className="pr-4 text-[12px] font-semibold text-text">{label}</span>
       <input
         type="checkbox"
         checked={checked}
@@ -1168,5 +1168,5 @@ function ToggleField({
 }
 
 function getInputClassName() {
-  return "w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none";
+  return "w-full rounded-[14px] border border-white/[0.04] bg-black/20 px-3 py-2.5 text-[12px] outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/15";
 }

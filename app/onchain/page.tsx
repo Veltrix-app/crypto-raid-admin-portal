@@ -371,12 +371,12 @@ export default function OnchainPage() {
             ariaLabel="Search on-chain queue"
             name="onchain-search"
           />
-          <div className="rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-sub md:col-span-2">
+          <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-[12px] text-sub md:col-span-2">
             {loadError || "All on-chain actions write both a case timeline event and a broader audit record."}
           </div>
         </OpsFilterBar>
 
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] xl:items-start">
           <OnchainQueuePanel
             eyebrow="Case queue"
             title="Internal on-chain cases"
@@ -389,7 +389,7 @@ export default function OnchainPage() {
             scope="internal"
           />
 
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             <OnchainCaseDetailPanel
               scope="internal"
               onchainCase={onchainCaseDetail}
@@ -421,13 +421,13 @@ export default function OnchainPage() {
           title={`Incidents and overrides for ${activeProjectName}`}
           description="Keep the active project's provider workflow and incident response visible while on-chain ops work the higher-risk ingest and enrichment cases."
         >
-          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] xl:items-start">
             <div className="space-y-4">
-              <div className="rounded-[24px] border border-line bg-card2 px-5 py-5">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5">
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
                   Project ops incidents
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sub">
+                <p className="mt-1.5 text-[12px] leading-5 text-sub">
                   Active project incidents still surface here so on-chain operators can see
                   whether provider instability or callback failures are contributing to the current
                   case load.
@@ -446,12 +446,12 @@ export default function OnchainPage() {
               />
             </div>
             <div className="space-y-4">
-              <div className="rounded-[24px] border border-line bg-card2 px-5 py-5">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5">
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
                   Project overrides
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sub">
-              Override provider noise or pause the sync workflow when the active project needs a
+                <p className="mt-1.5 text-[12px] leading-5 text-sub">
+                  Override provider noise or pause the sync workflow when the active project needs a
                   calmer on-chain recovery window.
                 </p>
               </div>
@@ -478,7 +478,7 @@ export default function OnchainPage() {
           title={`Escalations for ${activeProjectName}`}
           description="When sync, enrichment or provider drift starts repeating, keep one accountable owner and one next recovery move visible here."
         >
-          <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+          <div className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
             <SupportEscalationPanel
               title="On-chain support escalations"
               description="Use this workspace when on-chain issues cross queue, provider and deploy boundaries and need stronger operator follow-through."
@@ -506,9 +506,9 @@ export default function OnchainPage() {
 
 function ModeCard({ label, body }: { label: string; body: string }) {
   return (
-    <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{body}</p>
+    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary">{label}</p>
+      <p className="mt-1.5 text-[12px] leading-5 text-sub">{body}</p>
     </div>
   );
 }

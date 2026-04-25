@@ -2669,7 +2669,7 @@ export default function ProjectCommunityManagementPage() {
           title="Project incidents and manual overrides"
           description="Community OS now surfaces project-scoped incidents, override posture and operator history in the same workspace where the team already runs commands, automations and pushes."
         >
-          <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
             <div className="space-y-4">
               {projectOps.error ? (
                 <div className="rounded-[22px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
@@ -2716,7 +2716,7 @@ export default function ProjectCommunityManagementPage() {
         {communitySurfaceMode === "operate" ? (
           <>
             <div
-              className={`grid gap-6 ${
+              className={`grid gap-4 xl:items-start ${
                 communityViewMode === "captain"
                   ? "xl:grid-cols-[1.1fr_0.9fr]"
                   : "xl:grid-cols-[0.95fr_1.05fr]"
@@ -2749,7 +2749,7 @@ export default function ProjectCommunityManagementPage() {
               />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
               <CommunityCommandsPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}
@@ -2806,7 +2806,7 @@ export default function ProjectCommunityManagementPage() {
               readinessWatch={communityMembers.readinessWatch}
             />
 
-            <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+            <div className="grid gap-4 xl:grid-cols-[1fr_1fr] xl:items-start">
               <CommunityMissionsPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}
@@ -2852,7 +2852,7 @@ export default function ProjectCommunityManagementPage() {
               />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
               <CommunityAutomationsPanel
                 settings={discordBotSettings}
                 runningAutomationAction={runningAutomationAction}
@@ -2868,7 +2868,7 @@ export default function ProjectCommunityManagementPage() {
               />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
               <CommunityCohortsPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}
@@ -2958,7 +2958,7 @@ export default function ProjectCommunityManagementPage() {
               onSendTestPush={(provider) => void sendIntegrationTestPush(provider)}
             />
 
-            <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
               <CommunityRanksPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}
@@ -2983,7 +2983,7 @@ export default function ProjectCommunityManagementPage() {
               />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
               <CommunityAutomationCenterPanel
                 automations={communityAutomations}
                 automationRuns={communityAutomationRuns}
@@ -3018,7 +3018,7 @@ export default function ProjectCommunityManagementPage() {
               />
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
               <CommunityCaptainsPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}

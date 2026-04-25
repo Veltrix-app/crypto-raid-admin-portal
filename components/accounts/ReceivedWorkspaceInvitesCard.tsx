@@ -50,12 +50,12 @@ export default function ReceivedWorkspaceInvitesCard() {
         {invites.map((invite) => (
           <div
             key={invite.id}
-            className="rounded-[24px] border border-white/6 bg-white/[0.025] px-4 py-4"
+            className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-4 py-3.5"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">{invite.accountName}</p>
-                <p className="mt-2 text-sm leading-6 text-sub">
+                <p className="mt-2 text-[12px] leading-5 text-sub">
                   {invite.role} access is waiting for {invite.email}. This invite expires on{" "}
                   {new Date(invite.expiresAt).toLocaleDateString()}.
                 </p>
@@ -70,7 +70,7 @@ export default function ReceivedWorkspaceInvitesCard() {
                 type="button"
                 onClick={() => void handleAccept(invite.id)}
                 disabled={loadingInviteId === invite.id || invite.status !== "pending"}
-                className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full bg-primary px-4 py-2.5 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loadingInviteId === invite.id ? "Accepting..." : "Accept invite"}
               </button>

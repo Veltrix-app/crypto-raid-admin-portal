@@ -460,7 +460,7 @@ function ProjectLaunchContent() {
           </OpsPanel>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-start">
           <OpsPanel
             eyebrow="Project launch workspace"
             title={`Bring ${project.name} from setup into launch posture`}
@@ -504,7 +504,7 @@ function ProjectLaunchContent() {
           </OpsPanel>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[320px,minmax(0,1fr)]">
+        <div className="grid gap-4 xl:grid-cols-[300px,minmax(0,1fr)] xl:items-start">
           <ProjectLaunchRail
             steps={snapshot.onboarding.steps}
             activeStepId={activeStepId}
@@ -512,7 +512,7 @@ function ProjectLaunchContent() {
             onSelect={setActiveStepId}
           />
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <ProjectLaunchScorecard
               score={snapshot.readiness.score}
               tier={snapshot.readiness.tier}
@@ -524,7 +524,7 @@ function ProjectLaunchContent() {
               activeOverrides={snapshot.readiness.ops.activeOverrides}
             />
 
-            <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+            <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)] 2xl:items-start">
               <OpsPanel
                 eyebrow={view === "setup" ? "Setup checklist" : "Launch checklist"}
                 title={
@@ -627,7 +627,7 @@ function ProjectLaunchContent() {
               </div>
             </OpsPanel>
 
-            <div className="grid gap-6 2xl:grid-cols-2">
+            <div className="grid gap-4 2xl:grid-cols-2 2xl:items-start">
               <OpsPanel
                 eyebrow="Incident board"
                 title="Open launch incidents"

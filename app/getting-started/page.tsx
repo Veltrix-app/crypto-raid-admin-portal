@@ -50,13 +50,13 @@ function GettingStartedContent() {
       title="Getting Started"
       description="This workspace keeps the first-run path calm: create the account layer, create the first project, then move directly into launch operations."
       statusBand={
-        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-start">
           <OpsPanel
             eyebrow="Onboarding posture"
             title="Keep the first-run path obvious"
-            description="The first-run rail should make it clear what already exists, what is still missing and what move unlocks the operational product next."
+            description="One quick read: workspace, current step and whether a project already exists."
           >
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-3">
               <OpsMetricCard
                 label="Workspace"
                 value={primaryAccount?.name ?? "Pending"}
@@ -99,10 +99,6 @@ function GettingStartedContent() {
           >
             <div className="space-y-3">
               <OpsSnapshotRow
-                label="Workspace state"
-                value={primaryAccount ? `${primaryAccount.status} / ${primaryAccount.role}` : "Awaiting bootstrap"}
-              />
-              <OpsSnapshotRow
                 label="First project"
                 value={primaryAccount?.firstProjectName ?? "Not created yet"}
               />
@@ -124,29 +120,31 @@ function GettingStartedContent() {
         </div>
       }
     >
-      <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-        <div className="space-y-6">
+      {accessState?.overview?.needsWorkspaceBootstrap || accessState?.overview?.invites?.length ? (
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+        <div className="space-y-4">
           <ReceivedWorkspaceInvitesCard />
           {accessState?.overview?.needsWorkspaceBootstrap ? <AccountBootstrapCard /> : null}
         </div>
 
         <OpsPanel
-          eyebrow="Why this page exists"
+          eyebrow="Guidance"
           title="Orientation before depth"
-          description="Getting Started should feel like a guided rail, not a second dashboard. It exists to move the workspace from identity into the first real launch surface."
+          description="This page only exists to move the account into its first project and launch workspace."
         >
           <div className="space-y-3">
             <OpsSnapshotRow
-              label="What this page owns"
-              value="Workspace bootstrap, first project handoff and the account-level activation read."
+              label="Owns"
+              value="Workspace bootstrap and first project handoff."
             />
             <OpsSnapshotRow
-              label="What comes after"
-              value="Once the first project exists, the clean path is Launch, then the project workspace and team surfaces."
+              label="After"
+              value="Launch, then project workspace and team surfaces."
             />
           </div>
         </OpsPanel>
       </div>
+      ) : null}
 
       <AccountOnboardingChecklist />
       {activationSummary ? (

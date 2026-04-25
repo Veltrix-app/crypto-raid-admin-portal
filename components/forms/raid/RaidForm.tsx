@@ -275,7 +275,7 @@ export default function RaidForm({
 
   return (
     <form
-      className="space-y-6"
+      className="space-y-4"
       onSubmit={async (event) => {
         event.preventDefault();
         setSubmitting(true);
@@ -431,7 +431,7 @@ export default function RaidForm({
               title="Define the wave"
               description="This is the member-facing core. Make the raid title, community and objective feel like one sharp coordinated move."
             >
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Raid title">
                   <input
                     value={values.title}
@@ -500,7 +500,7 @@ export default function RaidForm({
               title="Place the raid in the right lane"
               description="Attach the raid to one real campaign lane, then wire the destination and contributor steps so the wave can actually land."
             >
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Project">
                   <select
                     value={values.projectId}
@@ -597,20 +597,20 @@ export default function RaidForm({
                 ) : null}
               </div>
 
-              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
                       Contributor steps
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-sub">
+                    <p className="mt-1.5 text-[12px] leading-5 text-sub">
                       Raids need guided steps so the pressure wave feels coordinated instead of vague.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={addInstruction}
-                    className="rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.05]"
+                    className="rounded-[14px] border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[12px] font-bold text-text transition hover:border-primary/25 hover:bg-white/[0.04]"
                   >
                     Add step
                   </button>
@@ -618,7 +618,7 @@ export default function RaidForm({
 
                 <div className="mt-5 space-y-3">
                   {values.instructions.map((instruction, index) => (
-                    <div key={`${index}-${instruction}`} className="flex gap-3">
+                    <div key={`${index}-${instruction}`} className="flex gap-2.5">
                       <input
                         value={instruction}
                         onChange={(event) => updateInstruction(index, event.target.value)}
@@ -628,7 +628,7 @@ export default function RaidForm({
                       <button
                         type="button"
                         onClick={() => removeInstruction(index)}
-                        className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-semibold text-rose-300 transition hover:-translate-y-0.5"
+                        className="rounded-[14px] border border-rose-500/24 bg-rose-500/10 px-3 py-2 text-[12px] font-semibold text-rose-300 transition hover:border-rose-400/40"
                       >
                         Remove
                       </button>
@@ -644,7 +644,7 @@ export default function RaidForm({
               title="Make the proof route trustworthy"
               description="A raid should not feel manually brittle unless you intend it to. Pick the cleanest verification route and give it enough structure."
             >
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Verification type">
                   <select
                     value={values.verificationType}
@@ -664,11 +664,11 @@ export default function RaidForm({
                   </select>
                 </Field>
 
-                <div className="rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
+                <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">
                     Recommended posture
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-text">
+                  <p className="mt-1.5 text-[12px] leading-5 text-text">
                     {values.verificationType === "manual_confirm"
                       ? "Best for captain-led waves or custom proof review."
                       : "Use exact destination data and structured JSON so the automation layer can trust the signal."}
@@ -706,7 +706,7 @@ export default function RaidForm({
               title="Tune urgency and reward"
               description="This is where the raid becomes a live operating move. Set XP, urgency and timing so the launch posture matches the pressure you want."
             >
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <Field label="Reward XP">
                   <input
                     type="number"
@@ -849,10 +849,10 @@ function ContextPill({
       ? "border-primary/20 bg-primary/12 text-primary"
       : tone === "warning"
         ? "border-amber-400/20 bg-amber-500/10 text-amber-300"
-        : "border-white/8 bg-black/20 text-text";
+        : "border-white/[0.04] bg-black/20 text-text";
 
   return (
-    <span className={`rounded-full border px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] ${toneClass}`}>
+    <span className={`rounded-full border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] ${toneClass}`}>
       {value}
     </span>
   );
@@ -867,7 +867,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-semibold tracking-[-0.01em] text-text">
+      <span className="mb-2 block text-[12px] font-semibold tracking-[-0.01em] text-text">
         {label}
       </span>
       {children}
@@ -877,14 +877,14 @@ function Field({
 
 function StudioHint({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4 text-sm leading-7 text-sub">
+    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5 text-[12px] leading-5 text-sub">
       <span className="font-semibold text-text">Studio hint:</span> {children}
     </div>
   );
 }
 
 function getInputClassName() {
-  return "w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 outline-none";
+  return "w-full rounded-[14px] border border-white/[0.04] bg-black/20 px-3 py-2.5 text-[12px] outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/15";
 }
 
 function isValidJson(raw: string | undefined) {

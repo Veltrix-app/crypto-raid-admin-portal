@@ -110,16 +110,16 @@ export default function SubmissionsPage() {
                 />
               </div>
 
-              <div className="rounded-[22px] border border-line bg-card p-4 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-                <div className="flex flex-wrap items-start justify-between gap-5">
+              <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,17,24,0.96),rgba(9,12,18,0.96))] p-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="max-w-2xl">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
                       Workspace focus
                     </p>
-                    <h2 className="mt-2 text-[1.02rem] font-extrabold tracking-tight text-text">
+                    <h2 className="mt-1.5 text-[0.98rem] font-semibold tracking-tight text-text">
                       Switch between review queue and decision signals
                     </h2>
-                    <p className="mt-2 text-sm leading-6 text-sub">
+                    <p className="mt-1.5 text-[12px] leading-5 text-sub">
                       Queue mode is for reviewing individual proofs. Signals mode gives a calmer
                       read on how verification is resolving overall so the page does not feel like
                       one endless moderation wall.
@@ -140,7 +140,7 @@ export default function SubmissionsPage() {
           }
         >
           {submissionsView === "signals" ? (
-            <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
               <OpsPanel
                 eyebrow="Decision mix"
                 title="How proof traffic is resolving"
@@ -205,12 +205,12 @@ export default function SubmissionsPage() {
                   <option value="approved">approved</option>
                   <option value="rejected">rejected</option>
                 </OpsSelect>
-                <div className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-sub">
+                <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-[12px] text-sub">
                   {filteredSubmissions.length} submissions in view
                 </div>
               </OpsFilterBar>
 
-              <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+              <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
                 <OpsPanel
                   eyebrow="Review queue"
                   title="Submission stream"
@@ -222,7 +222,7 @@ export default function SubmissionsPage() {
                       const linkedFlags = flagsBySubmissionId.get(submission.id) ?? [];
                       const riskLabel =
                         user?.status === "flagged"
-                          ? `Watch · Sybil ${user.sybilScore}`
+                          ? `Watch / Sybil ${user.sybilScore}`
                           : `Trust ${user?.trustScore ?? 50}`;
                       const decisionLabel =
                         linkedFlags.length > 0
@@ -241,11 +241,11 @@ export default function SubmissionsPage() {
                             : "This submission did not meet the current verification requirements.");
 
                       return (
-                        <div key={submission.id} className="rounded-[24px] border border-line bg-card2 p-5">
+                        <div key={submission.id} className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
                           <div className="flex flex-wrap items-start justify-between gap-4">
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-3">
-                                <h2 className="text-lg font-extrabold text-text">{submission.username}</h2>
+                                <h2 className="text-[0.98rem] font-semibold text-text">{submission.username}</h2>
                                 <OpsStatusPill tone={user?.status === "flagged" ? "danger" : "default"}>
                                   {riskLabel}
                                 </OpsStatusPill>
@@ -261,13 +261,13 @@ export default function SubmissionsPage() {
                                   {submission.status}
                                 </OpsStatusPill>
                               </div>
-                              <p className="mt-3 text-sm font-semibold text-text">
+                              <p className="mt-2.5 text-[12px] font-semibold text-text">
                                 {submission.questTitle}
                                 <span className="ml-2 text-sub">inside {submission.campaignTitle}</span>
                               </p>
-                              <p className="mt-3 line-clamp-2 text-sm leading-6 text-sub">{decisionReason}</p>
+                              <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-sub">{decisionReason}</p>
 
-                              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                              <div className="mt-3 grid gap-2.5 md:grid-cols-3">
                                 <Metric label="Decision" value={decisionLabel} />
                                 <Metric label="Submitted" value={formatDate(submission.submittedAt)} />
                                 <Metric
@@ -279,7 +279,7 @@ export default function SubmissionsPage() {
 
                             <Link
                               href={`/submissions/${submission.id}`}
-                              className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
+                              className="rounded-[14px] border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[12px] font-bold text-text transition hover:border-primary/30 hover:text-primary"
                             >
                               Open review
                             </Link>
@@ -289,7 +289,7 @@ export default function SubmissionsPage() {
                     })}
 
                     {filteredSubmissions.length === 0 ? (
-                      <div className="rounded-[24px] border border-line bg-card p-6 text-sm text-sub">
+                      <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-4 text-[12px] text-sub">
                         No submissions match your filters.
                       </div>
                     ) : null}
@@ -350,28 +350,28 @@ function DecisionCard({
         : "text-rose-300";
 
   return (
-    <div className="rounded-[24px] border border-line bg-card2 p-5">
-      <p className="text-sm text-sub">{label}</p>
-              <p className={`mt-2 text-[1.45rem] font-extrabold ${toneClass}`}>{value}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
+    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+      <p className="text-[12px] text-sub">{label}</p>
+      <p className={`mt-1.5 text-[1.05rem] font-semibold ${toneClass}`}>{value}</p>
+      <p className="mt-1.5 text-[12px] leading-5 text-sub">{hint}</p>
     </div>
   );
 }
 
 function SignalRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-text">{value}</p>
+    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1.5 text-[12px] font-semibold text-text">{value}</p>
     </div>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-line bg-card px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-text">{value}</p>
+    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.018] px-3 py-2.5">
+      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1.5 text-[12px] font-semibold text-text">{value}</p>
     </div>
   );
 }

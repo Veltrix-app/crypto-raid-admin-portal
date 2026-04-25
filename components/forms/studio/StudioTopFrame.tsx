@@ -18,54 +18,54 @@ export default function StudioTopFrame({
   supporting?: ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[24px] border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(199,255,0,0.13),transparent_20%),radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_22%),linear-gradient(180deg,rgba(16,20,29,0.985),rgba(10,12,18,0.965))] p-5 shadow-[0_22px_64px_rgba(0,0,0,0.26)]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)]" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-[28%] bg-[radial-gradient(circle_at_center,rgba(199,255,0,0.08),transparent_58%)]" />
+    <div className="relative self-start overflow-hidden rounded-[20px] border border-white/[0.04] bg-[radial-gradient(circle_at_top_left,rgba(199,255,0,0.08),transparent_20%),radial-gradient(circle_at_top_right,rgba(255,255,255,0.04),transparent_22%),linear-gradient(180deg,rgba(13,17,24,0.985),rgba(8,10,15,0.965))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.18)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-[28%] bg-[radial-gradient(circle_at_center,rgba(199,255,0,0.045),transparent_58%)]" />
 
-      <div className="relative flex flex-col gap-5">
+      <div className="relative flex flex-col gap-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
-            <p className="text-[11px] font-bold uppercase tracking-[0.26em] text-primary/90">
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary/90">
               {eyebrow}
             </p>
-            <h2 className="mt-2.5 text-[1.6rem] font-black tracking-[-0.03em] text-text md:text-[2rem]">
+            <h2 className="mt-2 text-[1.18rem] font-semibold tracking-[-0.03em] text-text md:text-[1.4rem]">
               {title}
             </h2>
-            <p className="mt-2.5 max-w-2xl text-sm leading-6 text-sub/95">{description}</p>
+            <p className="mt-2 max-w-2xl text-[12px] leading-5 text-sub/95">{description}</p>
           </div>
 
           {actions ? (
-            <div className="min-w-[220px] rounded-[18px] border border-white/8 bg-black/20 p-3.5 xl:max-w-[300px]">
+            <div className="min-w-[220px] rounded-[16px] border border-white/[0.04] bg-black/20 p-3 xl:max-w-[300px]">
               {actions}
             </div>
           ) : null}
         </div>
 
         {context || supporting ? (
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
             {context ? (
-          <div className="rounded-[18px] border border-white/8 bg-black/20 px-3.5 py-3.5">
+          <div className="rounded-[16px] border border-white/[0.04] bg-black/20 px-3 py-3">
             <div className="flex items-center gap-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
                 Studio context
               </p>
-              <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.18),transparent)]" />
+              <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.12),transparent)]" />
             </div>
-            <div className="mt-3">{context}</div>
+            <div className="mt-2.5">{context}</div>
           </div>
             ) : (
               <div />
             )}
 
             {supporting ? (
-              <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3 py-3">
                 <div className="flex items-center gap-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary/90">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary/90">
                     Studio signals
                   </p>
-                  <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.18),transparent)]" />
+                  <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.12),transparent)]" />
                 </div>
-                <div className="mt-3">{supporting}</div>
+                <div className="mt-2.5">{supporting}</div>
               </div>
             ) : null}
           </div>

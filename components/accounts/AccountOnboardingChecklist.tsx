@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowUpRight, CheckCircle2, Circle, Clock3 } from "lucide-react";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import {
-  OpsMetricCard,
   OpsPanel,
   OpsPriorityLink,
   OpsSnapshotRow,
@@ -64,94 +63,33 @@ export default function AccountOnboardingChecklist() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-        <OpsPanel
-          eyebrow="First-run posture"
-          title="Keep the onboarding rail readable"
-          description="This rail should answer what exists already, what is still missing and where the owner should go next without turning into another dashboard."
-        >
-          <div className="grid gap-4 md:grid-cols-3">
-            <OpsMetricCard
-              label="Workspace"
-              value={primaryAccount?.name ?? "Not created"}
-              emphasis={primaryAccount ? "primary" : "default"}
-            />
-            <OpsMetricCard
-              label="Projects"
-              value={primaryAccount ? primaryAccount.projectCount : 0}
-              emphasis={primaryAccount?.projectCount ? "primary" : "warning"}
-            />
-            <OpsMetricCard
-              label="Workspace role"
-              value={primaryAccount?.role ?? "Owner"}
-              emphasis={primaryAccount?.role === "owner" ? "primary" : "default"}
-            />
-          </div>
-        </OpsPanel>
-
-        <OpsPanel
-          eyebrow="Next move"
-          title={nextAction.label}
-          description={nextAction.body}
-          tone="accent"
-          action={
-            <Link
-              href={nextAction.href}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105"
-            >
-              Open
-              <ArrowUpRight size={14} />
-            </Link>
-          }
-        >
-          <div className="space-y-3">
-            <OpsSnapshotRow
-              label="Current step"
-              value={primaryAccount?.currentStep ?? "create_workspace"}
-            />
-            <OpsSnapshotRow
-              label="Workspace status"
-              value={
-                primaryAccount
-                  ? `${primaryAccount.status} / ${primaryAccount.role}`
-                  : "Not created yet"
-              }
-            />
-            <OpsSnapshotRow
-              label="First project"
-              value={primaryAccount?.firstProjectName ?? "Not created yet"}
-            />
-          </div>
-        </OpsPanel>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+    <div className="space-y-4">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
         <OpsPanel
           eyebrow="Getting started checklist"
           title="Move from account setup into launch operations"
           description="This stays intentionally calm: one clean sequence, one next move, no buried settings or portal sprawl."
         >
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {checklist.map((item) => (
               <div
                 key={item.id}
-                className="rounded-[24px] border border-white/6 bg-white/[0.025] px-4 py-4"
+                className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5">
                       {item.status === "complete" ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-300" />
                       ) : item.status === "active" ? (
-                        <Clock3 className="h-5 w-5 text-amber-300" />
+                        <Clock3 className="h-4 w-4 text-amber-300" />
                       ) : (
-                        <Circle className="h-5 w-5 text-sub" />
+                        <Circle className="h-4 w-4 text-sub" />
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-text">{item.label}</p>
-                      <p className="mt-2 text-sm leading-6 text-sub">{item.description}</p>
+                      <p className="text-[13px] font-bold text-text">{item.label}</p>
+                      <p className="mt-1.5 text-[12px] leading-5 text-sub">{item.description}</p>
                     </div>
                   </div>
                   <OpsStatusPill
@@ -171,7 +109,38 @@ export default function AccountOnboardingChecklist() {
           </div>
         </OpsPanel>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
+          <OpsPanel
+            eyebrow="Next move"
+            title={nextAction.label}
+            description={nextAction.body}
+            tone="accent"
+            action={
+              <Link
+                href={nextAction.href}
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-black text-black transition hover:brightness-105"
+              >
+                Open
+                <ArrowUpRight size={14} />
+              </Link>
+            }
+          >
+            <div className="space-y-3">
+              <OpsSnapshotRow
+                label="Current step"
+                value={primaryAccount?.currentStep ?? "create_workspace"}
+              />
+              <OpsSnapshotRow
+                label="Workspace status"
+                value={
+                  primaryAccount
+                    ? `${primaryAccount.status} / ${primaryAccount.role}`
+                    : "Not created yet"
+                }
+              />
+            </div>
+          </OpsPanel>
+
           {primaryAccount?.currentStep === "invite_team" ? (
             <OpsPanel
               eyebrow="Workspace team"
@@ -190,7 +159,7 @@ export default function AccountOnboardingChecklist() {
 
           <OpsPriorityLink
             href={nextAction.href}
-            title="Continue from setup"
+            title="Continue"
             body="The portal now keeps a dedicated first-run rail alive until the account is far enough along to operate like a mature workspace."
             cta="Continue"
             emphasis

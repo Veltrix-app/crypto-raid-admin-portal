@@ -301,16 +301,16 @@ export default function ClaimsPage() {
               />
             </div>
 
-            <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-              <div className="flex flex-wrap items-start justify-between gap-5">
+            <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,17,24,0.96),rgba(9,12,18,0.96))] p-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
                     Payout command read
                   </p>
-                  <h2 className="mt-2 text-[1.02rem] font-extrabold tracking-tight text-text">
+                  <h2 className="mt-1.5 text-[0.98rem] font-semibold tracking-tight text-text">
                     Keep the queue calm, separate incidents from disputes, and make each resolution legible.
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-sub">
+                  <p className="mt-1.5 text-[12px] leading-5 text-sub">
                     This workspace is no longer a mixed wall of claims and retry buttons. Treat it
                     as a bounded operator rail: clear the right cases, keep blocked claims
                     explainable and leave the active project surface visible while you work.
@@ -329,7 +329,7 @@ export default function ClaimsPage() {
                 />
               </div>
 
-              <div className="mt-5 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+              <div className="mt-4 grid gap-3 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
                 <div className="grid gap-3 md:grid-cols-3">
                   <ClaimsSignalCard
                     label="Queue pressure"
@@ -351,7 +351,7 @@ export default function ClaimsPage() {
                   />
                 </div>
 
-                <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3">
                   <div className="flex flex-wrap gap-2">
                     <OpsStatusPill tone="default">{activeProjectName}</OpsStatusPill>
                     <OpsStatusPill tone={mode === "incidents" || mode === "disputes" ? "warning" : "success"}>
@@ -382,45 +382,6 @@ export default function ClaimsPage() {
           </div>
         }
       >
-        <OpsPanel
-          eyebrow="Workspace lanes"
-          title="How to read this payout workspace"
-          description="Each mode changes the operator question. Keep the case queue and detail rail in sync instead of treating the page like a flat backlog."
-          tone="accent"
-        >
-          <div className="grid gap-4 md:grid-cols-4">
-            <ModeCard
-              label="Queue"
-              body="Fresh claim reviews and manual payout cases that still need an operator decision."
-            />
-            <ModeCard
-              label="Incidents"
-              body="Delivery failures, low stock pressure and campaign finalization failures that deserve immediate attention."
-            />
-            <ModeCard
-              label="Disputes"
-              body="Cases waiting on project input or bouncing back into internal payout ops."
-            />
-            <ModeCard
-              label="Resolution log"
-              body="Resolved or dismissed payout outcomes that should remain explainable afterwards."
-            />
-          </div>
-        </OpsPanel>
-
-        <OpsPanel
-          eyebrow="Pressure mix"
-          title="What is bending the queue right now"
-          description="Use this shorter read to separate routine throughput from the issues that can poison fulfillment quality."
-        >
-          <div className="grid gap-4 md:grid-cols-4">
-            <ModeCard label="Pending claims" body={`${pendingClaims} claims are still waiting for review or delivery.`} />
-            <ModeCard label="Low stock" body={`${lowInventoryRewards} rewards are at or below the low-stock threshold.`} />
-            <ModeCard label="Blocked cases" body={`${payoutCases.filter((row) => row.status === "blocked").length} payout cases are currently blocked.`} />
-            <ModeCard label="Escalated" body={`${payoutCases.filter((row) => row.escalationState !== "none").length} cases currently need cross-team follow-through.`} />
-          </div>
-        </OpsPanel>
-
         <OpsFilterBar>
           <OpsSearchInput
             value={search}
@@ -429,12 +390,12 @@ export default function ClaimsPage() {
             ariaLabel="Search payout queue"
             name="payout-search"
           />
-          <div className="rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-sub md:col-span-2">
+          <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-[12px] text-sub md:col-span-2">
             {loadError || "Every payout action writes both a case timeline event and a broader audit record."}
           </div>
         </OpsFilterBar>
 
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] xl:items-start">
           <PayoutQueuePanel
             eyebrow="Case queue"
             title="Internal payout cases"
@@ -447,7 +408,7 @@ export default function ClaimsPage() {
             scope="internal"
           />
 
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             <PayoutCaseDetailPanel
               scope="internal"
               payoutCase={payoutCaseDetail}
@@ -480,13 +441,13 @@ export default function ClaimsPage() {
           title={`Incidents and overrides for ${activeProjectName}`}
           description="Keep the active project's claim workflow and payout overrides visible while internal ops work the higher-risk payout cases."
         >
-          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] xl:items-start">
             <div className="space-y-4">
-              <div className="rounded-[24px] border border-line bg-card2 px-5 py-5">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5">
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
                   Project ops incidents
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sub">
+                <p className="mt-1.5 text-[12px] leading-5 text-sub">
                   Active project incidents still surface here so payout operators can see whether
                   provider instability or other runtime issues are contributing to the current case
                   load.
@@ -507,12 +468,12 @@ export default function ClaimsPage() {
               />
             </div>
             <div className="space-y-4">
-              <div className="rounded-[24px] border border-line bg-card2 px-5 py-5">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5">
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
                   Project overrides
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sub">
-              Override payout noise or pause the claim workflow when the active project needs a
+                <p className="mt-1.5 text-[12px] leading-5 text-sub">
+                  Override payout noise or pause the claim workflow when the active project needs a
                   calmer resolution window.
                 </p>
               </div>
@@ -559,15 +520,6 @@ export default function ClaimsPage() {
   );
 }
 
-function ModeCard({ label, body }: { label: string; body: string }) {
-  return (
-    <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-sub">{body}</p>
-    </div>
-  );
-}
-
 function ClaimsSignalCard({
   label,
   value,
@@ -580,12 +532,12 @@ function ClaimsSignalCard({
   tone?: "default" | "warning";
 }) {
   return (
-    <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className={`mt-3 text-lg font-extrabold ${tone === "warning" ? "text-amber-300" : "text-text"}`}>
+    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3">
+      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className={`mt-2 text-[0.98rem] font-semibold ${tone === "warning" ? "text-amber-300" : "text-text"}`}>
         {value}
       </p>
-      <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>
+      <p className="mt-1.5 text-[12px] leading-5 text-sub">{hint}</p>
     </div>
   );
 }

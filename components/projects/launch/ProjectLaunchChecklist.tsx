@@ -60,16 +60,16 @@ export default function ProjectLaunchChecklist({
     return (
       <div className="space-y-4">
         {selectedStep ? (
-          <div className="rounded-[22px] border border-primary/25 bg-[linear-gradient(180deg,rgba(186,255,59,0.08),rgba(11,16,24,0.98))] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.2)]">
+          <div className="rounded-[18px] border border-primary/18 bg-[linear-gradient(180deg,rgba(186,255,59,0.06),rgba(11,16,24,0.98))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-2xl">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
                   Active setup step
                 </p>
-                <h3 className="mt-2 text-[1.35rem] font-extrabold tracking-tight text-text">
+                <h3 className="mt-2 text-[1.05rem] font-bold text-text">
                   {selectedStep.title}
                 </h3>
-                <p className="mt-2.5 text-sm leading-6 text-sub">{selectedStep.summary}</p>
+                <p className="mt-2 text-[12px] leading-5 text-sub">{selectedStep.summary}</p>
               </div>
               <OpsStatusPill
                 tone={
@@ -89,14 +89,14 @@ export default function ProjectLaunchChecklist({
                 {selectedStep.blockers.map((blocker) => (
                   <div
                     key={blocker}
-                    className="rounded-[16px] border border-white/10 bg-black/20 px-3.5 py-3.5 text-sm leading-5.5 text-sub"
+                    className="rounded-[14px] border border-white/[0.05] bg-black/20 px-3.5 py-3 text-[12px] leading-5 text-sub"
                   >
                     {blocker}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="mt-4 rounded-[16px] border border-emerald-400/20 bg-emerald-500/10 px-3.5 py-3.5 text-sm text-emerald-200">
+              <div className="mt-4 rounded-[14px] border border-emerald-400/20 bg-emerald-500/10 px-3.5 py-3 text-[12px] text-emerald-200">
                 This step is already in good shape. You can still open its rail to refine the details.
               </div>
             )}
@@ -116,16 +116,16 @@ export default function ProjectLaunchChecklist({
             <div
               key={step.id}
               className={cn(
-                "rounded-[20px] border px-3.5 py-3.5 transition-all duration-200",
+                "rounded-[16px] border px-3.5 py-3 transition-all duration-200",
                 step.id === activeStepId
                   ? "border-primary/25 bg-primary/10"
-                  : "border-white/10 bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))]"
+                  : "border-white/[0.05] bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))]"
               )}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-bold text-text">{step.title}</p>
-                  <p className="mt-2 text-sm leading-5.5 text-sub">{step.summary}</p>
+                  <p className="text-[13px] font-bold text-text">{step.title}</p>
+                  <p className="mt-1.5 text-[12px] leading-5 text-sub">{step.summary}</p>
                 </div>
                 <OpsStatusPill
                   tone={
@@ -171,7 +171,7 @@ export default function ProjectLaunchChecklist({
         {groups.map((group) => (
           <div
             key={group.id}
-            className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))] p-4"
+            className="rounded-[16px] border border-white/[0.05] bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))] p-4"
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-2xl">
@@ -189,9 +189,9 @@ export default function ProjectLaunchChecklist({
                     {group.status}
                   </OpsStatusPill>
                 </div>
-                <p className="mt-2 text-sm leading-5.5 text-sub">{group.summary}</p>
+                <p className="mt-2 text-[12px] leading-5 text-sub">{group.summary}</p>
               </div>
-              <div className="rounded-[16px] border border-white/10 bg-black/20 px-3.5 py-2.5 text-right">
+              <div className="rounded-[14px] border border-white/[0.05] bg-black/20 px-3.5 py-2.5 text-right">
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
                   Group score
                 </p>
@@ -205,7 +205,7 @@ export default function ProjectLaunchChecklist({
               {group.signals.map((signal) => (
                 <div
                   key={signal}
-                  className="rounded-[16px] border border-white/8 bg-black/20 px-3.5 py-2.5 text-sm text-sub"
+                  className="rounded-[14px] border border-white/[0.05] bg-black/20 px-3.5 py-2.5 text-[12px] text-sub"
                 >
                   {signal}
                 </div>
@@ -238,15 +238,15 @@ function IssueGroup({
   }
 
   return (
-    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))] p-4">
+    <div className="rounded-[18px] border border-white/[0.05] bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))] p-4">
       <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>
-      <h3 className="mt-2 text-[1.08rem] font-extrabold tracking-tight text-text">{title}</h3>
+      <h3 className="mt-2 text-[1rem] font-bold text-text">{title}</h3>
       <div className="mt-3.5 space-y-2.5">
         {issues.map((issue) => (
           <Link
             key={issue.id}
             href={issue.href}
-            className="block rounded-[18px] border border-white/10 bg-black/20 px-3.5 py-3.5 transition hover:border-primary/25 hover:bg-white/[0.04]"
+            className="block rounded-[14px] border border-white/[0.05] bg-black/20 px-3.5 py-3 transition hover:border-primary/25 hover:bg-white/[0.035]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -256,7 +256,7 @@ function IssueGroup({
                   </span>
                   <p className="font-bold text-text">{issue.title}</p>
                 </div>
-                <p className="mt-2 text-sm leading-5.5 text-sub">{issue.summary}</p>
+                <p className="mt-2 text-[12px] leading-5 text-sub">{issue.summary}</p>
               </div>
               <OpsStatusPill tone={tone}>{issue.severity}</OpsStatusPill>
             </div>

@@ -80,33 +80,33 @@ export default function ProjectSettingsPage() {
           operatorIncidentCount: 0,
         })}
       >
-        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-start">
           <OpsPanel
             eyebrow="Project settings"
             title="Workspace configuration"
             description="Use settings as the project dossier: public profile, links and launch context should be readable before you drop into the deeper builder."
           >
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Identity</p>
-                <p className="mt-3 text-lg font-extrabold tracking-[-0.02em] text-text">
+                <p className="mt-2 text-[0.95rem] font-bold text-text">
                   {project.name}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sub">{project.slug || "No slug set yet"}</p>
+                <p className="mt-1.5 text-[12px] leading-5 text-sub">{project.slug || "No slug set yet"}</p>
               </div>
-              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Public surface</p>
-                <p className="mt-3 text-lg font-extrabold tracking-[-0.02em] text-text">
+                <p className="mt-2 text-[0.95rem] font-bold text-text">
                   {project.isPublic ? "Public" : "Private"}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sub">{project.contactEmail || "No contact email yet"}</p>
+                <p className="mt-1.5 text-[12px] leading-5 text-sub">{project.contactEmail || "No contact email yet"}</p>
               </div>
-              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Context</p>
-                <p className="mt-3 text-lg font-extrabold tracking-[-0.02em] text-text">
+                <p className="mt-2 text-[0.95rem] font-bold text-text">
                   {project.chain}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sub">{project.category || "No category set yet"}</p>
+                <p className="mt-1.5 text-[12px] leading-5 text-sub">{project.category || "No category set yet"}</p>
               </div>
             </div>
           </OpsPanel>
@@ -118,15 +118,15 @@ export default function ProjectSettingsPage() {
             tone="accent"
           >
             <div className="space-y-3">
-              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">What this affects</p>
-                <p className="mt-2 text-sm leading-6 text-text">
+                <p className="mt-2 text-[12px] leading-5 text-text">
                   Public project pages, launch context, templates, connected channels and the profile surfaces used across the portal.
                 </p>
               </div>
-              <div className="rounded-[22px] border border-white/6 bg-white/[0.025] px-4 py-4">
+              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sub">Recommended use</p>
-                <p className="mt-2 text-sm leading-6 text-text">
+                <p className="mt-2 text-[12px] leading-5 text-text">
                   Treat this as a dossier and builder, not as a dumping ground for every project action. Operational work should still happen in Launch, Community and the project overview.
                 </p>
               </div>

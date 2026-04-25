@@ -63,7 +63,7 @@ export function OpsPanel({
   return (
     <section
       className={cx(
-        "relative overflow-hidden rounded-[22px] border p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]",
+        "relative self-start overflow-hidden rounded-[22px] border p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]",
         tone === "accent"
           ? "border-primary/[0.1] bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.06),transparent_22%),radial-gradient(circle_at_88%_14%,rgba(74,217,255,0.045),transparent_20%),linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
           : "border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]",

@@ -17,12 +17,12 @@ export default function StudioStepRail<TStep extends string>({
   onSelect: (step: TStep) => void;
 }) {
   return (
-    <aside className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,22,31,0.96),rgba(10,12,18,0.94))] p-4 shadow-[0_18px_46px_rgba(0,0,0,0.18)] xl:sticky xl:top-24 xl:self-start">
-      <div className="mb-4 flex items-center gap-3 px-1">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+    <aside className="rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,17,24,0.96),rgba(9,11,16,0.94))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)] xl:sticky xl:top-24 xl:self-start">
+      <div className="mb-3 flex items-center gap-3 px-1">
+        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
           Studio Flow
         </p>
-        <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.18),transparent)]" />
+        <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.12),transparent)]" />
       </div>
 
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 xl:hidden">
@@ -35,12 +35,12 @@ export default function StudioStepRail<TStep extends string>({
               type="button"
               title={step.label}
               onClick={() => onSelect(step.id)}
-              className={`min-w-[124px] rounded-[20px] border px-3 py-3 text-left transition ${
+              className={`min-w-[124px] rounded-[16px] border px-3 py-2.5 text-left transition ${
                 active
-                  ? "border-primary/35 bg-[linear-gradient(135deg,rgba(199,255,0,0.14),rgba(255,255,255,0.05))]"
+                  ? "border-primary/24 bg-[linear-gradient(135deg,rgba(199,255,0,0.08),rgba(255,255,255,0.025))]"
                   : step.complete
                     ? "border-primary/18 bg-primary/[0.06]"
-                    : "border-white/8 bg-black/20"
+                    : "border-white/[0.04] bg-black/20"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -50,7 +50,7 @@ export default function StudioStepRail<TStep extends string>({
                       ? "border-primary/25 bg-primary/12 text-primary shadow-[0_0_16px_rgba(199,255,0,0.25)]"
                       : step.complete
                         ? "border-primary/15 bg-primary/10 text-primary"
-                        : "border-white/10 bg-white/[0.04] text-sub"
+                        : "border-white/[0.05] bg-white/[0.025] text-sub"
                   }`}
                 >
                   {step.shortLabel ?? index + 1}
@@ -75,8 +75,8 @@ export default function StudioStepRail<TStep extends string>({
           const statusTone = active
             ? "border-primary/35 bg-[linear-gradient(135deg,rgba(199,255,0,0.14),rgba(255,255,255,0.05))] shadow-[0_16px_34px_rgba(0,0,0,0.22)]"
             : step.complete
-              ? "border-primary/18 bg-primary/[0.06] hover:border-primary/28 hover:bg-primary/[0.09]"
-              : "border-white/8 bg-black/20 hover:border-white/14 hover:bg-white/[0.04]";
+              ? "border-primary/18 bg-primary/[0.06] hover:border-primary/24 hover:bg-primary/[0.08]"
+              : "border-white/[0.04] bg-black/20 hover:border-white/[0.08] hover:bg-white/[0.035]";
 
           return (
             <button
@@ -84,7 +84,7 @@ export default function StudioStepRail<TStep extends string>({
               type="button"
               title={step.label}
               onClick={() => onSelect(step.id)}
-              className={`relative rounded-[22px] border px-3 py-3.5 text-left transition ${statusTone}`}
+              className={`relative rounded-[16px] border px-3 py-3 text-left transition ${statusTone}`}
             >
               <div className="flex items-center gap-3">
                 <span
@@ -93,7 +93,7 @@ export default function StudioStepRail<TStep extends string>({
                       ? "border-primary/25 bg-primary/12 text-primary shadow-[0_0_16px_rgba(199,255,0,0.28)]"
                       : step.complete
                         ? "border-primary/15 bg-primary/10 text-primary"
-                        : "border-white/10 bg-white/[0.04] text-sub"
+                        : "border-white/[0.05] bg-white/[0.025] text-sub"
                   }`}
                 >
                   {step.shortLabel ?? index + 1}

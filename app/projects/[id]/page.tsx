@@ -1751,7 +1751,7 @@ export default function ProjectDetailPage() {
             </DetailSurface>
           ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+        <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr] xl:items-start">
           <DetailSurface
             title="Edit Project"
             description="Update how this project appears in the app and portal without leaving the workspace detail view."

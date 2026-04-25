@@ -270,21 +270,18 @@ export default function ProjectForm({
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="space-y-6">
-        <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
-            <BuilderStepRail
-              steps={steps.map((step, index) => ({
-                ...step,
-                eyebrow: `Step ${index + 1}`,
-                complete: stepCompletion[step.id],
-              }))}
-              currentStep={currentStep}
-              onSelect={setCurrentStep}
-            />
-          </div>
+      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)_360px] xl:items-start">
+        <BuilderStepRail
+          steps={steps.map((step, index) => ({
+            ...step,
+            eyebrow: `Step ${index + 1}`,
+            complete: stepCompletion[step.id],
+          }))}
+          currentStep={currentStep}
+          onSelect={setCurrentStep}
+        />
 
-        <div className="space-y-5 rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,19,28,0.98),rgba(10,12,18,0.96))] p-5 shadow-[0_22px_58px_rgba(0,0,0,0.2)]">
+        <div className="space-y-4 rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
           <BuilderStepHeader
             eyebrow={`Step ${currentStepIndex + 1}`}
             title={currentStepMeta.label}
@@ -317,7 +314,6 @@ export default function ProjectForm({
             }
           />
         </div>
-        </div>
 
         <BuilderSidebarStack>
           <ProjectPreviewSurface values={values} />
@@ -325,7 +321,7 @@ export default function ProjectForm({
           <BuilderSidebarCard title="Readiness Guide">
             <div className="space-y-2">
               {brandingReadiness.map((item) => (
-                <div key={item.label} className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+                <div key={item.label} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
                     <span
@@ -336,7 +332,7 @@ export default function ProjectForm({
                       {item.complete ? "Ready" : "Missing"}
                     </span>
                   </div>
-                  <p className="mt-3 text-sm text-sub">{item.value}</p>
+                  <p className="mt-2 text-[12px] leading-5 text-sub">{item.value}</p>
                 </div>
               ))}
             </div>
@@ -359,7 +355,7 @@ export default function ProjectForm({
               {capabilitySignals.map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4"
+                  className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
@@ -373,7 +369,7 @@ export default function ProjectForm({
                       {item.ready ? "Unlocked" : "Not ready"}
                     </span>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-sub">{item.hint}</p>
+                  <p className="mt-2 text-[12px] leading-5 text-sub">{item.hint}</p>
                 </div>
               ))}
             </div>
@@ -797,9 +793,9 @@ function renderReview(
 
 function SectionIntro({ title, body }: { title: string; body: string }) {
   return (
-    <div className="border-b border-white/8 pb-4">
-      <p className="text-[1.05rem] font-extrabold tracking-[-0.02em] text-text">{title}</p>
-      <p className="mt-2 max-w-2xl text-sm leading-7 text-sub">{body}</p>
+    <div className="border-b border-white/[0.04] pb-3.5">
+      <p className="text-[0.98rem] font-semibold tracking-[-0.02em] text-text">{title}</p>
+      <p className="mt-1.5 max-w-2xl text-[12px] leading-5 text-sub">{body}</p>
     </div>
   );
 }
@@ -813,7 +809,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-semibold tracking-[-0.01em] text-text">{label}</span>
+      <span className="mb-2 block text-[12px] font-semibold tracking-[-0.01em] text-text">{label}</span>
       {children}
     </label>
   );
@@ -829,8 +825,8 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-4">
-      <span className="text-sm font-semibold text-text">{label}</span>
+    <label className="flex items-center justify-between rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+      <span className="text-[12px] font-semibold text-text">{label}</span>
       <input
         type="checkbox"
         checked={checked}
@@ -843,7 +839,7 @@ function ToggleField({
 
 function PreviewBadge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-xs font-bold text-text">
+    <span className="rounded-full border border-white/[0.04] bg-white/[0.025] px-2.5 py-1 text-[10px] font-bold text-text">
       {children}
     </span>
   );
@@ -851,9 +847,9 @@ function PreviewBadge({ children }: { children: React.ReactNode }) {
 
 function PreviewStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
-      <p className="text-sm text-sub">{label}</p>
-                  <p className="mt-2 text-[1.02rem] font-extrabold text-text">{value}</p>
+    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+      <p className="text-[12px] text-sub">{label}</p>
+      <p className="mt-1.5 text-[0.98rem] font-semibold text-text">{value}</p>
     </div>
   );
 }
@@ -866,13 +862,13 @@ function SummaryPanel({
   items: Array<[string, string]>;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
-      <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-primary">{title}</p>
-      <div className="mt-4 space-y-3">
+    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary">{title}</p>
+      <div className="mt-3 space-y-2.5">
         {items.map(([label, value]) => (
-          <div key={label} className="flex items-start justify-between gap-4 border-b border-white/6 pb-3 last:border-b-0 last:pb-0">
-            <p className="text-sm text-sub">{label}</p>
-            <p className="max-w-[60%] text-right text-sm font-semibold text-text">{value}</p>
+          <div key={label} className="flex items-start justify-between gap-4 border-b border-white/[0.04] pb-2.5 last:border-b-0 last:pb-0">
+            <p className="text-[12px] text-sub">{label}</p>
+            <p className="max-w-[60%] text-right text-[12px] font-semibold text-text">{value}</p>
           </div>
         ))}
       </div>
@@ -886,7 +882,7 @@ function ProjectPreviewSurface({
   values: Omit<AdminProject, "id">;
 }) {
   return (
-      <div className="overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.98),rgba(10,12,18,0.96))] shadow-[0_20px_48px_rgba(0,0,0,0.18)]">
+    <div className="self-start overflow-hidden rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] shadow-[0_12px_28px_rgba(0,0,0,0.16)]">
       <div
         className="h-40 bg-gradient-to-br from-primary/15 via-card to-card2"
         style={
@@ -906,8 +902,8 @@ function ProjectPreviewSurface({
         ) : null}
       </div>
 
-      <div className="p-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+      <div className="p-4">
+        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
           Public Project Preview
         </p>
         <div className="mt-4 flex items-center gap-3">
@@ -915,14 +911,14 @@ function ProjectPreviewSurface({
             {values.logo || "\uD83D\uDE80"}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-[1.02rem] font-extrabold text-text">
+            <p className="truncate text-[0.98rem] font-semibold text-text">
               {values.name || "Project name"}
             </p>
             <p className="truncate text-sm text-sub">/{values.slug || "project-slug"}</p>
           </div>
         </div>
 
-        <p className="mt-4 text-sm leading-7 text-sub">
+        <p className="mt-3 text-[12px] leading-5 text-sub">
           {values.description || "Short public description will appear here."}
         </p>
 
@@ -950,9 +946,9 @@ function ConnectedModuleCard({
   ready: boolean;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
+    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
       <div className="space-y-3">
-        <p className="text-sm font-bold text-text">{label}</p>
+        <p className="text-[12px] font-semibold text-text">{label}</p>
         <span
           className={`inline-flex max-w-full self-start rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
             ready ? "bg-primary/15 text-primary" : "bg-white/5 text-sub"

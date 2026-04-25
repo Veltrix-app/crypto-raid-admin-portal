@@ -17,23 +17,23 @@ export default function StudioPreviewCard({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-[22px] border border-white/8 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.08),transparent_24%),linear-gradient(180deg,rgba(17,21,31,0.97),rgba(10,12,18,0.95))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)] ${className}`.trim()}
+      className={`relative self-start overflow-hidden rounded-[18px] border border-white/[0.04] bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.045),transparent_24%),linear-gradient(180deg,rgba(13,17,24,0.97),rgba(8,10,15,0.95))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)] ${className}`.trim()}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]" />
 
       <div className="flex items-center gap-3">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>
-        <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.18),transparent)]" />
+        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">{eyebrow}</p>
+        <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.12),transparent)]" />
       </div>
 
-      <div className="mt-4">
-        <p className="text-lg font-black tracking-[-0.02em] text-text">{title}</p>
+      <div className="mt-3">
+        <p className="text-[0.98rem] font-semibold tracking-[-0.02em] text-text">{title}</p>
         {description ? (
-          <p className="mt-2 text-sm leading-6 text-sub/95">{description}</p>
+          <p className="mt-1.5 text-[12px] leading-5 text-sub/95">{description}</p>
         ) : null}
       </div>
 
-      <div className="mt-4 border-t border-white/8 pt-4">{children}</div>
+      <div className="mt-3.5 border-t border-white/[0.04] pt-3.5">{children}</div>
     </div>
   );
 }

@@ -47,7 +47,7 @@ export default function NewRewardPage() {
           </div>
         }
       >
-        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
           <OpsPanel
             eyebrow="Reward setup"
             title="Catalog and fulfillment configuration"
@@ -64,7 +64,7 @@ export default function NewRewardPage() {
             />
           </OpsPanel>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <OpsPanel
               eyebrow="Builder checklist"
               title="What makes a clean reward"
