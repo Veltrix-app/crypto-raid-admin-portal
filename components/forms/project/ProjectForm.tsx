@@ -16,6 +16,7 @@ type Props = {
   initialValues?: Omit<AdminProject, "id">;
   onSubmit: (values: Omit<AdminProject, "id">) => void;
   submitLabel?: string;
+  layout?: "default" | "horizontal";
 };
 
 type StepId =
@@ -97,6 +98,7 @@ export default function ProjectForm({
   initialValues,
   onSubmit,
   submitLabel = "Save Project",
+  layout = "default",
 }: Props) {
   const [values, setValues] = useState<Omit<AdminProject, "id">>(initialValues || defaultValues);
   const [slugTouched, setSlugTouched] = useState(Boolean(initialValues?.slug));
@@ -247,6 +249,121 @@ export default function ProjectForm({
   ) => {
     setValues((current) => ({ ...current, [key]: value }));
   };
+  const stepItems = steps.map((step, index) => ({
+    ...step,
+    eyebrow: `Step ${index + 1}`,
+    complete: stepCompletion[step.id],
+  }));
+  const editorSurface = (
+    <div
+      className={
+        layout === "horizontal"
+          ? "space-y-4 rounded-[20px] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.13)]"
+          : "space-y-4 rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]"
+      }
+    >
+      <BuilderStepHeader
+        eyebrow={`Step ${currentStepIndex + 1}`}
+        title={currentStepMeta.label}
+        description={currentStepMeta.description}
+        stepIndex={currentStepIndex + 1}
+        totalSteps={steps.length}
+      />
+
+      {currentStep === "identity" ? renderIdentity(values, setField, setSlugTouched) : null}
+      {currentStep === "brand" ? renderBrand(values, setField) : null}
+      {currentStep === "links" ? renderLinks(values, setField) : null}
+      {currentStep === "context" ? renderContext(values, setField) : null}
+      {currentStep === "public-profile" ? renderPublicProfile(values, setField) : null}
+      {currentStep === "review" ? renderReview(values, brandingReadiness, connectedLinks, templateContextCount) : null}
+
+      <BuilderBottomNav
+        canGoBack={Boolean(previousStep)}
+        onBack={() => previousStep && setCurrentStep(previousStep.id)}
+        nextLabel={nextStep ? `Continue to ${nextStep.label}` : undefined}
+        onNext={nextStep ? () => setCurrentStep(nextStep.id) : undefined}
+        footerLabel={`Step ${currentStepIndex + 1} - ${currentStepMeta.label}`}
+        submitButton={
+          nextStep ? (
+            undefined
+          ) : (
+            <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
+              {submitLabel}
+            </button>
+          )
+        }
+      />
+    </div>
+  );
+  const supportCards = (
+    <BuilderSidebarStack
+      sticky={false}
+      className={
+        layout === "horizontal"
+          ? "grid gap-3 space-y-0 xl:grid-cols-4"
+          : "xl:col-span-2 xl:grid xl:grid-cols-4 xl:gap-4 xl:space-y-0"
+      }
+    >
+      <ProjectPreviewSurface values={values} />
+
+      <BuilderSidebarCard title="Readiness Guide">
+        <div className="space-y-2">
+          {brandingReadiness.map((item) => (
+            <div key={item.label} className="rounded-[14px] bg-white/[0.018] p-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-bold text-text">{item.label}</p>
+                <span
+                  className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+                    item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                  }`}
+                >
+                  {item.complete ? "Ready" : "Missing"}
+                </span>
+              </div>
+              <p className="mt-2 text-[12px] leading-5 text-sub">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </BuilderSidebarCard>
+
+      <BuilderSidebarCard title="Connected Modules">
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          {connectedModules.map((item) => (
+            <ConnectedModuleCard
+              key={item.label}
+              label={item.label}
+              ready={Boolean(item.value)}
+            />
+          ))}
+        </div>
+      </BuilderSidebarCard>
+
+      <BuilderSidebarCard title="Capabilities Unlocked">
+        <div className="space-y-2.5">
+          {capabilitySignals.map((item) => (
+            <div
+              key={item.label}
+              className="rounded-[14px] bg-white/[0.018] p-3"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-bold text-text">{item.label}</p>
+                <span
+                  className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+                    item.ready
+                      ? "bg-primary/15 text-primary"
+                      : "bg-white/5 text-sub"
+                  }`}
+                >
+                  {item.ready ? "Unlocked" : "Not ready"}
+                </span>
+              </div>
+              <p className="mt-2 text-[12px] leading-5 text-sub">{item.hint}</p>
+            </div>
+          ))}
+        </div>
+      </BuilderSidebarCard>
+    </BuilderSidebarStack>
+  );
 
   return (
     <form
@@ -270,116 +387,123 @@ export default function ProjectForm({
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)] xl:items-start">
-        <BuilderStepRail
-          steps={steps.map((step, index) => ({
-            ...step,
-            eyebrow: `Step ${index + 1}`,
-            complete: stepCompletion[step.id],
-          }))}
-          currentStep={currentStep}
-          onSelect={setCurrentStep}
-        />
-
-        <div className="space-y-4 rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
-          <BuilderStepHeader
-            eyebrow={`Step ${currentStepIndex + 1}`}
-            title={currentStepMeta.label}
-            description={currentStepMeta.description}
-            stepIndex={currentStepIndex + 1}
-            totalSteps={steps.length}
+      {layout === "horizontal" ? (
+        <div className="space-y-4">
+          <BuilderHorizontalStepRail
+            steps={stepItems}
+            currentStep={currentStep}
+            onSelect={setCurrentStep}
           />
-
-          {currentStep === "identity" ? renderIdentity(values, setField, setSlugTouched) : null}
-          {currentStep === "brand" ? renderBrand(values, setField) : null}
-          {currentStep === "links" ? renderLinks(values, setField) : null}
-          {currentStep === "context" ? renderContext(values, setField) : null}
-          {currentStep === "public-profile" ? renderPublicProfile(values, setField) : null}
-          {currentStep === "review" ? renderReview(values, brandingReadiness, connectedLinks, templateContextCount) : null}
-
-          <BuilderBottomNav
-            canGoBack={Boolean(previousStep)}
-            onBack={() => previousStep && setCurrentStep(previousStep.id)}
-            nextLabel={nextStep ? `Continue to ${nextStep.label}` : undefined}
-            onNext={nextStep ? () => setCurrentStep(nextStep.id) : undefined}
-            footerLabel={`Step ${currentStepIndex + 1} - ${currentStepMeta.label}`}
-            submitButton={
-              nextStep ? (
-                undefined
-              ) : (
-                <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
-                  {submitLabel}
-                </button>
-              )
-            }
-          />
+          {editorSurface}
+          {supportCards}
         </div>
-
-        <BuilderSidebarStack
-          sticky={false}
-          className="xl:col-span-2 xl:grid xl:grid-cols-4 xl:gap-4 xl:space-y-0"
-        >
-          <ProjectPreviewSurface values={values} />
-
-          <BuilderSidebarCard title="Readiness Guide">
-            <div className="space-y-2">
-              {brandingReadiness.map((item) => (
-                <div key={item.label} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold text-text">{item.label}</p>
-                    <span
-                      className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-                        item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
-                      }`}
-                    >
-                      {item.complete ? "Ready" : "Missing"}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-[12px] leading-5 text-sub">{item.value}</p>
-                </div>
-              ))}
-            </div>
-          </BuilderSidebarCard>
-
-          <BuilderSidebarCard title="Connected Modules">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {connectedModules.map((item) => (
-                <ConnectedModuleCard
-                  key={item.label}
-                  label={item.label}
-                  ready={Boolean(item.value)}
-                />
-              ))}
-            </div>
-          </BuilderSidebarCard>
-
-          <BuilderSidebarCard title="Capabilities Unlocked">
-            <div className="space-y-3">
-              {capabilitySignals.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold text-text">{item.label}</p>
-                    <span
-                      className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-                        item.ready
-                          ? "bg-primary/15 text-primary"
-                          : "bg-white/5 text-sub"
-                      }`}
-                    >
-                      {item.ready ? "Unlocked" : "Not ready"}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-[12px] leading-5 text-sub">{item.hint}</p>
-                </div>
-              ))}
-            </div>
-          </BuilderSidebarCard>
-        </BuilderSidebarStack>
-      </div>
+      ) : (
+        <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)] xl:items-start">
+          <BuilderStepRail
+            steps={stepItems}
+            currentStep={currentStep}
+            onSelect={setCurrentStep}
+          />
+          {editorSurface}
+          {supportCards}
+        </div>
+      )}
     </form>
+  );
+}
+
+function BuilderHorizontalStepRail<TStep extends string>({
+  steps,
+  currentStep,
+  onSelect,
+}: {
+  steps: Array<{
+    id: TStep;
+    eyebrow: string;
+    label: string;
+    description: string;
+    complete: boolean;
+  }>;
+  currentStep: TStep;
+  onSelect: (step: TStep) => void;
+}) {
+  const currentIndex = Math.max(
+    0,
+    steps.findIndex((step) => step.id === currentStep)
+  );
+
+  return (
+    <div className="rounded-[20px] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.12)]">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">
+            Horizontal progress
+          </p>
+          <p className="mt-1.5 text-[12px] leading-5 text-sub">
+            Keep the full setup path visible without stealing a left column from the editor.
+          </p>
+        </div>
+        <span className="rounded-full bg-white/[0.024] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
+          Step {currentIndex + 1} of {steps.length}
+        </span>
+      </div>
+
+      <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
+        <div
+          className="h-full rounded-full bg-[linear-gradient(90deg,rgba(199,255,0,0.78),rgba(102,255,198,0.96))] shadow-[0_0_18px_rgba(199,255,0,0.18)] transition-all"
+          style={{ width: `${((currentIndex + 1) / steps.length) * 100}%` }}
+        />
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+        {steps.map((step, index) => {
+          const active = step.id === currentStep;
+
+          return (
+            <button
+              key={step.id}
+              type="button"
+              onClick={() => onSelect(step.id)}
+              className={`group rounded-[15px] px-3 py-3 text-left transition-colors duration-200 ${
+                active
+                  ? "bg-white/[0.045] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
+                  : "bg-white/[0.014] hover:bg-white/[0.03]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">
+                    {step.eyebrow}
+                  </p>
+                  <p className="mt-1.5 break-words text-[12px] font-semibold text-text [overflow-wrap:anywhere]">
+                    {step.label}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] ${
+                    step.complete
+                      ? "bg-primary/15 text-primary"
+                      : active
+                        ? "bg-white/[0.08] text-text"
+                        : "bg-black/20 text-sub"
+                  }`}
+                >
+                  {step.complete ? "Ready" : active ? "Now" : "Open"}
+                </span>
+              </div>
+              <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-sub">
+                {step.description}
+              </p>
+              <div
+                className={`mt-3 h-1 rounded-full ${
+                  index <= currentIndex ? "bg-primary/70" : "bg-white/[0.06]"
+                }`}
+              />
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
