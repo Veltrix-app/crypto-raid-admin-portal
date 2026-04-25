@@ -337,6 +337,7 @@ export default function AnalyticsPage() {
       sub: "Workspace peer bands live",
     },
   ];
+  const attributionSources = growthOverview?.attribution.sources ?? [];
   const analyticsCommandRead =
     analyticsView === "growth"
       ? {
@@ -438,142 +439,69 @@ export default function AnalyticsPage() {
               })}
             </div>
 
-            <OpsPanel
-              eyebrow="Command read"
-              title={analyticsCommandRead.title}
-              description={analyticsCommandRead.description}
-              action={
-                <AnalyticsViewSwitch value={analyticsView} onChange={setAnalyticsView} />
-              }
-            >
-              <div className="space-y-2.5">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <OpsPanel
+                eyebrow="Command read"
+                title={analyticsCommandRead.title}
+                description={analyticsCommandRead.description}
+                action={
+                  <AnalyticsViewSwitch value={analyticsView} onChange={setAnalyticsView} />
+                }
+              >
                 <div className="grid gap-2.5 lg:grid-cols-3">
                   <OpsSnapshotRow label="Now" value={analyticsCommandRead.now} />
                   <OpsSnapshotRow label="Next" value={analyticsCommandRead.next} />
                   <OpsSnapshotRow label="Watch" value={analyticsCommandRead.watch} />
                 </div>
-
-                <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
-                  <ModeCard
-                    label="Growth"
-                    body="Funnel, revenue, retention, attribution and benchmark coverage in one internal workspace."
-                  />
-                  <ModeCard
-                    label="Outcomes"
-                    body="Activation, readiness, trust, claims and on-chain reliability trends."
-                  />
-                  <ModeCard
-                    label="Campaigns"
-                    body="Throughput, completion and confidence by campaign."
-                  />
-                  <ModeCard
-                    label="Verification"
-                    body="Route mix, manual review pressure and proof bottlenecks."
-                  />
-                </div>
-
-                <div className="flex flex-wrap gap-2 border-t border-white/[0.025] pt-2.5">
-                  <SoftRouteLink href="/overview" label="Overview" />
-                  <SoftRouteLink href="/analytics/engagement" label="Engagement" />
-                  <SoftRouteLink href="/analytics/rewards" label="Rewards" />
-                  <OpsStatusPill tone="default">
-                    {summaryError ? "snapshot job pending" : "snapshot route ready"}
-                  </OpsStatusPill>
-                </div>
-              </div>
-            </OpsPanel>
-          </div>
-        }
-      >
-        {summaryError ? (
-          <OpsPanel
-            eyebrow="Snapshot route"
-            title="Outcome snapshots are still warming up"
-            description={summaryError}
-          >
-            <p className="text-sm leading-6 text-sub">
-              Verification and campaign intelligence still render from live portal data. The snapshot-backed outcome board stays visible as context, but it should not dominate the page when the metric job is catching up.
-            </p>
-          </OpsPanel>
-        ) : null}
-
-        {analyticsView === "growth" ? (
-          <div className="space-y-4">
-            <div className="grid gap-4 xl:items-start xl:grid-cols-[1.08fr_0.92fr]">
-              <OpsPanel
-                eyebrow="Growth funnel"
-                title="Visit to retained revenue"
-                description="Top-of-funnel is event-led, while workspace progression is snapshot-backed. Together they show whether traffic is actually turning into durable accounts."
-              >
-                <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
-                  {(growthOverview?.funnel ?? []).slice(0, 10).map((stage) => (
-                    <div
-                      key={stage.stage}
-                      className="rounded-[16px] border border-white/[0.025] bg-white/[0.018] px-3.5 py-3"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-[13px] font-bold text-text">{stage.label}</p>
-                        <OpsStatusPill tone="default">{stage.dataSource}</OpsStatusPill>
-                      </div>
-                      <p className="mt-2.5 text-[1.18rem] font-extrabold tracking-tight text-text">
-                        {stage.value.toLocaleString()}
-                      </p>
-                      <p className="mt-2 text-[11px] text-sub">
-                        {stage.conversionRate === null
-                          ? "Starting point"
-                          : `${stage.conversionRate}% from previous stage`}
-                      </p>
-                    </div>
-                  ))}
-                </div>
               </OpsPanel>
 
               <OpsPanel
-                eyebrow="Revenue pulse"
-                title="Commercial posture"
-                description="Use this when you need the fast internal read before dropping into Business or Success."
+                eyebrow="Snapshot route"
+                title={summaryError ? "Outcome snapshots are warming up" : "Snapshot route is healthy"}
+                description={
+                  summaryError
+                    ? "Live portal data still renders. The snapshot layer should stay secondary until the metric job catches up."
+                    : "Snapshot-backed outcomes are available for this analytics read."
+                }
               >
-                <div className="grid gap-4 md:grid-cols-2">
-                  <OpsMetricCard
-                    label="MRR"
-                    value={formatCurrencyValue(growthOverview?.revenue.mrr ?? 0)}
-                  />
-                  <OpsMetricCard
-                    label="Active paid"
-                    value={growthOverview?.revenue.activePaidAccounts ?? 0}
-                  />
-                  <OpsMetricCard
-                    label="Free"
-                    value={growthOverview?.revenue.freeAccounts ?? 0}
-                  />
-                  <OpsMetricCard
-                    label="Trialing"
-                    value={growthOverview?.revenue.trialingAccounts ?? 0}
-                  />
-                  <OpsMetricCard
-                    label="Expansion ready"
-                    value={growthOverview?.revenue.expansionReadyAccounts ?? 0}
-                  />
-                  <OpsMetricCard
-                    label="Churn risk"
-                    value={growthOverview?.revenue.churnRiskAccounts ?? 0}
-                    emphasis={
-                      (growthOverview?.revenue.churnRiskAccounts ?? 0) > 0
-                        ? "warning"
-                        : "default"
-                    }
-                  />
+                <div className="space-y-3">
+                  <OpsStatusPill tone={summaryError ? "warning" : "default"}>
+                    {summaryError ? "snapshot job pending" : "snapshot route ready"}
+                  </OpsStatusPill>
+                  {summaryError ? (
+                    <p className="text-[12px] leading-5 text-sub">{summaryError}</p>
+                  ) : null}
+                  <div className="flex flex-wrap gap-2 border-t border-white/[0.025] pt-3">
+                    <SoftRouteLink href="/overview" label="Overview" />
+                    <SoftRouteLink href="/analytics/engagement" label="Engagement" />
+                    <SoftRouteLink href="/analytics/rewards" label="Rewards" />
+                  </div>
                 </div>
               </OpsPanel>
             </div>
+          </div>
+        }
+      >
 
-            <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
-              <OpsPanel
-                eyebrow="Retention"
-                title="Cohort durability"
-                description="Retention only matters if the product keeps accounts moving after setup, billing and first launch."
-              >
-                <div className="grid gap-4 md:grid-cols-4">
+        {analyticsView === "growth" ? (
+          <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_360px]">
+            <OpsPanel
+              eyebrow="Growth model"
+              title="Funnel, retention and benchmark read"
+              description="This is the main analytics surface: first understand whether traffic moves through the funnel, then check retention and peer coverage."
+            >
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_290px]">
+                <div>
+                  <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
+                    Funnel stages
+                  </p>
+                  <FunnelStageList stages={growthOverview?.funnel ?? []} />
+                </div>
+
+                <div className="space-y-2.5">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
+                    Cohort health
+                  </p>
                   <OpsMetricCard
                     label="Overall retained 30d"
                     value={`${growthOverview?.retention.overallRetained30dRate ?? 0}%`}
@@ -594,105 +522,87 @@ export default function AnalyticsPage() {
                     }
                   />
                 </div>
+              </div>
 
-                <div className="mt-5 space-y-3">
-                  {(growthOverview?.retention.cohorts ?? []).map((cohort) => (
-                    <div
-                      key={cohort.cohortLabel}
-                      className="rounded-[16px] border border-white/[0.025] bg-white/[0.018] px-3.5 py-3"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-semibold text-text">{cohort.cohortLabel}</p>
-                          <OpsStatusPill tone="default">{cohort.retainedRate}% retained</OpsStatusPill>
-                      </div>
-                      <p className="mt-3 text-sm leading-6 text-sub">
-                        {cohort.retainedCount} of {cohort.accountCount} accounts stayed active long
-                        enough to cross the 30-day retention mark.
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </OpsPanel>
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <CompactReadCard
+                  label="Attribution"
+                  title={
+                    attributionSources.length > 0
+                      ? `${attributionSources.length} tracked sources`
+                      : "Awaiting tracked sources"
+                  }
+                  body={
+                    attributionSources.length > 0
+                      ? attributionSources
+                          .slice(0, 3)
+                          .map((source) => `${source.source}: ${source.paidConversions} paid`)
+                          .join(" | ")
+                      : "Sources will appear here once tracked events move through the funnel."
+                  }
+                />
+                <CompactReadCard
+                  label="Benchmarks"
+                  title={`${
+                    growthOverview?.benchmarkCoverage.workspaceBenchmarksReady ?? 0
+                  } / ${
+                    growthOverview?.benchmarkCoverage.workspaceAccountsMeasured ?? 0
+                  } workspace peer bands`}
+                  body="Peer coverage only becomes useful when the measured cohort is large enough."
+                />
+              </div>
+            </OpsPanel>
 
-              <OpsPanel
-                eyebrow="Attribution"
-                title="Which sources are producing real customers"
-                description="This keeps acquisition honest by showing source quality, not just traffic volume."
-              >
-                <div className="space-y-3">
-                  {(growthOverview?.attribution.sources ?? []).length > 0 ? (
-                    growthOverview?.attribution.sources.map((source) => (
-                      <div
-                        key={source.source}
-                        className="rounded-[16px] border border-white/[0.025] bg-white/[0.018] px-3.5 py-3"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="font-semibold text-text">{source.source}</p>
-                          <OpsStatusPill tone="default">
-                            {source.paidConversions} paid
-                          </OpsStatusPill>
-                        </div>
-                        <div className="mt-4 grid gap-3 md:grid-cols-4 text-sm text-sub">
-                          <p>{source.anonymousVisits} visits</p>
-                          <p>{source.pricingViews} pricing views</p>
-                          <p>{source.signups} signups</p>
-                          <p>{source.checkoutStarts} checkouts</p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm leading-6 text-sub">
-                      Attribution sources will start to stack here as tracked growth events move
-                      through the new funnel.
-                    </p>
-                  )}
-                </div>
-              </OpsPanel>
-            </div>
+            <OpsPanel
+              eyebrow="Commercial posture"
+              title="Revenue and next action"
+              description="Keep commercial health and the next operator move in one rail instead of scattering it across the canvas."
+            >
+              <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                <OpsMetricCard
+                  label="MRR"
+                  value={formatCurrencyValue(growthOverview?.revenue.mrr ?? 0)}
+                />
+                <OpsMetricCard
+                  label="Active paid"
+                  value={growthOverview?.revenue.activePaidAccounts ?? 0}
+                />
+                <OpsMetricCard
+                  label="Free"
+                  value={growthOverview?.revenue.freeAccounts ?? 0}
+                />
+                <OpsMetricCard
+                  label="Trialing"
+                  value={growthOverview?.revenue.trialingAccounts ?? 0}
+                />
+                <OpsMetricCard
+                  label="Expansion ready"
+                  value={growthOverview?.revenue.expansionReadyAccounts ?? 0}
+                />
+                <OpsMetricCard
+                  label="Churn risk"
+                  value={growthOverview?.revenue.churnRiskAccounts ?? 0}
+                  emphasis={
+                    (growthOverview?.revenue.churnRiskAccounts ?? 0) > 0
+                      ? "warning"
+                      : "default"
+                  }
+                />
+              </div>
 
-            <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_1fr]">
-              <OpsPanel
-                eyebrow="Benchmarks"
-                title="Peer coverage"
-                description="Benchmarks are shown only when the cohort is large enough to be useful, not just because we can compute a percentile."
-              >
-                <div className="grid gap-4 md:grid-cols-2">
-                  <OpsMetricCard
-                    label="Workspace peer bands"
-                    value={`${
-                      growthOverview?.benchmarkCoverage.workspaceBenchmarksReady ?? 0
-                    } / ${
-                      growthOverview?.benchmarkCoverage.workspaceAccountsMeasured ?? 0
-                    }`}
-                  />
-                  <OpsMetricCard
-                    label="Project peer bands"
-                    value={`${
-                      growthOverview?.benchmarkCoverage.projectBenchmarksReady ?? 0
-                    } / ${growthOverview?.benchmarkCoverage.projectsMeasured ?? 0}`}
-                  />
-                </div>
-              </OpsPanel>
-
-              <OpsPanel
-                eyebrow="Execution links"
-                title="Where to act next"
-                description="Analytics tells you what is happening; Business and Success tell you who should act next."
-              >
-                <div className="grid gap-4">
-                  <LinkRow
-                    href="/business"
-                    title="Open Business"
-                    body="Use the commercial cockpit when the growth read points to plan pressure, failed conversion, or pricing-related friction."
-                  />
-                  <LinkRow
-                    href="/success"
-                    title="Open Success"
-                    body="Use the success cockpit when accounts are activating too slowly, drifting after launch, or failing to turn first setup into real motion."
-                  />
-                </div>
-              </OpsPanel>
-            </div>
+              <div className="mt-4 space-y-2.5 border-t border-white/[0.025] pt-4">
+                <LinkRow
+                  href="/business"
+                  title="Open Business"
+                  body="Use the commercial cockpit when the growth read points to plan pressure or pricing friction."
+                />
+                <LinkRow
+                  href="/success"
+                  title="Open Success"
+                  body="Use Success when accounts activate slowly or fail to turn setup into durable motion."
+                />
+              </div>
+            </OpsPanel>
           </div>
         ) : null}
 
@@ -987,11 +897,61 @@ function SoftRouteLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-function ModeCard({ label, body }: { label: string; body: string }) {
+function FunnelStageList({ stages }: { stages: AdminGrowthOverview["funnel"] }) {
+  if (stages.length === 0) {
+    return (
+      <div className="rounded-[16px] border border-white/[0.025] bg-white/[0.014] px-3.5 py-3">
+        <p className="text-[13px] font-semibold text-text">Funnel data is not ready yet</p>
+        <p className="mt-1.5 text-[12px] leading-5 text-sub">
+          The page keeps the model in place, but avoids showing a large empty chart while the
+          snapshot job is still warming up.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-[16px] border border-white/[0.025] bg-white/[0.014]">
+      {stages.slice(0, 8).map((stage, index) => (
+        <div
+          key={stage.stage}
+          className="grid grid-cols-[32px_minmax(0,1fr)_96px] items-center gap-3 border-b border-white/[0.025] px-3 py-2.5 text-[12px] last:border-b-0"
+        >
+          <span className="text-[10px] font-bold text-sub">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-text">{stage.label}</p>
+            <p className="mt-0.5 truncate text-[10px] uppercase tracking-[0.14em] text-sub">
+              {stage.dataSource}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="font-semibold text-text">{stage.value.toLocaleString()}</p>
+            <p className="mt-0.5 text-[10px] text-sub">
+              {stage.conversionRate === null ? "start" : `${stage.conversionRate}%`}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CompactReadCard({
+  label,
+  title,
+  body,
+}: {
+  label: string;
+  title: string;
+  body: string;
+}) {
   return (
     <div className="rounded-[16px] border border-white/[0.025] bg-white/[0.016] px-3 py-2.5">
       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">{label}</p>
-      <p className="mt-1.5 text-[11px] leading-5 text-sub">{body}</p>
+      <p className="mt-1.5 text-[13px] font-semibold text-text">{title}</p>
+      <p className="mt-1 text-[11px] leading-5 text-sub">{body}</p>
     </div>
   );
 }
