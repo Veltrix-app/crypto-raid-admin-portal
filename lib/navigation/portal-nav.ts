@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  BadgeCheck,
   BarChart3,
   Building2,
   ClipboardCheck,
@@ -96,6 +97,12 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Analytics",
     description: "Outcomes, activation trends, reliability pressure and performance signals.",
     icon: BarChart3,
+  },
+  {
+    href: "/xp",
+    label: "XP Review",
+    description: "DeFi XP events, suspicious claim pressure, user history and economy guardrails.",
+    icon: BadgeCheck,
   },
   {
     href: "/growth",
