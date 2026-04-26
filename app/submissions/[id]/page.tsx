@@ -36,6 +36,10 @@ export default function SubmissionDetailPage() {
 
   const [working, setWorking] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
+  const [decisionMessage, setDecisionMessage] = useState<{
+    tone: "success" | "error";
+    text: string;
+  } | null>(null);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
   const [verificationResult, setVerificationResult] = useState<AdminVerificationResult | null>(null);
   const currentSubmission = submission ?? null;
@@ -174,9 +178,19 @@ export default function SubmissionDetailPage() {
 
     try {
       setWorking(true);
+      setDecisionMessage(null);
       await reviewSubmission(currentSubmission.id, "approved", reviewNotes);
       setAuditLogs(await fetchAuditTrail("quest_submissions", currentSubmission.id));
+      setDecisionMessage({
+        tone: "success",
+        text: "Approved through the central XP route. XP, audit and member notification are handled by the webapp economy layer.",
+      });
       router.refresh();
+    } catch (error) {
+      setDecisionMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Approval failed.",
+      });
     } finally {
       setWorking(false);
     }
@@ -189,9 +203,19 @@ export default function SubmissionDetailPage() {
 
     try {
       setWorking(true);
+      setDecisionMessage(null);
       await reviewSubmission(currentSubmission.id, "rejected", reviewNotes);
       setAuditLogs(await fetchAuditTrail("quest_submissions", currentSubmission.id));
+      setDecisionMessage({
+        tone: "success",
+        text: "Rejected through the central review route. No XP was issued for this submission.",
+      });
       router.refresh();
+    } catch (error) {
+      setDecisionMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Rejection failed.",
+      });
     } finally {
       setWorking(false);
     }
@@ -366,6 +390,18 @@ export default function SubmissionDetailPage() {
                 {working ? "Working..." : "Reject"}
               </button>
             </div>
+
+            {decisionMessage ? (
+              <div
+                className={`mt-4 rounded-[14px] border px-3 py-2.5 text-sm ${
+                  decisionMessage.tone === "success"
+                    ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-200"
+                    : "border-rose-400/20 bg-rose-400/10 text-rose-200"
+                }`}
+              >
+                {decisionMessage.text}
+              </div>
+            ) : null}
           </DetailSurface>
         </div>
 

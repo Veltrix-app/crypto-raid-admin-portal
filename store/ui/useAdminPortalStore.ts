@@ -20,6 +20,10 @@ import { AdminUser } from "@/types/entities/user";
 import { AdminAuditLog } from "@/types/entities/audit-log";
 import { resolveQuestIntegration } from "@/lib/quest-integration";
 import {
+  buildReviewedSubmissionPatch,
+  normalizeQuestSubmissionDecisionStatus,
+} from "@/lib/quests/submission-decisions";
+import {
   type ProjectContentAction,
   type ProjectContentType,
 } from "@/lib/projects/content-actions";
@@ -1852,62 +1856,64 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   reviewSubmission: async (id, status, reviewNotes = "") => {
     const supabase = createClient();
     const authUserId = useAdminAuthStore.getState().authUserId;
-    const timestamp = new Date().toISOString();
-    const submission = get().submissions.find((item) => item.id === id);
+    const decision = normalizeQuestSubmissionDecisionStatus(status);
 
-    const fullUpdate = {
-      status,
-      review_notes: reviewNotes,
-      reviewed_by_auth_user_id: authUserId,
-      reviewed_at: timestamp,
-      updated_at: timestamp,
-    };
-
-    let { error } = await supabase
-      .from("quest_submissions")
-      .update(fullUpdate)
-      .eq("id", id);
-
-    if (error) {
-      const fallback = await supabase
-        .from("quest_submissions")
-        .update({ status })
-        .eq("id", id);
-      error = fallback.error;
+    if (!decision) {
+      throw new Error("Quest submissions can only be approved or rejected from the portal.");
     }
 
-    if (error) throw error;
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session?.access_token) {
+      throw new Error(sessionError?.message || "Missing reviewer session.");
+    }
+
+    const response = await fetch(
+      `/api/quest-submissions/${encodeURIComponent(id)}/decision`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          decision,
+          reviewNotes,
+        }),
+      }
+    );
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload?.ok) {
+      throw new Error(payload?.error || "Quest submission decision failed.");
+    }
+
+    if (Array.isArray(payload.warnings) && payload.warnings.length > 0) {
+      console.warn("Quest submission decision warnings:", payload.warnings);
+    }
+
+    const timestamp = new Date().toISOString();
 
     set((state) => ({
       submissions: state.submissions.map((item) =>
         item.id === id
           ? {
               ...item,
-              status,
-              reviewNotes: reviewNotes || item.reviewNotes,
-              reviewedByAuthUserId: authUserId ?? item.reviewedByAuthUserId,
-              reviewedAt: timestamp,
-              updatedAt: timestamp,
+              ...buildReviewedSubmissionPatch({
+                status: decision,
+                reviewNotes,
+                reviewerAuthUserId: authUserId,
+                timestamp,
+                existingReviewNotes: item.reviewNotes,
+                existingReviewerAuthUserId: item.reviewedByAuthUserId,
+              }),
             }
           : item
       ),
     }));
-
-    if (submission) {
-      await writeAuditLog({
-        sourceTable: "quest_submissions",
-        sourceId: id,
-        projectId: get().quests.find((quest) => quest.id === submission.questId)?.projectId,
-        action: `submission_${status}`,
-        summary: `${status === "approved" ? "Approved" : "Rejected"} submission for ${submission.questTitle}.`,
-        metadata: {
-          submissionId: id,
-          questId: submission.questId,
-          campaignId: submission.campaignId,
-          reviewNotes,
-        },
-      });
-    }
   },
 
   approveSubmission: async (id) => {
