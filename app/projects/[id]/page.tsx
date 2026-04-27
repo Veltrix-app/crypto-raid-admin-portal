@@ -1060,6 +1060,12 @@ export default function ProjectDetailPage() {
       href: `/projects/${project.id}/community`,
     },
     {
+      label: "Tweet-to-Raid Autopilot",
+      description:
+        "Connect X posts to automated raid generation, review approval and Discord or Telegram delivery.",
+      href: `/projects/${project.id}/community#tweet-to-raid`,
+    },
+    {
       label: "Open Campaign Studio",
       description:
         "Start the next campaign with this project already loaded, so mission architecture and launch pressure begin in the right workspace.",

@@ -51,6 +51,7 @@ import { CommunityOutcomesPanel } from "@/components/community/CommunityOutcomes
 import { CommunityPlaybooksPanel } from "@/components/community/CommunityPlaybooksPanel";
 import { CommunityRaidOpsPanel } from "@/components/community/CommunityRaidOpsPanel";
 import { CommunityRanksPanel } from "@/components/community/CommunityRanksPanel";
+import { TweetToRaidAutopilotPanel } from "@/components/community/TweetToRaidAutopilotPanel";
 import SupportEscalationPanel from "@/components/observability/SupportEscalationPanel";
 import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
@@ -2661,6 +2662,15 @@ export default function ProjectCommunityManagementPage() {
           ownerSignalCount={communityRecommendations.healthSignals.length}
           captainPriorityCount={captainHighPriorityCount}
           activeMode={communityViewMode}
+        />
+
+        <TweetToRaidAutopilotPanel
+          projectId={project.id}
+          projectName={project.name}
+          campaigns={relatedCampaigns.map((campaign) => ({
+            id: campaign.id,
+            title: campaign.title,
+          }))}
         />
 
         <OpsPanel
