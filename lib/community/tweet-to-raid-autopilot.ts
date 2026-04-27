@@ -264,6 +264,17 @@ export function buildTweetToRaidSourcePayload(
   };
 }
 
+export function buildTweetToRaidPollPayload(projectId: string, body: Record<string, unknown>) {
+  const sourceId = readString(body.sourceId);
+  const limit = clampNumber(body.limit, sourceId ? 1 : 25, 1, 100);
+
+  return {
+    projectId,
+    ...(sourceId ? { sourceId } : {}),
+    limit,
+  };
+}
+
 export async function loadTweetToRaidAutopilotState(
   projectId: string
 ): Promise<TweetToRaidAutopilotState> {
@@ -414,6 +425,52 @@ export async function runManualTweetToRaidIngest(
   if (!response.ok) {
     throw new Error(
       typeof result?.error === "string" ? result.error : "Tweet-to-Raid ingest job failed."
+    );
+  }
+
+  return result ?? { ok: true };
+}
+
+export async function runTweetToRaidSourcePoll(
+  projectId: string,
+  body: Record<string, unknown>
+) {
+  const communityBotUrl = process.env.COMMUNITY_BOT_URL;
+  if (!communityBotUrl) {
+    throw new Error("COMMUNITY_BOT_URL is missing on the portal deployment.");
+  }
+
+  const response = await fetch(`${communityBotUrl.replace(/\/+$/, "")}/jobs/poll-x-raid-sources`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(process.env.COMMUNITY_RETRY_JOB_SECRET || process.env.COMMUNITY_BOT_WEBHOOK_SECRET
+        ? {
+            "x-community-job-secret":
+              process.env.COMMUNITY_RETRY_JOB_SECRET || process.env.COMMUNITY_BOT_WEBHOOK_SECRET || "",
+          }
+        : {}),
+    },
+    body: JSON.stringify(buildTweetToRaidPollPayload(projectId, body)),
+    cache: "no-store",
+  });
+
+  const result = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!response.ok) {
+    const resultStatus = typeof result?.status === "string" ? result.status : "";
+    if (
+      response.status === 503 &&
+      (resultStatus === "failed" || resultStatus === "partial_failure")
+    ) {
+      return result;
+    }
+
+    throw new Error(
+      typeof result?.error === "string"
+        ? result.error
+        : typeof result?.reason === "string"
+          ? result.reason
+          : "Tweet-to-Raid source poll failed."
     );
   }
 

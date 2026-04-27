@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildTweetToRaidPollPayload,
   buildManualTweetToRaidPost,
   normalizeTweetToRaidUsername,
   parseTweetToRaidHashtags,
@@ -47,6 +48,20 @@ test("buildManualTweetToRaidPost turns portal input into the bot job post shape"
       mediaUrls: ["https://cdn.example.com/a.png", "https://cdn.example.com/b.png"],
       isReply: false,
       isRepost: false,
+    }
+  );
+});
+
+test("buildTweetToRaidPollPayload keeps project scoped polling bounded", () => {
+  assert.deepEqual(
+    buildTweetToRaidPollPayload("project-1", {
+      sourceId: "source-1",
+      limit: "250",
+    }),
+    {
+      projectId: "project-1",
+      sourceId: "source-1",
+      limit: 100,
     }
   );
 });

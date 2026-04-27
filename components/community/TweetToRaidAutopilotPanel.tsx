@@ -89,6 +89,23 @@ function formatHashtags(values: string[] | null) {
   return values?.length ? values.map((tag) => `#${tag}`).join(", ") : "No hashtag gate";
 }
 
+function readMetadataString(source: TweetToRaidSourceRow | null, key: string) {
+  const value = source?.metadata?.[key];
+  return typeof value === "string" ? value : "";
+}
+
+function readMetadataNumber(source: TweetToRaidSourceRow | null, key: string) {
+  const value = source?.metadata?.[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function getPollTone(status: string) {
+  if (status === "success") return "success";
+  if (status === "failed" || status === "partial_failure") return "danger";
+  if (status === "skipped") return "warning";
+  return "default";
+}
+
 function sourceToForm(source: TweetToRaidSourceRow): SourceForm {
   return {
     sourceId: source.id,
@@ -256,6 +273,12 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
   const pendingCount = pendingCandidates.length;
   const lastEvent = state.events[0] ?? null;
   const lastRaid = state.raids[0] ?? null;
+  const lastPollStatus = readMetadataString(activeSource, "lastPollStatus");
+  const lastPollAt = readMetadataString(activeSource, "lastPollAt");
+  const lastPollError = readMetadataString(activeSource, "lastPollError");
+  const lastPollFetchedPostCount = readMetadataNumber(activeSource, "lastPollFetchedPostCount");
+  const lastPollCreatedRaidCount = readMetadataNumber(activeSource, "lastPollCreatedRaidCount");
+  const lastPollCreatedCandidateCount = readMetadataNumber(activeSource, "lastPollCreatedCandidateCount");
 
   return (
     <OpsPanel
@@ -275,7 +298,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
       }
     >
       <div id="tweet-to-raid" className="space-y-4">
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-5">
           <OpsMetricCard
             label="Sources"
             value={state.sources.length}
@@ -300,6 +323,16 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
             sub={state.jobSecretConfigured ? "Job secret configured." : "Secret optional or missing."}
             emphasis={state.botConfigured ? "primary" : "warning"}
           />
+          <OpsMetricCard
+            label="X poller"
+            value={lastPollStatus || "Not run"}
+            sub={
+              lastPollAt
+                ? `${lastPollFetchedPostCount} posts checked.`
+                : "Run the source poll once the bot token is configured."
+            }
+            emphasis={lastPollStatus === "success" ? "primary" : lastPollStatus ? "warning" : "default"}
+          />
         </div>
 
         {loading ? (
@@ -318,22 +351,62 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
                     Start safe in review mode. Switch to auto-live only when the source, hashtag gate and delivery rail are proven.
                   </p>
                 </div>
-                {state.sources.length > 1 ? (
-                  <select
-                    value={sourceForm.sourceId}
-                    onChange={(event) => {
-                      const nextSource = state.sources.find((source) => source.id === event.target.value);
-                      if (nextSource) setSourceForm(sourceToForm(nextSource));
-                    }}
-                    className={inputClassName("max-w-[220px]")}
+                <div className="flex flex-wrap items-center gap-2">
+                  {lastPollStatus ? (
+                    <OpsStatusPill tone={getPollTone(lastPollStatus)}>
+                      Poll {lastPollStatus}
+                    </OpsStatusPill>
+                  ) : null}
+                  {state.sources.length > 1 ? (
+                    <select
+                      value={sourceForm.sourceId}
+                      onChange={(event) => {
+                        const nextSource = state.sources.find((source) => source.id === event.target.value);
+                        if (nextSource) setSourceForm(sourceToForm(nextSource));
+                      }}
+                      className={inputClassName("max-w-[220px]")}
+                    >
+                      {state.sources.map((source) => (
+                        <option key={source.id} value={source.id}>
+                          @{source.x_username}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={workingAction === "poll_sources" || !activeSource || !state.botConfigured}
+                    onClick={() =>
+                      void runAction(
+                        "poll_sources",
+                        { sourceId: activeSource?.id ?? "", limit: 10 },
+                        "Tweet-to-Raid source poll completed."
+                      )
+                    }
+                    className="rounded-[14px] border border-line bg-card px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {state.sources.map((source) => (
-                      <option key={source.id} value={source.id}>
-                        @{source.x_username}
-                      </option>
-                    ))}
-                  </select>
-                ) : null}
+                    {workingAction === "poll_sources" ? "Polling..." : "Poll now"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="rounded-[16px] border border-line bg-card px-3 py-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">Last poll</p>
+                  <p className="mt-2 text-[12px] font-bold text-text">{lastPollAt ? formatDate(lastPollAt) : "Not run"}</p>
+                </div>
+                <div className="rounded-[16px] border border-line bg-card px-3 py-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">Output</p>
+                  <p className="mt-2 text-[12px] font-bold text-text">
+                    {lastPollCreatedRaidCount} live / {lastPollCreatedCandidateCount} review
+                  </p>
+                </div>
+                <div className="rounded-[16px] border border-line bg-card px-3 py-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">Issue</p>
+                  <p className="mt-2 line-clamp-2 text-[12px] font-bold text-text">
+                    {lastPollError || "No poll issue recorded."}
+                  </p>
+                </div>
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">

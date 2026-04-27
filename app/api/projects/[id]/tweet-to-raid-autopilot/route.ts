@@ -8,12 +8,14 @@ import {
   loadTweetToRaidAutopilotState,
   rejectTweetToRaidCandidate,
   runManualTweetToRaidIngest,
+  runTweetToRaidSourcePoll,
   saveTweetToRaidSource,
 } from "@/lib/community/tweet-to-raid-autopilot";
 import { writeProjectCommunityAuditLog } from "@/lib/community/project-community-ops";
 
 type AutopilotAction =
   | "save_source"
+  | "poll_sources"
   | "manual_ingest"
   | "approve_candidate"
   | "reject_candidate";
@@ -21,6 +23,7 @@ type AutopilotAction =
 function readBodyAction(value: unknown): AutopilotAction | null {
   if (
     value === "save_source" ||
+    value === "poll_sources" ||
     value === "manual_ingest" ||
     value === "approve_candidate" ||
     value === "reject_candidate"
@@ -109,6 +112,32 @@ export async function POST(
       return NextResponse.json({
         ok: true,
         message: "Tweet-to-Raid ingest job completed.",
+        result,
+        ...(await loadTweetToRaidAutopilotState(access.projectId)),
+      });
+    }
+
+    if (action === "poll_sources") {
+      const result = await runTweetToRaidSourcePoll(access.projectId, body ?? {});
+      const pollNeedsAttention =
+        result && typeof result === "object" && (result as { ok?: unknown }).ok === false;
+      await writeProjectCommunityAuditLog({
+        projectId: access.projectId,
+        sourceTable: "x_raid_sources",
+        sourceId: typeof body?.sourceId === "string" ? body.sourceId : access.projectId,
+        action: "tweet_to_raid_source_poll_requested",
+        summary: "Tweet-to-Raid source poll requested from the portal.",
+        metadata: {
+          result,
+          authUserId: access.authUserId,
+        },
+      });
+
+      return NextResponse.json({
+        ok: true,
+        message: pollNeedsAttention
+          ? "Tweet-to-Raid poll ran, but needs attention. Check source health."
+          : "Tweet-to-Raid source poll completed.",
         result,
         ...(await loadTweetToRaidAutopilotState(access.projectId)),
       });
