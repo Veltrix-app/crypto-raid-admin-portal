@@ -13,18 +13,6 @@ type Props = {
   onRunCommandSync: () => void;
 };
 
-const liveCommands = [
-  "/link",
-  "/profile",
-  "/rank",
-  "/leaderboard",
-  "/missions",
-  "/raid",
-  "/captain",
-];
-
-const telegramCommands = ["/link", "/profile", "/missions", "/leaderboard", "/raid"];
-
 export function CommunityCommandsPanel({
   settings,
   setSettings,
@@ -33,6 +21,63 @@ export function CommunityCommandsPanel({
   onSaveDiscordBotConfig,
   onRunCommandSync,
 }: Props) {
+  const discordCommands = [
+    { command: "/link", enabled: settings.commandsEnabled },
+    { command: "/profile", enabled: settings.commandsEnabled },
+    { command: "/rank", enabled: settings.commandsEnabled },
+    {
+      command: "/leaderboard",
+      enabled: settings.commandsEnabled && settings.leaderboardEnabled,
+    },
+    {
+      command: "/missions",
+      enabled: settings.commandsEnabled && settings.missionCommandsEnabled,
+    },
+    {
+      command: "/raid",
+      enabled: settings.commandsEnabled && settings.raidOpsEnabled,
+    },
+    {
+      command: "/newraid",
+      enabled: settings.commandsEnabled && settings.raidOpsEnabled,
+    },
+    {
+      command: "/captain",
+      enabled:
+        settings.commandsEnabled &&
+        settings.captainsEnabled &&
+        settings.captainCommandsEnabled,
+    },
+  ];
+  const telegramCommands = [
+    { command: "/link", enabled: settings.telegramCommandsEnabled },
+    { command: "/profile", enabled: settings.telegramCommandsEnabled },
+    {
+      command: "/missions",
+      enabled: settings.telegramCommandsEnabled && settings.missionCommandsEnabled,
+    },
+    {
+      command: "/leaderboard",
+      enabled: settings.telegramCommandsEnabled && settings.leaderboardEnabled,
+    },
+    {
+      command: "/raid",
+      enabled: settings.telegramCommandsEnabled && settings.raidOpsEnabled,
+    },
+    {
+      command: "/newraid",
+      enabled: settings.telegramCommandsEnabled && settings.raidOpsEnabled,
+    },
+    {
+      command: "/captain",
+      enabled:
+        settings.telegramCommandsEnabled &&
+        settings.captainsEnabled &&
+        settings.captainCommandsEnabled,
+    },
+  ];
+  const liveCommandCount = discordCommands.filter((command) => command.enabled).length;
+
   return (
     <OpsPanel
       eyebrow="Commands"
@@ -90,7 +135,7 @@ export function CommunityCommandsPanel({
           />
           <OpsMetricCard
             label="Live commands"
-            value={liveCommands.length}
+            value={liveCommandCount}
             sub="The current Discord command surface registered with the bot."
           />
         </div>
@@ -185,24 +230,27 @@ export function CommunityCommandsPanel({
           <div className="mt-4 rounded-[22px] border border-line bg-card px-4 py-4">
             <p className="text-sm font-bold text-text">Current command surfaces</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {liveCommands.map((command) => (
-                <OpsStatusPill key={command} tone="success">
-                  {command}
+              {discordCommands.map((command) => (
+                <OpsStatusPill
+                  key={command.command}
+                  tone={command.enabled ? "success" : "default"}
+                >
+                  {command.command}
                 </OpsStatusPill>
               ))}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {telegramCommands.map((command) => (
                 <OpsStatusPill
-                  key={`telegram-${command}`}
-                  tone={settings.telegramCommandsEnabled ? "success" : "default"}
+                  key={`telegram-${command.command}`}
+                  tone={command.enabled ? "success" : "default"}
                 >
-                  TG {command}
+                  TG {command.command}
                 </OpsStatusPill>
               ))}
             </div>
             <p className="mt-4 text-sm leading-6 text-sub">
-              Discord stays the richer command surface, Telegram stays the fast-access surface, and deep links push members back into the exact webapp or captain workspace they should land on next.
+              Discord stays the richer command surface, Telegram stays the fast-access surface, and /newraid only becomes live when Telegram commands and raid ops are both enabled.
             </p>
           </div>
 

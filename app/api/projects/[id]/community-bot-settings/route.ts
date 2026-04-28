@@ -349,6 +349,8 @@ export async function GET(
     const telegramSettingsRow = telegramIntegration ? settingsByIntegrationId.get(telegramIntegration.id) : null;
     const primarySettingsRow = primaryIntegration ? settingsByIntegrationId.get(primaryIntegration.id) : null;
     const metadata = readMetadata(primarySettingsRow as { metadata?: CommunitySettingsMetadata | null } | null);
+    const raidOpsEnabled =
+      discordSettingsRow?.raid_ops_enabled === true || telegramSettingsRow?.raid_ops_enabled === true;
 
     return NextResponse.json({
       ok: true,
@@ -380,7 +382,7 @@ export async function GET(
             ? Number(discordSettingsRow?.leaderboard_top_n)
             : defaults.leaderboardTopN,
         leaderboardCadence: sanitizeLeaderboardCadence(discordSettingsRow?.leaderboard_cadence),
-        raidOpsEnabled: discordSettingsRow?.raid_ops_enabled === true,
+        raidOpsEnabled,
         lastRankSyncAt:
           typeof discordSettingsRow?.last_rank_sync_at === "string"
             ? discordSettingsRow.last_rank_sync_at
@@ -571,6 +573,8 @@ export async function POST(
           provider: "telegram",
           project_id: telegramIntegration.project_id,
           commands_enabled: rawSettings.telegramCommandsEnabled === true,
+          leaderboard_enabled: rawSettings.leaderboardEnabled !== false,
+          raid_ops_enabled: rawSettings.raidOpsEnabled === true,
           metadata: sharedMetadata,
           updated_at: new Date().toISOString(),
         },
