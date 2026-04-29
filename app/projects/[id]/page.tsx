@@ -959,7 +959,7 @@ export default function ProjectDetailPage() {
       description: project.website || project.contactEmail
         ? "Brand, links and contact details are already attached to this project."
         : "Complete the project profile so campaigns and public pages look credible from day one.",
-      href: "#edit-project",
+      href: `/projects/${project.id}/settings`,
       cta: project.website || project.contactEmail ? "Refine profile" : "Complete profile",
       status: project.website || project.contactEmail ? "ready" : "next",
     },
@@ -1093,7 +1093,7 @@ export default function ProjectDetailPage() {
       label: "Claims queue",
       description:
         "Check reward fulfillment pressure and payout incidents tied to this workspace.",
-      href: "/claims",
+      href: `/projects/${project.id}/payouts`,
     },
     {
       label: "Team settings",
@@ -1757,7 +1757,7 @@ export default function ProjectDetailPage() {
             </DetailSurface>
           ) : null}
 
-        <div className="grid gap-4">
+        <div className="hidden" aria-hidden="true">
           <DetailSurface
             title="Edit Project"
             description="Update how this project appears in the app and portal without leaving the workspace detail view."
