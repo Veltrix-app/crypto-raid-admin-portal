@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Shield } from "lucide-react";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import { cn } from "@/lib/utils/cn";
-import { GLOBAL_NAV_ITEMS } from "@/lib/navigation/portal-nav";
+import { GLOBAL_NAV_GROUPS, GLOBAL_NAV_ITEMS } from "@/lib/navigation/portal-nav";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 
 export default function AdminSidebar() {
@@ -26,49 +26,74 @@ export default function AdminSidebar() {
       <Link
         href="/overview"
         className="mx-auto flex h-10 w-10 items-center justify-center rounded-[14px] border border-primary/18 bg-[linear-gradient(180deg,rgba(186,255,59,0.14),rgba(255,255,255,0.02))] text-primary shadow-[0_12px_30px_rgba(0,0,0,0.2)]"
-        title="Veltrix portal"
-        aria-label="Veltrix portal"
+        title="VYNTRO portal"
+        aria-label="VYNTRO portal"
       >
         <Shield size={16} />
       </Link>
 
       <nav className="mt-4 flex-1 overflow-y-auto">
-        <p className="mb-2 text-center text-[8px] font-bold uppercase tracking-[0.18em] text-sub">
-          Nav
-        </p>
-        <div className="flex flex-col items-center gap-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        <div className="flex flex-col gap-3">
+          {GLOBAL_NAV_GROUPS.map((group) => {
+            const groupItems = navItems.filter((item) => item.group === group.key);
+
+            if (groupItems.length === 0) {
+              return null;
+            }
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                title={item.label}
-                aria-label={item.label}
-                className={cn(
-                  "group relative flex h-10 w-10 items-center justify-center rounded-[14px] border transition",
-                  active
-                    ? "border-primary/24 bg-primary/12 text-primary shadow-[0_12px_28px_rgba(186,255,59,0.12)]"
-                    : "border-transparent bg-transparent text-sub hover:border-white/10 hover:bg-white/[0.04] hover:text-text"
-                )}
-              >
-                {active ? (
-                  <span className="absolute -left-[9px] top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-primary" />
-                ) : null}
-                <Icon size={16} />
-                <span
-                  className={cn(
-                    "pointer-events-none absolute left-[calc(100%+0.55rem)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border px-2 py-1 text-[9px] font-semibold opacity-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition group-hover:opacity-100 group-focus-visible:opacity-100",
-                    active
-                      ? "border-primary/20 bg-[#0d1117] text-primary"
-                      : "border-white/8 bg-[#0d1117] text-text"
-                  )}
-                >
-                  {item.label}
-                </span>
-              </Link>
+              <div key={group.key}>
+                <p className="mb-1.5 text-center text-[7px] font-black uppercase tracking-[0.18em] text-sub/70">
+                  {group.label}
+                </p>
+                <div className="flex flex-col items-center gap-1.5">
+                  {groupItems.map((item) => {
+                    const Icon = item.icon;
+                    const href =
+                      item.requiresWorkspace && activeProjectId
+                        ? item.href.replace(":projectId", activeProjectId)
+                        : item.requiresWorkspace
+                          ? "/projects"
+                          : item.href;
+                    const active =
+                      item.href === "/projects"
+                        ? pathname === "/projects" ||
+                          pathname === "/projects/new" ||
+                          /^\/projects\/[^/]+$/.test(pathname)
+                        : pathname === href || pathname.startsWith(`${href}/`);
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={href}
+                        title={item.label}
+                        aria-label={item.label}
+                        className={cn(
+                          "group relative flex h-9 w-9 items-center justify-center rounded-[13px] border transition",
+                          active
+                            ? "border-primary/20 bg-primary/11 text-primary shadow-[0_12px_28px_rgba(186,255,59,0.1)]"
+                            : "border-transparent bg-transparent text-sub hover:border-white/[0.055] hover:bg-white/[0.03] hover:text-text"
+                        )}
+                      >
+                        {active ? (
+                          <span className="absolute -left-[9px] top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-primary" />
+                        ) : null}
+                        <Icon size={15} />
+                        <span
+                          className={cn(
+                            "pointer-events-none absolute left-[calc(100%+0.55rem)] top-1/2 z-40 -translate-y-1/2 whitespace-nowrap rounded-full border px-2 py-1 text-[9px] font-semibold opacity-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition group-hover:opacity-100 group-focus-visible:opacity-100",
+                            active
+                              ? "border-primary/20 bg-[#0d1117] text-primary"
+                              : "border-white/8 bg-[#0d1117] text-text"
+                          )}
+                        >
+                          {item.label}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
