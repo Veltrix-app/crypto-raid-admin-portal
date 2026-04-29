@@ -703,8 +703,8 @@ export default function ProjectCommunityManagementPage() {
   );
   const [communityViewMode, setCommunityViewMode] = useState<"owner" | "captain">("owner");
   const [communitySurfaceMode, setCommunitySurfaceMode] = useState<
-    "operate" | "grow" | "configure"
-  >("operate");
+    "overview" | "commands" | "automations" | "captains" | "growth"
+  >("overview");
   const [communityCaptainWorkspace, setCommunityCaptainWorkspace] = useState<CommunityCaptainWorkspaceState>(
     emptyCommunityCaptainWorkspace
   );
@@ -719,6 +719,36 @@ export default function ProjectCommunityManagementPage() {
   const [captainWorkspaceNoticeTone, setCaptainWorkspaceNoticeTone] = useState<
     "success" | "error"
   >("success");
+
+  useEffect(() => {
+    function syncSurfaceFromHash() {
+      const hash = window.location.hash;
+
+      if (["#tweet-to-raid", "#commands", "#raid-ops", "#missions"].includes(hash)) {
+        setCommunitySurfaceMode("commands");
+        return;
+      }
+
+      if (["#automations", "#playbooks", "#funnels"].includes(hash)) {
+        setCommunitySurfaceMode("automations");
+        return;
+      }
+
+      if (["#captains", "#captain-workspace"].includes(hash)) {
+        setCommunitySurfaceMode("captains");
+        return;
+      }
+
+      if (["#growth", "#members", "#cohorts", "#leaderboards"].includes(hash)) {
+        setCommunitySurfaceMode("growth");
+      }
+    }
+
+    syncSurfaceFromHash();
+    window.addEventListener("hashchange", syncSurfaceFromHash);
+
+    return () => window.removeEventListener("hashchange", syncSurfaceFromHash);
+  }, []);
 
   const project = useMemo(() => getProjectById(params.id), [getProjectById, params.id]);
   const projectOps = useProjectOps(project?.id, {
@@ -2520,15 +2550,17 @@ export default function ProjectCommunityManagementPage() {
                   Workspace focus
                 </p>
                 <p className="mt-2 text-sm leading-6 text-sub">
-                  Use one surface at a time: operate for active execution, grow for cohorts and missions, configure for integrations, automations and control rails.
+                  Use one surface at a time: overview for orientation, commands for raids, automations for rails, captains for delegation, and growth for member movement.
                 </p>
                 <div className="mt-2.5">
                   <SegmentToggle
                     value={communitySurfaceMode}
                     options={[
-                      { value: "operate", label: "Operate" },
-                      { value: "grow", label: "Grow" },
-                      { value: "configure", label: "Configure" },
+                      { value: "overview", label: "Overview" },
+                      { value: "commands", label: "Commands / Raids" },
+                      { value: "automations", label: "Automations" },
+                      { value: "captains", label: "Captains" },
+                      { value: "growth", label: "Growth" },
                     ]}
                     onChange={setCommunitySurfaceMode}
                   />
@@ -2573,11 +2605,15 @@ export default function ProjectCommunityManagementPage() {
             <OpsSnapshotRow
               label="Current read"
               value={
-                communitySurfaceMode === "operate"
-                  ? "Execution, incidents and captain queues are the main reading path."
-                  : communitySurfaceMode === "grow"
-                    ? "Cohorts, activation boards and member movement are the main reading path."
-                    : "Integrations, automations and control rails are the main reading path."
+                communitySurfaceMode === "overview"
+                  ? "Orientation, health and the safest next move are the main reading path."
+                  : communitySurfaceMode === "commands"
+                    ? "Command setup, Tweet-to-Raid and live raid delivery are the main reading path."
+                    : communitySurfaceMode === "automations"
+                      ? "Automation rails, playbooks and activation loops are the main reading path."
+                      : communitySurfaceMode === "captains"
+                        ? "Captain ownership, queue pressure and delegation are the main reading path."
+                        : "Members, cohorts, leaderboards and growth quality are the main reading path."
               }
             />
             <OpsSnapshotRow
@@ -2609,103 +2645,109 @@ export default function ProjectCommunityManagementPage() {
           </div>
         </OpsPanel>
 
-        <CommunityOverviewPanel
-          projectId={project.id}
-          projectName={project.name}
-          discordIntegrationStatus={discordIntegrationStatus}
-          telegramIntegrationStatus={telegramIntegrationStatus}
-          xIntegrationStatus={xIntegrationStatus}
-          telegramCommandsEnabled={discordBotSettings.telegramCommandsEnabled}
-          captainsEnabled={discordBotSettings.captainsEnabled}
-          activationBoardsEnabled={discordBotSettings.activationBoardsEnabled}
-          campaignCount={relatedCampaigns.length}
-          questCount={relatedQuests.length}
-          raidCount={relatedRaids.length}
-          linkedContributorCount={communityMembers.summary.commandReady}
-          walletVerifiedCount={communityMembers.summary.walletVerified}
-          captainCount={communityGrowth.captains.assignments.length}
-          newcomerCount={communityGrowth.cohorts.summary.newcomers}
-          reactivationCount={communityGrowth.cohorts.summary.reactivation}
-          watchlistCount={communityGrowth.cohorts.summary.watchlist}
-          callbackFailures={operatorSignals.callbackFailures}
-          onchainFailures={operatorSignals.onchainFailures}
-          latestIssue={
-            communityGrowth.trust.openFlagCount > 0 || communityGrowth.trust.watchlistCount > 0
-              ? communityGrowth.trust.latestIssue
-              : operatorSignals.latestIssue
-          }
-          automationRailCount={communityAutomations.length}
-          activeAutomationCount={activeAutomationCount}
-          readyAutomationCount={readyAutomationCount}
-          blockedAutomationCount={blockedAutomationCount}
-          degradedAutomationCount={degradedAutomationCount}
-          dueAutomationCount={dueAutomationCount}
-          enabledPlaybookCount={enabledPlaybookCount}
-          recentAutomationFailureCount={recentAutomationFailureCount}
-          automationSuccessRate={automationSuccessRate}
-          captainCoverageRate={captainCoverageRate}
-          unassignedCaptainCount={captainUnassignedCount}
-          overdueCaptainCount={captainOverdueCount}
-          lastRankSyncAt={discordBotSettings.lastRankSyncAt}
-          lastLeaderboardPostedAt={discordBotSettings.lastLeaderboardPostedAt}
-          lastMissionDigestAt={discordBotSettings.lastMissionDigestAt}
-          lastRaidAlertAt={discordBotSettings.lastRaidAlertAt}
-          lastAutomationRunAt={discordBotSettings.lastAutomationRunAt}
-          lastNewcomerPushAt={discordBotSettings.lastNewcomerPushAt}
-          lastReactivationPushAt={discordBotSettings.lastReactivationPushAt}
-          lastActivationBoardAt={discordBotSettings.lastActivationBoardAt}
-          recommendedPlayTitle={communityRecommendations.recommendations[0]?.title ?? ""}
-          recommendedPlaySummary={communityRecommendations.recommendations[0]?.summary ?? ""}
-          recommendedPlayActionLabel={
-            communityRecommendations.recommendations[0]?.actionLabel ?? ""
-          }
-          ownerSignalCount={communityRecommendations.healthSignals.length}
-          captainPriorityCount={captainHighPriorityCount}
-          activeMode={communityViewMode}
-        />
+        {communitySurfaceMode === "overview" ? (
+          <CommunityOverviewPanel
+            projectId={project.id}
+            projectName={project.name}
+            discordIntegrationStatus={discordIntegrationStatus}
+            telegramIntegrationStatus={telegramIntegrationStatus}
+            xIntegrationStatus={xIntegrationStatus}
+            telegramCommandsEnabled={discordBotSettings.telegramCommandsEnabled}
+            captainsEnabled={discordBotSettings.captainsEnabled}
+            activationBoardsEnabled={discordBotSettings.activationBoardsEnabled}
+            campaignCount={relatedCampaigns.length}
+            questCount={relatedQuests.length}
+            raidCount={relatedRaids.length}
+            linkedContributorCount={communityMembers.summary.commandReady}
+            walletVerifiedCount={communityMembers.summary.walletVerified}
+            captainCount={communityGrowth.captains.assignments.length}
+            newcomerCount={communityGrowth.cohorts.summary.newcomers}
+            reactivationCount={communityGrowth.cohorts.summary.reactivation}
+            watchlistCount={communityGrowth.cohorts.summary.watchlist}
+            callbackFailures={operatorSignals.callbackFailures}
+            onchainFailures={operatorSignals.onchainFailures}
+            latestIssue={
+              communityGrowth.trust.openFlagCount > 0 || communityGrowth.trust.watchlistCount > 0
+                ? communityGrowth.trust.latestIssue
+                : operatorSignals.latestIssue
+            }
+            automationRailCount={communityAutomations.length}
+            activeAutomationCount={activeAutomationCount}
+            readyAutomationCount={readyAutomationCount}
+            blockedAutomationCount={blockedAutomationCount}
+            degradedAutomationCount={degradedAutomationCount}
+            dueAutomationCount={dueAutomationCount}
+            enabledPlaybookCount={enabledPlaybookCount}
+            recentAutomationFailureCount={recentAutomationFailureCount}
+            automationSuccessRate={automationSuccessRate}
+            captainCoverageRate={captainCoverageRate}
+            unassignedCaptainCount={captainUnassignedCount}
+            overdueCaptainCount={captainOverdueCount}
+            lastRankSyncAt={discordBotSettings.lastRankSyncAt}
+            lastLeaderboardPostedAt={discordBotSettings.lastLeaderboardPostedAt}
+            lastMissionDigestAt={discordBotSettings.lastMissionDigestAt}
+            lastRaidAlertAt={discordBotSettings.lastRaidAlertAt}
+            lastAutomationRunAt={discordBotSettings.lastAutomationRunAt}
+            lastNewcomerPushAt={discordBotSettings.lastNewcomerPushAt}
+            lastReactivationPushAt={discordBotSettings.lastReactivationPushAt}
+            lastActivationBoardAt={discordBotSettings.lastActivationBoardAt}
+            recommendedPlayTitle={communityRecommendations.recommendations[0]?.title ?? ""}
+            recommendedPlaySummary={communityRecommendations.recommendations[0]?.summary ?? ""}
+            recommendedPlayActionLabel={
+              communityRecommendations.recommendations[0]?.actionLabel ?? ""
+            }
+            ownerSignalCount={communityRecommendations.healthSignals.length}
+            captainPriorityCount={captainHighPriorityCount}
+            activeMode={communityViewMode}
+          />
+        ) : null}
 
-        <TweetToRaidAutopilotPanel
-          projectId={project.id}
-          projectName={project.name}
-          campaigns={relatedCampaigns.map((campaign) => ({
-            id: campaign.id,
-            title: campaign.title,
-          }))}
-        />
+        {communitySurfaceMode === "commands" ? (
+          <TweetToRaidAutopilotPanel
+            projectId={project.id}
+            projectName={project.name}
+            campaigns={relatedCampaigns.map((campaign) => ({
+              id: campaign.id,
+              title: campaign.title,
+            }))}
+          />
+        ) : null}
 
-        <OpsPanel
-          eyebrow="Platform Core"
-          title="Project incidents and manual overrides"
-          description="Community OS now surfaces project-scoped incidents, override posture and operator history in the same workspace where the team already runs commands, automations and pushes."
-        >
-          <div className="grid gap-3 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
-            <div className="space-y-3">
-              {projectOps.error ? (
-                <div className="rounded-[22px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                  {projectOps.error}
-                </div>
-              ) : null}
-              <OpsIncidentPanel
-                incidents={projectOps.openIncidents}
-                emptyTitle="No project incidents"
-                emptyDescription="No provider, runtime or manual-test incidents are open for this project right now."
-                workingIncidentId={projectOps.workingIncidentId}
-                onUpdateStatus={projectOps.updateIncidentStatus}
+        {communitySurfaceMode === "overview" ? (
+          <OpsPanel
+            eyebrow="Platform Core"
+            title="Project incidents and manual overrides"
+            description="Community OS now surfaces project-scoped incidents, override posture and operator history in the same workspace where the team already runs commands, automations and pushes."
+          >
+            <div className="grid gap-3 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
+              <div className="space-y-3">
+                {projectOps.error ? (
+                  <div className="rounded-[22px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                    {projectOps.error}
+                  </div>
+                ) : null}
+                <OpsIncidentPanel
+                  incidents={projectOps.openIncidents}
+                  emptyTitle="No project incidents"
+                  emptyDescription="No provider, runtime or manual-test incidents are open for this project right now."
+                  workingIncidentId={projectOps.workingIncidentId}
+                  onUpdateStatus={projectOps.updateIncidentStatus}
+                />
+              </div>
+
+              <OpsOverridePanel
+                overrides={projectOps.activeOverrides}
+                quickActions={projectOverrideActions}
+                creatingOverride={projectOps.creatingOverride}
+                workingOverrideId={projectOps.workingOverrideId}
+                onCreateOverride={projectOps.createOverride}
+                onResolveOverride={projectOps.resolveOverride}
               />
             </div>
+          </OpsPanel>
+        ) : null}
 
-            <OpsOverridePanel
-              overrides={projectOps.activeOverrides}
-              quickActions={projectOverrideActions}
-              creatingOverride={projectOps.creatingOverride}
-              workingOverrideId={projectOps.workingOverrideId}
-              onCreateOverride={projectOps.createOverride}
-              onResolveOverride={projectOps.resolveOverride}
-            />
-          </div>
-        </OpsPanel>
-
-        {authRole === "super_admin" ? (
+        {communitySurfaceMode === "overview" && authRole === "super_admin" ? (
           <OpsPanel
             eyebrow="Support posture"
             title="Project support escalations"
@@ -2722,340 +2764,375 @@ export default function ProjectCommunityManagementPage() {
           </OpsPanel>
         ) : null}
 
-        {communitySurfaceMode === "operate" ? (
+        {communitySurfaceMode === "commands" || communitySurfaceMode === "captains" ? (
           <>
-            <div
-              className={`grid gap-3 xl:items-start ${
-                communityViewMode === "captain"
-                  ? "xl:grid-cols-[1.1fr_0.9fr]"
-                  : "xl:grid-cols-[0.95fr_1.05fr]"
-              }`}
-            >
-              <CommunityOutcomesPanel
-                mode={communityViewMode}
-                recommendations={communityRecommendations.recommendations}
-                healthSignals={communityOutcomes.healthSignals}
-                journeyOutcomes={communityOutcomes.journeyOutcomes}
-                execution={communityOutcomes.execution}
-                captainWorkspace={communityOutcomes.captainWorkspace}
-                cohortSnapshots={communityOutcomes.cohortSnapshots}
-                healthRollups={communityOutcomes.healthRollups}
-                captainCoverage={communityOutcomes.captainCoverage}
-              />
+            {communitySurfaceMode === "captains" ? (
+              <div
+                className={`grid gap-3 xl:items-start ${
+                  communityViewMode === "captain"
+                    ? "xl:grid-cols-[1.1fr_0.9fr]"
+                    : "xl:grid-cols-[0.95fr_1.05fr]"
+                }`}
+              >
+                <CommunityOutcomesPanel
+                  mode={communityViewMode}
+                  recommendations={communityRecommendations.recommendations}
+                  healthSignals={communityOutcomes.healthSignals}
+                  journeyOutcomes={communityOutcomes.journeyOutcomes}
+                  execution={communityOutcomes.execution}
+                  captainWorkspace={communityOutcomes.captainWorkspace}
+                  cohortSnapshots={communityOutcomes.cohortSnapshots}
+                  healthRollups={communityOutcomes.healthRollups}
+                  captainCoverage={communityOutcomes.captainCoverage}
+                />
 
-              <CommunityCaptainWorkspacePanel
-                mode={communityViewMode}
-                viewer={communityCaptainWorkspace.viewer}
-                summary={communityCaptainWorkspace.summary}
-                queue={communityCaptainWorkspace.queue}
-                priorities={communityCaptainWorkspace.priorities}
-                blockedItems={communityCaptainWorkspace.blockedItems}
-                recentResults={communityCaptainWorkspace.recentResults}
-                runningActionId={runningCaptainWorkspaceActionId}
-                notice={captainWorkspaceNotice}
-                noticeTone={captainWorkspaceNoticeTone}
-                onRunAction={(actionId) => void runCaptainWorkspaceAction(actionId)}
-              />
-            </div>
+                <CommunityCaptainWorkspacePanel
+                  mode={communityViewMode}
+                  viewer={communityCaptainWorkspace.viewer}
+                  summary={communityCaptainWorkspace.summary}
+                  queue={communityCaptainWorkspace.queue}
+                  priorities={communityCaptainWorkspace.priorities}
+                  blockedItems={communityCaptainWorkspace.blockedItems}
+                  recentResults={communityCaptainWorkspace.recentResults}
+                  runningActionId={runningCaptainWorkspaceActionId}
+                  notice={captainWorkspaceNotice}
+                  noticeTone={captainWorkspaceNoticeTone}
+                  onRunAction={(actionId) => void runCaptainWorkspaceAction(actionId)}
+                />
+              </div>
+            ) : null}
 
-            <div className="grid gap-3 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
-              <CommunityCommandsPanel
-                settings={discordBotSettings}
-                setSettings={setDiscordBotSettings}
-                savingDiscordBotSettings={savingDiscordBotSettings}
-                runningDiscordBotAction={runningDiscordBotAction}
-                onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
-                onRunCommandSync={() => void runDiscordBotAction("command_sync")}
-              />
-              <CommunityActivityPanel
-                callbackFailures={operatorSignals.callbackFailures}
-                onchainFailures={operatorSignals.onchainFailures}
-                watchlistCount={communityGrowth.cohorts.summary.watchlist}
-                openFlagCount={communityGrowth.trust.openFlagCount}
-                latestIssue={
-                  communityGrowth.trust.openFlagCount > 0 ||
-                  communityGrowth.trust.watchlistCount > 0
-                    ? communityGrowth.trust.latestIssue
-                    : operatorSignals.latestIssue
-                }
-                recentActivity={recentActivity}
-                loadingActivity={loadingActivity}
-                automationRunCount={communityAutomationRuns.length}
-                playbookRunCount={communityPlaybookRuns.length}
-                captainActionCount={captainActions.length}
-                recentAutomationFailureCount={recentAutomationFailureCount}
-                onboardingRecentCompleted={
-                  communityOutcomes.journeyOutcomes.onboarding.recentCompletedCount
-                }
-                comebackRecentCompleted={
-                  communityOutcomes.journeyOutcomes.comeback.recentCompletedCount
-                }
-                captainPriorityCount={captainHighPriorityCount}
-                captainBlockedCount={communityCaptainWorkspace.blockedItems.length}
-                captainOverdueCount={captainOverdueCount}
-                captainUnassignedCount={captainUnassignedCount}
-                captainCoverageRate={captainCoverageRate}
-                automationBlockedCount={blockedAutomationCount}
-                automationDegradedCount={degradedAutomationCount}
-                automationSuccessRate={automationSuccessRate}
-              />
-            </div>
+            {communitySurfaceMode === "commands" ? (
+              <div className="grid gap-3 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
+                <CommunityCommandsPanel
+                  settings={discordBotSettings}
+                  setSettings={setDiscordBotSettings}
+                  savingDiscordBotSettings={savingDiscordBotSettings}
+                  runningDiscordBotAction={runningDiscordBotAction}
+                  onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
+                  onRunCommandSync={() => void runDiscordBotAction("command_sync")}
+                />
+                <CommunityActivityPanel
+                  callbackFailures={operatorSignals.callbackFailures}
+                  onchainFailures={operatorSignals.onchainFailures}
+                  watchlistCount={communityGrowth.cohorts.summary.watchlist}
+                  openFlagCount={communityGrowth.trust.openFlagCount}
+                  latestIssue={
+                    communityGrowth.trust.openFlagCount > 0 ||
+                    communityGrowth.trust.watchlistCount > 0
+                      ? communityGrowth.trust.latestIssue
+                      : operatorSignals.latestIssue
+                  }
+                  recentActivity={recentActivity}
+                  loadingActivity={loadingActivity}
+                  automationRunCount={communityAutomationRuns.length}
+                  playbookRunCount={communityPlaybookRuns.length}
+                  captainActionCount={captainActions.length}
+                  recentAutomationFailureCount={recentAutomationFailureCount}
+                  onboardingRecentCompleted={
+                    communityOutcomes.journeyOutcomes.onboarding.recentCompletedCount
+                  }
+                  comebackRecentCompleted={
+                    communityOutcomes.journeyOutcomes.comeback.recentCompletedCount
+                  }
+                  captainPriorityCount={captainHighPriorityCount}
+                  captainBlockedCount={communityCaptainWorkspace.blockedItems.length}
+                  captainOverdueCount={captainOverdueCount}
+                  captainUnassignedCount={captainUnassignedCount}
+                  captainCoverageRate={captainCoverageRate}
+                  automationBlockedCount={blockedAutomationCount}
+                  automationDegradedCount={degradedAutomationCount}
+                  automationSuccessRate={automationSuccessRate}
+                />
+              </div>
+            ) : null}
           </>
         ) : null}
 
-        {communitySurfaceMode === "grow" ? (
+        {communitySurfaceMode === "growth" ||
+        communitySurfaceMode === "commands" ||
+        communitySurfaceMode === "automations" ? (
           <>
-            <CommunityMembersPanel
-              loading={loadingCommunityMembers}
-              summary={communityMembers.summary}
-              analytics={communityGrowth.analytics}
-              cohortSnapshots={communityOutcomes.cohortSnapshots}
-              healthRollups={communityOutcomes.healthRollups}
-              topContributors={communityMembers.topContributors}
-              readinessWatch={communityMembers.readinessWatch}
-            />
-
-            <div className="grid gap-3 xl:grid-cols-[1fr_1fr] xl:items-start">
-              <CommunityMissionsPanel
-                settings={discordBotSettings}
-                setSettings={setDiscordBotSettings}
-                campaigns={relatedCampaigns.map((campaign) => ({
-                  id: campaign.id,
-                  title: campaign.title,
-                  featured: campaign.featured,
-                  xpBudget: campaign.xpBudget,
-                }))}
-                quests={relatedQuests.map((quest) => ({
-                  id: quest.id,
-                  title: quest.title,
-                  xp: quest.xp,
-                }))}
-                rewards={relatedRewards.map((reward) => ({
-                  id: reward.id,
-                  title: reward.title,
-                  cost: reward.cost,
-                  rarity: reward.rarity,
-                }))}
-                savingDiscordBotSettings={savingDiscordBotSettings}
-                runningMissionAction={runningMissionAction}
-                missionNotice={missionNotice}
-                missionNoticeTone={missionNoticeTone}
-                onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
-                onRunMissionAction={(mode, contentId) => void runMissionAction(mode, contentId)}
-              />
-
-              <CommunityRaidOpsPanel
-                settings={discordBotSettings}
-                setSettings={setDiscordBotSettings}
-                raids={relatedRaids.map((raid) => ({
-                  id: raid.id,
-                  title: raid.title,
-                  rewardXp: raid.rewardXp,
-                }))}
-                savingDiscordBotSettings={savingDiscordBotSettings}
-                runningRaidAction={runningRaidAction}
-                raidNotice={raidNotice}
-                raidNoticeTone={raidNoticeTone}
-                onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
-                onRunRaidAction={(raidId, mode) => void runRaidAction(raidId, mode)}
-              />
-            </div>
-
-            <div className="grid gap-3 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
-              <CommunityAutomationsPanel
-                settings={discordBotSettings}
-                runningAutomationAction={runningAutomationAction}
-                automationNotice={automationNotice}
-                automationNoticeTone={automationNoticeTone}
-                onRunAutomationAction={(mode) => void runAutomationAction(mode)}
-              />
-
-              <CommunityAnalyticsPanel
+            {communitySurfaceMode === "growth" ? (
+              <CommunityMembersPanel
+                loading={loadingCommunityMembers}
+                summary={communityMembers.summary}
                 analytics={communityGrowth.analytics}
                 cohortSnapshots={communityOutcomes.cohortSnapshots}
                 healthRollups={communityOutcomes.healthRollups}
+                topContributors={communityMembers.topContributors}
+                readinessWatch={communityMembers.readinessWatch}
               />
-            </div>
+            ) : null}
 
-            <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
-              <CommunityCohortsPanel
+            {communitySurfaceMode === "commands" ? (
+              <div className="grid gap-3 xl:grid-cols-[1fr_1fr] xl:items-start">
+                <CommunityMissionsPanel
+                  settings={discordBotSettings}
+                  setSettings={setDiscordBotSettings}
+                  campaigns={relatedCampaigns.map((campaign) => ({
+                    id: campaign.id,
+                    title: campaign.title,
+                    featured: campaign.featured,
+                    xpBudget: campaign.xpBudget,
+                  }))}
+                  quests={relatedQuests.map((quest) => ({
+                    id: quest.id,
+                    title: quest.title,
+                    xp: quest.xp,
+                  }))}
+                  rewards={relatedRewards.map((reward) => ({
+                    id: reward.id,
+                    title: reward.title,
+                    cost: reward.cost,
+                    rarity: reward.rarity,
+                  }))}
+                  savingDiscordBotSettings={savingDiscordBotSettings}
+                  runningMissionAction={runningMissionAction}
+                  missionNotice={missionNotice}
+                  missionNoticeTone={missionNoticeTone}
+                  onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
+                  onRunMissionAction={(mode, contentId) => void runMissionAction(mode, contentId)}
+                />
+
+                <CommunityRaidOpsPanel
+                  settings={discordBotSettings}
+                  setSettings={setDiscordBotSettings}
+                  raids={relatedRaids.map((raid) => ({
+                    id: raid.id,
+                    title: raid.title,
+                    rewardXp: raid.rewardXp,
+                  }))}
+                  savingDiscordBotSettings={savingDiscordBotSettings}
+                  runningRaidAction={runningRaidAction}
+                  raidNotice={raidNotice}
+                  raidNoticeTone={raidNoticeTone}
+                  onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
+                  onRunRaidAction={(raidId, mode) => void runRaidAction(raidId, mode)}
+                />
+              </div>
+            ) : null}
+
+            {communitySurfaceMode === "automations" || communitySurfaceMode === "growth" ? (
+              <div className="grid gap-3 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
+                {communitySurfaceMode === "automations" ? (
+                  <CommunityAutomationsPanel
+                    settings={discordBotSettings}
+                    runningAutomationAction={runningAutomationAction}
+                    automationNotice={automationNotice}
+                    automationNoticeTone={automationNoticeTone}
+                    onRunAutomationAction={(mode) => void runAutomationAction(mode)}
+                  />
+                ) : null}
+
+                {communitySurfaceMode === "growth" ? (
+                  <CommunityAnalyticsPanel
+                    analytics={communityGrowth.analytics}
+                    cohortSnapshots={communityOutcomes.cohortSnapshots}
+                    healthRollups={communityOutcomes.healthRollups}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+
+            {communitySurfaceMode === "growth" || communitySurfaceMode === "automations" ? (
+              <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+                {communitySurfaceMode === "growth" ? (
+                  <CommunityCohortsPanel
+                    settings={discordBotSettings}
+                    setSettings={setDiscordBotSettings}
+                    summary={communityGrowth.cohorts.summary}
+                    newcomers={communityGrowth.cohorts.newcomers}
+                    highTrust={communityGrowth.cohorts.highTrust}
+                    reactivation={communityGrowth.cohorts.reactivation}
+                    watchlist={communityGrowth.cohorts.watchlist}
+                    cohortSnapshots={communityOutcomes.cohortSnapshots}
+                    healthRollups={communityOutcomes.healthRollups}
+                    trust={communityGrowth.trust}
+                    savingSettings={savingDiscordBotSettings}
+                    runningFunnelAction={runningFunnelAction}
+                    funnelNotice={funnelNotice}
+                    funnelNoticeTone={funnelNoticeTone}
+                    onSaveSettings={() => void saveDiscordBotConfig()}
+                    onRunFunnelAction={(mode) => void runFunnelAction(mode)}
+                  />
+                ) : null}
+
+                {communitySurfaceMode === "automations" ? (
+                  <CommunityFunnelsPanel
+                    newcomerCount={communityGrowth.cohorts.summary.newcomers}
+                    reactivationCount={communityGrowth.cohorts.summary.reactivation}
+                    watchlistCount={communityGrowth.cohorts.summary.watchlist}
+                    automations={communityAutomations}
+                    cohortSnapshots={communityOutcomes.cohortSnapshots}
+                    healthRollups={communityOutcomes.healthRollups}
+                    onboardingCompletionRate={
+                      communityOutcomes.journeyOutcomes.onboarding.completionRate
+                    }
+                    comebackCompletionRate={
+                      communityOutcomes.journeyOutcomes.comeback.completionRate
+                    }
+                    onboardingRecentCompleted={
+                      communityOutcomes.journeyOutcomes.onboarding.recentCompletedCount
+                    }
+                    comebackRecentCompleted={
+                      communityOutcomes.journeyOutcomes.comeback.recentCompletedCount
+                    }
+                    runningAutomationId={runningCommunityAutomationId}
+                    onRunAutomation={(automationId) => void runCommunityAutomation(automationId)}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+
+            {communitySurfaceMode === "automations" ? (
+              <CommunityActivationBoardsPanel
                 settings={discordBotSettings}
                 setSettings={setDiscordBotSettings}
-                summary={communityGrowth.cohorts.summary}
-                newcomers={communityGrowth.cohorts.newcomers}
-                highTrust={communityGrowth.cohorts.highTrust}
-                reactivation={communityGrowth.cohorts.reactivation}
-                watchlist={communityGrowth.cohorts.watchlist}
-                cohortSnapshots={communityOutcomes.cohortSnapshots}
-                healthRollups={communityOutcomes.healthRollups}
-                trust={communityGrowth.trust}
+                boards={communityGrowth.activationBoards}
                 savingSettings={savingDiscordBotSettings}
-                runningFunnelAction={runningFunnelAction}
-                funnelNotice={funnelNotice}
-                funnelNoticeTone={funnelNoticeTone}
+                runningActivationBoardCampaignId={runningActivationBoardCampaignId}
+                activationNotice={activationNotice}
+                activationNoticeTone={activationNoticeTone}
                 onSaveSettings={() => void saveDiscordBotConfig()}
-                onRunFunnelAction={(mode) => void runFunnelAction(mode)}
+                onRunActivationBoard={(campaignId) => void runActivationBoard(campaignId)}
               />
-
-              <CommunityFunnelsPanel
-                newcomerCount={communityGrowth.cohorts.summary.newcomers}
-                reactivationCount={communityGrowth.cohorts.summary.reactivation}
-                watchlistCount={communityGrowth.cohorts.summary.watchlist}
-                automations={communityAutomations}
-                cohortSnapshots={communityOutcomes.cohortSnapshots}
-                healthRollups={communityOutcomes.healthRollups}
-                onboardingCompletionRate={
-                  communityOutcomes.journeyOutcomes.onboarding.completionRate
-                }
-                comebackCompletionRate={
-                  communityOutcomes.journeyOutcomes.comeback.completionRate
-                }
-                onboardingRecentCompleted={
-                  communityOutcomes.journeyOutcomes.onboarding.recentCompletedCount
-                }
-                comebackRecentCompleted={
-                  communityOutcomes.journeyOutcomes.comeback.recentCompletedCount
-                }
-                runningAutomationId={runningCommunityAutomationId}
-                onRunAutomation={(automationId) => void runCommunityAutomation(automationId)}
-              />
-            </div>
-
-            <CommunityActivationBoardsPanel
-              settings={discordBotSettings}
-              setSettings={setDiscordBotSettings}
-              boards={communityGrowth.activationBoards}
-              savingSettings={savingDiscordBotSettings}
-              runningActivationBoardCampaignId={runningActivationBoardCampaignId}
-              activationNotice={activationNotice}
-              activationNoticeTone={activationNoticeTone}
-              onSaveSettings={() => void saveDiscordBotConfig()}
-              onRunActivationBoard={(campaignId) => void runActivationBoard(campaignId)}
-            />
+            ) : null}
           </>
         ) : null}
 
-        {communitySurfaceMode === "configure" ? (
+        {communitySurfaceMode === "commands" ||
+        communitySurfaceMode === "growth" ||
+        communitySurfaceMode === "automations" ||
+        communitySurfaceMode === "captains" ? (
           <>
-            <CommunityIntegrationsPanel
-              projectName={project.name}
-              xIntegrationStatus={xIntegrationStatus}
-              discordIntegrationStatus={discordIntegrationStatus}
-              telegramIntegrationStatus={telegramIntegrationStatus}
-              discordIntegrationConfig={discordIntegrationConfig}
-              setDiscordIntegrationConfig={setDiscordIntegrationConfig}
-              telegramIntegrationConfig={telegramIntegrationConfig}
-              setTelegramIntegrationConfig={setTelegramIntegrationConfig}
-              discordPushSettings={discordPushSettings}
-              setDiscordPushSettings={setDiscordPushSettings}
-              telegramPushSettings={telegramPushSettings}
-              setTelegramPushSettings={setTelegramPushSettings}
-              selectableProjects={[]}
-              campaigns={relatedCampaigns.map((campaign) => ({
-                id: campaign.id,
-                title: campaign.title,
-                projectId: campaign.projectId,
-              }))}
-              projectNameById={projectNameById}
-              savingIntegration={savingIntegration}
-              testingIntegration={testingIntegration}
-              integrationBlock={integrationBlock}
-              integrationNotice={integrationNotice}
-              integrationTestNotice={integrationTestNotice}
-              integrationTestTone={integrationTestTone}
-              onSaveIntegration={(provider) => void saveProjectIntegration(provider)}
-              onSendTestPush={(provider) => void sendIntegrationTestPush(provider)}
-            />
-
-            <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
-              <CommunityRanksPanel
-                settings={discordBotSettings}
-                setSettings={setDiscordBotSettings}
-                rankRules={discordRankRules}
-                setRankRules={setDiscordRankRules}
-                savingDiscordBotSettings={savingDiscordBotSettings}
-                runningDiscordBotAction={runningDiscordBotAction}
-                discordBotNotice={discordBotNotice}
-                discordBotNoticeTone={discordBotNoticeTone}
-                onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
-                onLoadPreset={loadDiscordRankPreset}
-                onRunRankSync={() => void runDiscordBotAction("rank_sync")}
+            {communitySurfaceMode === "commands" ? (
+              <CommunityIntegrationsPanel
+                projectName={project.name}
+                xIntegrationStatus={xIntegrationStatus}
+                discordIntegrationStatus={discordIntegrationStatus}
+                telegramIntegrationStatus={telegramIntegrationStatus}
+                discordIntegrationConfig={discordIntegrationConfig}
+                setDiscordIntegrationConfig={setDiscordIntegrationConfig}
+                telegramIntegrationConfig={telegramIntegrationConfig}
+                setTelegramIntegrationConfig={setTelegramIntegrationConfig}
+                discordPushSettings={discordPushSettings}
+                setDiscordPushSettings={setDiscordPushSettings}
+                telegramPushSettings={telegramPushSettings}
+                setTelegramPushSettings={setTelegramPushSettings}
+                selectableProjects={[]}
+                campaigns={relatedCampaigns.map((campaign) => ({
+                  id: campaign.id,
+                  title: campaign.title,
+                  projectId: campaign.projectId,
+                }))}
+                projectNameById={projectNameById}
+                savingIntegration={savingIntegration}
+                testingIntegration={testingIntegration}
+                integrationBlock={integrationBlock}
+                integrationNotice={integrationNotice}
+                integrationTestNotice={integrationTestNotice}
+                integrationTestTone={integrationTestTone}
+                onSaveIntegration={(provider) => void saveProjectIntegration(provider)}
+                onSendTestPush={(provider) => void sendIntegrationTestPush(provider)}
               />
+            ) : null}
 
-              <CommunityLeaderboardsPanel
-                settings={discordBotSettings}
-                setSettings={setDiscordBotSettings}
-                savingDiscordBotSettings={savingDiscordBotSettings}
-                runningDiscordBotAction={runningDiscordBotAction}
-                onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
-                onRunLeaderboardPost={() => void runDiscordBotAction("leaderboard_post")}
-              />
-            </div>
+            {communitySurfaceMode === "growth" ? (
+              <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+                <CommunityRanksPanel
+                  settings={discordBotSettings}
+                  setSettings={setDiscordBotSettings}
+                  rankRules={discordRankRules}
+                  setRankRules={setDiscordRankRules}
+                  savingDiscordBotSettings={savingDiscordBotSettings}
+                  runningDiscordBotAction={runningDiscordBotAction}
+                  discordBotNotice={discordBotNotice}
+                  discordBotNoticeTone={discordBotNoticeTone}
+                  onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
+                  onLoadPreset={loadDiscordRankPreset}
+                  onRunRankSync={() => void runDiscordBotAction("rank_sync")}
+                />
 
-            <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
-              <CommunityAutomationCenterPanel
-                automations={communityAutomations}
-                automationRuns={communityAutomationRuns}
-                journeyAutomationCount={
-                  communityAutomations.filter((automation) =>
-                    ["newcomer_pulse", "reactivation_pulse", "activation_board"].includes(
-                      automation.automationType
-                    )
-                  ).length
-                }
-                recommendedPlayTitle={communityRecommendations.recommendations[0]?.title ?? ""}
-                saving={savingCommunityAutomations}
-                runningAutomationId={runningCommunityAutomationId}
-                notice={communityAutomationNotice}
-                noticeTone={communityAutomationNoticeTone}
-                onUpdateAutomation={updateCommunityAutomation}
-                onSave={() => void saveCommunityAutomations()}
-                onRunAutomation={(automationId) => void runCommunityAutomation(automationId)}
-              />
+                <CommunityLeaderboardsPanel
+                  settings={discordBotSettings}
+                  setSettings={setDiscordBotSettings}
+                  savingDiscordBotSettings={savingDiscordBotSettings}
+                  runningDiscordBotAction={runningDiscordBotAction}
+                  onSaveDiscordBotConfig={() => void saveDiscordBotConfig()}
+                  onRunLeaderboardPost={() => void runDiscordBotAction("leaderboard_post")}
+                />
+              </div>
+            ) : null}
 
-              <CommunityPlaybooksPanel
-                playbooks={communityPlaybooks}
-                playbookRuns={communityPlaybookRuns}
-                automations={communityAutomations}
-                saving={savingPlaybooks}
-                runningPlaybookKey={runningPlaybookKey}
-                notice={playbookNotice}
-                noticeTone={playbookNoticeTone}
-                onUpdatePlaybook={updateCommunityPlaybook}
-                onSave={() => void saveCommunityPlaybooks()}
-                onRunPlaybook={(playbookKey) => void runCommunityPlaybook(playbookKey)}
-              />
-            </div>
+            {communitySurfaceMode === "automations" ? (
+              <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+                <CommunityAutomationCenterPanel
+                  automations={communityAutomations}
+                  automationRuns={communityAutomationRuns}
+                  journeyAutomationCount={
+                    communityAutomations.filter((automation) =>
+                      ["newcomer_pulse", "reactivation_pulse", "activation_board"].includes(
+                        automation.automationType
+                      )
+                    ).length
+                  }
+                  recommendedPlayTitle={communityRecommendations.recommendations[0]?.title ?? ""}
+                  saving={savingCommunityAutomations}
+                  runningAutomationId={runningCommunityAutomationId}
+                  notice={communityAutomationNotice}
+                  noticeTone={communityAutomationNoticeTone}
+                  onUpdateAutomation={updateCommunityAutomation}
+                  onSave={() => void saveCommunityAutomations()}
+                  onRunAutomation={(automationId) => void runCommunityAutomation(automationId)}
+                />
 
-            <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
-              <CommunityCaptainsPanel
-                settings={discordBotSettings}
-                setSettings={setDiscordBotSettings}
-                assignments={captainAssignments}
-                setAssignments={setCaptainAssignments}
-                roster={communityGrowth.captains.assignments}
-                candidates={communityGrowth.captains.candidates}
-                savingSettings={savingDiscordBotSettings}
-                savingCaptains={savingCaptains}
-                captainNotice={captainNotice}
-                captainNoticeTone={captainNoticeTone}
-                onSaveSettings={() => void saveDiscordBotConfig()}
-                onSaveCaptains={() => void saveCaptains()}
-              />
+                <CommunityPlaybooksPanel
+                  playbooks={communityPlaybooks}
+                  playbookRuns={communityPlaybookRuns}
+                  automations={communityAutomations}
+                  saving={savingPlaybooks}
+                  runningPlaybookKey={runningPlaybookKey}
+                  notice={playbookNotice}
+                  noticeTone={playbookNoticeTone}
+                  onUpdatePlaybook={updateCommunityPlaybook}
+                  onSave={() => void saveCommunityPlaybooks()}
+                  onRunPlaybook={(playbookKey) => void runCommunityPlaybook(playbookKey)}
+                />
+              </div>
+            ) : null}
 
-              <CommunityCaptainOpsPanel
-                roster={communityGrowth.captains.assignments}
-                captainPermissions={captainPermissions}
-                captainSeatScopes={captainSeatScopes}
-                captainActions={captainActions}
-                saving={savingCaptainPermissions}
-                notice={captainPermissionsNotice}
-                noticeTone={captainPermissionsNoticeTone}
-                onTogglePermission={toggleCaptainPermission}
-                onUpdateScope={updateCaptainSeatScope}
-                onSave={() => void saveCaptainPermissions()}
-              />
-            </div>
+            {communitySurfaceMode === "captains" ? (
+              <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+                <CommunityCaptainsPanel
+                  settings={discordBotSettings}
+                  setSettings={setDiscordBotSettings}
+                  assignments={captainAssignments}
+                  setAssignments={setCaptainAssignments}
+                  roster={communityGrowth.captains.assignments}
+                  candidates={communityGrowth.captains.candidates}
+                  savingSettings={savingDiscordBotSettings}
+                  savingCaptains={savingCaptains}
+                  captainNotice={captainNotice}
+                  captainNoticeTone={captainNoticeTone}
+                  onSaveSettings={() => void saveDiscordBotConfig()}
+                  onSaveCaptains={() => void saveCaptains()}
+                />
+
+                <CommunityCaptainOpsPanel
+                  roster={communityGrowth.captains.assignments}
+                  captainPermissions={captainPermissions}
+                  captainSeatScopes={captainSeatScopes}
+                  captainActions={captainActions}
+                  saving={savingCaptainPermissions}
+                  notice={captainPermissionsNotice}
+                  noticeTone={captainPermissionsNoticeTone}
+                  onTogglePermission={toggleCaptainPermission}
+                  onUpdateScope={updateCaptainSeatScope}
+                  onSave={() => void saveCaptainPermissions()}
+                />
+              </div>
+            ) : null}
           </>
         ) : null}
       </ProjectWorkspaceFrame>
