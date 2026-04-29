@@ -82,7 +82,7 @@ export function PortalBillingBlockNotice({
           href={block.supportUrl}
           className="inline-flex items-center rounded-full border border-white/12 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
         >
-          Talk to Veltrix
+          Talk to VYNTRO
         </a>
       </div>
     </div>

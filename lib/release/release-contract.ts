@@ -76,7 +76,7 @@ type ReleaseCheckDefinition = {
 export const RELEASE_SERVICE_DEFINITIONS: readonly ReleaseServiceDefinition[] = [
   {
     serviceKey: "webapp",
-    label: "Veltrix Webapp",
+    label: "VYNTRO Webapp",
     gateMode: "hard",
     description: "Member-facing app, billing handoffs, support, trust center and public routes.",
     requiredKeys: [
@@ -105,7 +105,7 @@ export const RELEASE_SERVICE_DEFINITIONS: readonly ReleaseServiceDefinition[] = 
   },
   {
     serviceKey: "docs",
-    label: "Veltrix Docs",
+    label: "VYNTRO Docs",
     gateMode: "light",
     description: "Public documentation and buyer-facing reference surfaces.",
     requiredKeys: [],
@@ -445,4 +445,3 @@ export function buildInitialEnvironmentAudits(
     updated_at: timestamp,
   }));
 }
-

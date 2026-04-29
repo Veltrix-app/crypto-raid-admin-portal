@@ -51,7 +51,7 @@ export async function assertInternalOnchainAccess() {
   }
 
   if (!adminUser || adminUser.status !== "active") {
-    throw new OnchainAccessError(403, "Internal on-chain operations are limited to Veltrix operators.");
+    throw new OnchainAccessError(403, "Internal on-chain operations are limited to VYNTRO operators.");
   }
 
   return {

@@ -269,7 +269,7 @@ export default function AccountInvitePanel({
           {loading ? (
             <InlineEmptyNotice
               title="Loading team"
-              description="Veltrix is reading current members and pending invites for this workspace."
+              description="VYNTRO is reading current members and pending invites for this workspace."
             />
           ) : members.length ? (
             <div className="space-y-3">
@@ -308,7 +308,7 @@ export default function AccountInvitePanel({
           {loading ? (
             <InlineEmptyNotice
               title="Loading invites"
-              description="Veltrix is reading the invite queue for this workspace."
+              description="VYNTRO is reading the invite queue for this workspace."
             />
           ) : invites.length ? (
             <div className="space-y-3">

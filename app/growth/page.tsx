@@ -65,7 +65,7 @@ export default function GrowthPage() {
       <AdminShell>
         <StatePanel
           title="Growth is internal-only"
-          description="This commercial workspace is reserved for Veltrix super admins because it exposes cross-account lead and buyer context."
+          description="This commercial workspace is reserved for VYNTRO super admins because it exposes cross-account lead and buyer context."
           tone="warning"
           actions={
             <Link
@@ -85,7 +85,7 @@ export default function GrowthPage() {
       <AdminShell>
         <LoadingState
           title="Loading growth workspace"
-          description="Veltrix is resolving leads, buyer requests and follow-up tasks into the internal commercial cockpit."
+          description="VYNTRO is resolving leads, buyer requests and follow-up tasks into the internal commercial cockpit."
         />
       </AdminShell>
     );
@@ -122,7 +122,7 @@ export default function GrowthPage() {
         description="Run the market machine from one internal queue: high-intent buyers, enterprise requests, follow-up and converted context."
         actions={
           <div className="space-y-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">Veltrix internal</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">VYNTRO internal</p>
             <div className="flex flex-wrap gap-2">
               <OpsStatusPill tone={(overview.counts.evaluation ?? 0) > 0 ? "warning" : "default"}>
                 {overview.counts.evaluation} in evaluation

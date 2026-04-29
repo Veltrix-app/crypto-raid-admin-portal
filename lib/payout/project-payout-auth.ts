@@ -51,7 +51,7 @@ export async function assertInternalPayoutAccess() {
   }
 
   if (!adminUser || adminUser.status !== "active") {
-    throw new PayoutAccessError(403, "Internal payout operations are limited to Veltrix operators.");
+    throw new PayoutAccessError(403, "Internal payout operations are limited to VYNTRO operators.");
   }
 
   return {

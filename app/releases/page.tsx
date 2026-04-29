@@ -79,7 +79,7 @@ export default function ReleasesPage() {
       <AdminShell>
         <StatePanel
           title="Release control is internal-only"
-          description="Only Veltrix super admins can operate the release machine, gate posture and go/no-go state."
+          description="Only VYNTRO super admins can operate the release machine, gate posture and go/no-go state."
           tone="warning"
           actions={
             <Link
@@ -99,7 +99,7 @@ export default function ReleasesPage() {
       <AdminShell>
         <LoadingState
           title="Loading release machine"
-          description="Veltrix is pulling release candidates, gate pressure, smoke posture and environment audits into one workspace."
+          description="VYNTRO is pulling release candidates, gate pressure, smoke posture and environment audits into one workspace."
         />
       </AdminShell>
     );
@@ -134,7 +134,7 @@ export default function ReleasesPage() {
         description="Run the whole-stack release machine from one internal workspace: scope, migrations, environments, smoke and go/no-go posture."
         actions={
           <div className="space-y-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">Veltrix internal</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">VYNTRO internal</p>
             <div className="flex flex-wrap gap-2">
               <OpsStatusPill tone={overview.counts.blockingFailures > 0 ? "warning" : "success"}>
                 {overview.counts.blockingFailures} blocking failures

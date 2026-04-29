@@ -448,7 +448,7 @@ export async function claimSupportTicket(ticketId: string, actorAuthUserId: stri
     visibilityScope: "internal",
     actorAuthUserId,
     title: "Ticket claimed",
-    body: "A Veltrix operator claimed this ticket and moved it into triage.",
+    body: "A VYNTRO operator claimed this ticket and moved it into triage.",
   });
 
   return loadSupportTicketDetail(ticketId);

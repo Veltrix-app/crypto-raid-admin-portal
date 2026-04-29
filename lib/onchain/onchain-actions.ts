@@ -132,7 +132,7 @@ function buildActionMutation(params: {
           params.notes ??
           (params.scope === "internal"
             ? "Escalated on-chain case for deeper internal resolution."
-            : "Escalated on-chain case back to Veltrix on-chain ops."),
+            : "Escalated on-chain case back to VYNTRO on-chain ops."),
         auditAction: "updated",
       };
     case "retry":

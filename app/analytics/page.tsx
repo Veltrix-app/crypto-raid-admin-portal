@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
+  OpsCommandRead,
   OpsMetricCard,
   OpsPanel,
-  OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
 import EngagementChart from "@/components/charts/engagement/EngagementChart";
@@ -439,46 +439,40 @@ export default function AnalyticsPage() {
               })}
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-              <OpsPanel
-                eyebrow="Command read"
-                title={analyticsCommandRead.title}
-                description={analyticsCommandRead.description}
-                action={
-                  <AnalyticsViewSwitch value={analyticsView} onChange={setAnalyticsView} />
-                }
-              >
-                <div className="grid gap-2.5 lg:grid-cols-3">
-                  <OpsSnapshotRow label="Now" value={analyticsCommandRead.now} />
-                  <OpsSnapshotRow label="Next" value={analyticsCommandRead.next} />
-                  <OpsSnapshotRow label="Watch" value={analyticsCommandRead.watch} />
-                </div>
-              </OpsPanel>
-
-              <OpsPanel
-                eyebrow="Snapshot route"
-                title={summaryError ? "Outcome snapshots are warming up" : "Snapshot route is healthy"}
-                description={
-                  summaryError
-                    ? "Live portal data still renders. The snapshot layer should stay secondary until the metric job catches up."
-                    : "Snapshot-backed outcomes are available for this analytics read."
-                }
-              >
-                <div className="space-y-3">
-                  <OpsStatusPill tone={summaryError ? "warning" : "default"}>
-                    {summaryError ? "snapshot job pending" : "snapshot route ready"}
-                  </OpsStatusPill>
-                  {summaryError ? (
-                    <p className="text-[12px] leading-5 text-sub">{summaryError}</p>
-                  ) : null}
-                  <div className="flex flex-wrap gap-2 border-t border-white/[0.025] pt-3">
-                    <SoftRouteLink href="/overview" label="Overview" />
-                    <SoftRouteLink href="/analytics/engagement" label="Engagement" />
-                    <SoftRouteLink href="/analytics/rewards" label="Rewards" />
+            <OpsCommandRead
+              eyebrow="Command read"
+              title={analyticsCommandRead.title}
+              description={analyticsCommandRead.description}
+              now={analyticsCommandRead.now}
+              next={analyticsCommandRead.next}
+              watch={analyticsCommandRead.watch}
+              action={<AnalyticsViewSwitch value={analyticsView} onChange={setAnalyticsView} />}
+              rail={
+                <OpsPanel
+                  eyebrow="Snapshot route"
+                  title={summaryError ? "Outcome snapshots are warming up" : "Snapshot route is healthy"}
+                  description={
+                    summaryError
+                      ? "Live portal data still renders. The snapshot layer should stay secondary until the metric job catches up."
+                      : "Snapshot-backed outcomes are available for this analytics read."
+                  }
+                >
+                  <div className="space-y-3">
+                    <OpsStatusPill tone={summaryError ? "warning" : "default"}>
+                      {summaryError ? "snapshot job pending" : "snapshot route ready"}
+                    </OpsStatusPill>
+                    {summaryError ? (
+                      <p className="text-[12px] leading-5 text-sub">{summaryError}</p>
+                    ) : null}
+                    <div className="flex flex-wrap gap-2 border-t border-white/[0.025] pt-3">
+                      <SoftRouteLink href="/overview" label="Overview" />
+                      <SoftRouteLink href="/analytics/engagement" label="Engagement" />
+                      <SoftRouteLink href="/analytics/rewards" label="Rewards" />
+                    </div>
                   </div>
-                </div>
-              </OpsPanel>
-            </div>
+                </OpsPanel>
+              }
+            />
           </div>
         }
       >

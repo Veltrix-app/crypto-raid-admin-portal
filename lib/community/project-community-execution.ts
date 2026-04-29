@@ -243,7 +243,7 @@ function buildAutomationSeedContext(
   return {
     sequencingKey: "always_on",
     ownerLabel: "Rank sync",
-    ownerSummary: "Keep Discord rank state aligned with live Veltrix contributor progress.",
+    ownerSummary: "Keep Discord rank state aligned with live VYNTRO contributor progress.",
   };
 }
 
@@ -476,7 +476,7 @@ function mapAutomationRow(row: CommunityAutomationRow): CommunityAutomationRecor
     title: trimText(row.title) || COMMUNITY_AUTOMATION_LABELS[automationType],
     description:
       automationType === "rank_sync"
-        ? "Keep Discord rank roles aligned with live Veltrix contributor state."
+        ? "Keep Discord rank roles aligned with live VYNTRO contributor state."
         : automationType === "leaderboard_pulse"
           ? "Post a live leaderboard pulse into the community rail."
           : automationType === "mission_digest"

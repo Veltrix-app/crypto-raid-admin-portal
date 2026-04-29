@@ -68,7 +68,7 @@ export function DataRequestPanel({
           <input
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
-            placeholder="What should Veltrix export or review for deletion?"
+            placeholder="What should VYNTRO export or review for deletion?"
             className="rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <button

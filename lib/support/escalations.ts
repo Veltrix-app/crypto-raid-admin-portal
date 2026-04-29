@@ -131,7 +131,7 @@ export async function assertInternalSupportAccess() {
   if (!adminUser || adminUser.status !== "active") {
     throw new SupportEscalationAccessError(
       403,
-      "Support escalations are limited to Veltrix operators."
+      "Support escalations are limited to VYNTRO operators."
     );
   }
 

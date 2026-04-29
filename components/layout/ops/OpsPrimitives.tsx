@@ -174,6 +174,40 @@ export function OpsPriorityLink({
   );
 }
 
+export function OpsCommandRead({
+  eyebrow,
+  title,
+  description,
+  now,
+  next,
+  watch,
+  action,
+  rail,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  now: string;
+  next: string;
+  watch: string;
+  action?: ReactNode;
+  rail?: ReactNode;
+}) {
+  return (
+    <div className={cx("grid gap-3.5", rail ? "xl:grid-cols-[minmax(0,1fr)_320px]" : "")}>
+      <OpsPanel eyebrow={eyebrow} title={title} description={description} action={action} tone="accent">
+        <div className="grid gap-2.5 lg:grid-cols-3">
+          <OpsSnapshotRow label="Now" value={now} />
+          <OpsSnapshotRow label="Next" value={next} />
+          <OpsSnapshotRow label="Watch" value={watch} />
+        </div>
+      </OpsPanel>
+
+      {rail ? rail : null}
+    </div>
+  );
+}
+
 export function OpsFilterBar({ children }: { children: ReactNode }) {
   return (
     <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-2.5">

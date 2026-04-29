@@ -62,7 +62,7 @@ export default function QaPage() {
       <AdminShell>
         <StatePanel
           title="QA control is internal-only"
-          description="Only Veltrix super admins can inspect release readiness, smoke packs and environment warnings across the stack."
+          description="Only VYNTRO super admins can inspect release readiness, smoke packs and environment warnings across the stack."
           tone="warning"
           actions={
             <Link
@@ -82,7 +82,7 @@ export default function QaPage() {
       <AdminShell>
         <LoadingState
           title="Loading QA board"
-          description="Veltrix is combining release candidates, smoke posture, environment warnings and deploy hygiene into one readiness board."
+          description="VYNTRO is combining release candidates, smoke posture, environment warnings and deploy hygiene into one readiness board."
         />
       </AdminShell>
     );
@@ -117,7 +117,7 @@ export default function QaPage() {
         description="One internal board for release verification, smoke completeness, environment warnings and the surfaces that still need operator proof."
         actions={
           <div className="space-y-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">Veltrix internal</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">VYNTRO internal</p>
             <div className="flex flex-wrap gap-2">
               <OpsStatusPill tone={overview.blockingChecks.length > 0 ? "warning" : "success"}>
                 {overview.blockingChecks.length} blocking failures

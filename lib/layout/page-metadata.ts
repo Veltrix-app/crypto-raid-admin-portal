@@ -53,7 +53,7 @@ export function getPortalPageMetadata(
   }
 
   return {
-    eyebrow: "Veltrix platform",
+    eyebrow: "VYNTRO platform",
     title: "Portal",
     description: "Project-first control system for launches, community operations, safety and support.",
   };

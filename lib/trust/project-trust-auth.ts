@@ -51,7 +51,7 @@ export async function assertInternalTrustAccess() {
   }
 
   if (!adminUser || adminUser.status !== "active") {
-    throw new TrustAccessError(403, "Internal trust operations are limited to Veltrix operators.");
+    throw new TrustAccessError(403, "Internal trust operations are limited to VYNTRO operators.");
   }
 
   return {

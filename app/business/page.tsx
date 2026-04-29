@@ -10,9 +10,9 @@ import {
   StatePanel,
 } from "@/components/layout/state/StatePrimitives";
 import {
+  OpsCommandRead,
   OpsMetricCard,
   OpsPanel,
-  OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
 import { fetchBusinessControlOverview } from "@/lib/billing/business-dashboard";
@@ -112,7 +112,7 @@ export default function BusinessPage() {
       <AdminShell>
         <StatePanel
           title="Business Control is internal-only"
-          description="This cockpit is reserved for Veltrix super admins because it exposes cross-account revenue, collections and commercial health."
+          description="This cockpit is reserved for VYNTRO super admins because it exposes cross-account revenue, collections and commercial health."
           tone="warning"
           actions={
             <Link
@@ -132,7 +132,7 @@ export default function BusinessPage() {
       <AdminShell>
         <LoadingState
           title="Loading business cockpit"
-          description="Veltrix is pulling revenue, billing ops, collections and account health into the control panel."
+          description="VYNTRO is pulling revenue, billing ops, collections and account health into the control panel."
         />
       </AdminShell>
     );
@@ -177,62 +177,49 @@ export default function BusinessPage() {
               <OpsMetricCard label="Upgrade candidates" value={overview.queues.upgradeCandidates.length} />
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-              <OpsPanel
-                eyebrow="Commercial command read"
-                title="Read revenue pressure first, then choose collections, activation, or expansion."
-                description="This page should answer what is moving now, which account needs a human move next, and where hidden billing or activation drag is building beneath the topline."
-              >
-                <div className="grid gap-2.5 lg:grid-cols-3">
-                  <OpsSnapshotRow
-                    label="Now"
-                    value={
-                      overview.collections.failedPaymentCount > 0
-                        ? `${overview.collections.failedPaymentCount} payment failures need billing ops attention`
-                        : "Collections look calm right now"
-                    }
-                  />
-                  <OpsSnapshotRow
-                    label="Next"
-                    value={
-                      highestPressureAccounts[0]
-                        ? `Open ${highestPressureAccounts[0].accountName} as the next commercial account`
-                        : "No urgent account is bubbling to the top"
-                    }
-                  />
-                  <OpsSnapshotRow
-                    label="Watch"
-                    value={
-                      overview.health.paidButUnderusedAccounts > 0
-                        ? `${overview.health.paidButUnderusedAccounts} paid accounts are drifting in activation`
-                        : "Activation drift is currently low"
-                    }
-                  />
-                </div>
-              </OpsPanel>
-
-              <OpsPanel
-                eyebrow="Business routes"
-                title="Internal board"
-                description="Keep related operator routes close without turning the hero into a badge wall."
-              >
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    <OpsStatusPill tone="default">{overview.revenue.activePaidAccounts} paid</OpsStatusPill>
-                    <OpsStatusPill tone="default">{overview.revenue.trialingAccounts} trialing</OpsStatusPill>
-                    <OpsStatusPill tone="default">
-                      {overview.collections.failedPaymentCount} failed payments
-                    </OpsStatusPill>
+            <OpsCommandRead
+              eyebrow="Commercial command read"
+              title="Read revenue pressure first, then choose collections, activation, or expansion."
+              description="This page should answer what is moving now, which account needs a human move next, and where hidden billing or activation drag is building beneath the topline."
+              now={
+                overview.collections.failedPaymentCount > 0
+                  ? `${overview.collections.failedPaymentCount} payment failures need billing ops attention`
+                  : "Collections look calm right now"
+              }
+              next={
+                highestPressureAccounts[0]
+                  ? `Open ${highestPressureAccounts[0].accountName} as the next commercial account`
+                  : "No urgent account is bubbling to the top"
+              }
+              watch={
+                overview.health.paidButUnderusedAccounts > 0
+                  ? `${overview.health.paidButUnderusedAccounts} paid accounts are drifting in activation`
+                  : "Activation drift is currently low"
+              }
+              rail={
+                <OpsPanel
+                  eyebrow="Business routes"
+                  title="Internal board"
+                  description="Keep related operator routes close without turning the hero into a badge wall."
+                >
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <OpsStatusPill tone="default">{overview.revenue.activePaidAccounts} paid</OpsStatusPill>
+                      <OpsStatusPill tone="default">{overview.revenue.trialingAccounts} trialing</OpsStatusPill>
+                      <OpsStatusPill tone="default">
+                        {overview.collections.failedPaymentCount} failed payments
+                      </OpsStatusPill>
+                    </div>
+                    <Link
+                      href="/qa"
+                      className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+                    >
+                      QA board
+                    </Link>
                   </div>
-                  <Link
-                    href="/qa"
-                    className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
-                  >
-                    QA board
-                  </Link>
-                </div>
-              </OpsPanel>
-            </div>
+                </OpsPanel>
+              }
+            />
           </div>
         }
       >

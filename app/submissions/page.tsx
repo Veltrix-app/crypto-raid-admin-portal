@@ -235,7 +235,7 @@ export default function SubmissionsPage() {
                       const decisionReason =
                         linkedFlags[0]?.reason ??
                         (submission.status === "approved"
-                          ? "Veltrix approved this submission automatically because it met the current low-risk verification rules."
+                          ? "VYNTRO approved this submission automatically because it met the current low-risk verification rules."
                           : submission.status === "pending"
                             ? "This submission is waiting for a reviewer because it could not be fully auto-verified."
                             : "This submission did not meet the current verification requirements.");

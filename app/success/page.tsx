@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
-import { OpsMetricCard, OpsPriorityLink, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { OpsCommandRead, OpsMetricCard, OpsPriorityLink, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import { SuccessOverviewPanel } from "@/components/success/SuccessOverviewPanel";
 import { SuccessQueueTable, type SuccessQueueFilters } from "@/components/success/SuccessQueueTable";
 import type { AdminSuccessOverview } from "@/types/entities/success";
@@ -76,60 +76,44 @@ export default function SuccessPage() {
               <OpsMetricCard label="Churn risk" value={loading ? "..." : overview?.counts.churnRisk ?? 0} />
             </div>
 
-            <div className="rounded-[20px] border border-white/[0.025] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.16)]">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="max-w-xl">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sub">
-                    Success command read
+            <OpsCommandRead
+              eyebrow="Success command read"
+              title="Read activation drag first, then decide whether the next move is rescue, expansion, or billing alignment."
+              description="This cockpit works best when it answers where customers are stalling, who deserves named follow-up next, and which accounts are quietly becoming expansion or churn stories."
+              now={
+                (overview?.counts.stalled ?? 0) > 0
+                  ? `${overview?.counts.stalled ?? 0} accounts are stalled in activation`
+                  : "Activation flow looks calm right now"
+              }
+              next={
+                topRiskAccount
+                  ? `Open ${topRiskAccount.accountName} as the next named success follow-up`
+                  : "No urgent account is bubbling to the top"
+              }
+              watch={
+                (overview?.counts.expansionReady ?? 0) > 0
+                  ? `${overview?.counts.expansionReady ?? 0} accounts are leaning toward expansion`
+                  : "Expansion pressure is currently modest"
+              }
+              rail={
+                <div className="rounded-[22px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-3.5">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary/90">
+                    Success posture
                   </p>
-                  <h2 className="mt-1.5 text-[0.94rem] font-semibold tracking-tight text-text">
-                    Read activation drag first, then decide whether the next move is rescue, expansion, or billing alignment.
-                  </h2>
-                  <p className="mt-1.5 max-w-2xl text-[11px] leading-5 text-sub">
-                    This cockpit works best when it answers where customers are stalling, who deserves named follow-up next, and which accounts are quietly becoming expansion or churn stories.
-                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <OpsStatusPill tone="default">
+                      {overview?.counts.stalled ?? 0} stalled
+                    </OpsStatusPill>
+                    <OpsStatusPill tone="default">
+                      {overview?.counts.expansionReady ?? 0} expansion-ready
+                    </OpsStatusPill>
+                    <OpsStatusPill tone="default">
+                      {overview?.counts.churnRisk ?? 0} churn-risk
+                    </OpsStatusPill>
+                  </div>
                 </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <OpsStatusPill tone="default">
-                    {overview?.counts.stalled ?? 0} stalled
-                  </OpsStatusPill>
-                  <OpsStatusPill tone="default">
-                    {overview?.counts.expansionReady ?? 0} expansion-ready
-                  </OpsStatusPill>
-                  <OpsStatusPill tone="default">
-                    {overview?.counts.churnRisk ?? 0} churn-risk
-                  </OpsStatusPill>
-                </div>
-              </div>
-
-              <div className="mt-3.5 grid gap-2.5 lg:grid-cols-3">
-                <OpsSnapshotRow
-                  label="Now"
-                  value={
-                    (overview?.counts.stalled ?? 0) > 0
-                      ? `${overview?.counts.stalled ?? 0} accounts are stalled in activation`
-                      : "Activation flow looks calm right now"
-                  }
-                />
-                <OpsSnapshotRow
-                  label="Next"
-                  value={
-                    topRiskAccount
-                      ? `Open ${topRiskAccount.accountName} as the next named success follow-up`
-                      : "No urgent account is bubbling to the top"
-                  }
-                />
-                <OpsSnapshotRow
-                  label="Watch"
-                  value={
-                    (overview?.counts.expansionReady ?? 0) > 0
-                      ? `${overview?.counts.expansionReady ?? 0} accounts are leaning toward expansion`
-                      : "Expansion pressure is currently modest"
-                  }
-                />
-              </div>
-            </div>
+              }
+            />
           </div>
         }
       >

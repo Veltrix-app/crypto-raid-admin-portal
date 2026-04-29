@@ -118,7 +118,7 @@ export default function AccountEntryGuard({ children }: { children: ReactNode })
         <div className="w-full max-w-2xl">
           <LoadingState
             title="Loading account setup"
-            description="Veltrix is resolving workspace memberships, onboarding state and the right portal entry surface."
+            description="VYNTRO is resolving workspace memberships, onboarding state and the right portal entry surface."
           />
         </div>
       </div>

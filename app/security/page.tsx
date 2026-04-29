@@ -11,7 +11,7 @@ import { ComplianceControlsPanel } from "@/components/security/ComplianceControl
 import { fetchSecurityOverview } from "@/lib/security/security-actions";
 import type { AdminSecurityOverview } from "@/types/entities/security";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
-import { OpsMetricCard, OpsPanel, OpsSnapshotRow, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { OpsCommandRead, OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 
 export default function SecurityPage() {
   const role = useAdminAuthStore((s) => s.role);
@@ -63,7 +63,7 @@ export default function SecurityPage() {
       <AdminShell>
         <StatePanel
           title="Security Control is internal-only"
-          description="This cockpit is reserved for Veltrix super admins because it exposes cross-account security, compliance and request posture."
+          description="This cockpit is reserved for VYNTRO super admins because it exposes cross-account security, compliance and request posture."
           tone="warning"
           actions={
             <Link
@@ -83,7 +83,7 @@ export default function SecurityPage() {
       <AdminShell>
         <LoadingState
           title="Loading security cockpit"
-          description="Veltrix is pulling enterprise policy posture, active sessions, compliance controls and request queues into one view."
+          description="VYNTRO is pulling enterprise policy posture, active sessions, compliance controls and request queues into one view."
         />
       </AdminShell>
     );
@@ -125,60 +125,47 @@ export default function SecurityPage() {
               <OpsMetricCard label="SSO accounts" value={overview.counts.enterpriseHardenedAccounts} />
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-              <OpsPanel
-                eyebrow="Security command read"
-                title="Read weak posture first, then choose policy cleanup, request handling, or incident control."
-                description="This cockpit should tell you what is fragile, what is audit-sensitive, and where enterprise trust can erode if response timing slips."
-              >
-                <div className="grid gap-2.5 lg:grid-cols-3">
-                  <OpsSnapshotRow
-                    label="Now"
-                    value={
-                      overview.counts.weakPostureAccounts > 0
-                        ? `${overview.counts.weakPostureAccounts} accounts still need trust posture cleanup`
-                        : "Account posture looks calm right now"
-                    }
-                  />
-                  <OpsSnapshotRow
-                    label="Next"
-                    value={
-                      overview.queues.dataRequests.length > 0
-                        ? `Review ${overview.queues.dataRequests.length} open export or delete requests`
-                        : "No urgent request queue is waiting"
-                    }
-                  />
-                  <OpsSnapshotRow
-                    label="Watch"
-                    value={
-                      overview.queues.securityIncidents.length > 0
-                        ? `${overview.queues.securityIncidents.length} security incidents or postmortem items are open`
-                        : "No active security incidents are open"
-                    }
-                  />
-                </div>
-              </OpsPanel>
-
-              <OpsPanel
-                eyebrow="Security routes"
-                title="Internal board"
-                description="Keep release and trust routes nearby without overloading the hero."
-              >
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    <OpsStatusPill tone="default">{overview.counts.weakPostureAccounts} weak posture</OpsStatusPill>
-                    <OpsStatusPill tone="default">{overview.counts.openDataRequests} requests</OpsStatusPill>
-                    <OpsStatusPill tone="default">{overview.queues.securityIncidents.length} incidents</OpsStatusPill>
+            <OpsCommandRead
+              eyebrow="Security command read"
+              title="Read weak posture first, then choose policy cleanup, request handling, or incident control."
+              description="This cockpit should tell you what is fragile, what is audit-sensitive, and where enterprise trust can erode if response timing slips."
+              now={
+                overview.counts.weakPostureAccounts > 0
+                  ? `${overview.counts.weakPostureAccounts} accounts still need trust posture cleanup`
+                  : "Account posture looks calm right now"
+              }
+              next={
+                overview.queues.dataRequests.length > 0
+                  ? `Review ${overview.queues.dataRequests.length} open export or delete requests`
+                  : "No urgent request queue is waiting"
+              }
+              watch={
+                overview.queues.securityIncidents.length > 0
+                  ? `${overview.queues.securityIncidents.length} security incidents or postmortem items are open`
+                  : "No active security incidents are open"
+              }
+              rail={
+                <OpsPanel
+                  eyebrow="Security routes"
+                  title="Internal board"
+                  description="Keep release and trust routes nearby without overloading the hero."
+                >
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <OpsStatusPill tone="default">{overview.counts.weakPostureAccounts} weak posture</OpsStatusPill>
+                      <OpsStatusPill tone="default">{overview.counts.openDataRequests} requests</OpsStatusPill>
+                      <OpsStatusPill tone="default">{overview.queues.securityIncidents.length} incidents</OpsStatusPill>
+                    </div>
+                    <Link
+                      href="/releases"
+                      className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+                    >
+                      Releases
+                    </Link>
                   </div>
-                  <Link
-                    href="/releases"
-                    className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
-                  >
-                    Releases
-                  </Link>
-                </div>
-              </OpsPanel>
-            </div>
+                </OpsPanel>
+              }
+            />
           </div>
         }
       >

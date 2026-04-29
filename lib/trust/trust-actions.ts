@@ -139,7 +139,7 @@ function buildActionMutation(params: {
           params.notes ??
           (params.scope === "internal"
             ? "Escalated trust case for internal resolution."
-            : "Escalated trust case back to Veltrix trust ops."),
+            : "Escalated trust case back to VYNTRO trust ops."),
         auditAction: "trust_case_escalated",
       } as const;
     case "dismiss":

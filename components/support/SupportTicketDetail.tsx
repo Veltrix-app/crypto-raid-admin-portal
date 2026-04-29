@@ -162,7 +162,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
 
   if (loading) {
     return (
-      <OpsPanel title="Loading support ticket" description="Veltrix is resolving the ticket history, status posture and handoff state.">
+      <OpsPanel title="Loading support ticket" description="VYNTRO is resolving the ticket history, status posture and handoff state.">
         <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
           Loading support ticket...
         </div>

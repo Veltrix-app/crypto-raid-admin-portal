@@ -170,7 +170,7 @@ function ProjectsPageContent() {
                   <input
                     value={bootstrapName}
                     onChange={(event) => setBootstrapName(event.target.value)}
-                    placeholder="Veltrix Founding Campaign"
+                    placeholder="VYNTRO Founding Campaign"
                     className="w-full rounded-[18px] border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   />
                 </label>

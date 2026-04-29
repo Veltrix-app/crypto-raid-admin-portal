@@ -52,7 +52,7 @@ export default function LoginPage() {
 
     if (result.requiresMfa) {
       setSubmitting(false);
-      setFeedback("Authenticator code required before Veltrix can finish portal access.");
+      setFeedback("Authenticator code required before VYNTRO can finish portal access.");
       return;
     }
 
@@ -111,7 +111,7 @@ export default function LoginPage() {
           <form onSubmit={handleVerifyTotp} className="space-y-4">
             <div className="rounded-[22px] border border-primary/20 bg-primary/10 px-4 py-4 text-sm leading-6 text-sub">
               Current step-up posture: <span className="font-semibold text-text">{currentAal ?? "aal1"}</span>.
-              Veltrix detected {verifiedFactorCount} verified factor{verifiedFactorCount === 1 ? "" : "s"} and is waiting for your authenticator code.
+              VYNTRO detected {verifiedFactorCount} verified factor{verifiedFactorCount === 1 ? "" : "s"} and is waiting for your authenticator code.
             </div>
 
             <div>
@@ -184,7 +184,7 @@ export default function LoginPage() {
                 <div>
                   <p className="text-sm font-semibold text-text">Enterprise SSO</p>
                   <p className="text-xs leading-5 text-sub">
-                    Use your workspace email and Veltrix will route you into the right identity provider.
+                    Use your workspace email and VYNTRO will route you into the right identity provider.
                   </p>
                 </div>
               </div>
