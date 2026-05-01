@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  assertProjectCommunityAccess,
+  createProjectCommunityAccessErrorResponse,
+} from "@/lib/community/project-community-auth";
+import {
   buildCommunityEntityUrl,
   buildProjectAppUrl,
   getDefaultCommunityArtwork,
@@ -32,14 +36,11 @@ export async function POST(
     const body = (await request.json().catch(() => null)) as
       | { mode?: AutomationMode; providers?: Array<"discord" | "telegram"> }
       | null;
-
-    if (!projectId) {
-      return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
-    }
+    const access = await assertProjectCommunityAccess(projectId ?? "");
 
     const mode = body?.mode ?? "all";
     const providers = Array.isArray(body?.providers) ? body.providers : undefined;
-    const { integrations, settingsByIntegrationId } = await loadCommunitySettingsRows(projectId);
+    const { integrations, settingsByIntegrationId } = await loadCommunitySettingsRows(access.projectId);
     const primaryIntegration =
       integrations.find((integration) => integration.provider === "discord") ?? integrations[0] ?? null;
 
@@ -51,7 +52,7 @@ export async function POST(
     }
 
     const metadata = readMetadata(settingsByIntegrationId.get(primaryIntegration.id)?.metadata);
-    const state = await loadProjectCommunityState(projectId);
+    const state = await loadProjectCommunityState(access.projectId);
     const results: Array<Record<string, unknown>> = [];
     const metadataPatch: Record<string, unknown> = {
       lastAutomationRunAt: new Date().toISOString(),
@@ -72,7 +73,7 @@ export async function POST(
       ].join("\n");
 
       const missionResult = await sendProjectCommunityMessage({
-        projectId,
+        projectId: access.projectId,
         providers,
         title: `${state.project.name} mission board`,
         body: missionBody,
@@ -112,7 +113,7 @@ export async function POST(
             : raid.short_description || "A raid is live and needs community pressure right now.";
 
         const raidResult = await sendProjectCommunityMessage({
-          projectId,
+          projectId: access.projectId,
           providers,
           title: raid.title,
           body: raidBody,
@@ -143,11 +144,11 @@ export async function POST(
     }
 
     await updateCommunityMetadata({
-      projectId,
+      projectId: access.projectId,
       metadataPatch,
     });
     await writeProjectCommunityAuditLog({
-      projectId,
+      projectId: access.projectId,
       sourceTable: "community_bot_settings",
       sourceId: primaryIntegration.id,
       action: "community_automation_run",
@@ -164,12 +165,6 @@ export async function POST(
       results,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Community automation run failed.",
-      },
-      { status: 500 }
-    );
+    return createProjectCommunityAccessErrorResponse(error, "Community automation run failed.");
   }
 }

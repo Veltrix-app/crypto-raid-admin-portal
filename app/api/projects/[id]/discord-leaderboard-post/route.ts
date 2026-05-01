@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  assertProjectCommunityAccess,
+  createProjectCommunityAccessErrorResponse,
+} from "@/lib/community/project-community-auth";
 
 const communityBotUrl = process.env.COMMUNITY_BOT_URL;
 const communityJobSecret =
@@ -18,10 +22,7 @@ export async function POST(
   try {
     const { id } = await context.params;
     const projectId = id?.trim();
-
-    if (!projectId) {
-      return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
-    }
+    const access = await assertProjectCommunityAccess(projectId ?? "");
 
     const response = await fetch(
       `${communityBotUrl.replace(/\/+$/, "")}/jobs/post-community-leaderboards`,
@@ -32,7 +33,7 @@ export async function POST(
           ...(communityJobSecret ? { "x-community-job-secret": communityJobSecret } : {}),
         },
         body: JSON.stringify({
-          projectId,
+          projectId: access.projectId,
           force: true,
         }),
         cache: "no-store",
@@ -56,12 +57,6 @@ export async function POST(
 
     return NextResponse.json(payload);
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Discord leaderboard post failed.",
-      },
-      { status: 500 }
-    );
+    return createProjectCommunityAccessErrorResponse(error, "Discord leaderboard post failed.");
   }
 }

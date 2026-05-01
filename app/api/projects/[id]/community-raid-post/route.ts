@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  assertProjectCommunityAccess,
+  createProjectCommunityAccessErrorResponse,
+} from "@/lib/community/project-community-auth";
+import {
   buildCommunityEntityUrl,
   getDefaultCommunityArtwork,
   loadProjectCommunityState,
@@ -36,10 +40,7 @@ export async function POST(
     const body = (await request.json().catch(() => null)) as
       | { raidId?: string; mode?: RaidPostMode; providers?: Array<"discord" | "telegram"> }
       | null;
-
-    if (!projectId) {
-      return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
-    }
+    const access = await assertProjectCommunityAccess(projectId ?? "");
 
     const raidId = typeof body?.raidId === "string" ? body.raidId.trim() : "";
     const mode = body?.mode ?? "live";
@@ -49,7 +50,7 @@ export async function POST(
       return NextResponse.json({ ok: false, error: "Missing raid id." }, { status: 400 });
     }
 
-    const state = await loadProjectCommunityState(projectId);
+    const state = await loadProjectCommunityState(access.projectId);
     const raid = state.raids.find((item) => item.id === raidId);
 
     if (!raid) {
@@ -60,7 +61,7 @@ export async function POST(
       mode === "reminder" ? "RAID REMINDER" : mode === "result" ? "RAID RESULT" : "RAID ALERT";
 
     const response = await sendProjectCommunityMessage({
-      projectId,
+      projectId: access.projectId,
       providers,
       title: raid.title,
       body: buildRaidBody(mode, raid.title, raid.short_description),
@@ -80,14 +81,14 @@ export async function POST(
     });
 
     await updateCommunityMetadata({
-      projectId,
+      projectId: access.projectId,
       metadataPatch: {
         lastRaidAlertAt: new Date().toISOString(),
         lastAutomationRunAt: new Date().toISOString(),
       },
     });
     await writeProjectCommunityAuditLog({
-      projectId,
+      projectId: access.projectId,
       sourceTable: "raids",
       sourceId: raid.id,
       action:
@@ -108,12 +109,6 @@ export async function POST(
       mode,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Raid community post failed.",
-      },
-      { status: 500 }
-    );
+    return createProjectCommunityAccessErrorResponse(error, "Raid community post failed.");
   }
 }

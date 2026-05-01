@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  assertProjectCommunityAccess,
+  createProjectCommunityAccessErrorResponse,
+} from "@/lib/community/project-community-auth";
+import {
   buildCommunityEntityUrl,
   buildProjectAppUrl,
   getDefaultCommunityArtwork,
@@ -40,19 +44,16 @@ export async function POST(
     const body = (await request.json().catch(() => null)) as
       | { mode?: MissionPostMode; contentId?: string; providers?: Array<"discord" | "telegram"> }
       | null;
-
-    if (!projectId) {
-      return NextResponse.json({ ok: false, error: "Missing project id." }, { status: 400 });
-    }
+    const access = await assertProjectCommunityAccess(projectId ?? "");
 
     const mode = body?.mode ?? "digest";
     const contentId = typeof body?.contentId === "string" ? body.contentId.trim() : "";
     const providers = Array.isArray(body?.providers) ? body.providers : undefined;
-    const state = await loadProjectCommunityState(projectId);
+    const state = await loadProjectCommunityState(access.projectId);
 
     if (mode === "digest") {
       const response = await sendProjectCommunityMessage({
-        projectId,
+        projectId: access.projectId,
         providers,
         title: `${state.project.name} mission board`,
         body: buildMissionDigestBody(state),
@@ -71,14 +72,14 @@ export async function POST(
       });
 
       await updateCommunityMetadata({
-        projectId,
+        projectId: access.projectId,
         metadataPatch: {
           lastMissionDigestAt: new Date().toISOString(),
           lastAutomationRunAt: new Date().toISOString(),
         },
       });
       await writeProjectCommunityAuditLog({
-        projectId,
+        projectId: access.projectId,
         sourceTable: "community_bot_settings",
         sourceId: projectId,
         action: "community_mission_digest_posted",
@@ -109,7 +110,7 @@ export async function POST(
       }
 
       const response = await sendProjectCommunityMessage({
-        projectId,
+        projectId: access.projectId,
         providers,
         title: campaign.title,
         body: campaign.short_description || "A live campaign just opened in Veltrix.",
@@ -134,7 +135,7 @@ export async function POST(
       });
 
       await writeProjectCommunityAuditLog({
-        projectId,
+        projectId: access.projectId,
         sourceTable: "campaigns",
         sourceId: campaign.id,
         action: "community_campaign_posted",
@@ -155,7 +156,7 @@ export async function POST(
       }
 
       const response = await sendProjectCommunityMessage({
-        projectId,
+        projectId: access.projectId,
         providers,
         title: quest.title,
         body: quest.short_description || "A mission is now live in Veltrix.",
@@ -173,7 +174,7 @@ export async function POST(
       });
 
       await writeProjectCommunityAuditLog({
-        projectId,
+        projectId: access.projectId,
         sourceTable: "quests",
         sourceId: quest.id,
         action: "community_mission_posted",
@@ -193,7 +194,7 @@ export async function POST(
     }
 
     const response = await sendProjectCommunityMessage({
-      projectId,
+      projectId: access.projectId,
       providers,
       title: reward.title,
       body: reward.description || "A new reward is live in Veltrix.",
@@ -212,7 +213,7 @@ export async function POST(
     });
 
     await writeProjectCommunityAuditLog({
-      projectId,
+      projectId: access.projectId,
       sourceTable: "rewards",
       sourceId: reward.id,
       action: "community_reward_posted",
@@ -225,12 +226,6 @@ export async function POST(
 
     return NextResponse.json({ ...response, mode });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Mission community post failed.",
-      },
-      { status: 500 }
-    );
+    return createProjectCommunityAccessErrorResponse(error, "Mission community post failed.");
   }
 }
