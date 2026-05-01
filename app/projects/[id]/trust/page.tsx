@@ -8,6 +8,7 @@ import { OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import ProjectTrustCaseDetailPanel from "@/components/trust/ProjectTrustCaseDetailPanel";
 import ProjectTrustCasesPanel from "@/components/trust/ProjectTrustCasesPanel";
+import ProjectTrustCockpitPanel from "@/components/trust/ProjectTrustCockpitPanel";
 import ProjectTrustPermissionsPanel from "@/components/trust/ProjectTrustPermissionsPanel";
 import TrustCaseTimeline from "@/components/trust/TrustCaseTimeline";
 import TrustHealthPanel from "@/components/trust/TrustHealthPanel";
@@ -17,6 +18,7 @@ import type {
   TrustCaseListRow,
   TrustCaseTimelineEventRecord,
 } from "@/components/trust/types";
+import type { TrustCockpitSnapshot } from "@/lib/trust/trust-cockpit";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
 import type { TrustCaseAction } from "@/lib/trust/trust-actions";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -39,9 +41,12 @@ export default function ProjectTrustPage() {
   const teamMembers = useAdminPortalStore((s) => s.teamMembers);
   const [trustCases, setTrustCases] = useState<TrustCaseListRow[]>([]);
   const [trustAccess, setTrustAccess] = useState<ProjectTrustAccessSummary | null>(null);
+  const [trustCockpit, setTrustCockpit] = useState<TrustCockpitSnapshot | null>(null);
   const [summaryOnly, setSummaryOnly] = useState(false);
   const [loadingCases, setLoadingCases] = useState(true);
+  const [loadingCockpit, setLoadingCockpit] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [cockpitError, setCockpitError] = useState<string | null>(null);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [trustCaseDetail, setTrustCaseDetail] = useState<ProjectTrustCaseDetailPayload | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -59,6 +64,35 @@ export default function ProjectTrustPage() {
 
   const hasProjectAccess =
     role === "super_admin" || memberships.some((item) => item.projectId === project?.id);
+
+  async function loadTrustCockpit() {
+    if (!project?.id) {
+      return;
+    }
+
+    try {
+      setLoadingCockpit(true);
+      setCockpitError(null);
+      const response = await fetch(`/api/projects/${project.id}/trust-cockpit`, {
+        cache: "no-store",
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? "Failed to load project trust cockpit.");
+      }
+
+      setTrustCockpit((payload.cockpit ?? null) as TrustCockpitSnapshot | null);
+      setTrustAccess((payload.access ?? null) as ProjectTrustAccessSummary | null);
+    } catch (error) {
+      setTrustCockpit(null);
+      setCockpitError(
+        error instanceof Error ? error.message : "Failed to load project trust cockpit."
+      );
+    } finally {
+      setLoadingCockpit(false);
+    }
+  }
 
   async function loadTrustCases(preserveSelection = true) {
     if (!project?.id) {
@@ -97,6 +131,7 @@ export default function ProjectTrustPage() {
   }
 
   useEffect(() => {
+    void loadTrustCockpit();
     void loadTrustCases(false);
   }, [project?.id]);
 
@@ -259,6 +294,13 @@ export default function ProjectTrustPage() {
               emphasis: escalatedCases.length > 0 ? "primary" : "default",
             },
           ]}
+        />
+
+        <ProjectTrustCockpitPanel
+          cockpit={trustCockpit}
+          loading={loadingCockpit}
+          error={cockpitError}
+          onRetry={() => void loadTrustCockpit()}
         />
 
         <div className="grid gap-3 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-start">
