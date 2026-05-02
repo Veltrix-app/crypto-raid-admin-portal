@@ -11,6 +11,7 @@ import {
   StatePanel,
 } from "@/components/layout/state/StatePrimitives";
 import {
+  OpsCommandRead,
   OpsMetricCard,
   OpsPanel,
   OpsSnapshotRow,
@@ -118,6 +119,51 @@ function invoiceStatusTone(status: string) {
     default:
       return "default";
   }
+}
+
+function strongestUsagePressure(workspace: PortalCustomerBillingWorkspace) {
+  const priority: Record<PortalBillingUsageItem["pressure"], number> = {
+    blocked: 4,
+    upgrade_recommended: 3,
+    watching: 2,
+    comfortable: 1,
+  };
+
+  return [...workspace.usage].sort(
+    (a, b) => priority[b.pressure] - priority[a.pressure] || b.percent - a.percent
+  )[0];
+}
+
+function planBuyerFit(plan: BillingPlan) {
+  if (plan.isEnterprise) {
+    return "Large launches, managed limits and custom commercial support.";
+  }
+
+  if (plan.priceMonthly === 0) {
+    return "Starter workspace for proving the first campaign motion.";
+  }
+
+  if (plan.raidsLimit >= 25 || plan.campaignsLimit >= 10) {
+    return "Growth teams running multiple campaigns, raids and reward flows.";
+  }
+
+  return "Small teams that need more campaign room without enterprise overhead.";
+}
+
+function planRiskLine(plan: BillingPlan, workspace: PortalCustomerBillingWorkspace) {
+  if (plan.id === workspace.currentPlan?.id) {
+    return "Watch limits closely before adding more live campaigns.";
+  }
+
+  if (plan.id === workspace.nextPlan?.id) {
+    return "Recommended next ceiling based on current usage pressure.";
+  }
+
+  if (plan.isEnterprise) {
+    return "Best when launch volume should not be capped by self-serve limits.";
+  }
+
+  return "Review when this capacity matches the next campaign window.";
 }
 
 function UsageRow({ item }: { item: PortalBillingUsageItem }) {
@@ -232,6 +278,14 @@ function PlanCard({
         <p>Providers: {plan.providersLimit}</p>
         <p>Seats: {plan.includedBillableSeats}</p>
       </div>
+
+      <div className="mt-4 rounded-[14px] border border-white/[0.024] bg-white/[0.012] px-3 py-2.5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+          Buyer fit
+        </p>
+        <p className="mt-1.5 text-[12px] leading-5 text-text">{planBuyerFit(plan)}</p>
+        <p className="mt-2 text-[11px] leading-5 text-sub">{planRiskLine(plan, workspace)}</p>
+      </div>
     </div>
   );
 }
@@ -318,6 +372,208 @@ function BillingUpgradeHero({
         </div>
       </div>
     </section>
+  );
+}
+
+function CriticalUsageStrip({
+  workspace,
+  nextBillingDate,
+  openInvoiceCount,
+}: {
+  workspace: PortalCustomerBillingWorkspace;
+  nextBillingDate: string | null;
+  openInvoiceCount: number;
+}) {
+  const strongestPressure = strongestUsagePressure(workspace);
+
+  return (
+    <div className="grid gap-2.5 md:grid-cols-4">
+      <OpsMetricCard
+        label="Current plan"
+        value={workspace.currentPlan?.name ?? "Free"}
+        sub={workspace.nextPlan ? `Next best: ${workspace.nextPlan.name}` : "No upgrade needed"}
+        emphasis="primary"
+      />
+      <OpsMetricCard
+        label="Capacity signal"
+        value={strongestPressure ? usagePressureLabel(strongestPressure.pressure) : "Clean"}
+        sub={
+          strongestPressure
+            ? `${strongestPressure.label}: ${strongestPressure.current} / ${strongestPressure.limit}`
+            : "No usage pressure detected."
+        }
+        emphasis={
+          strongestPressure?.pressure === "blocked" ||
+          strongestPressure?.pressure === "upgrade_recommended"
+            ? "warning"
+            : "default"
+        }
+      />
+      <OpsMetricCard
+        label="Open invoices"
+        value={openInvoiceCount}
+        sub={
+          openInvoiceCount
+            ? "There is invoice follow-up waiting."
+            : "Collections look clean right now."
+        }
+      />
+      <OpsMetricCard
+        label="Renewal"
+        value={formatDateLabel(nextBillingDate ?? undefined)}
+        sub={paymentMethodLabel(workspace.billingProfile?.paymentMethodStatus)}
+      />
+    </div>
+  );
+}
+
+function PlanComparisonGrid({ workspace }: { workspace: PortalCustomerBillingWorkspace }) {
+  return (
+    <OpsPanel
+      eyebrow="Plan ladder"
+      title="Pick the plan that keeps campaigns moving"
+      description="Plans are shown before invoices because this is the upgrade decision surface: choose the next growth ceiling first, then validate usage pressure."
+    >
+      <div className="grid gap-3 xl:grid-cols-2">
+        {workspace.plans.map((plan) => (
+          <PlanCard
+            key={plan.id}
+            plan={plan}
+            workspace={workspace}
+            isCurrent={plan.id === workspace.currentPlan?.id}
+            isNext={plan.id === workspace.nextPlan?.id}
+          />
+        ))}
+      </div>
+    </OpsPanel>
+  );
+}
+
+function BillingOpsDiagnostics({
+  workspace,
+  nextBillingDate,
+}: {
+  workspace: PortalCustomerBillingWorkspace;
+  nextBillingDate: string | null;
+}) {
+  return (
+    <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_390px]">
+      <div className="space-y-4">
+        <OpsPanel
+          eyebrow="Capacity proof"
+          title="What is pushing the upgrade"
+          description="Usage explains why a plan change matters before the workspace hits a hard limit."
+        >
+          <div className="space-y-2.5">
+            {workspace.usage.map((item) => (
+              <UsageRow key={item.key} item={item} />
+            ))}
+          </div>
+        </OpsPanel>
+
+        <OpsPanel
+          eyebrow="Invoice history"
+          title="Recent invoices"
+          description="Track the last billing events, payment state and which invoice needs follow-up."
+        >
+          {workspace.invoices.length ? (
+            <div className="space-y-3">
+              {workspace.invoices.map((invoice) => (
+                <div
+                  key={invoice.id}
+                  className="rounded-[16px] border border-white/[0.025] bg-white/[0.014] p-3.5"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <p className="text-sm font-bold text-text">
+                          {invoice.invoiceNumber || invoice.stripeInvoiceId || "Invoice"}
+                        </p>
+                        <OpsStatusPill tone={invoiceStatusTone(invoice.status)}>
+                          {invoice.status}
+                        </OpsStatusPill>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-sub">
+                        Due {formatDateLabel(invoice.dueAt)} | Paid {formatDateLabel(invoice.paidAt)}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-lg font-extrabold text-text">
+                        {formatCurrency(invoice.totalAmount)}
+                      </p>
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-sub">
+                        {invoice.collectionStatus.replaceAll("_", " ")}
+                      </p>
+                    </div>
+                  </div>
+
+                  {invoice.hostedInvoiceUrl || invoice.invoicePdfUrl ? (
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      {invoice.hostedInvoiceUrl ? (
+                        <a
+                          href={invoice.hostedInvoiceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+                        >
+                          Open hosted invoice
+                        </a>
+                      ) : null}
+                      {invoice.invoicePdfUrl ? (
+                        <a
+                          href={invoice.invoicePdfUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+                        >
+                          Open PDF
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <InlineEmptyNotice
+              title="No synced invoices yet"
+              description="Invoices will appear here once Stripe billing is active for this workspace account."
+            />
+          )}
+        </OpsPanel>
+      </div>
+
+      <div className="space-y-4">
+        <OpsPanel
+          eyebrow="Billing signal"
+          title="Account readiness"
+          description="Keep payment and renewal context close to the upgrade action."
+        >
+          <div className="space-y-2.5">
+            <OpsSnapshotRow
+              label="Subscription status"
+              value={subscriptionLabel(workspace.subscription?.status)}
+            />
+            <OpsSnapshotRow
+              label="Payment method"
+              value={paymentMethodLabel(workspace.billingProfile?.paymentMethodStatus)}
+            />
+            <OpsSnapshotRow
+              label="Next billing window"
+              value={formatDateLabel(nextBillingDate ?? undefined)}
+            />
+          </div>
+        </OpsPanel>
+
+        <SupportSurfaceContextPanel
+          title="Billing-linked support handoffs"
+          description="Tickets land here once generic support becomes invoice follow-up, payment method recovery or commercial account work."
+          handoffType="billing"
+          customerAccountId={workspace.accountId}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -466,170 +722,40 @@ function SettingsBillingContent() {
         openInvoiceCount={openInvoiceCount}
       />
 
-      <div className="grid gap-2.5 md:grid-cols-4">
-        <OpsMetricCard
-          label="Current plan"
-          value={workspace.currentPlan?.name ?? "Free"}
-        />
-        <OpsMetricCard
-          label="Subscription"
-          value={subscriptionLabel(workspace.subscription?.status)}
-          sub={`Next window: ${formatDateLabel(nextBillingDate ?? undefined)}`}
-        />
-        <OpsMetricCard
-          label="Open invoices"
-          value={openInvoiceCount}
-          sub={
-            openInvoiceCount
-              ? "There is invoice follow-up waiting."
-              : "Collections look clean right now."
-          }
-        />
-        <OpsMetricCard
-          label="Billable seats"
-          value={
-            workspace.entitlements
-              ? `${workspace.entitlements.currentBillableSeats} / ${workspace.entitlements.includedBillableSeats}`
-              : "0 / 0"
-          }
-        />
-      </div>
-
-      <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_390px]">
-        <OpsPanel
-          eyebrow="Plan ladder"
-          title="Pick the plan that keeps campaigns moving"
-          description="Plans are shown before invoices because this is the upgrade decision surface: choose the next growth ceiling first, then validate usage pressure."
-        >
-          <div className="grid gap-3 xl:grid-cols-2">
-            {workspace.plans.map((plan) => (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                workspace={workspace}
-                isCurrent={plan.id === workspace.currentPlan?.id}
-                isNext={plan.id === workspace.nextPlan?.id}
-              />
-            ))}
-          </div>
-        </OpsPanel>
-
-        <div className="space-y-4">
-          <OpsPanel
-            eyebrow="Capacity proof"
-            title="What is pushing the upgrade"
-            description="Usage explains why a plan change matters before the workspace hits a hard limit."
+      <OpsCommandRead
+        eyebrow="Upgrade decision"
+        title="Choose capacity before limits slow the next launch"
+        description="Billing should sell the growth ceiling first: plan, capacity, payment readiness and the next commercial move stay in one scan."
+        now={overallPressureLabel(workspace.overallPressure)}
+        next={
+          workspace.nextPlan
+            ? `Review ${workspace.nextPlan.name} before the next campaign window`
+            : "Keep monitoring usage; no immediate upgrade is needed"
+        }
+        watch={
+          openInvoiceCount
+            ? `${openInvoiceCount} open invoice handoff${openInvoiceCount === 1 ? "" : "s"}`
+            : `${workspace.usage.length} usage limits are being tracked`
+        }
+        action={
+          <a
+            href={workspace.upgradeUrl ?? workspace.pricingUrl}
+            className="inline-flex items-center rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-black transition hover:brightness-105"
           >
-            <div className="space-y-2.5">
-              {workspace.usage.map((item) => (
-                <UsageRow key={item.key} item={item} />
-              ))}
-            </div>
-          </OpsPanel>
+            {workspace.nextPlan?.isEnterprise ? "Talk to sales" : "Review upgrade"}
+          </a>
+        }
+      />
 
-          <OpsPanel
-            eyebrow="Billing signal"
-            title="Account readiness"
-            description="Keep payment and renewal context close to the upgrade action."
-          >
-            <div className="space-y-2.5">
-              <OpsSnapshotRow
-                label="Subscription status"
-                value={subscriptionLabel(workspace.subscription?.status)}
-              />
-              <OpsSnapshotRow
-                label="Payment method"
-                value={paymentMethodLabel(workspace.billingProfile?.paymentMethodStatus)}
-              />
-              <OpsSnapshotRow
-                label="Next billing window"
-                value={formatDateLabel(nextBillingDate ?? undefined)}
-              />
-            </div>
-          </OpsPanel>
-        </div>
-      </div>
+      <CriticalUsageStrip
+        workspace={workspace}
+        nextBillingDate={nextBillingDate}
+        openInvoiceCount={openInvoiceCount}
+      />
 
-      <div className="grid gap-4 xl:items-start xl:grid-cols-[1fr_0.9fr]">
-        <OpsPanel
-          eyebrow="Invoice history"
-          title="Recent invoices"
-          description="Track the last billing events, payment state and which invoice needs follow-up."
-        >
-          {workspace.invoices.length ? (
-            <div className="space-y-3">
-              {workspace.invoices.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className="rounded-[16px] border border-white/[0.025] bg-white/[0.014] p-3.5"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <p className="text-sm font-bold text-text">
-                          {invoice.invoiceNumber || invoice.stripeInvoiceId || "Invoice"}
-                        </p>
-                        <OpsStatusPill tone={invoiceStatusTone(invoice.status)}>
-                          {invoice.status}
-                        </OpsStatusPill>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-sub">
-                        Due {formatDateLabel(invoice.dueAt)} | Paid {formatDateLabel(invoice.paidAt)}
-                      </p>
-                    </div>
+      <PlanComparisonGrid workspace={workspace} />
 
-                    <div className="text-right">
-                      <p className="text-lg font-extrabold text-text">
-                        {formatCurrency(invoice.totalAmount)}
-                      </p>
-                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-sub">
-                        {invoice.collectionStatus.replaceAll("_", " ")}
-                      </p>
-                    </div>
-                  </div>
-
-                  {invoice.hostedInvoiceUrl || invoice.invoicePdfUrl ? (
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      {invoice.hostedInvoiceUrl ? (
-                        <a
-                          href={invoice.hostedInvoiceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
-                        >
-                          Open hosted invoice
-                        </a>
-                      ) : null}
-                      {invoice.invoicePdfUrl ? (
-                        <a
-                          href={invoice.invoicePdfUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
-                        >
-                          Open PDF
-                        </a>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <InlineEmptyNotice
-              title="No synced invoices yet"
-              description="Invoices will appear here once Stripe billing is active for this workspace account."
-            />
-          )}
-        </OpsPanel>
-
-        <SupportSurfaceContextPanel
-          title="Billing-linked support handoffs"
-          description="Tickets land here once generic support becomes invoice follow-up, payment method recovery or commercial account work."
-          handoffType="billing"
-          customerAccountId={workspace.accountId}
-        />
-      </div>
+      <BillingOpsDiagnostics workspace={workspace} nextBillingDate={nextBillingDate} />
     </WorkspaceSettingsFrame>
   );
 }

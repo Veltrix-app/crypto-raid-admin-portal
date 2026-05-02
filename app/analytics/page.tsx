@@ -44,9 +44,7 @@ const analyticsViewOptions: Array<{ value: AnalyticsView; label: string }> = [
 export default function AnalyticsPage() {
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const quests = useAdminPortalStore((s) => s.quests);
-  const rewards = useAdminPortalStore((s) => s.rewards);
   const submissions = useAdminPortalStore((s) => s.submissions);
-  const claims = useAdminPortalStore((s) => s.claims);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const role = useAdminAuthStore((s) => s.role);
@@ -411,8 +409,8 @@ export default function AnalyticsPage() {
         title="Analytics"
         description="Use Analytics for outcomes and trends, not live triage: launch and health pressure lives in Overview, while campaign and verification intelligence stay available here."
         statusBand={
-          <div className="space-y-4">
-            <div className="grid gap-2.5 md:grid-cols-3 xl:grid-cols-6">
+          <div className="flex flex-col gap-4">
+            <div className="order-2 grid gap-2.5 md:grid-cols-3 xl:grid-cols-6">
               {(analyticsView === "growth" ? growthCards : outcomeCards).map((card) => {
                 if ("key" in card) {
                   const metric = platformMetricMap.get(card.key);
@@ -439,40 +437,44 @@ export default function AnalyticsPage() {
               })}
             </div>
 
-            <OpsCommandRead
-              eyebrow="Command read"
-              title={analyticsCommandRead.title}
-              description={analyticsCommandRead.description}
-              now={analyticsCommandRead.now}
-              next={analyticsCommandRead.next}
-              watch={analyticsCommandRead.watch}
-              action={<AnalyticsViewSwitch value={analyticsView} onChange={setAnalyticsView} />}
-              rail={
-                <OpsPanel
-                  eyebrow="Snapshot route"
-                  title={summaryError ? "Outcome snapshots are warming up" : "Snapshot route is healthy"}
-                  description={
-                    summaryError
-                      ? "Live portal data still renders. The snapshot layer should stay secondary until the metric job catches up."
-                      : "Snapshot-backed outcomes are available for this analytics read."
-                  }
-                >
-                  <div className="space-y-3">
-                    <OpsStatusPill tone={summaryError ? "warning" : "default"}>
-                      {summaryError ? "snapshot job pending" : "snapshot route ready"}
-                    </OpsStatusPill>
-                    {summaryError ? (
-                      <p className="text-[12px] leading-5 text-sub">{summaryError}</p>
-                    ) : null}
-                    <div className="flex flex-wrap gap-2 border-t border-white/[0.025] pt-3">
-                      <SoftRouteLink href="/overview" label="Overview" />
-                      <SoftRouteLink href="/analytics/engagement" label="Engagement" />
-                      <SoftRouteLink href="/analytics/rewards" label="Rewards" />
+            <div className="order-1">
+              <OpsCommandRead
+                eyebrow="Command read"
+                title={analyticsCommandRead.title}
+                description={analyticsCommandRead.description}
+                now={analyticsCommandRead.now}
+                next={analyticsCommandRead.next}
+                watch={analyticsCommandRead.watch}
+                action={<AnalyticsViewSwitch value={analyticsView} onChange={setAnalyticsView} />}
+                rail={
+                  <OpsPanel
+                    eyebrow="Snapshot route"
+                    title={
+                      summaryError ? "Outcome snapshots are warming up" : "Snapshot route is healthy"
+                    }
+                    description={
+                      summaryError
+                        ? "Live portal data still renders. The snapshot layer should stay secondary until the metric job catches up."
+                        : "Snapshot-backed outcomes are available for this analytics read."
+                    }
+                  >
+                    <div className="space-y-3">
+                      <OpsStatusPill tone={summaryError ? "warning" : "default"}>
+                        {summaryError ? "snapshot job pending" : "snapshot route ready"}
+                      </OpsStatusPill>
+                      {summaryError ? (
+                        <p className="text-[12px] leading-5 text-sub">{summaryError}</p>
+                      ) : null}
+                      <div className="flex flex-wrap gap-2 border-t border-white/[0.025] pt-3">
+                        <SoftRouteLink href="/overview" label="Overview" />
+                        <SoftRouteLink href="/analytics/engagement" label="Engagement" />
+                        <SoftRouteLink href="/analytics/rewards" label="Rewards" />
+                      </div>
                     </div>
-                  </div>
-                </OpsPanel>
-              }
-            />
+                  </OpsPanel>
+                }
+              />
+            </div>
           </div>
         }
       >
