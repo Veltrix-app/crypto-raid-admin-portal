@@ -92,14 +92,14 @@ export function SuccessTaskPanel({
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Task title"
-          className="rounded-[18px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text outline-none transition focus:border-primary/40"
+          className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text outline-none transition focus:border-primary/40"
         />
         <textarea
           value={summary}
           onChange={(event) => setSummary(event.target.value)}
           placeholder="Task summary"
           rows={3}
-          className="rounded-[18px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/40"
+          className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/40"
         />
         <button
           type="button"
@@ -112,7 +112,7 @@ export function SuccessTaskPanel({
       </div>
 
       {error ? (
-        <div className="mt-4 rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+        <div className="mt-4 rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
           {error}
         </div>
       ) : null}
@@ -120,7 +120,7 @@ export function SuccessTaskPanel({
       <div className="mt-4 space-y-2.5">
         {tasks.length ? (
           tasks.map((task) => (
-            <div key={task.id} className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5">
+            <div key={task.id} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-3.5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-[13px] font-semibold text-text">{task.title}</p>
                 <div className="flex flex-wrap items-center gap-2">
@@ -135,7 +135,7 @@ export function SuccessTaskPanel({
                 <button
                   type="button"
                   onClick={() => void resolveTask(task.id)}
-                  className="mt-3 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/30 hover:bg-primary/15"
+                  className="mt-3 inline-flex items-center rounded-full border border-primary/20 bg-primary/[0.055] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/30 hover:bg-primary/[0.075]"
                 >
                   Resolve
                 </button>
@@ -143,7 +143,7 @@ export function SuccessTaskPanel({
             </div>
           ))
         ) : (
-          <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5 text-[13px] text-sub">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-3.5 text-[13px] text-sub">
             No follow-up tasks yet.
           </div>
         )}

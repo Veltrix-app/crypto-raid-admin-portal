@@ -99,7 +99,7 @@ function usageTone(pressure: PortalBillingUsageItem["pressure"]) {
 
 function UsageRow({ item }: { item: PortalBillingUsageItem }) {
   return (
-    <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+    <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-xl">
           <div className="flex items-center gap-3">
@@ -338,7 +338,7 @@ export default function BusinessAccountDetailPage() {
               <OpsMetricCard label="Open invoices" value={detail.account.openInvoiceCount} emphasis={detail.account.openInvoiceCount > 0 ? "warning" : "default"} />
             </div>
 
-            <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] px-4 py-4 shadow-[0_12px_42px_rgba(0,0,0,0.22)]">
+            <div className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] px-4 py-4 shadow-[0_12px_42px_rgba(0,0,0,0.22)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-xl">
                   <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
@@ -417,20 +417,20 @@ export default function BusinessAccountDetailPage() {
             ) : null}
 
             {actionError ? (
-              <div className="mt-4 rounded-[20px] border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+              <div className="mt-4 rounded-[20px] border border-rose-300/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-100">
                 {actionError}
               </div>
             ) : null}
 
             {detail.account.planId !== "free" ? (
-              <div className="mt-4 border-t border-white/[0.04] pt-4">
+              <div className="mt-4 border-t border-white/[0.026] pt-4">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Safe operator actions</p>
                 <div className="mt-3 flex flex-wrap gap-3">
                   <button
                     type="button"
                     onClick={() => void handleExtendGrace(3)}
                     disabled={graceSaving !== null}
-                    className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center rounded-full border border-white/[0.026] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {graceSaving === 3 ? "Extending..." : "Extend grace 3d"}
                   </button>
@@ -438,7 +438,7 @@ export default function BusinessAccountDetailPage() {
                     type="button"
                     onClick={() => void handleExtendGrace(7)}
                     disabled={graceSaving !== null}
-                    className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center rounded-full border border-white/[0.026] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {graceSaving === 7 ? "Extending..." : "Extend grace 7d"}
                   </button>
@@ -456,7 +456,7 @@ export default function BusinessAccountDetailPage() {
           {detail.workspace.invoices.length ? (
             <div className="space-y-3">
               {detail.workspace.invoices.map((invoice) => (
-                <div key={invoice.id} className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+                <div key={invoice.id} className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-3">
@@ -484,7 +484,7 @@ export default function BusinessAccountDetailPage() {
                           href={invoice.hostedInvoiceUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
+                          className="inline-flex items-center rounded-full border border-white/[0.026] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
                         >
                           Open hosted invoice
                         </a>
@@ -494,7 +494,7 @@ export default function BusinessAccountDetailPage() {
                           href={invoice.invoicePdfUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
+                          className="inline-flex items-center rounded-full border border-white/[0.026] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
                         >
                           Open PDF
                         </a>
@@ -518,7 +518,7 @@ export default function BusinessAccountDetailPage() {
             title="Internal commercial notes"
             description="Keep the business follow-up, upgrade signal and exception context on the account itself."
           >
-            <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+            <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
               <div className="grid gap-3 md:grid-cols-[180px_1fr]">
                 <label className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
                   Note type
@@ -527,7 +527,7 @@ export default function BusinessAccountDetailPage() {
                     onChange={(event) =>
                       setNoteType(event.target.value as AdminCustomerAccountBusinessNote["noteType"])
                     }
-                    className="mt-2 w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-3 py-2 text-sm font-medium text-text outline-none transition focus:border-primary/35"
+                    className="mt-2 w-full rounded-2xl border border-white/[0.026] bg-white/[0.014] px-3 py-2 text-sm font-medium text-text outline-none transition focus:border-primary/35"
                   >
                     {noteTypeOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -543,7 +543,7 @@ export default function BusinessAccountDetailPage() {
                     value={noteTitle}
                     onChange={(event) => setNoteTitle(event.target.value)}
                     placeholder="What should the next operator know?"
-                    className="mt-2 w-full rounded-2xl border border-white/[0.04] bg-white/[0.02] px-3 py-2 text-sm text-text outline-none transition focus:border-primary/35"
+                    className="mt-2 w-full rounded-2xl border border-white/[0.026] bg-white/[0.014] px-3 py-2 text-sm text-text outline-none transition focus:border-primary/35"
                   />
                 </label>
               </div>
@@ -555,7 +555,7 @@ export default function BusinessAccountDetailPage() {
                   onChange={(event) => setNoteBody(event.target.value)}
                   placeholder="Add the commercial context, risk or next move."
                   rows={4}
-                  className="mt-2 w-full rounded-[22px] border border-white/[0.04] bg-white/[0.02] px-3 py-3 text-sm leading-6 text-text outline-none transition focus:border-primary/35"
+                  className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.014] px-3 py-3 text-sm leading-6 text-text outline-none transition focus:border-primary/35"
                 />
               </label>
 
@@ -572,7 +572,7 @@ export default function BusinessAccountDetailPage() {
             <div className="mt-4 space-y-3">
               {detail.businessNotes.length ? (
                 detail.businessNotes.map((note) => (
-                  <div key={note.id} className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+                  <div key={note.id} className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
@@ -606,7 +606,7 @@ export default function BusinessAccountDetailPage() {
             {detail.billingEvents.length ? (
               <div className="space-y-3">
                 {detail.billingEvents.map((event) => (
-                  <div key={event.id} className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+                  <div key={event.id} className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">

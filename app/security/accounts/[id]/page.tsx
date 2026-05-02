@@ -201,7 +201,7 @@ export default function SecurityAccountDetailPage() {
               <OpsMetricCard label="Sessions" value={detail.sessions.length} emphasis={detail.sessions.length > 0 ? "primary" : "default"} />
             </div>
 
-            <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] px-4 py-4 shadow-[0_12px_42px_rgba(0,0,0,0.22)]">
+            <div className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(18,24,36,0.84),rgba(12,16,24,0.92))] px-4 py-4 shadow-[0_12px_42px_rgba(0,0,0,0.22)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-xl">
                   <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
@@ -236,7 +236,7 @@ export default function SecurityAccountDetailPage() {
             {detail.requests.length ? (
               <div className="space-y-3">
                 {detail.requests.map((request) => (
-                  <div key={request.id} className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+                  <div key={request.id} className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="max-w-3xl">
                         <p className="text-sm font-bold text-text">

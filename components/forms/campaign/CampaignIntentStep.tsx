@@ -36,10 +36,10 @@ export default function CampaignIntentStep({
                 key={option.id}
                 type="button"
                 onClick={() => onIntentChange(option.id)}
-                className={`rounded-[24px] border p-4 text-left transition ${
+                className={`rounded-[18px] border p-4 text-left transition ${
                   active
                     ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))]"
-                    : "border-line bg-card2 hover:border-primary/40"
+                    : "border-white/[0.028] bg-white/[0.014] hover:border-primary/40"
                 }`}
               >
                 <p className="text-sm font-bold text-text">{option.label}</p>
@@ -63,10 +63,10 @@ export default function CampaignIntentStep({
                 key={option.id}
                 type="button"
                 onClick={() => onAudienceChange(option.id)}
-                className={`rounded-[24px] border p-4 text-left transition ${
+                className={`rounded-[18px] border p-4 text-left transition ${
                   active
                     ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))]"
-                    : "border-line bg-card2 hover:border-primary/40"
+                    : "border-white/[0.028] bg-white/[0.014] hover:border-primary/40"
                 }`}
               >
                 <p className="text-sm font-bold text-text">{option.label}</p>

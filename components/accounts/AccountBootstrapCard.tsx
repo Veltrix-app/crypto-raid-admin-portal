@@ -60,12 +60,12 @@ export default function AccountBootstrapCard() {
         <input
           value={workspaceName}
           onChange={(event) => setWorkspaceName(event.target.value)}
-          className="w-full rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+          className="w-full rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
           placeholder="Founders workspace"
         />
 
         {error ? (
-          <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          <div className="rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
             {error}
           </div>
         ) : null}
@@ -81,7 +81,7 @@ export default function AccountBootstrapCard() {
             {loading ? "Creating workspace..." : "Create workspace"}
           </button>
 
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.04] bg-white/[0.02] px-4 py-2.5 text-sm font-semibold text-sub">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.026] bg-white/[0.014] px-4 py-2.5 text-sm font-semibold text-sub">
             <Building2 size={16} />
             Creates owner membership and onboarding state
           </div>

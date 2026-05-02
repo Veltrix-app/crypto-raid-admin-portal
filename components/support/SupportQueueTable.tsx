@@ -144,11 +144,11 @@ export function SupportQueueTable({
 
       <div className="mt-5 space-y-3">
         {loading ? (
-          <div className="rounded-[24px] border border-line bg-card2 px-5 py-6 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-6 text-sm text-sub">
             Loading support queue...
           </div>
         ) : tickets.length === 0 ? (
-          <div className="rounded-[24px] border border-line bg-card2 px-5 py-6 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-6 text-sm text-sub">
             No support tickets match the current queue filters.
           </div>
         ) : (
@@ -156,7 +156,7 @@ export function SupportQueueTable({
             <Link
               key={ticket.id}
               href={`/support/tickets/${ticket.id}`}
-              className="block rounded-[24px] border border-line bg-card2 p-5 transition hover:border-primary/30 hover:bg-primary/8"
+              className="block rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5 transition hover:border-primary/30 hover:bg-primary/8"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-3xl">

@@ -262,7 +262,7 @@ function PlanCard({
             className={`rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] transition ${
               isNext
                 ? "bg-primary text-black hover:brightness-105"
-                : "border border-white/[0.04] text-sub hover:border-white/[0.08] hover:text-text"
+                : "border border-white/[0.026] text-sub hover:border-white/[0.045] hover:text-text"
             }`}
           >
             {plan.isEnterprise ? "Contact" : isNext ? "Upgrade" : "Review"}
@@ -305,7 +305,7 @@ function BillingUpgradeHero({
   const cta = nextPlan ? (nextPlan.isEnterprise ? "Talk to sales" : "Upgrade now") : "View plans";
 
   return (
-    <section className="overflow-hidden rounded-[22px] border border-white/[0.028] bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.08),transparent_24%),linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.99))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.2)]">
+    <section className="overflow-hidden rounded-[18px] border border-white/[0.028] bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.08),transparent_24%),linear-gradient(180deg,rgba(11,14,20,0.99),rgba(7,9,14,0.99))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.2)]">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-stretch">
         <div>
           <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary/90">
@@ -329,7 +329,7 @@ function BillingUpgradeHero({
             </a>
             <a
               href={workspace.pricingUrl}
-              className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-[12px] font-bold text-sub transition hover:border-white/[0.08] hover:text-text"
+              className="inline-flex items-center rounded-full border border-white/[0.026] px-4 py-2 text-[12px] font-bold text-sub transition hover:border-white/[0.045] hover:text-text"
             >
               Compare plans
             </a>
@@ -515,7 +515,7 @@ function BillingOpsDiagnostics({
                           href={invoice.hostedInvoiceUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+                          className="inline-flex items-center rounded-full border border-white/[0.026] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.045] hover:text-text"
                         >
                           Open hosted invoice
                         </a>
@@ -525,7 +525,7 @@ function BillingOpsDiagnostics({
                           href={invoice.invoicePdfUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center rounded-full border border-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+                          className="inline-flex items-center rounded-full border border-white/[0.026] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.045] hover:text-text"
                         >
                           Open PDF
                         </a>

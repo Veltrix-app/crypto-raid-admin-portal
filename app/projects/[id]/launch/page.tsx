@@ -385,7 +385,7 @@ function ProjectLaunchContent() {
           action={
             <Link
               href="/projects"
-              className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm font-bold text-text"
+              className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] px-4 py-3 text-sm font-bold text-text"
             >
               Back to projects
             </Link>
@@ -428,7 +428,7 @@ function ProjectLaunchContent() {
             action={
               <Link
                 href={`/projects/${project.id}`}
-                className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 text-sm font-bold text-text"
+                className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] px-4 py-3 text-sm font-bold text-text"
               >
                 Back to project overview
               </Link>

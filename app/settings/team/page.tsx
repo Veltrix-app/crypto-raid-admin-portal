@@ -122,7 +122,7 @@ export default function SettingsTeamPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Name"
-                  className="rounded-[20px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 outline-none transition focus:border-primary/40"
+                  className="rounded-[20px] border border-white/[0.026] bg-white/[0.016] px-4 py-3 outline-none transition focus:border-primary/40"
                   required
                 />
                 <input
@@ -130,13 +130,13 @@ export default function SettingsTeamPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
-                  className="rounded-[20px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 outline-none transition focus:border-primary/40"
+                  className="rounded-[20px] border border-white/[0.026] bg-white/[0.016] px-4 py-3 outline-none transition focus:border-primary/40"
                   required
                 />
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as AdminTeamMember["role"])}
-                  className="rounded-[20px] border border-white/[0.04] bg-white/[0.025] px-4 py-3 outline-none transition focus:border-primary/40"
+                  className="rounded-[20px] border border-white/[0.026] bg-white/[0.016] px-4 py-3 outline-none transition focus:border-primary/40"
                 >
                   {ROLE_OPTIONS.filter((option) => canAssignOwner || option !== "owner").map((option) => (
                     <option key={option} value={option}>
@@ -149,7 +149,7 @@ export default function SettingsTeamPage() {
                 </button>
               </form>
             ) : (
-              <div className="rounded-[22px] border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-200">
+              <div className="rounded-[18px] border border-amber-500/25 bg-amber-500/[0.055] p-4 text-sm text-amber-200">
                 Your current role is view-only for team settings. Owners and admins can invite or
                 update members.
               </div>
@@ -190,7 +190,7 @@ export default function SettingsTeamPage() {
         >
           <div className="grid gap-3 md:grid-cols-4">
             {roleBreakdown.map((item) => (
-              <div key={item.role} className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+              <div key={item.role} className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{item.role}</p>
                 <p className="mt-2 text-[1.45rem] font-extrabold capitalize text-text">{item.count}</p>
               </div>
@@ -232,7 +232,7 @@ function RoleGuideCard({
   description: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+    <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-bold capitalize text-text">{role}</p>
         <OpsStatusPill tone={role === "owner" ? "warning" : role === "reviewer" ? "success" : "default"}>
@@ -268,7 +268,7 @@ function TeamSection({
     <OpsPanel eyebrow="Team lane" title={title} description={subtitle}>
       <div className="space-y-4">
         {members.map((member) => (
-          <div key={member.id} className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] p-5">
+          <div key={member.id} className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h3 className="text-lg font-extrabold text-text">{member.name}</h3>
@@ -291,7 +291,7 @@ function TeamSection({
                         status: member.status,
                       })
                     }
-                    className="rounded-[18px] border border-white/[0.04] bg-white/[0.02] px-4 py-3 outline-none"
+                    className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] px-4 py-3 outline-none"
                   >
                     {ROLE_OPTIONS.filter((option) => canAssignOwner || option !== "owner").map((option) => (
                       <option key={option} value={option}>
@@ -309,7 +309,7 @@ function TeamSection({
                         status: e.target.value as AdminTeamMember["status"],
                       })
                     }
-                    className="rounded-[18px] border border-white/[0.04] bg-white/[0.02] px-4 py-3 outline-none"
+                    className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] px-4 py-3 outline-none"
                   >
                     {STATUS_OPTIONS.map((option) => (
                       <option key={option} value={option}>

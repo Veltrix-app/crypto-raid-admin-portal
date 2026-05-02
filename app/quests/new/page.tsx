@@ -53,7 +53,7 @@ function NewQuestPageContent() {
       >
         <div className="space-y-4">
           {entrySourceLabel ? (
-            <div className="rounded-[16px] border border-primary/16 bg-primary/10 p-3.5 text-[12px] leading-5 text-primary">
+            <div className="rounded-[16px] border border-primary/16 bg-primary/[0.055] p-3.5 text-[12px] leading-5 text-primary">
               <span className="font-semibold text-white">{entrySourceLabel}</span> handed this quest into the studio with project context already loaded.
               {returnHref ? (
                 <>
@@ -67,7 +67,7 @@ function NewQuestPageContent() {
             </div>
           ) : null}
 
-          <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5 text-[12px] leading-5 text-sub">
+          <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5 text-[12px] leading-5 text-sub">
             This studio now keeps the member-facing preview and quest watchlist inside the builder
             itself, so you can stay focused on one decision at a time instead of scanning side
             panels.

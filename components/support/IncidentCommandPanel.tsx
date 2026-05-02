@@ -96,11 +96,11 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
         description="Declare, update and resolve service incidents from one bounded command surface with both public and internal timelines."
       >
         {loading ? (
-          <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-4 text-[13px] text-sub">
             Loading incident command...
           </div>
         ) : error ? (
-          <div className="rounded-[20px] border border-rose-400/20 bg-rose-500/10 px-3.5 py-4 text-[13px] text-rose-200">
+          <div className="rounded-[20px] border border-rose-400/20 bg-rose-500/[0.055] px-3.5 py-4 text-[13px] text-rose-200">
             {error}
           </div>
         ) : incident ? (
@@ -112,7 +112,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
               <OpsMetricCard label="Updates" value={incident.updates.length} />
             </div>
 
-            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+            <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] p-4">
               <div className="max-w-2xl">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                   Incident command read
@@ -128,7 +128,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-line bg-card2 p-4">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
@@ -177,7 +177,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
 
             <div className="space-y-2.5">
               {incident.updates.map((update) => (
-                <div key={update.id} className="rounded-[20px] border border-line bg-card2 p-3.5">
+                <div key={update.id} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-3.5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-[13px] font-bold text-text">{update.title ?? humanize(update.updateType)}</p>
@@ -194,7 +194,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
             </div>
           </div>
         ) : (
-          <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-4 text-[13px] text-sub">
             Incident not found.
           </div>
         )}
@@ -209,7 +209,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
       description="Use this internal control rail when the issue is broader than one ticket and needs a public status timeline."
     >
       {error ? (
-        <div className="rounded-[20px] border border-rose-400/20 bg-rose-500/10 px-3.5 py-2.5 text-[13px] text-rose-200">
+        <div className="rounded-[20px] border border-rose-400/20 bg-rose-500/[0.055] px-3.5 py-2.5 text-[13px] text-rose-200">
           {error}
         </div>
       ) : null}
@@ -252,14 +252,14 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
               setBusy(false);
             }
           }}
-          className="space-y-3.5 rounded-[22px] border border-line bg-card2 p-4"
+          className="space-y-3.5 rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4"
         >
           <h3 className="text-base font-extrabold text-text">Declare new incident</h3>
 
           <input
             value={createDraft.title}
             onChange={(event) => setCreateDraft((current) => ({ ...current, title: event.target.value }))}
-            className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             placeholder="Incident title"
           />
 
@@ -269,7 +269,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
               onChange={(event) =>
                 setCreateDraft((current) => ({ ...current, componentKey: event.target.value }))
               }
-              className="rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <option value="platform">Platform</option>
               <option value="auth">Authentication</option>
@@ -288,7 +288,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
               onChange={(event) =>
                 setCreateDraft((current) => ({ ...current, severity: event.target.value as AdminServiceIncidentSeverity }))
               }
-              className="rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <option value="minor">Minor</option>
               <option value="major">Major</option>
@@ -300,7 +300,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
               onChange={(event) =>
                 setCreateDraft((current) => ({ ...current, impactScope: event.target.value as AdminServiceIncidentImpactScope }))
               }
-              className="rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <option value="degraded">Degraded</option>
               <option value="partial_outage">Partial outage</option>
@@ -315,7 +315,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
               setCreateDraft((current) => ({ ...current, publicSummary: event.target.value }))
             }
             rows={4}
-            className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             placeholder="Public summary for the status page"
           />
 
@@ -325,14 +325,14 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
               setCreateDraft((current) => ({ ...current, internalSummary: event.target.value }))
             }
             rows={4}
-            className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             placeholder="Internal summary for operators"
           />
 
           <button
             type="submit"
             disabled={busy}
-            className="rounded-full border border-primary/35 bg-primary/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full border border-primary/35 bg-primary/[0.075] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {busy ? "Declaring..." : "Declare incident"}
           </button>
@@ -340,11 +340,11 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
 
         <div className="space-y-2.5">
           {loading ? (
-            <div className="rounded-[24px] border border-line bg-card2 px-5 py-6 text-sm text-sub">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-6 text-sm text-sub">
               Loading incidents...
             </div>
           ) : incidents.length === 0 ? (
-            <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
+            <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-4 text-[13px] text-sub">
               No incidents have been declared yet.
             </div>
           ) : (
@@ -352,7 +352,7 @@ export function IncidentCommandPanel({ incidentId }: { incidentId?: string }) {
               <Link
                 key={item.id}
                 href={`/support/incidents/${item.id}`}
-                className="block rounded-[22px] border border-line bg-card2 p-4 transition hover:border-primary/30 hover:bg-primary/8"
+                className="block rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4 transition hover:border-primary/30 hover:bg-primary/8"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>

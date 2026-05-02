@@ -160,7 +160,7 @@ export function SuccessAccountDetail({
               />
             </div>
           ) : (
-            <div className="rounded-[22px] border border-line bg-card2 px-4 py-4 text-sm text-sub">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-4 py-4 text-sm text-sub">
               No linked member activation state found for the primary owner yet.
             </div>
           )}
@@ -180,14 +180,14 @@ export function SuccessAccountDetail({
               value={noteTitle}
               onChange={(event) => setNoteTitle(event.target.value)}
               placeholder="Note title"
-              className="rounded-[18px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text outline-none transition focus:border-primary/40"
+              className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text outline-none transition focus:border-primary/40"
             />
             <textarea
               value={noteBody}
               onChange={(event) => setNoteBody(event.target.value)}
               placeholder="What matters about this account right now?"
               rows={3}
-              className="rounded-[18px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/40"
+              className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/40"
             />
             <button
               type="button"
@@ -200,7 +200,7 @@ export function SuccessAccountDetail({
           </div>
 
           {error ? (
-            <div className="mt-4 rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+            <div className="mt-4 rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
               {error}
             </div>
           ) : null}
@@ -208,7 +208,7 @@ export function SuccessAccountDetail({
           <div className="mt-4 space-y-2.5">
             {detail.notes.length ? (
               detail.notes.map((note) => (
-                <div key={note.id} className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5">
+                <div key={note.id} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-3.5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-[13px] font-semibold text-text">{note.title}</p>
                     <OpsStatusPill>{humanizeSuccessValue(note.noteType)}</OpsStatusPill>
@@ -217,7 +217,7 @@ export function SuccessAccountDetail({
                 </div>
               ))
             ) : (
-              <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5 text-[13px] text-sub">
+              <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-3.5 text-[13px] text-sub">
                 No internal CS notes yet.
               </div>
             )}

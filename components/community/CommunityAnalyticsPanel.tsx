@@ -94,7 +94,7 @@ export function CommunityAnalyticsPanel({
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
-          <div className="rounded-[20px] border border-line bg-card2 p-4">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Health rollups</p>
@@ -115,7 +115,7 @@ export function CommunityAnalyticsPanel({
                 healthRollups.map((rollup) => (
                   <div
                     key={rollup.key}
-                    className="rounded-[16px] border border-line bg-card px-3.5 py-3.5"
+                    className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -139,14 +139,14 @@ export function CommunityAnalyticsPanel({
                   </div>
                 ))
               ) : (
-                <div className="rounded-[16px] border border-dashed border-line bg-card px-3.5 py-4 text-sm text-sub">
+                <div className="rounded-[16px] border border-dashed border-white/[0.026] bg-white/[0.01] px-3.5 py-4 text-sm text-sub">
                   Health rollups will appear here as soon as the Phase 3 snapshot refresh runs.
                 </div>
               )}
             </div>
           </div>
 
-          <div className="rounded-[20px] border border-line bg-card2 p-4">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-4">
             <p className="text-sm font-bold text-text">Segment balance</p>
             <p className="mt-2 text-sm text-sub">
               The community machine gets healthier when active and high-trust lanes outgrow
@@ -154,7 +154,7 @@ export function CommunityAnalyticsPanel({
             </p>
 
             <div className="mt-3.5 space-y-2.5">
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Active contributor rail
                 </p>
@@ -164,7 +164,7 @@ export function CommunityAnalyticsPanel({
                   mission pressure.
                 </p>
               </div>
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   High-trust anchor
                 </p>
@@ -173,7 +173,7 @@ export function CommunityAnalyticsPanel({
                   Trusted seats that can hold launch, leaderboard and reward quality together.
                 </p>
               </div>
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Risk and retention drag
                 </p>

@@ -301,7 +301,7 @@ export default function ClaimsPage() {
               />
             </div>
 
-            <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,17,24,0.96),rgba(9,12,18,0.96))] p-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
+            <div className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,17,24,0.96),rgba(9,12,18,0.96))] p-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-2xl">
                   <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -351,7 +351,7 @@ export default function ClaimsPage() {
                   />
                 </div>
 
-                <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3">
+                <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3">
                   <div className="flex flex-wrap gap-2">
                     <OpsStatusPill tone="default">{activeProjectName}</OpsStatusPill>
                     <OpsStatusPill tone={mode === "incidents" || mode === "disputes" ? "warning" : "success"}>
@@ -390,7 +390,7 @@ export default function ClaimsPage() {
             ariaLabel="Search payout queue"
             name="payout-search"
           />
-          <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-[12px] text-sub md:col-span-2">
+          <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 text-[12px] text-sub md:col-span-2">
             {loadError || "Every payout action writes both a case timeline event and a broader audit record."}
           </div>
         </OpsFilterBar>
@@ -443,7 +443,7 @@ export default function ClaimsPage() {
         >
           <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] xl:items-start">
             <div className="space-y-4">
-              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-3.5 py-3.5">
                 <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
                   Project ops incidents
                 </p>
@@ -468,7 +468,7 @@ export default function ClaimsPage() {
               />
             </div>
             <div className="space-y-4">
-              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-3.5 py-3.5">
                 <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
                   Project overrides
                 </p>
@@ -532,7 +532,7 @@ function ClaimsSignalCard({
   tone?: "default" | "warning";
 }) {
   return (
-    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3">
+    <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3">
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className={`mt-2 text-[0.98rem] font-semibold ${tone === "warning" ? "text-amber-300" : "text-text"}`}>
         {value}

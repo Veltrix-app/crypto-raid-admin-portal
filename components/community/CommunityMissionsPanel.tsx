@@ -91,9 +91,9 @@ export function CommunityMissionsPanel({
           <OpsMetricCard label="Mission digest" value={settings.missionDigestEnabled ? "Armed" : "Parked"} sub="Whether the daily mission summary is enabled." emphasis={settings.missionDigestEnabled ? "primary" : "default"} />
         </div>
 
-        <div className="rounded-[24px] border border-line bg-card2 p-5">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
           <div className="grid gap-3 md:grid-cols-3">
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Enable mission digest</span>
               <input
                 type="checkbox"
@@ -107,7 +107,7 @@ export function CommunityMissionsPanel({
               />
             </label>
 
-            <label className="rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
                 Digest cadence
               </span>
@@ -130,7 +130,7 @@ export function CommunityMissionsPanel({
               </select>
             </label>
 
-            <label className="rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
                 Delivery target
               </span>
@@ -165,7 +165,7 @@ export function CommunityMissionsPanel({
             <button
               onClick={() => onRunMissionAction("digest")}
               disabled={runningMissionAction === "digest"}
-              className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningMissionAction === "digest" ? "Posting digest..." : "Send mission digest now"}
             </button>
@@ -175,8 +175,8 @@ export function CommunityMissionsPanel({
             <p
               className={`mt-4 rounded-[18px] border px-4 py-3 text-sm leading-6 ${
                 missionNoticeTone === "error"
-                  ? "border-rose-400/30 bg-rose-500/10 text-rose-200"
-                  : "border-primary/20 bg-primary/10 text-primary"
+                  ? "border-rose-400/30 bg-rose-500/[0.055] text-rose-200"
+                  : "border-primary/20 bg-primary/[0.055] text-primary"
               }`}
             >
               {missionNotice}
@@ -185,7 +185,7 @@ export function CommunityMissionsPanel({
         </div>
 
         <div className="grid gap-4 xl:grid-cols-3">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-bold text-text">Featured campaigns</p>
               <OpsStatusPill tone={campaigns.length > 0 ? "success" : "default"}>
@@ -195,7 +195,7 @@ export function CommunityMissionsPanel({
             <select
               value={selectedCampaignId}
               onChange={(event) => setSelectedCampaignId(event.target.value)}
-              className="mt-4 w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none"
+              className="mt-4 w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none"
             >
               {campaigns.length > 0 ? (
                 campaigns.map((campaign) => (
@@ -210,13 +210,13 @@ export function CommunityMissionsPanel({
             <button
               onClick={() => selectedCampaignId && onRunMissionAction("campaign", selectedCampaignId)}
               disabled={!selectedCampaignId || runningMissionAction === "campaign"}
-              className="mt-4 w-full rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-4 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningMissionAction === "campaign" ? "Pushing campaign..." : "Push selected campaign"}
             </button>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-bold text-text">Live quests</p>
               <OpsStatusPill tone={quests.length > 0 ? "success" : "default"}>
@@ -226,7 +226,7 @@ export function CommunityMissionsPanel({
             <select
               value={selectedQuestId}
               onChange={(event) => setSelectedQuestId(event.target.value)}
-              className="mt-4 w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none"
+              className="mt-4 w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none"
             >
               {quests.length > 0 ? (
                 quests.map((quest) => (
@@ -241,13 +241,13 @@ export function CommunityMissionsPanel({
             <button
               onClick={() => selectedQuestId && onRunMissionAction("quest", selectedQuestId)}
               disabled={!selectedQuestId || runningMissionAction === "quest"}
-              className="mt-4 w-full rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-4 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningMissionAction === "quest" ? "Pushing quest..." : "Push selected quest"}
             </button>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-bold text-text">Reward nudges</p>
               <OpsStatusPill tone={rewards.length > 0 ? "success" : "default"}>
@@ -257,7 +257,7 @@ export function CommunityMissionsPanel({
             <select
               value={selectedRewardId}
               onChange={(event) => setSelectedRewardId(event.target.value)}
-              className="mt-4 w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none"
+              className="mt-4 w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none"
             >
               {rewards.length > 0 ? (
                 rewards.map((reward) => (
@@ -272,7 +272,7 @@ export function CommunityMissionsPanel({
             <button
               onClick={() => selectedRewardId && onRunMissionAction("reward", selectedRewardId)}
               disabled={!selectedRewardId || runningMissionAction === "reward"}
-              className="mt-4 w-full rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-4 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningMissionAction === "reward" ? "Pushing reward..." : "Push selected reward"}
             </button>

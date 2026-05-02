@@ -15,7 +15,7 @@ export default function CampaignLaunchPreview({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
+      <div className="overflow-hidden rounded-[18px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-2xl">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -30,7 +30,7 @@ export default function CampaignLaunchPreview({
             </p>
           </div>
 
-          <div className="rounded-[16px] border border-white/8 bg-black/20 px-3.5 py-2.5">
+          <div className="rounded-[16px] border border-white/[0.032] bg-black/20 px-3.5 py-2.5">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
               Launch posture
             </p>
@@ -40,7 +40,7 @@ export default function CampaignLaunchPreview({
           </div>
         </div>
 
-        <div className="mt-4 rounded-[18px] border border-white/8 bg-black/20 px-3.5 py-3.5">
+        <div className="mt-4 rounded-[18px] border border-white/[0.032] bg-black/20 px-3.5 py-3.5">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
               Launch pressure
@@ -68,7 +68,7 @@ export default function CampaignLaunchPreview({
         {preview.readiness.map((item) => (
           <div
             key={item.label}
-            className="rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-3.5 py-3.5"
+            className="rounded-[18px] border border-white/[0.032] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-3.5 py-3.5"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -83,7 +83,7 @@ export default function CampaignLaunchPreview({
               </div>
               <span
                 className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
-                  item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                  item.complete ? "bg-primary/[0.075] text-primary" : "bg-amber-500/[0.075] text-amber-300"
                 }`}
               >
                 {item.complete ? "Ready" : "Needs work"}
@@ -105,7 +105,7 @@ function PreviewStat({
   value: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-3.5">
+    <div className="rounded-[18px] border border-white/[0.032] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-3.5">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-1.5 text-[1.02rem] font-black tracking-[-0.03em] text-text">{value}</p>
     </div>

@@ -59,7 +59,7 @@ export function SecurityAccountDetail({
         {detail.members.length ? (
           <div className="space-y-2.5">
             {detail.members.map((member) => (
-              <div key={member.authUserId} className="rounded-[20px] border border-line bg-card2 p-3.5">
+              <div key={member.authUserId} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-3.5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-[13px] font-bold text-text">{member.email}</p>

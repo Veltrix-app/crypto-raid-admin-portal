@@ -142,23 +142,23 @@ export function SupportSurfaceContextPanel({
   return (
     <OpsPanel eyebrow="Support handoffs" title={title} description={description}>
       {error ? (
-        <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+        <div className="rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
           {error}
         </div>
       ) : null}
 
       <div className="space-y-3">
         {loading ? (
-          <div className="rounded-[22px] border border-line bg-card2 px-4 py-5 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-4 py-5 text-sm text-sub">
             Loading support handoffs...
           </div>
         ) : rows.length === 0 ? (
-          <div className="rounded-[22px] border border-line bg-card2 px-4 py-5 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-4 py-5 text-sm text-sub">
             No support tickets are currently handed into this surface.
           </div>
         ) : (
           rows.map((row) => (
-            <div key={row.handoffId} className="rounded-[22px] border border-line bg-card2 p-4">
+            <div key={row.handoffId} className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="max-w-2xl">
                   <div className="flex flex-wrap items-center gap-2">
@@ -185,14 +185,14 @@ export function SupportSurfaceContextPanel({
                   <div className="mt-3 flex flex-wrap justify-end gap-2">
                     <Link
                       href={`/support/tickets/${row.ticketId}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
+                      className="inline-flex items-center gap-2 rounded-full border border-white/[0.026] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-text"
                     >
                       Open ticket
                     </Link>
                     {row.targetRoute ? (
                       <Link
                         href={row.targetRoute}
-                        className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-primary transition hover:border-primary/45 hover:bg-primary/15"
+                        className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/[0.055] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-primary transition hover:border-primary/45 hover:bg-primary/[0.075]"
                       >
                         Open surface
                         <ArrowUpRight size={12} />

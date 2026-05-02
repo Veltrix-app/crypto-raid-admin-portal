@@ -30,14 +30,14 @@ export function LeadNotesPanel({
       title="Internal commercial notes"
       description="Keep qualification context, buyer concerns and enterprise edges with the lead."
     >
-      <div className="rounded-[20px] border border-line bg-card2 p-3.5">
+      <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-3.5">
         <div className="grid gap-3 md:grid-cols-[180px_1fr]">
           <label className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
             Note type
             <select
               value={noteType}
               onChange={(event) => setNoteType(event.target.value)}
-              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
             >
               {commercialNoteTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -51,7 +51,7 @@ export function LeadNotesPanel({
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
               placeholder="What should the next operator know?"
             />
           </label>
@@ -62,7 +62,7 @@ export function LeadNotesPanel({
             value={body}
             onChange={(event) => setBody(event.target.value)}
             rows={3}
-            className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/35"
+            className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/35"
             placeholder="Capture the commercial context or buyer concern."
           />
         </label>
@@ -85,7 +85,7 @@ export function LeadNotesPanel({
       <div className="mt-4 space-y-2.5">
         {notes.length ? (
           notes.map((note) => (
-            <div key={note.id} className="rounded-[20px] border border-line bg-card2 p-3.5">
+            <div key={note.id} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-3.5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export function LeadNotesPanel({
             </div>
           ))
         ) : (
-          <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5 text-[13px] text-sub">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-3.5 text-[13px] text-sub">
             No notes yet.
           </div>
         )}

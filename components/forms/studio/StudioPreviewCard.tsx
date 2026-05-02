@@ -17,7 +17,7 @@ export default function StudioPreviewCard({
 }) {
   return (
     <div
-      className={`relative self-start overflow-hidden rounded-[18px] border border-white/[0.04] bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.045),transparent_24%),linear-gradient(180deg,rgba(13,17,24,0.97),rgba(8,10,15,0.95))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)] ${className}`.trim()}
+      className={`relative self-start overflow-hidden rounded-[18px] border border-white/[0.026] bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.045),transparent_24%),linear-gradient(180deg,rgba(13,17,24,0.97),rgba(8,10,15,0.95))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)] ${className}`.trim()}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]" />
 
@@ -33,7 +33,7 @@ export default function StudioPreviewCard({
         ) : null}
       </div>
 
-      <div className="mt-3.5 border-t border-white/[0.04] pt-3.5">{children}</div>
+      <div className="mt-3.5 border-t border-white/[0.026] pt-3.5">{children}</div>
     </div>
   );
 }

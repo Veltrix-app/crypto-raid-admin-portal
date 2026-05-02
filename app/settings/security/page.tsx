@@ -139,13 +139,13 @@ function TwoFactorSetupPanel({
             </button>
           ) : (
             <div className="grid gap-4 xl:items-start xl:grid-cols-[280px_minmax(0,1fr)]">
-              <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+              <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
                 {qrImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={qrImageUrl} alt="Veltrix TOTP QR code" className="w-full rounded-[18px] bg-white p-3" />
                 ) : null}
               </div>
-              <div className="space-y-4 rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+              <div className="space-y-4 rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
                 <p className="text-sm leading-6 text-sub">
                   Scan this QR code in your authenticator app, or use the manual secret below.
                 </p>
@@ -157,7 +157,7 @@ function TwoFactorSetupPanel({
                   value={verificationCode}
                   onChange={(event) => setVerificationCode(event.target.value)}
                   placeholder="Enter the 6-digit code"
-                  className="w-full rounded-[18px] border border-white/[0.04] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -344,13 +344,13 @@ function SettingsSecurityContent() {
       ]}
     >
       {feedback ? (
-        <div className="rounded-[22px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+        <div className="rounded-[18px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
           {feedback}
         </div>
       ) : null}
 
       {error ? (
-        <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+        <div className="rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
           {error}
         </div>
       ) : null}

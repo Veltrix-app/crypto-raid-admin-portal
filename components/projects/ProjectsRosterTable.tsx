@@ -15,15 +15,15 @@ export default function ProjectsRosterTable({
 }: ProjectsRosterTableProps) {
   if (projects.length === 0) {
     return (
-      <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.018] px-4 py-5 text-sm text-sub">
+      <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.018] px-4 py-5 text-sm text-sub">
         {emptyState}
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]">
-      <div className="hidden grid-cols-[minmax(0,1.8fr)_120px_220px_140px_150px] gap-3 border-b border-white/[0.04] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-sub lg:grid">
+    <div className="overflow-hidden rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]">
+      <div className="hidden grid-cols-[minmax(0,1.8fr)_120px_220px_140px_150px] gap-3 border-b border-white/[0.026] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-sub lg:grid">
         <span>Workspace</span>
         <span>Chain</span>
         <span>State</span>
@@ -36,7 +36,7 @@ export default function ProjectsRosterTable({
           <article key={project.id} className="px-4 py-3">
             <div className="hidden items-center gap-3 lg:grid lg:grid-cols-[minmax(0,1.8fr)_120px_220px_140px_150px]">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] border border-white/[0.05] bg-white/[0.025] text-[0.95rem]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] border border-white/[0.032] bg-white/[0.016] text-[0.95rem]">
                   {project.logo}
                 </span>
                 <div className="min-w-0">
@@ -102,7 +102,7 @@ export default function ProjectsRosterTable({
             <div className="space-y-3 lg:hidden">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] border border-white/[0.05] bg-white/[0.025] text-[0.95rem]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] border border-white/[0.032] bg-white/[0.016] text-[0.95rem]">
                     {project.logo}
                   </span>
                   <div className="min-w-0">
@@ -146,7 +146,7 @@ export default function ProjectsRosterTable({
                 <ProjectMetric label="Campaigns" value={project.campaigns.toLocaleString()} />
               </div>
 
-              <div className="flex items-center justify-between border-t border-white/[0.04] pt-2.5">
+              <div className="flex items-center justify-between border-t border-white/[0.026] pt-2.5">
                 <Link href={`/projects/${project.id}`} className="text-[12px] font-semibold text-primary">
                   Workspace
                 </Link>
@@ -164,7 +164,7 @@ export default function ProjectsRosterTable({
 
 function ProjectMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.018] px-2.5 py-2">
+    <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.018] px-2.5 py-2">
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-1 text-[12px] font-semibold text-text">{value}</p>
     </div>

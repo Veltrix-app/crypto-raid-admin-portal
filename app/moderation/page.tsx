@@ -327,7 +327,7 @@ export default function ModerationPage() {
             ariaLabel="Search trust queue"
             name="trust-search"
           />
-          <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-[12px] text-sub md:col-span-2">
+          <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 text-[12px] text-sub md:col-span-2">
             {loadError || "All trust actions write both a case timeline event and a broader audit record."}
           </div>
         </OpsFilterBar>
@@ -380,7 +380,7 @@ export default function ModerationPage() {
         >
           <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr] xl:items-start">
             <div className="space-y-4">
-              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-3.5 py-3.5">
                 <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
                   Project ops incidents
                 </p>
@@ -405,7 +405,7 @@ export default function ModerationPage() {
               />
             </div>
             <div className="space-y-4">
-              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-3.5 py-3.5">
                 <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
                   Project overrides
                 </p>
@@ -467,7 +467,7 @@ export default function ModerationPage() {
 
 function ModeCard({ label, body }: { label: string; body: string }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+    <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary">{label}</p>
       <p className="mt-1.5 text-[12px] leading-5 text-sub">{body}</p>
     </div>

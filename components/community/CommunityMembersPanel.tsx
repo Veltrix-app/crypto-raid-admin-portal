@@ -127,7 +127,7 @@ export function CommunityMembersPanel({
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
-          <div className="rounded-[20px] border border-line bg-card2 p-4">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Readiness posture</p>
@@ -142,7 +142,7 @@ export function CommunityMembersPanel({
             </div>
 
             <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Starter lane
                 </p>
@@ -151,7 +151,7 @@ export function CommunityMembersPanel({
                   {analytics.newcomerReadyCount} newcomer seats are already command-ready.
                 </p>
               </div>
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Active rail
                 </p>
@@ -160,7 +160,7 @@ export function CommunityMembersPanel({
                   Ready active contributors who can absorb immediate mission pressure.
                 </p>
               </div>
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Comeback lane
                 </p>
@@ -169,7 +169,7 @@ export function CommunityMembersPanel({
                   {analytics.reactivationReadyCount} comeback seats are already reachable.
                 </p>
               </div>
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   High-trust anchor
                 </p>
@@ -181,7 +181,7 @@ export function CommunityMembersPanel({
             </div>
           </div>
 
-          <div className="rounded-[20px] border border-line bg-card2 p-4">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Quality overlay</p>
@@ -196,7 +196,7 @@ export function CommunityMembersPanel({
             </div>
 
             <div className="mt-3.5 space-y-2.5">
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Watchlist seats
                 </p>
@@ -205,7 +205,7 @@ export function CommunityMembersPanel({
                   {analytics.openFlagCount} open review flags are currently shaping trust posture.
                 </p>
               </div>
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Activation-ready
                 </p>
@@ -214,7 +214,7 @@ export function CommunityMembersPanel({
                   Contributors who are both reachable and wallet-ready right now.
                 </p>
               </div>
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                   Average trust
                 </p>
@@ -230,7 +230,7 @@ export function CommunityMembersPanel({
         <div className="grid gap-3 md:grid-cols-3">
           {primarySignals.length > 0 ? (
             primarySignals.map((signal) => (
-              <div key={signal.key} className="rounded-[16px] border border-line bg-card2 px-3.5 py-3.5">
+              <div key={signal.key} className="rounded-[16px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-bold text-text">{signal.label}</p>
                   <OpsStatusPill
@@ -251,7 +251,7 @@ export function CommunityMembersPanel({
               </div>
             ))
           ) : (
-            <div className="rounded-[16px] border border-dashed border-line bg-card px-3.5 py-4 text-sm text-sub md:col-span-3">
+            <div className="rounded-[16px] border border-dashed border-white/[0.026] bg-white/[0.01] px-3.5 py-4 text-sm text-sub md:col-span-3">
               Community health signals will appear here as soon as the Phase 3 rollups refresh.
             </div>
           )}

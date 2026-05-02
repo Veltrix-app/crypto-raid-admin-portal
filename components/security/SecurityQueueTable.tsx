@@ -23,7 +23,7 @@ export function SecurityQueueTable({
             <Link
               key={account.customerAccountId}
               href={`/security/accounts/${account.customerAccountId}`}
-              className="block rounded-[16px] border border-white/[0.025] bg-white/[0.014] p-3 transition hover:border-white/[0.08]"
+              className="block rounded-[16px] border border-white/[0.025] bg-white/[0.014] p-3 transition hover:border-white/[0.045]"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>

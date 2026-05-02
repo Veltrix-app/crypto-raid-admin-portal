@@ -126,7 +126,7 @@ export function CommunityCohortsPanel({
           />
         </div>
 
-        <div className="rounded-[20px] border border-line bg-card2 p-4">
+        <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">Funnel controls</p>
@@ -146,7 +146,7 @@ export function CommunityCohortsPanel({
           </div>
 
           <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
-            <label className="flex items-center gap-3 rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-sm text-text">
+            <label className="flex items-center gap-3 rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-sm text-text">
               <input
                 type="checkbox"
                 checked={settings.newcomerFunnelEnabled}
@@ -160,7 +160,7 @@ export function CommunityCohortsPanel({
               Enable newcomer starter lane
             </label>
 
-            <label className="flex items-center gap-3 rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-sm text-text">
+            <label className="flex items-center gap-3 rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-sm text-text">
               <input
                 type="checkbox"
                 checked={settings.reactivationFunnelEnabled}
@@ -180,7 +180,7 @@ export function CommunityCohortsPanel({
               type="button"
               onClick={onSaveSettings}
               disabled={savingSettings}
-              className="rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-[13px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {savingSettings ? "Saving funnel settings..." : "Save funnel settings"}
             </button>
@@ -196,7 +196,7 @@ export function CommunityCohortsPanel({
               type="button"
               onClick={() => onRunFunnelAction("reactivation")}
               disabled={runningFunnelAction !== null}
-              className="rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-[13px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningFunnelAction === "reactivation"
                 ? "Pushing comeback wave..."
@@ -208,7 +208,7 @@ export function CommunityCohortsPanel({
             <div
               className={`mt-3.5 rounded-[16px] border px-3.5 py-2.5 text-sm ${
                 funnelNoticeTone === "error"
-                  ? "border-rose-500/30 bg-rose-500/10 text-rose-200"
+                  ? "border-rose-500/30 bg-rose-500/[0.055] text-rose-200"
                   : "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
               }`}
             >
@@ -229,7 +229,7 @@ export function CommunityCohortsPanel({
           ).map(([key, snapshot]) => (
             <div
               key={key}
-              className="rounded-[18px] border border-line bg-card2 p-3.5"
+              className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-3.5"
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-bold text-text">{snapshot?.label ?? "Lane"}</p>
@@ -248,7 +248,7 @@ export function CommunityCohortsPanel({
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
-          <div className="rounded-[20px] border border-line bg-card2 p-4">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-4">
             <p className="text-sm font-bold text-text">Segment pressure</p>
             <p className="mt-2 text-sm text-sub">
               Keep these ratios readable: starter and comeback queues should shrink into the active
@@ -256,7 +256,7 @@ export function CommunityCohortsPanel({
             </p>
 
             <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Starter to active</p>
                   <p className="mt-2 text-[1.02rem] font-black text-text">
                   {summary.newcomers} / {summary.warmingUp + summary.core}
@@ -265,7 +265,7 @@ export function CommunityCohortsPanel({
                   Use this ratio to see whether onboarding pressure is graduating into the active rail.
                 </p>
               </div>
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Trust balance</p>
                   <p className="mt-2 text-[1.02rem] font-black text-text">
                   {summary.highTrust} / {summary.watchlist}
@@ -277,7 +277,7 @@ export function CommunityCohortsPanel({
             </div>
           </div>
 
-          <div className="rounded-[20px] border border-line bg-card2 p-4">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Trust posture</p>
@@ -292,15 +292,15 @@ export function CommunityCohortsPanel({
             </div>
 
             <div className="mt-3.5 space-y-2.5">
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Average trust</p>
                 <p className="mt-2 text-lg font-black text-text">{trust.averageTrust}</p>
               </div>
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Open flags</p>
                 <p className="mt-2 text-lg font-black text-text">{trust.openFlagCount}</p>
               </div>
-              <div className="rounded-[16px] border border-line bg-card px-3.5 py-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Signal readout</p>
                 <p className="mt-2 text-sm leading-5.5 text-sub">
                   {trustSignal?.summary || trust.latestIssue}

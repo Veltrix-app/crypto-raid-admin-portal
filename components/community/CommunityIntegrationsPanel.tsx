@@ -79,7 +79,7 @@ function ProviderPushSettings({
     provider === "discord" ? "Target Discord channel ID" : "Target Telegram chat ID for pushes";
 
   return (
-    <div className="rounded-[24px] border border-line bg-card p-4">
+    <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] p-4">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
         Community Push Settings
       </p>
@@ -94,7 +94,7 @@ function ProviderPushSettings({
                 scopeMode: event.target.value as PushScopeMode,
               }))
             }
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
           >
             <option value="project_only">Only this project</option>
             <option value="selected_projects">Selected projects</option>
@@ -104,14 +104,14 @@ function ProviderPushSettings({
         </label>
 
         {settings.scopeMode === "selected_projects" ? (
-          <div className="space-y-2 rounded-2xl border border-line bg-card2 p-4">
+          <div className="space-y-2 rounded-2xl border border-white/[0.028] bg-white/[0.014] p-4">
             <p className="text-sm font-semibold text-text">Allowed projects</p>
             <div className="grid gap-2">
               {selectableProjects.length > 0 ? (
                 selectableProjects.map((candidate) => (
                   <label
                     key={candidate.id}
-                    className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text"
+                    className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text"
                   >
                     <span>{candidate.name}</span>
                     <input
@@ -138,14 +138,14 @@ function ProviderPushSettings({
         ) : null}
 
         {settings.scopeMode === "selected_campaigns" ? (
-          <div className="space-y-2 rounded-2xl border border-line bg-card2 p-4">
+          <div className="space-y-2 rounded-2xl border border-white/[0.028] bg-white/[0.014] p-4">
             <p className="text-sm font-semibold text-text">Allowed campaigns</p>
             <div className="grid gap-2">
               {campaigns.length > 0 ? (
                 campaigns.map((candidate) => (
                   <label
                     key={candidate.id}
-                    className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text"
+                    className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text"
                   >
                     <span>
                       {candidate.title}
@@ -186,7 +186,7 @@ function ProviderPushSettings({
                 deliveryMode: event.target.value as PushDeliveryMode,
               }))
             }
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
           >
             <option value="broadcast">Broadcast everything that matches</option>
             <option value="priority_only">High-priority only</option>
@@ -204,7 +204,7 @@ function ProviderPushSettings({
             }))
           }
           placeholder={channelPlaceholder}
-          className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+          className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
         />
 
         {provider === "discord" ? (
@@ -217,7 +217,7 @@ function ProviderPushSettings({
               }))
             }
             placeholder="Optional Discord thread ID"
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
           />
         ) : null}
 
@@ -231,7 +231,7 @@ function ProviderPushSettings({
           ].map(([key, label]) => (
             <label
               key={key}
-              className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text"
+              className="flex items-center justify-between rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text"
             >
               <span>{label}</span>
               <input
@@ -249,7 +249,7 @@ function ProviderPushSettings({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text">
+          <label className="flex items-center justify-between rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text">
             <span>Featured only</span>
             <input
               type="checkbox"
@@ -262,7 +262,7 @@ function ProviderPushSettings({
               }
             />
           </label>
-          <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text">
+          <label className="flex items-center justify-between rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text">
             <span>Live only</span>
             <input
               type="checkbox"
@@ -286,7 +286,7 @@ function ProviderPushSettings({
             }))
           }
           placeholder="Minimum XP threshold (optional)"
-          className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+          className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
         />
       </div>
     </div>
@@ -325,7 +325,7 @@ export function CommunityIntegrationsPanel({
       description="Keep provider verification healthy, save the delivery rails for this project and send live test pushes without publishing a quest or raid first."
     >
       <div className="space-y-6">
-        <div className="rounded-[24px] border border-line bg-card2 p-5">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">X follow verification</p>
@@ -340,7 +340,7 @@ export function CommunityIntegrationsPanel({
         </div>
 
         <div className="grid gap-6 xl:grid-cols-2">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Discord community rail</p>
@@ -363,7 +363,7 @@ export function CommunityIntegrationsPanel({
                   }))
                 }
                 placeholder="Discord guild ID"
-                className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
               />
               <input
                 value={discordIntegrationConfig.serverId}
@@ -374,7 +374,7 @@ export function CommunityIntegrationsPanel({
                   }))
                 }
                 placeholder="Optional legacy server ID"
-                className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
               />
 
               <ProviderPushSettings
@@ -397,7 +397,7 @@ export function CommunityIntegrationsPanel({
                 <button
                   onClick={() => onSendTestPush("discord")}
                   disabled={testingIntegration === "discord"}
-                  className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {testingIntegration === "discord" ? "Sending Discord test..." : "Send Discord test push"}
                 </button>
@@ -405,7 +405,7 @@ export function CommunityIntegrationsPanel({
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Telegram community rail</p>
@@ -428,7 +428,7 @@ export function CommunityIntegrationsPanel({
                   }))
                 }
                 placeholder="Telegram chat ID"
-                className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
               />
               <input
                 value={telegramIntegrationConfig.groupId}
@@ -439,7 +439,7 @@ export function CommunityIntegrationsPanel({
                   }))
                 }
                 placeholder="Optional legacy group ID"
-                className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
               />
 
               <ProviderPushSettings
@@ -464,7 +464,7 @@ export function CommunityIntegrationsPanel({
                 <button
                   onClick={() => onSendTestPush("telegram")}
                   disabled={testingIntegration === "telegram"}
-                  className="rounded-2xl border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {testingIntegration === "telegram"
                     ? "Sending Telegram test..."
@@ -483,7 +483,7 @@ export function CommunityIntegrationsPanel({
         ) : null}
 
         {integrationNotice ? (
-          <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">
+          <div className="rounded-2xl border border-primary/20 bg-primary/[0.055] px-4 py-3 text-sm text-primary">
             {integrationNotice}
           </div>
         ) : null}
@@ -492,8 +492,8 @@ export function CommunityIntegrationsPanel({
           <div
             className={`rounded-2xl px-4 py-3 text-sm ${
               integrationTestTone === "error"
-                ? "border border-rose-500/25 bg-rose-500/10 text-rose-200"
-                : "border border-primary/20 bg-primary/10 text-primary"
+                ? "border border-rose-500/25 bg-rose-500/[0.055] text-rose-200"
+                : "border border-primary/20 bg-primary/[0.055] text-primary"
             }`}
           >
             {integrationTestNotice}

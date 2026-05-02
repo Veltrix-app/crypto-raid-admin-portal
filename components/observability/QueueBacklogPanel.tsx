@@ -70,7 +70,7 @@ function QueueTile({
   description: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-black/20 p-5">
+    <div className="rounded-[18px] border border-white/10 bg-black/20 p-5">
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-4 text-3xl font-extrabold tracking-tight text-text">{value}</p>
       <p className="mt-3 text-sm leading-6 text-sub">{description}</p>

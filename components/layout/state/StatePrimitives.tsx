@@ -32,7 +32,7 @@ export function StatePanel({
   actions?: ReactNode;
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-[24px] border p-5 shadow-[0_18px_54px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_62px_rgba(0,0,0,0.24)] ${toneClasses(tone)}`}>
+    <div className={`relative overflow-hidden rounded-[18px] border p-5 shadow-[0_18px_54px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_62px_rgba(0,0,0,0.24)] ${toneClasses(tone)}`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.04),transparent_26%)]" />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3.5">

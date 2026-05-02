@@ -20,7 +20,7 @@ export default function ProjectsOnboardingQueue({
 }: ProjectsOnboardingQueueProps) {
   if (requests.length === 0) {
     return (
-      <div className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-sub">
+      <div className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.014] px-4 py-6 text-sm text-sub">
         No pending onboarding requests right now.
       </div>
     );
@@ -32,7 +32,7 @@ export default function ProjectsOnboardingQueue({
         const busy = runningRequestId === request.id;
 
         return (
-          <div key={request.id} className="rounded-[18px] border border-white/[0.04] bg-white/[0.02] p-4">
+          <div key={request.id} className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-4">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -69,13 +69,13 @@ export default function ProjectsOnboardingQueue({
                     type="button"
                     onClick={() => onReject(request.id)}
                     disabled={busy}
-                    className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2 text-[12px] font-bold text-rose-300 transition disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-xl border border-rose-500/30 bg-rose-500/[0.055] px-3.5 py-2 text-[12px] font-bold text-rose-300 transition disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Reject
                   </button>
                 </div>
               ) : (
-                <div className="rounded-xl border border-line px-4 py-2 text-sm font-semibold text-sub">
+                <div className="rounded-xl border border-white/[0.026] px-4 py-2 text-sm font-semibold text-sub">
                   Awaiting review
                 </div>
               )}

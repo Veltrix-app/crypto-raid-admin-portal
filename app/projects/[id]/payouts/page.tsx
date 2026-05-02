@@ -313,7 +313,7 @@ export default function ProjectPayoutPage() {
         </div>
 
         {loadError ? (
-          <div className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-5 py-5 text-sm text-rose-300">
+          <div className="rounded-[18px] border border-rose-500/30 bg-rose-500/[0.055] px-5 py-5 text-sm text-rose-300">
             {loadError}
           </div>
         ) : null}

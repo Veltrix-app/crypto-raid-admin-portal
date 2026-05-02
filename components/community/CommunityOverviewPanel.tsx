@@ -72,13 +72,13 @@ function StatusCard(props: {
   tone?: "default" | "warning";
 }) {
   return (
-    <div className="rounded-[24px] border border-line bg-card2 p-5">
+    <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
       <div className="flex items-center gap-3">
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-[16px] border ${
             props.tone === "warning"
-              ? "border-amber-400/20 bg-amber-500/10 text-amber-300"
-              : "border-white/10 bg-card text-sub"
+              ? "border-amber-400/20 bg-amber-500/[0.055] text-amber-300"
+              : "border-white/10 bg-white/[0.012] text-sub"
           }`}
         >
           {props.icon}
@@ -156,7 +156,7 @@ export function CommunityOverviewPanel({
         <div className="flex flex-wrap gap-3">
           <Link
             href={`/projects/${projectId}`}
-            className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
+            className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
           >
             Back to project
           </Link>
@@ -171,7 +171,7 @@ export function CommunityOverviewPanel({
     >
       <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
         <div className="grid gap-3">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
@@ -214,7 +214,7 @@ export function CommunityOverviewPanel({
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
               Reach and readiness
             </p>
@@ -255,7 +255,7 @@ export function CommunityOverviewPanel({
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
               Captain and execution health
             </p>
@@ -323,7 +323,7 @@ export function CommunityOverviewPanel({
         </div>
 
         <div className="grid gap-3">
-          <div className="rounded-[24px] border border-primary/20 bg-[linear-gradient(180deg,rgba(186,255,59,0.1),rgba(13,19,29,0.96))] p-5">
+          <div className="rounded-[18px] border border-primary/20 bg-[linear-gradient(180deg,rgba(186,255,59,0.1),rgba(13,19,29,0.96))] p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
@@ -338,26 +338,26 @@ export function CommunityOverviewPanel({
                 </p>
               </div>
               {recommendedPlayActionLabel ? (
-                <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+                <span className="rounded-full border border-primary/20 bg-primary/[0.055] px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
                   {recommendedPlayActionLabel}
                 </span>
               ) : null}
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[18px] border border-white/10 bg-card/70 px-4 py-3">
+              <div className="rounded-[18px] border border-white/10 bg-white/[0.012]/70 px-4 py-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
                   Owner signals
                 </p>
                 <p className="mt-2 text-lg font-bold text-text">{ownerSignalCount}</p>
               </div>
-              <div className="rounded-[18px] border border-white/10 bg-card/70 px-4 py-3">
+              <div className="rounded-[18px] border border-white/10 bg-white/[0.012]/70 px-4 py-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
                   Automation pressure
                 </p>
                 <p className="mt-2 text-lg font-bold text-text">{automationPressureCount}</p>
               </div>
-              <div className="rounded-[18px] border border-white/10 bg-card/70 px-4 py-3">
+              <div className="rounded-[18px] border border-white/10 bg-white/[0.012]/70 px-4 py-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
                   Captain pressure
                 </p>
@@ -366,9 +366,9 @@ export function CommunityOverviewPanel({
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-primary/20 bg-primary/10 text-primary">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-primary/20 bg-primary/[0.055] text-primary">
                 <UsersRound size={18} />
               </div>
               <div>
@@ -455,11 +455,11 @@ export function CommunityOverviewPanel({
             />
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">
               Current issue
             </p>
-            <p className="mt-3 rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm leading-6 text-sub">
+            <p className="mt-3 rounded-[18px] border border-white/[0.032] bg-white/[0.012] px-4 py-3 text-sm leading-6 text-sub">
               {latestIssue}
             </p>
           </div>

@@ -16,7 +16,7 @@ export default function EngagementChart({ items }: Props) {
               <span className="text-text">{item.label}</span>
               <span className="text-sub">{item.value}</span>
             </div>
-            <div className="h-3 overflow-hidden rounded-full bg-card2">
+            <div className="h-3 overflow-hidden rounded-full bg-white/[0.014]">
               <div
                 className="h-full rounded-full bg-primary"
                 style={{ width: `${width}%` }}

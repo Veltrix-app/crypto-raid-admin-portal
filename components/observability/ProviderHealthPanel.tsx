@@ -50,9 +50,9 @@ export default function ProviderHealthPanel({
         />
       </div>
 
-      <div className="mt-5 rounded-[22px] border border-white/8 bg-black/20 p-4">
+      <div className="mt-5 rounded-[18px] border border-white/[0.032] bg-black/20 p-4">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-white/[0.03] text-primary">
+          <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-white/[0.018] text-primary">
             <Link2 size={16} />
           </div>
           <div>
@@ -82,9 +82,9 @@ function SignalCard({
   tone: "warning" | "success";
 }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-black/20 p-5">
+    <div className="rounded-[18px] border border-white/10 bg-black/20 p-5">
       <div className="flex items-center gap-3 text-primary">
-        <span className="flex h-9 w-9 items-center justify-center rounded-[14px] border border-primary/20 bg-primary/10">
+        <span className="flex h-9 w-9 items-center justify-center rounded-[14px] border border-primary/20 bg-primary/[0.055]">
           {icon}
         </span>
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">{label}</p>

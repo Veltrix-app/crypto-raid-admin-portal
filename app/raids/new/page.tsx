@@ -52,7 +52,7 @@ function NewRaidPageContent() {
       >
         <div className="space-y-4">
           {entrySourceLabel ? (
-            <div className="rounded-[16px] border border-primary/16 bg-primary/10 p-3.5 text-[12px] leading-5 text-primary">
+            <div className="rounded-[16px] border border-primary/16 bg-primary/[0.055] p-3.5 text-[12px] leading-5 text-primary">
               <span className="font-semibold text-white">{entrySourceLabel}</span> handed this raid into the studio with project context already loaded.
               {returnHref ? (
                 <>
@@ -66,7 +66,7 @@ function NewRaidPageContent() {
             </div>
           ) : null}
 
-          <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5 text-[12px] leading-5 text-sub">
+          <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5 text-[12px] leading-5 text-sub">
             The studio now keeps the member preview, watchlist and verification posture inside the
             builder itself, so you can shape one pressure mission at a time instead of scanning a
             separate checklist column.

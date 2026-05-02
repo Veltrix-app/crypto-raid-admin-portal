@@ -23,7 +23,7 @@ export function OpsHero({
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.02),transparent_34%,transparent_68%,rgba(255,255,255,0.01))]" />
       <div className="relative z-10 grid gap-3 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-start">
         <div className="max-w-4xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.035] bg-white/[0.02] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.035] bg-white/[0.014] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
             <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_18px_rgba(186,255,59,0.55)]" />
             {eyebrow}
           </div>
@@ -34,7 +34,7 @@ export function OpsHero({
         </div>
 
         {aside ? (
-          <div className="rounded-[14px] border border-white/[0.035] bg-white/[0.02] px-3 py-2.5 backdrop-blur-xl xl:justify-self-end xl:min-w-[210px]">
+          <div className="rounded-[14px] border border-white/[0.035] bg-white/[0.014] px-3 py-2.5 backdrop-blur-xl xl:justify-self-end xl:min-w-[210px]">
             {aside}
           </div>
         ) : null}
@@ -63,7 +63,7 @@ export function OpsPanel({
   return (
     <section
       className={cx(
-        "relative min-w-0 self-start overflow-hidden rounded-[22px] border p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.13)]",
+        "relative min-w-0 self-start overflow-hidden rounded-[18px] border p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.13)]",
         tone === "accent"
           ? "border-white/[0.035] bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.028),transparent_22%),radial-gradient(circle_at_88%_14%,rgba(74,217,255,0.025),transparent_20%),linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
           : "border-white/[0.028] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]",
@@ -104,9 +104,9 @@ export function OpsMetricCard({
       className={cx(
         "relative overflow-hidden rounded-[14px] border px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.1)]",
         emphasis === "primary"
-          ? "border-white/[0.026] bg-white/[0.02]"
+          ? "border-white/[0.026] bg-white/[0.014]"
           : emphasis === "warning"
-            ? "border-white/[0.026] bg-white/[0.02]"
+            ? "border-white/[0.026] bg-white/[0.014]"
             : "border-white/[0.024] bg-white/[0.016]"
       )}
     >
@@ -158,7 +158,7 @@ export function OpsPriorityLink({
         "group block rounded-[16px] border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/24",
         emphasis
           ? "border-primary/16 bg-[linear-gradient(180deg,rgba(186,255,59,0.08),rgba(12,15,22,0.98))]"
-          : "border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,17,25,0.98),rgba(8,11,16,0.98))]"
+          : "border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,17,25,0.98),rgba(8,11,16,0.98))]"
       )}
     >
       <div className="flex items-start justify-between gap-4">
@@ -299,7 +299,7 @@ export function OpsRailCard({
 
 export function OpsFilterBar({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-2.5">
+    <div className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-2.5">
       <div className="grid gap-2.5 md:grid-cols-[minmax(0,1fr)_210px_auto]">{children}</div>
     </div>
   );
@@ -319,7 +319,7 @@ export function OpsSearchInput({
   name?: string;
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2 transition-colors duration-200 hover:border-white/10 focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20">
+    <label className="flex items-center gap-3 rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2 transition-colors duration-200 hover:border-white/10 focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20">
       <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">Search</span>
       <input
         type="search"
@@ -355,7 +355,7 @@ export function OpsSelect({
       aria-label={ariaLabel}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2 text-[12px] text-text transition-colors duration-200 hover:border-white/10 focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
+      className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2 text-[12px] text-text transition-colors duration-200 hover:border-white/10 focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
     >
       {children}
     </select>
@@ -376,10 +376,10 @@ export function OpsStatusPill({
         tone === "success"
           ? "border-emerald-400/20 bg-emerald-500/15 text-emerald-300"
           : tone === "warning"
-            ? "border-amber-400/20 bg-amber-500/15 text-amber-300"
+            ? "border-amber-400/20 bg-amber-500/[0.075] text-amber-300"
             : tone === "danger"
               ? "border-rose-400/20 bg-rose-500/15 text-rose-300"
-              : "border-white/[0.04] bg-white/[0.02] text-sub"
+              : "border-white/[0.026] bg-white/[0.014] text-sub"
       )}
     >
       {children}

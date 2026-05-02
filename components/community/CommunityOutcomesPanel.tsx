@@ -86,7 +86,7 @@ export function CommunityOutcomesPanel({
       description="This rail keeps the page aggregate-first: automation health, captain effectiveness, cohort pressure and funnel conversion stay visible without drifting into member-level management."
     >
       <div className="space-y-5">
-        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+        <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="max-w-2xl">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
@@ -157,7 +157,7 @@ export function CommunityOutcomesPanel({
 
         <div className="grid gap-4 xl:grid-cols-[0.96fr_1.04fr]">
           <div className="space-y-4">
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
               <p className="text-sm font-bold text-text">Recommended next play</p>
               <p className="mt-2 text-sm text-sub">
                 The owner rail keeps the highest-leverage moves visible for this project.
@@ -169,8 +169,8 @@ export function CommunityOutcomesPanel({
                       key={recommendation.key}
                       className={`rounded-[20px] border px-4 py-4 ${
                         index === 0
-                          ? "border-primary/25 bg-primary/10"
-                          : "border-line bg-card"
+                          ? "border-primary/25 bg-primary/[0.055]"
+                          : "border-white/[0.026] bg-white/[0.012]"
                       }`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -196,14 +196,14 @@ export function CommunityOutcomesPanel({
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+                  <div className="rounded-[20px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-sm text-sub">
                     No owner recommendations are active yet.
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
               <p className="text-sm font-bold text-text">Health rollups</p>
               <p className="mt-2 text-sm text-sub">
                 These are the aggregate signals the owner should read before changing community posture.
@@ -211,7 +211,7 @@ export function CommunityOutcomesPanel({
               <div className="mt-4 space-y-3">
                 {visibleRollups.length > 0 ? (
                   visibleRollups.map((signal) => (
-                    <div key={signal.key} className="rounded-[20px] border border-line bg-card px-4 py-4">
+                    <div key={signal.key} className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <p className="font-bold text-text">{signal.label}</p>
@@ -234,7 +234,7 @@ export function CommunityOutcomesPanel({
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+                  <div className="rounded-[20px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-sm text-sub">
                     No health rollups are active yet.
                   </div>
                 )}
@@ -243,14 +243,14 @@ export function CommunityOutcomesPanel({
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
               <p className="text-sm font-bold text-text">Journey outcomes</p>
               <p className="mt-2 text-sm text-sub">
                 Onboarding, comeback and retention stay visible as community lanes, not as a member list.
               </p>
               <div className="mt-4 space-y-3">
                 {orderedOutcomes.map((outcome) => (
-                  <div key={outcome.key} className="rounded-[20px] border border-line bg-card px-4 py-4">
+                  <div key={outcome.key} className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-bold text-text">{outcome.label}</p>
@@ -276,7 +276,7 @@ export function CommunityOutcomesPanel({
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
               <p className="text-sm font-bold text-text">Cohort posture</p>
               <p className="mt-2 text-sm text-sub">
                 Aggregate segments that explain where growth or trust pressure is building.
@@ -284,7 +284,7 @@ export function CommunityOutcomesPanel({
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {cohortSnapshots.length > 0 ? (
                   cohortSnapshots.map((snapshot) => (
-                    <div key={snapshot.key} className="rounded-[20px] border border-line bg-card px-4 py-4">
+                    <div key={snapshot.key} className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-bold text-text">{snapshot.label}</p>
@@ -300,7 +300,7 @@ export function CommunityOutcomesPanel({
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub md:col-span-2">
+                  <div className="rounded-[20px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-sm text-sub md:col-span-2">
                     No cohort snapshots are available yet.
                   </div>
                 )}

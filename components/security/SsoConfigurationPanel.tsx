@@ -103,13 +103,13 @@ export function SsoConfigurationPanel({
             value={providerLabel}
             onChange={(event) => setProviderLabel(event.target.value)}
             placeholder="Provider label"
-            className="rounded-[16px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="rounded-[16px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <input
             value={providerId}
             onChange={(event) => setProviderId(event.target.value)}
             placeholder="Supabase provider ID"
-            className="rounded-[16px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="rounded-[16px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
@@ -118,7 +118,7 @@ export function SsoConfigurationPanel({
           onChange={(event) => setDomains(event.target.value)}
           placeholder="Allowed domains, comma separated"
           rows={3}
-          className="w-full rounded-[16px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="w-full rounded-[16px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
 
         <div className="grid gap-3 md:grid-cols-2">
@@ -126,31 +126,31 @@ export function SsoConfigurationPanel({
             value={securityContactEmail}
             onChange={(event) => setSecurityContactEmail(event.target.value)}
             placeholder="Security contact email"
-            className="rounded-[16px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="rounded-[16px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder="Policy notes"
             rows={3}
-            className="rounded-[16px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="rounded-[16px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
         <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
-          <label className="flex items-center gap-2.5 rounded-[16px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text">
+          <label className="flex items-center gap-2.5 rounded-[16px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text">
             <input type="checkbox" checked={ssoRequired} onChange={(event) => setSsoRequired(event.target.checked)} />
             Require SSO
           </label>
-          <label className="flex items-center gap-2.5 rounded-[16px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text">
+          <label className="flex items-center gap-2.5 rounded-[16px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text">
             <input type="checkbox" checked={twoFactorRequired} onChange={(event) => setTwoFactorRequired(event.target.checked)} />
             Enforce 2FA
           </label>
-          <label className="flex items-center gap-2.5 rounded-[16px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text">
+          <label className="flex items-center gap-2.5 rounded-[16px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text">
             <input type="checkbox" checked={sessionReviewRequired} onChange={(event) => setSessionReviewRequired(event.target.checked)} />
             Review sessions
           </label>
-          <label className="flex items-center gap-2.5 rounded-[16px] border border-line bg-card2 px-3.5 py-2.5 text-[13px] text-text">
+          <label className="flex items-center gap-2.5 rounded-[16px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5 text-[13px] text-text">
             <input type="checkbox" checked={highRiskReauthRequired} onChange={(event) => setHighRiskReauthRequired(event.target.checked)} />
             High-risk reauth
           </label>

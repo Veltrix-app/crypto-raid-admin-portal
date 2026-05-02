@@ -78,7 +78,7 @@ export default function XpReviewPage() {
               <button
                 type="button"
                 onClick={() => void loadReview()}
-                className="rounded-full border border-white/[0.05] bg-white/[0.025] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-text transition hover:border-primary/20 hover:text-primary"
+                className="rounded-full border border-white/[0.032] bg-white/[0.016] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-text transition hover:border-primary/20 hover:text-primary"
               >
                 Refresh
               </button>
@@ -122,7 +122,7 @@ export default function XpReviewPage() {
             <option value="review">review</option>
             <option value="blocked">blocked</option>
           </OpsSelect>
-          <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-[12px] text-sub">
+          <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 text-[12px] text-sub">
             {loading ? "Loading review..." : error || `${filteredRows.length} events in view`}
           </div>
         </OpsFilterBar>
@@ -139,7 +139,7 @@ export default function XpReviewPage() {
                 <XpEventCard key={row.id} row={row} />
               ))}
               {!loading && filteredRows.length === 0 ? (
-                <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-4 text-[12px] text-sub">
+                <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-4 text-[12px] text-sub">
                   No DeFi XP events match the current filters.
                 </div>
               ) : null}
@@ -156,7 +156,7 @@ export default function XpReviewPage() {
                 {(review?.guardrails ?? []).map((guardrail) => (
                   <div
                     key={guardrail.label}
-                    className="flex items-center justify-between gap-3 rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5"
+                    className="flex items-center justify-between gap-3 rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5"
                   >
                     <div>
                       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">
@@ -182,7 +182,7 @@ export default function XpReviewPage() {
                   <CompactReviewRow key={row.id} row={row} />
                 ))}
                 {!loading && suspiciousRows.length === 0 ? (
-                  <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-3 text-[12px] text-sub">
+                  <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-3 text-[12px] text-sub">
                     No suspicious DeFi XP claims in the latest event window.
                   </div>
                 ) : null}
@@ -200,7 +200,7 @@ export default function XpReviewPage() {
             {(review?.userHistories ?? []).map((history) => (
               <div
                 key={history.authUserId}
-                className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5"
+                className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -238,7 +238,7 @@ export default function XpReviewPage() {
 
 function XpEventCard({ row }: { row: DefiXpReviewRow }) {
   return (
-    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+    <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -265,7 +265,7 @@ function XpEventCard({ row }: { row: DefiXpReviewRow }) {
 
 function CompactReviewRow({ row }: { row: DefiXpReviewRow }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-3">
+    <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[12px] font-semibold text-text">{row.userLabel}</p>

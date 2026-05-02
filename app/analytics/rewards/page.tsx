@@ -61,14 +61,14 @@ export default function AnalyticsRewardsPage() {
         </div>
 
         <div className="grid gap-5 xl:grid-cols-2">
-          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
+          <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">Reward Demand</h2>
             <div className="mt-5">
               <RewardsChart items={rewardClaims} />
             </div>
           </div>
 
-          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
+          <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">Value Bands</h2>
             <div className="mt-5">
               <RewardsChart items={rewardCostBands} />
@@ -76,10 +76,10 @@ export default function AnalyticsRewardsPage() {
           </div>
         </div>
 
-        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
+        <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-5">
           <h2 className="text-[1.08rem] font-extrabold text-text">Fulfillment Pressure</h2>
-          <div className="mt-4 overflow-hidden rounded-[18px] border border-white/[0.04] bg-white/[0.025]">
-            <div className="grid grid-cols-5 border-b border-white/[0.04] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
+          <div className="mt-4 overflow-hidden rounded-[18px] border border-white/[0.026] bg-white/[0.016]">
+            <div className="grid grid-cols-5 border-b border-white/[0.026] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
               <div>Reward</div>
               <div>Type</div>
               <div>Claims</div>
@@ -124,7 +124,7 @@ function MetricCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-white/[0.04] bg-white/[0.02] p-4">
+    <div className="rounded-[20px] border border-white/[0.026] bg-white/[0.014] p-4">
       <p className="text-sm text-sub">{label}</p>
       <p className="mt-1.5 text-[1.4rem] font-extrabold text-text">{value}</p>
       <p className="mt-2 text-sm leading-6 text-sub">{hint}</p>

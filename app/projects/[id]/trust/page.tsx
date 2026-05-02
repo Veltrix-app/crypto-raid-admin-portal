@@ -334,7 +334,7 @@ export default function ProjectTrustPage() {
         </div>
 
         {loadError ? (
-          <div className="rounded-[16px] border border-rose-500/20 bg-rose-500/10 px-4 py-4 text-sm text-rose-300">
+          <div className="rounded-[16px] border border-rose-500/20 bg-rose-500/[0.055] px-4 py-4 text-sm text-rose-300">
             {loadError}
           </div>
         ) : null}

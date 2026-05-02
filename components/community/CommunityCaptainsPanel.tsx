@@ -123,7 +123,7 @@ export function CommunityCaptainsPanel({
           />
         </div>
 
-        <div className="rounded-[24px] border border-line bg-card2 p-5">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">Captain controls</p>
@@ -136,7 +136,7 @@ export function CommunityCaptainsPanel({
             </OpsStatusPill>
           </div>
 
-          <label className="mt-4 flex items-center gap-3 rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-text">
+          <label className="mt-4 flex items-center gap-3 rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
             <input
               type="checkbox"
               checked={settings.captainsEnabled}
@@ -155,7 +155,7 @@ export function CommunityCaptainsPanel({
               type="button"
               onClick={onSaveSettings}
               disabled={savingSettings}
-              className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {savingSettings ? "Saving settings..." : "Save captain settings"}
             </button>
@@ -173,7 +173,7 @@ export function CommunityCaptainsPanel({
             <div
               className={`mt-4 rounded-[20px] border px-4 py-3 text-sm ${
                 captainNoticeTone === "error"
-                  ? "border-rose-500/30 bg-rose-500/10 text-rose-200"
+                  ? "border-rose-500/30 bg-rose-500/[0.055] text-rose-200"
                   : "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
               }`}
             >
@@ -183,7 +183,7 @@ export function CommunityCaptainsPanel({
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Captain roster</p>
@@ -201,7 +201,7 @@ export function CommunityCaptainsPanel({
                 roster.map((captain) => (
                   <div
                     key={`${captain.authUserId}-${captain.role}`}
-                    className="rounded-[22px] border border-line bg-card px-4 py-4"
+                    className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-4"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -233,7 +233,7 @@ export function CommunityCaptainsPanel({
                       {captain.linkedProviders.map((provider) => (
                         <span
                           key={`${captain.authUserId}-${provider}`}
-                          className="rounded-full border border-white/8 bg-card2 px-3 py-1"
+                          className="rounded-full border border-white/[0.032] bg-white/[0.014] px-3 py-1"
                         >
                           {provider}
                         </span>
@@ -242,14 +242,14 @@ export function CommunityCaptainsPanel({
                   </div>
                 ))
               ) : (
-                <div className="rounded-[22px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+                <div className="rounded-[18px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-sm text-sub">
                   No captain seats are assigned yet. Start with one community captain and one raid lead.
                 </div>
               )}
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Roster editor</p>
@@ -264,7 +264,7 @@ export function CommunityCaptainsPanel({
                     current.length >= 6 ? current : [...current, createEmptyAssignment()]
                   )
                 }
-                className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
+                className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
               >
                 Add seat
               </button>
@@ -280,7 +280,7 @@ export function CommunityCaptainsPanel({
                   return (
                     <div
                       key={`captain-assignment-${index}`}
-                      className="rounded-[22px] border border-line bg-card px-4 py-4"
+                      className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-4"
                     >
                       <div className="grid gap-3 md:grid-cols-[1.2fr_0.8fr]">
                         <label className="space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
@@ -296,7 +296,7 @@ export function CommunityCaptainsPanel({
                                 )
                               )
                             }
-                            className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
+                            className="w-full rounded-[16px] border border-white/[0.026] bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
                           >
                             <option value="">Select a captain</option>
                             {candidates.map((candidate) => (
@@ -323,7 +323,7 @@ export function CommunityCaptainsPanel({
                                 )
                               )
                             }
-                            className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
+                            className="w-full rounded-[16px] border border-white/[0.026] bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
                           >
                             <option value="community_captain">Community captain</option>
                             <option value="raid_lead">Raid lead</option>
@@ -347,7 +347,7 @@ export function CommunityCaptainsPanel({
                               )
                             }
                             placeholder="Optional call-sign"
-                            className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
+                            className="w-full rounded-[16px] border border-white/[0.026] bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
                           />
                         </label>
 
@@ -358,13 +358,13 @@ export function CommunityCaptainsPanel({
                               current.filter((_, itemIndex) => itemIndex !== index)
                             )
                           }
-                          className="self-end rounded-[16px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-200 transition hover:border-rose-400/50 hover:text-rose-100"
+                          className="self-end rounded-[16px] border border-rose-500/30 bg-rose-500/[0.055] px-4 py-3 text-sm font-bold text-rose-200 transition hover:border-rose-400/50 hover:text-rose-100"
                         >
                           Remove
                         </button>
                       </div>
 
-                      <div className="mt-3 rounded-[18px] border border-white/8 bg-card2 px-4 py-4 text-sm text-sub">
+                      <div className="mt-3 rounded-[18px] border border-white/[0.032] bg-white/[0.014] px-4 py-4 text-sm text-sub">
                         {selectedCandidate ? (
                           <>
                             <p className="font-semibold text-text">{selectedCandidate.username}</p>
@@ -391,7 +391,7 @@ export function CommunityCaptainsPanel({
                   );
                 })
               ) : (
-                <div className="rounded-[22px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+                <div className="rounded-[18px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-sm text-sub">
                   No seats staged yet. Add a seat and choose a project member or contributor.
                 </div>
               )}

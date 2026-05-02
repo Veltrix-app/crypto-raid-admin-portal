@@ -55,12 +55,12 @@ export function DataRequestPanel({
       title="Export and delete requests"
       description="Raise a reviewed export or delete request instead of relying on ad-hoc support notes."
     >
-      <form onSubmit={handleSubmit} className="rounded-[22px] border border-line bg-card2 p-4">
+      <form onSubmit={handleSubmit} className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
         <div className="grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_140px]">
           <select
             value={requestType}
             onChange={(event) => setRequestType(event.target.value as "export" | "delete")}
-            className="rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             <option value="export">Data export</option>
             <option value="delete">Delete request</option>
@@ -69,7 +69,7 @@ export function DataRequestPanel({
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
             placeholder="What should VYNTRO export or review for deletion?"
-            className="rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <button
             type="submit"
@@ -84,7 +84,7 @@ export function DataRequestPanel({
       <div className="mt-4 space-y-3">
         {requests.length ? (
           requests.map((request) => (
-            <div key={request.id} className="rounded-[22px] border border-line bg-card2 p-4">
+            <div key={request.id} className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="max-w-3xl">
                   <div className="flex flex-wrap items-center gap-2">

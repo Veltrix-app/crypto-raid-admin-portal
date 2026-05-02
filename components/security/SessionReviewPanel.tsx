@@ -53,7 +53,7 @@ export function SessionReviewPanel({
       {sessions.length ? (
         <div className="space-y-3">
           {sessions.map((session) => (
-            <div key={session.id} className="rounded-[22px] border border-line bg-card2 p-4">
+            <div key={session.id} className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="max-w-3xl">
                   <div className="flex flex-wrap items-center gap-2">

@@ -167,7 +167,7 @@ function Field({
 }
 
 function inputClassName(extra = "") {
-  return `w-full rounded-[14px] border border-line bg-card px-3 py-2.5 text-[12px] normal-case tracking-normal text-text outline-none transition focus:border-primary/35 ${extra}`;
+  return `w-full rounded-[14px] border border-white/[0.026] bg-white/[0.012] px-3 py-2.5 text-[12px] normal-case tracking-normal text-text outline-none transition focus:border-primary/35 ${extra}`;
 }
 
 export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }: Props) {
@@ -336,14 +336,14 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
         </div>
 
         {loading ? (
-          <div className="rounded-[18px] border border-line bg-card px-4 py-4 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-4 text-sm text-sub">
             Loading Tweet-to-Raid Autopilot...
           </div>
         ) : null}
 
         <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
           <div className="space-y-4">
-            <div className="rounded-[22px] border border-line bg-card2 p-4">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-[13px] font-bold text-text">Source control</p>
@@ -383,7 +383,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
                         "Tweet-to-Raid source poll completed."
                       )
                     }
-                    className="rounded-[14px] border border-line bg-card px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-[14px] border border-white/[0.026] bg-white/[0.012] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {workingAction === "poll_sources" ? "Polling..." : "Poll now"}
                   </button>
@@ -391,17 +391,17 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-3">
-                <div className="rounded-[16px] border border-line bg-card px-3 py-3">
+                <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3 py-3">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">Last poll</p>
                   <p className="mt-2 text-[12px] font-bold text-text">{lastPollAt ? formatDate(lastPollAt) : "Not run"}</p>
                 </div>
-                <div className="rounded-[16px] border border-line bg-card px-3 py-3">
+                <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3 py-3">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">Output</p>
                   <p className="mt-2 text-[12px] font-bold text-text">
                     {lastPollCreatedRaidCount} live / {lastPollCreatedCandidateCount} review
                   </p>
                 </div>
-                <div className="rounded-[16px] border border-line bg-card px-3 py-3">
+                <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3 py-3">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">Issue</p>
                   <p className="mt-2 line-clamp-2 text-[12px] font-bold text-text">
                     {lastPollError || "No poll issue recorded."}
@@ -557,7 +557,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
               </div>
 
               <div className="mt-3 grid gap-3 md:grid-cols-3">
-                <label className="flex items-center justify-between gap-3 rounded-[16px] border border-line bg-card px-3 py-2.5 text-[12px] font-semibold text-text">
+                <label className="flex items-center justify-between gap-3 rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3 py-2.5 text-[12px] font-semibold text-text">
                   Exclude replies
                   <input
                     type="checkbox"
@@ -570,7 +570,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
                     }
                   />
                 </label>
-                <label className="flex items-center justify-between gap-3 rounded-[16px] border border-line bg-card px-3 py-2.5 text-[12px] font-semibold text-text">
+                <label className="flex items-center justify-between gap-3 rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3 py-2.5 text-[12px] font-semibold text-text">
                   Exclude reposts
                   <input
                     type="checkbox"
@@ -596,7 +596,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-line bg-card2 p-4">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
               <p className="text-[13px] font-bold text-text">Manual ingest test</p>
               <p className="mt-1.5 text-[12px] leading-5 text-sub">
                 Use this to prove the full route before real automation: X post in, review candidate or live raid out.
@@ -676,7 +676,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
                       "Tweet-to-Raid ingest completed."
                     )
                   }
-                  className="rounded-[16px] border border-line bg-card px-4 py-2.5 text-[12px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-4 py-2.5 text-[12px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {workingAction === "manual_ingest" ? "Running..." : "Generate from tweet"}
                 </button>
@@ -685,7 +685,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[22px] border border-line bg-card2 p-4">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[13px] font-bold text-text">Review queue</p>
@@ -701,7 +701,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
               <div className="mt-4 space-y-3">
                 {state.candidates.length > 0 ? (
                   state.candidates.map((candidate) => (
-                    <div key={candidate.id} className="rounded-[18px] border border-line bg-card px-3 py-3">
+                    <div key={candidate.id} className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-3">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="break-words text-[13px] font-bold text-text">
@@ -753,7 +753,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
                                 "Tweet-to-Raid candidate rejected."
                               )
                             }
-                            className="rounded-[14px] border border-line bg-card px-3 py-2 text-[12px] font-bold text-text hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-[14px] border border-white/[0.026] bg-white/[0.012] px-3 py-2 text-[12px] font-bold text-text hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             Reject
                           </button>
@@ -762,14 +762,14 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-[18px] border border-dashed border-line bg-card px-4 py-5 text-[12px] leading-5 text-sub">
+                  <div className="rounded-[18px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-[12px] leading-5 text-sub">
                     No generated candidates yet. Save a source and run a manual ingest test to prove the flow.
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-line bg-card2 p-4">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
               <p className="text-[13px] font-bold text-text">Autopilot history</p>
               <p className="mt-1.5 text-[12px] leading-5 text-sub">
                 Latest source event: {lastEvent ? `${lastEvent.decision_reason} (${formatDate(lastEvent.received_at)})` : "No events yet."}
@@ -777,7 +777,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
 
               <div className="mt-4 grid gap-3">
                 {state.raids.slice(0, 3).map((raid: GeneratedTweetRaidRow) => (
-                  <div key={raid.id} className="rounded-[16px] border border-line bg-card px-3 py-3">
+                  <div key={raid.id} className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3 py-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="break-words text-[12px] font-bold text-text">{raid.title}</p>
@@ -796,7 +796,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
                 ))}
 
                 {state.events.slice(0, 4).map((event) => (
-                  <div key={event.id} className="rounded-[16px] border border-line bg-card px-3 py-3">
+                  <div key={event.id} className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3 py-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="break-words text-[12px] font-bold text-text">
@@ -812,7 +812,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
                 ))}
 
                 {state.raids.length === 0 && state.events.length === 0 ? (
-                  <div className="rounded-[16px] border border-dashed border-line bg-card px-4 py-5 text-[12px] text-sub">
+                  <div className="rounded-[16px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-[12px] text-sub">
                     No live raid or ingest history yet.
                   </div>
                 ) : null}
@@ -825,8 +825,8 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
           <div
             className={`rounded-[18px] border px-4 py-3 text-[12px] leading-5 ${
               noticeTone === "error"
-                ? "border-rose-400/25 bg-rose-500/10 text-rose-200"
-                : "border-primary/20 bg-primary/10 text-primary"
+                ? "border-rose-400/25 bg-rose-500/[0.055] text-rose-200"
+                : "border-primary/20 bg-primary/[0.055] text-primary"
             }`}
           >
             {notice}

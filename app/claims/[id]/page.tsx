@@ -179,13 +179,13 @@ export default function ClaimDetailPage() {
             </div>
 
             {linkedFlags.length > 0 ? (
-              <div className="mt-5 rounded-[18px] border border-white/[0.04] bg-white/[0.03] p-4">
+              <div className="mt-5 rounded-[18px] border border-white/[0.026] bg-white/[0.018] p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                   Linked Flags
                 </p>
                 <div className="mt-3 space-y-3">
                   {linkedFlags.map((flag) => (
-                    <div key={flag.id} className="rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3">
+                    <div key={flag.id} className="rounded-2xl border border-white/[0.026] bg-white/[0.014] px-4 py-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <DetailBadge>{flag.flagType.replace(/_/g, " ")}</DetailBadge>
                         <DetailBadge tone="warning">{flag.severity}</DetailBadge>
@@ -211,7 +211,7 @@ export default function ClaimDetailPage() {
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
                   rows={4}
-                  className="w-full rounded-2xl border border-white/[0.04] bg-white/[0.025] px-4 py-3 outline-none"
+                  className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.016] px-4 py-3 outline-none"
                   placeholder="Capture payout checks, delivery decisions or rejection context."
                 />
               </label>
@@ -237,7 +237,7 @@ export default function ClaimDetailPage() {
               <button
                 onClick={() => handleSetStatus("rejected")}
                 disabled={working || currentClaim.status === "rejected"}
-                className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-5 py-3 font-bold text-rose-300 disabled:opacity-50"
+                className="rounded-2xl border border-rose-500/30 bg-rose-500/[0.055] px-5 py-3 font-bold text-rose-300 disabled:opacity-50"
               >
                 {working ? "Working..." : "Reject Claim"}
               </button>
@@ -333,7 +333,7 @@ export default function ClaimDetailPage() {
             <DetailSidebarSurface title="Audit Trail">
               <div className="mt-4 space-y-3">
                 {auditLogs.map((log) => (
-                  <div key={log.id} className="rounded-2xl border border-white/[0.04] bg-white/[0.025] p-4">
+                  <div key={log.id} className="rounded-2xl border border-white/[0.026] bg-white/[0.016] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-bold capitalize text-text">
                         {log.action.replace(/_/g, " ")}
@@ -383,13 +383,13 @@ function DecisionCard({
 }) {
   const toneClass =
     tone === "ready"
-      ? "bg-primary/15 text-primary"
+      ? "bg-primary/[0.075] text-primary"
       : tone === "danger"
         ? "bg-rose-500/15 text-rose-300"
-        : "bg-amber-500/15 text-amber-300";
+        : "bg-amber-500/[0.075] text-amber-300";
 
   return (
-    <div className="rounded-2xl border border-white/[0.04] bg-white/[0.025] p-4">
+    <div className="rounded-2xl border border-white/[0.026] bg-white/[0.016] p-4">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <div className="mt-3">
         <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${toneClass}`}>

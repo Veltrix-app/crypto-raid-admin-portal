@@ -68,7 +68,7 @@ export default function OpsOverridePanel({
               type="button"
               disabled={creatingOverride}
               onClick={() => (onCreateOverride ? void onCreateOverride(action) : undefined)}
-              className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(16,23,35,0.98),rgba(10,14,22,0.96))] p-4 text-left transition hover:border-primary/25 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(16,23,35,0.98),rgba(10,14,22,0.96))] p-4 text-left transition hover:border-primary/25 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-white/10 bg-black/20 text-primary">
@@ -104,7 +104,7 @@ export default function OpsOverridePanel({
           return (
             <div
               key={override.id}
-              className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))] p-5 shadow-[0_18px_55px_rgba(0,0,0,0.2)]"
+              className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))] p-5 shadow-[0_18px_55px_rgba(0,0,0,0.2)]"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
@@ -133,7 +133,7 @@ export default function OpsOverridePanel({
                       type="button"
                       disabled={busy}
                       onClick={() => void onResolveOverride(override.id, "resolved")}
-                      className="rounded-[18px] border border-primary/30 bg-primary/12 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary/18 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-[18px] border border-primary/30 bg-primary/[0.065] px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary/18 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {busy ? "Updating..." : "Resolve"}
                     </button>
@@ -158,7 +158,7 @@ export default function OpsOverridePanel({
 
 function SignalRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3">
+    <div className="rounded-[20px] border border-white/[0.032] bg-black/20 px-4 py-3">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
     </div>

@@ -56,7 +56,7 @@ function AuditRow({
   }
 
   return (
-    <div className="rounded-[22px] border border-line bg-card2 p-4">
+    <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -81,7 +81,7 @@ function AuditRow({
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value as typeof status)}
-            className="w-full rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
+            className="w-full rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
           >
             <option value="not_reviewed">Not reviewed</option>
             <option value="ready">Ready</option>
@@ -103,14 +103,14 @@ function AuditRow({
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
             rows={3}
-            className="w-full rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+            className="w-full rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
           />
           <textarea
             value={missingKeys}
             onChange={(event) => setMissingKeys(event.target.value)}
             rows={4}
             placeholder="Missing env keys, one per line"
-            className="w-full rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+            className="w-full rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
           />
         </div>
 
@@ -119,7 +119,7 @@ function AuditRow({
           onChange={(event) => setMismatchNotes(event.target.value)}
           rows={7}
           placeholder="Mismatch notes or suspicious environment posture"
-          className="w-full rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+          className="w-full rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
         />
       </div>
     </div>
@@ -156,7 +156,7 @@ export function EnvironmentAuditPanel({
 
       <div className="mt-6">
         {deployChecks ? (
-          <div className="rounded-[22px] border border-line bg-black/10 p-4">
+          <div className="rounded-[18px] border border-white/[0.024] bg-black/10 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-text">Live deploy hygiene snapshot</p>

@@ -69,7 +69,7 @@ export default function OpsIncidentPanel({
         return (
           <div
             key={incident.id}
-            className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))] p-5 shadow-[0_18px_55px_rgba(0,0,0,0.2)]"
+            className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,20,31,0.98),rgba(10,14,22,0.98))] p-5 shadow-[0_18px_55px_rgba(0,0,0,0.2)]"
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
@@ -143,7 +143,7 @@ export default function OpsIncidentPanel({
 
 function SignalRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3">
+    <div className="rounded-[20px] border border-white/[0.032] bg-black/20 px-4 py-3">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
     </div>
@@ -170,10 +170,10 @@ function ActionButton({
       onClick={() => void onClick()}
       className={`inline-flex items-center gap-2 rounded-[18px] border px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition ${
         tone === "primary"
-          ? "border-primary/30 bg-primary/12 text-primary hover:bg-primary/18"
+          ? "border-primary/30 bg-primary/[0.065] text-primary hover:bg-primary/18"
           : tone === "muted"
             ? "border-white/10 bg-white/[0.04] text-sub hover:border-white/16 hover:bg-white/[0.06]"
-            : "border-amber-400/25 bg-amber-500/10 text-amber-300 hover:bg-amber-500/14"
+            : "border-amber-400/25 bg-amber-500/[0.055] text-amber-300 hover:bg-amber-500/14"
       } disabled:cursor-not-allowed disabled:opacity-60`}
     >
       {icon}

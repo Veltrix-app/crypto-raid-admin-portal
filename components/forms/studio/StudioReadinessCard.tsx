@@ -20,7 +20,7 @@ export default function StudioReadinessCard({
   const visibleItems = showOnlyIncomplete ? items.filter((item) => !item.complete) : items;
 
   return (
-    <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(17,21,31,0.96),rgba(10,12,18,0.94))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
+    <div className="rounded-[18px] border border-white/[0.032] bg-[linear-gradient(180deg,rgba(17,21,31,0.96),rgba(10,12,18,0.94))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
       <div className="flex items-center gap-3">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{title}</p>
         <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.18),transparent)]" />
@@ -31,15 +31,15 @@ export default function StudioReadinessCard({
           visibleItems.map((item) => (
             <div
               key={item.label}
-              className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4"
+              className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] p-4"
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-bold text-text">{item.label}</p>
                 <span
                   className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
                     item.complete
-                      ? "bg-primary/15 text-primary"
-                      : "bg-amber-500/15 text-amber-300"
+                      ? "bg-primary/[0.075] text-primary"
+                      : "bg-amber-500/[0.075] text-amber-300"
                   }`}
                 >
                   {item.complete ? "Ready" : "Needs work"}
@@ -49,7 +49,7 @@ export default function StudioReadinessCard({
             </div>
           ))
         ) : (
-          <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+          <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] p-4">
             <p className="text-sm leading-6 text-sub">{emptyState}</p>
           </div>
         )}

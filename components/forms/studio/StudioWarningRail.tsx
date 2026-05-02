@@ -20,7 +20,7 @@ export default function StudioWarningRail({
   const warningCount = items.filter((item) => item.tone === "warning").length;
 
   return (
-    <div className="relative overflow-hidden rounded-[22px] border border-white/8 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.08),transparent_24%),linear-gradient(180deg,rgba(17,21,31,0.97),rgba(10,12,18,0.95))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
+    <div className="relative overflow-hidden rounded-[18px] border border-white/[0.032] bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.08),transparent_24%),linear-gradient(180deg,rgba(17,21,31,0.97),rgba(10,12,18,0.95))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)]" />
 
       <div className="flex items-center gap-3">
@@ -30,17 +30,17 @@ export default function StudioWarningRail({
 
       <div className="mt-4 flex items-center justify-between gap-3">
         <p className="text-lg font-black tracking-[-0.02em] text-text">{title}</p>
-        <span className="rounded-full border border-white/8 bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
+        <span className="rounded-full border border-white/[0.032] bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
           {warningCount > 0 ? `${warningCount} watch` : "stable"}
         </span>
       </div>
 
-      <div className="mt-4 border-t border-white/8 pt-4 space-y-3">
+      <div className="mt-4 border-t border-white/[0.032] pt-4 space-y-3">
         {items.length > 0 ? (
           items.map((item) => {
             const toneClass =
               item.tone === "success"
-                ? "bg-primary/10 text-primary"
+                ? "bg-primary/[0.055] text-primary"
                 : item.tone === "warning"
                   ? "bg-amber-500/14 text-amber-300"
                   : "bg-white/[0.08] text-text";
@@ -49,12 +49,12 @@ export default function StudioWarningRail({
                 ? "border-amber-400/16"
                 : item.tone === "success"
                   ? "border-primary/16"
-                  : "border-white/8";
+                  : "border-white/[0.032]";
 
             return (
               <div
                 key={item.label}
-                className={`rounded-[22px] border bg-white/[0.03] p-4 ${borderClass}`}
+                className={`rounded-[18px] border bg-white/[0.018] p-4 ${borderClass}`}
               >
                 <div className="flex items-center gap-3">
                   <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${toneClass}`}>
@@ -71,7 +71,7 @@ export default function StudioWarningRail({
             );
           })
         ) : (
-          <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+          <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] p-4">
             <p className="text-sm leading-6 text-sub">{emptyState}</p>
           </div>
         )}

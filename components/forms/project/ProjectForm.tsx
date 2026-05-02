@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BuilderBottomNav,
   BuilderHero,
+  BuilderHorizontalStepRail,
   BuilderMetricCard,
   BuilderSidebarCard,
   BuilderSidebarStack,
@@ -259,7 +260,7 @@ export default function ProjectForm({
       className={
         layout === "horizontal"
           ? "space-y-4 rounded-[20px] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.13)]"
-          : "space-y-4 rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]"
+          : "space-y-4 rounded-[20px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]"
       }
     >
       <BuilderStepHeader
@@ -314,7 +315,7 @@ export default function ProjectForm({
                 <p className="text-sm font-bold text-text">{item.label}</p>
                 <span
                   className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-                    item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                    item.complete ? "bg-primary/[0.075] text-primary" : "bg-amber-500/[0.075] text-amber-300"
                   }`}
                 >
                   {item.complete ? "Ready" : "Missing"}
@@ -350,7 +351,7 @@ export default function ProjectForm({
                 <span
                   className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
                     item.ready
-                      ? "bg-primary/15 text-primary"
+                      ? "bg-primary/[0.075] text-primary"
                       : "bg-white/5 text-sub"
                   }`}
                 >
@@ -390,6 +391,8 @@ export default function ProjectForm({
       {layout === "horizontal" ? (
         <div className="space-y-4">
           <BuilderHorizontalStepRail
+            title="Workspace setup"
+            description="Move through identity, brand, links and review from one compact rail."
             steps={stepItems}
             currentStep={currentStep}
             onSelect={setCurrentStep}
@@ -414,101 +417,6 @@ export default function ProjectForm({
   );
 }
 
-function BuilderHorizontalStepRail<TStep extends string>({
-  steps,
-  currentStep,
-  onSelect,
-}: {
-  steps: Array<{
-    id: TStep;
-    eyebrow: string;
-    label: string;
-    description: string;
-    complete: boolean;
-  }>;
-  currentStep: TStep;
-  onSelect: (step: TStep) => void;
-}) {
-  const currentIndex = Math.max(
-    0,
-    steps.findIndex((step) => step.id === currentStep)
-  );
-
-  return (
-    <div className="rounded-[20px] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.12)]">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">
-            Horizontal progress
-          </p>
-          <p className="mt-1.5 text-[12px] leading-5 text-sub">
-            Keep the full setup path visible without stealing a left column from the editor.
-          </p>
-        </div>
-        <span className="rounded-full bg-white/[0.024] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
-          Step {currentIndex + 1} of {steps.length}
-        </span>
-      </div>
-
-      <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
-        <div
-          className="h-full rounded-full bg-[linear-gradient(90deg,rgba(199,255,0,0.78),rgba(102,255,198,0.96))] shadow-[0_0_18px_rgba(199,255,0,0.18)] transition-all"
-          style={{ width: `${((currentIndex + 1) / steps.length) * 100}%` }}
-        />
-      </div>
-
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
-        {steps.map((step, index) => {
-          const active = step.id === currentStep;
-
-          return (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => onSelect(step.id)}
-              className={`group rounded-[15px] px-3 py-3 text-left transition-colors duration-200 ${
-                active
-                  ? "bg-white/[0.045] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
-                  : "bg-white/[0.014] hover:bg-white/[0.03]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">
-                    {step.eyebrow}
-                  </p>
-                  <p className="mt-1.5 break-words text-[12px] font-semibold text-text [overflow-wrap:anywhere]">
-                    {step.label}
-                  </p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] ${
-                    step.complete
-                      ? "bg-primary/15 text-primary"
-                      : active
-                        ? "bg-white/[0.08] text-text"
-                        : "bg-black/20 text-sub"
-                  }`}
-                >
-                  {step.complete ? "Ready" : active ? "Now" : "Open"}
-                </span>
-              </div>
-              <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-sub">
-                {step.description}
-              </p>
-              <div
-                className={`mt-3 h-1 rounded-full ${
-                  index <= currentIndex ? "bg-primary/70" : "bg-white/[0.06]"
-                }`}
-              />
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function renderIdentity(
   values: Omit<AdminProject, "id">,
   setField: <K extends keyof Omit<AdminProject, "id">>(
@@ -528,7 +436,7 @@ function renderIdentity(
           <input
             value={values.name}
             onChange={(e) => setField("name", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             required
           />
         </Field>
@@ -540,7 +448,7 @@ function renderIdentity(
               setSlugTouched(true);
               setField("slug", e.target.value);
             }}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="pepe-raiders"
             required
           />
@@ -550,7 +458,7 @@ function renderIdentity(
           <select
             value={values.chain}
             onChange={(e) => setField("chain", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
           >
             <option>Base</option>
             <option>Ethereum</option>
@@ -565,7 +473,7 @@ function renderIdentity(
           <input
             value={values.category || ""}
             onChange={(e) => setField("category", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="Meme, DeFi, NFT, Gaming..."
           />
         </Field>
@@ -574,7 +482,7 @@ function renderIdentity(
           <select
             value={values.status}
             onChange={(e) => setField("status", e.target.value as AdminProject["status"])}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
           >
             <option value="draft">draft</option>
             <option value="active">active</option>
@@ -588,7 +496,7 @@ function renderIdentity(
             onChange={(e) =>
               setField("onboardingStatus", e.target.value as AdminProject["onboardingStatus"])
             }
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
           >
             <option value="draft">draft</option>
             <option value="pending">pending</option>
@@ -618,7 +526,7 @@ function renderBrand(
           <input
             value={values.logo}
             onChange={(e) => setField("logo", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="Rocket, monogram, or logo hint"
           />
         </Field>
@@ -627,7 +535,7 @@ function renderBrand(
           <input
             value={values.bannerUrl || ""}
             onChange={(e) => setField("bannerUrl", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="https://..."
           />
         </Field>
@@ -637,7 +545,7 @@ function renderBrand(
             type="email"
             value={values.contactEmail || ""}
             onChange={(e) => setField("contactEmail", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="team@project.com"
           />
         </Field>
@@ -646,7 +554,7 @@ function renderBrand(
           <input
             value={values.brandAccent || ""}
             onChange={(e) => setField("brandAccent", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="#C7FF00"
           />
         </Field>
@@ -655,7 +563,7 @@ function renderBrand(
           <input
             value={values.brandMood || ""}
             onChange={(e) => setField("brandMood", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="Launch, premium, playful..."
           />
         </Field>
@@ -682,7 +590,7 @@ function renderLinks(
           <input
             value={values.website || ""}
             onChange={(e) => setField("website", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="https://..."
           />
         </Field>
@@ -691,7 +599,7 @@ function renderLinks(
           <input
             value={values.xUrl || ""}
             onChange={(e) => setField("xUrl", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="https://x.com/..."
           />
         </Field>
@@ -700,7 +608,7 @@ function renderLinks(
           <input
             value={values.telegramUrl || ""}
             onChange={(e) => setField("telegramUrl", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="https://t.me/..."
           />
         </Field>
@@ -709,7 +617,7 @@ function renderLinks(
           <input
             value={values.discordUrl || ""}
             onChange={(e) => setField("discordUrl", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="https://discord.gg/..."
           />
         </Field>
@@ -718,7 +626,7 @@ function renderLinks(
           <input
             value={values.docsUrl || ""}
             onChange={(e) => setField("docsUrl", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="https://docs..."
           />
         </Field>
@@ -727,7 +635,7 @@ function renderLinks(
           <input
             value={values.waitlistUrl || ""}
             onChange={(e) => setField("waitlistUrl", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="https://..."
           />
         </Field>
@@ -754,7 +662,7 @@ function renderContext(
           <input
             value={values.launchPostUrl || ""}
             onChange={(e) => setField("launchPostUrl", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="https://x.com/.../status/..."
           />
         </Field>
@@ -763,7 +671,7 @@ function renderContext(
           <input
             value={values.tokenContractAddress || ""}
             onChange={(e) => setField("tokenContractAddress", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="0x..."
           />
         </Field>
@@ -772,7 +680,7 @@ function renderContext(
           <input
             value={values.nftContractAddress || ""}
             onChange={(e) => setField("nftContractAddress", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="0x..."
           />
         </Field>
@@ -781,7 +689,7 @@ function renderContext(
           <input
             value={values.primaryWallet || ""}
             onChange={(e) => setField("primaryWallet", e.target.value)}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             placeholder="0x..."
           />
         </Field>
@@ -809,7 +717,7 @@ function renderPublicProfile(
           value={values.description}
           onChange={(e) => setField("description", e.target.value)}
           rows={5}
-          className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+          className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
           placeholder="Short project description..."
         />
       </Field>
@@ -819,7 +727,7 @@ function renderPublicProfile(
           value={values.longDescription || ""}
           onChange={(e) => setField("longDescription", e.target.value)}
           rows={8}
-          className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+          className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
           placeholder="Longer project overview, mission, value proposition..."
         />
       </Field>
@@ -830,7 +738,7 @@ function renderPublicProfile(
             type="number"
             value={values.members}
             onChange={(e) => setField("members", Number(e.target.value))}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             min={0}
           />
         </Field>
@@ -840,7 +748,7 @@ function renderPublicProfile(
             type="number"
             value={values.campaigns}
             onChange={(e) => setField("campaigns", Number(e.target.value))}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             min={0}
           />
         </Field>
@@ -878,12 +786,12 @@ function renderReview(
 
       <div className="grid gap-4 md:grid-cols-2">
         {brandingReadiness.map((item) => (
-          <div key={item.label} className="rounded-[22px] border border-line bg-card2 p-4">
+          <div key={item.label} className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-bold text-text">{item.label}</p>
               <span
                 className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-                  item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                  item.complete ? "bg-primary/[0.075] text-primary" : "bg-amber-500/[0.075] text-amber-300"
                 }`}
               >
                 {item.complete ? "Ready" : "Needs work"}
@@ -922,7 +830,7 @@ function renderReview(
 
 function SectionIntro({ title, body }: { title: string; body: string }) {
   return (
-    <div className="border-b border-white/[0.04] pb-3.5">
+    <div className="border-b border-white/[0.026] pb-3.5">
       <p className="text-[0.98rem] font-semibold tracking-[-0.02em] text-text">{title}</p>
       <p className="mt-1.5 max-w-2xl text-[12px] leading-5 text-sub">{body}</p>
     </div>
@@ -954,7 +862,7 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+    <label className="flex items-center justify-between rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
       <span className="text-[12px] font-semibold text-text">{label}</span>
       <input
         type="checkbox"
@@ -968,7 +876,7 @@ function ToggleField({
 
 function PreviewBadge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full border border-white/[0.04] bg-white/[0.025] px-2.5 py-1 text-[10px] font-bold text-text">
+    <span className="rounded-full border border-white/[0.026] bg-white/[0.016] px-2.5 py-1 text-[10px] font-bold text-text">
       {children}
     </span>
   );
@@ -976,7 +884,7 @@ function PreviewBadge({ children }: { children: React.ReactNode }) {
 
 function PreviewStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+    <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
       <p className="text-[12px] text-sub">{label}</p>
       <p className="mt-1.5 text-[0.98rem] font-semibold text-text">{value}</p>
     </div>
@@ -991,11 +899,11 @@ function SummaryPanel({
   items: Array<[string, string]>;
 }) {
   return (
-    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+    <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary">{title}</p>
       <div className="mt-3 space-y-2.5">
         {items.map(([label, value]) => (
-          <div key={label} className="flex items-start justify-between gap-4 border-b border-white/[0.04] pb-2.5 last:border-b-0 last:pb-0">
+          <div key={label} className="flex items-start justify-between gap-4 border-b border-white/[0.026] pb-2.5 last:border-b-0 last:pb-0">
             <p className="text-[12px] text-sub">{label}</p>
             <p className="max-w-[60%] break-words text-right text-[12px] font-semibold text-text [overflow-wrap:anywhere]">{value}</p>
           </div>
@@ -1036,7 +944,7 @@ function ProjectPreviewSurface({
           Public Project Preview
         </p>
         <div className="mt-4 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/8 bg-white/[0.04] text-[1.35rem]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/[0.032] bg-white/[0.04] text-[1.35rem]">
             {values.logo || "\uD83D\uDE80"}
           </div>
           <div className="min-w-0">
@@ -1075,12 +983,12 @@ function ConnectedModuleCard({
   ready: boolean;
 }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+    <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
       <div className="space-y-3">
         <p className="text-[12px] font-semibold text-text">{label}</p>
         <span
           className={`inline-flex max-w-full self-start rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-            ready ? "bg-primary/15 text-primary" : "bg-white/5 text-sub"
+            ready ? "bg-primary/[0.075] text-primary" : "bg-white/5 text-sub"
           }`}
         >
           {ready ? "Connected" : "Missing"}

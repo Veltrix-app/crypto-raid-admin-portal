@@ -158,7 +158,7 @@ export default function SecurityPage() {
                     </div>
                     <Link
                       href="/releases"
-                      className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+                      className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.045] hover:text-text"
                     >
                       Releases
                     </Link>

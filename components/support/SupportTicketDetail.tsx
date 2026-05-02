@@ -163,7 +163,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
   if (loading) {
     return (
       <OpsPanel title="Loading support ticket" description="VYNTRO is resolving the ticket history, status posture and handoff state.">
-        <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
+        <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-4 text-[13px] text-sub">
           Loading support ticket...
         </div>
       </OpsPanel>
@@ -173,7 +173,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
   if (error && !ticket) {
     return (
       <OpsPanel title="Support ticket could not load" description={error} tone="accent">
-        <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
+        <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-4 text-[13px] text-sub">
           Retry the route once the support APIs are available again.
         </div>
       </OpsPanel>
@@ -183,7 +183,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
   if (!ticket) {
     return (
       <OpsPanel title="Support ticket not found" description="This ticket is no longer available in the internal support queue.">
-        <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
+        <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-4 text-[13px] text-sub">
           The ticket may have been removed from the workspace or never existed.
         </div>
       </OpsPanel>
@@ -193,7 +193,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
   return (
     <div className="space-y-5">
       {error ? (
-        <div className="rounded-[20px] border border-rose-400/20 bg-rose-500/10 px-3.5 py-2.5 text-[13px] text-rose-200">
+        <div className="rounded-[20px] border border-rose-400/20 bg-rose-500/[0.055] px-3.5 py-2.5 text-[13px] text-rose-200">
           {error}
         </div>
       ) : null}
@@ -272,7 +272,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
           </div>
 
           {ticket.linkedIncidentId ? (
-            <div className="mt-4 rounded-[20px] border border-line bg-card2 p-3.5">
+            <div className="mt-4 rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-3.5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
@@ -284,7 +284,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
                 </div>
                 <Link
                   href={`/support/incidents/${ticket.linkedIncidentId}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-primary transition hover:border-primary/45 hover:bg-primary/15"
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/[0.055] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-primary transition hover:border-primary/45 hover:bg-primary/[0.075]"
                 >
                   Open incident
                   <ArrowUpRight size={12} />
@@ -294,7 +294,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
           ) : null}
 
           {latestPublicUpdate ? (
-            <div className="mt-4 rounded-[20px] border border-line bg-card2 p-3.5">
+            <div className="mt-4 rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-3.5">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                 Latest customer-facing update
               </p>
@@ -314,7 +314,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
                 type="button"
                 onClick={() => void runAction("claim")}
                 disabled={busy !== null}
-                className="rounded-full border border-primary/35 bg-primary/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-primary/35 bg-primary/[0.075] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {busy === "claim" ? "Claiming..." : "Claim ticket"}
               </button>
@@ -324,7 +324,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
               <select
                 value={statusDraft}
                 onChange={(event) => setStatusDraft(event.target.value as AdminSupportTicketStatus)}
-                className="rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <option value="new">New</option>
                 <option value="triaging">Triaging</option>
@@ -337,7 +337,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
               <select
                 value={waitingStateDraft}
                 onChange={(event) => setWaitingStateDraft(event.target.value as AdminSupportWaitingState)}
-                className="rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <option value="none">No waiting state</option>
                 <option value="customer">Waiting on customer</option>
@@ -350,7 +350,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
               type="button"
               onClick={() => void runAction("change_status")}
               disabled={busy !== null}
-              className="mt-3 rounded-full border border-line px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-3 rounded-full border border-white/[0.026] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {busy === "change_status" ? "Saving..." : "Update status"}
             </button>
@@ -366,14 +366,14 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
                 value={internalNote}
                 onChange={(event) => setInternalNote(event.target.value)}
                 rows={3}
-                className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="Add an internal note for operators."
               />
               <button
                 type="button"
                 onClick={() => void runAction("internal_note")}
                 disabled={busy !== null}
-                className="rounded-full border border-line px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-white/[0.026] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {busy === "internal_note" ? "Saving..." : "Add internal note"}
               </button>
@@ -384,14 +384,14 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
                 value={customerUpdate}
                 onChange={(event) => setCustomerUpdate(event.target.value)}
                 rows={3}
-                className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="Write the next customer-facing update."
               />
               <button
                 type="button"
                 onClick={() => void runAction("customer_update")}
                 disabled={busy !== null}
-                className="rounded-full border border-primary/35 bg-primary/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-primary/35 bg-primary/[0.075] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {busy === "customer_update" ? "Sending..." : "Add customer update"}
               </button>
@@ -407,7 +407,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
               <select
                 value={handoffType}
                 onChange={(event) => setHandoffType(event.target.value as AdminSupportHandoffType)}
-                className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <option value="general_support">General support</option>
                 <option value="billing">Billing</option>
@@ -420,14 +420,14 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
                 value={handoffSummary}
                 onChange={(event) => setHandoffSummary(event.target.value)}
                 rows={3}
-                className="w-full rounded-[18px] border border-line bg-card px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="Explain why this ticket is moving into another surface."
               />
               <button
                 type="button"
                 onClick={() => void runAction("handoff")}
                 disabled={busy !== null}
-                className="rounded-full border border-line px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-white/[0.026] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-text transition hover:border-primary/35 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {busy === "handoff" ? "Creating..." : "Create handoff"}
               </button>
@@ -444,7 +444,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
         >
           <div className="space-y-2.5">
             {ticket.events.map((event) => (
-              <div key={event.id} className="rounded-[20px] border border-line bg-card2 p-3.5">
+              <div key={event.id} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-[13px] font-bold text-text">{event.title ?? humanize(event.eventType)}</p>
@@ -465,12 +465,12 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
         >
           <div className="space-y-2.5">
             {ticket.handoffs.length === 0 ? (
-              <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-4 text-[13px] text-sub">
+              <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-4 text-[13px] text-sub">
                 This ticket has not been handed into another specialist surface yet.
               </div>
             ) : (
               ticket.handoffs.map((handoff) => (
-                <div key={handoff.id} className="rounded-[20px] border border-line bg-card2 p-3.5">
+                <div key={handoff.id} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-3.5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-[13px] font-bold text-text">{humanize(handoff.handoffType)}</p>
@@ -483,7 +483,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
                     {handoff.targetRoute ? (
                       <Link
                         href={handoff.targetRoute}
-                        className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-primary transition hover:border-primary/45 hover:bg-primary/15"
+                        className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/[0.055] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-primary transition hover:border-primary/45 hover:bg-primary/[0.075]"
                       >
                         Open destination
                         <ArrowUpRight size={12} />
@@ -502,7 +502,7 @@ export function SupportTicketDetail({ ticketId }: { ticketId: string }) {
 
 function ContextRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] border border-line bg-card2 px-3.5 py-2.5">
+    <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-2.5">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-1.5 text-[13px] leading-5 text-text">{value}</p>
     </div>

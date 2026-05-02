@@ -29,7 +29,7 @@ export function PortalBillingBlockNotice({
   title?: string;
 }) {
   return (
-    <div className="rounded-[26px] border border-amber-400/25 bg-amber-500/10 p-5 text-amber-50">
+    <div className="rounded-[20px] border border-amber-400/25 bg-amber-500/[0.055] p-5 text-amber-50">
       <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-200">
         Billing limit reached
       </p>

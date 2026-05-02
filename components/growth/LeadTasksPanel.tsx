@@ -38,14 +38,14 @@ export function LeadTasksPanel({
       title="Commercial next moves"
       description="Use structured tasks instead of remembering who to reply to next."
     >
-      <div className="rounded-[20px] border border-line bg-card2 p-3.5">
+      <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-3.5">
         <div className="grid gap-3 md:grid-cols-[180px_1fr_180px]">
           <label className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
             Task type
             <select
               value={taskType}
               onChange={(event) => setTaskType(event.target.value)}
-              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
             >
               {commercialTaskTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -59,7 +59,7 @@ export function LeadTasksPanel({
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
               placeholder="Follow-up title"
             />
           </label>
@@ -69,7 +69,7 @@ export function LeadTasksPanel({
               type="date"
               value={dueDate}
               onChange={(event) => setDueDate(event.target.value)}
-              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-2 text-[13px] text-text outline-none transition focus:border-primary/35"
             />
           </label>
         </div>
@@ -79,7 +79,7 @@ export function LeadTasksPanel({
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
             rows={3}
-            className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/35"
+            className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/35"
             placeholder="What should happen next?"
           />
         </label>
@@ -108,7 +108,7 @@ export function LeadTasksPanel({
       <div className="mt-4 space-y-2.5">
         {tasks.length ? (
           tasks.map((task) => (
-            <div key={task.id} className="rounded-[20px] border border-line bg-card2 p-3.5">
+            <div key={task.id} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-3.5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="max-w-3xl">
                   <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export function LeadTasksPanel({
                   <button
                     type="button"
                     onClick={() => void onResolve(task.id)}
-                    className="inline-flex rounded-full border border-line px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-primary"
+                    className="inline-flex rounded-full border border-white/[0.026] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-primary"
                   >
                     Resolve
                   </button>
@@ -134,7 +134,7 @@ export function LeadTasksPanel({
             </div>
           ))
         ) : (
-          <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5 text-[13px] text-sub">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-3.5 text-[13px] text-sub">
             No tasks yet.
           </div>
         )}

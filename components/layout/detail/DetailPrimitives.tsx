@@ -20,11 +20,11 @@ export function DetailHero({
   actions?: ReactNode;
 }) {
   return (
-    <section className="relative self-start overflow-hidden rounded-[22px] border border-white/[0.04] bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.06),transparent_18%),radial-gradient(circle_at_12%_18%,rgba(74,217,255,0.045),transparent_18%),linear-gradient(180deg,rgba(11,14,20,0.985),rgba(7,9,14,0.985))] p-3.5 shadow-[0_16px_42px_rgba(0,0,0,0.16)]">
+    <section className="relative self-start overflow-hidden rounded-[18px] border border-white/[0.026] bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.06),transparent_18%),radial-gradient(circle_at_12%_18%,rgba(74,217,255,0.045),transparent_18%),linear-gradient(180deg,rgba(11,14,20,0.985),rgba(7,9,14,0.985))] p-3.5 shadow-[0_16px_42px_rgba(0,0,0,0.16)]">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.03),transparent_34%)]" />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.05] bg-white/[0.025] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.16em] text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.032] bg-white/[0.016] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.16em] text-primary">
             <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_18px_rgba(186,255,59,0.55)]" />
             {eyebrow}
           </div>
@@ -36,7 +36,7 @@ export function DetailHero({
         </div>
 
         {actions ? (
-          <div className="rounded-[18px] border border-white/[0.05] bg-white/[0.025] p-3 xl:justify-self-end">
+          <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.016] p-3 xl:justify-self-end">
             <div className="flex flex-wrap gap-2">{actions}</div>
           </div>
         ) : null}
@@ -57,7 +57,7 @@ export function DetailMetricCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-[15px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(16,20,28,0.92),rgba(9,12,18,0.94))] px-3 py-2.5 shadow-[0_10px_22px_rgba(0,0,0,0.12)]">
+    <div className="rounded-[15px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(16,20,28,0.92),rgba(9,12,18,0.94))] px-3 py-2.5 shadow-[0_10px_22px_rgba(0,0,0,0.12)]">
       <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-1.5 text-[0.84rem] font-semibold tracking-[-0.02em] text-text">{value}</p>
       {hint ? <p className="mt-1 text-[10px] leading-5 text-sub">{hint}</p> : null}
@@ -92,7 +92,7 @@ export function DetailSurface({
           {description ? <p className="mt-1.5 text-[12px] leading-5 text-sub">{description}</p> : null}
         </div>
         {aside ? (
-          <div className="rounded-[16px] border border-white/[0.05] bg-white/[0.025] p-2.5 xl:justify-self-end">
+          <div className="rounded-[16px] border border-white/[0.032] bg-white/[0.016] p-2.5 xl:justify-self-end">
             {aside}
           </div>
         ) : null}
@@ -145,7 +145,7 @@ export function DetailStatusRow({
   tone?: "default" | "primary" | "warning" | "danger";
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
       <div className="min-w-0">
         <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
         <p className="mt-1 text-[11px] font-semibold text-text">{value}</p>
@@ -175,7 +175,7 @@ export function DetailActionTile({
   action?: ReactNode;
 }) {
   const content = (
-    <div className="rounded-[16px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(16,20,28,0.9),rgba(10,13,19,0.92))] p-3 transition-all duration-200 hover:border-primary/18 hover:bg-primary/5 hover:-translate-y-0.5">
+    <div className="rounded-[16px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(16,20,28,0.9),rgba(10,13,19,0.92))] p-3 transition-all duration-200 hover:border-primary/18 hover:bg-primary/5 hover:-translate-y-0.5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold text-text">{label}</p>
@@ -207,12 +207,12 @@ export function DetailBadge({
 }) {
   const toneClass =
     tone === "primary"
-      ? "border-primary/20 bg-primary/10 text-primary"
+      ? "border-primary/20 bg-primary/[0.055] text-primary"
       : tone === "warning"
         ? "border-amber-400/20 bg-amber-400/10 text-amber-300"
         : tone === "danger"
           ? "border-rose-400/20 bg-rose-400/10 text-rose-300"
-        : "border-white/[0.05] bg-white/[0.03] text-text";
+        : "border-white/[0.032] bg-white/[0.018] text-text";
 
   return (
     <span className={`rounded-full border px-2.5 py-1 text-[9px] font-bold transition-all duration-200 hover:brightness-110 ${toneClass}`}>

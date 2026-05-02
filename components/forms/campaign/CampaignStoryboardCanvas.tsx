@@ -17,7 +17,7 @@ export default function CampaignStoryboardCanvas({
 }) {
   if (blocks.length === 0) {
     return (
-      <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-5">
+      <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] p-5">
         <p className="text-lg font-black tracking-[-0.02em] text-text">
           Storyboard is still empty
         </p>

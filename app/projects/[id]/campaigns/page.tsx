@@ -158,7 +158,7 @@ export default function ProjectCampaignsPage() {
                         <OpsStatusPill tone={campaign.status === "active" ? "success" : "default"}>
                           {campaign.status}
                         </OpsStatusPill>
-                        <span className="rounded-full bg-white/[0.02] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-sub">
+                        <span className="rounded-full bg-white/[0.014] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-sub">
                           {campaign.campaignType.replaceAll("_", " ")}
                         </span>
                       </div>
@@ -171,7 +171,7 @@ export default function ProjectCampaignsPage() {
                     </div>
                     <Link
                       href={`/campaigns/${campaign.id}`}
-                      className="rounded-full bg-white/[0.026] p-2 text-sub transition group-hover:bg-primary/15 group-hover:text-primary"
+                      className="rounded-full bg-white/[0.026] p-2 text-sub transition group-hover:bg-primary/[0.075] group-hover:text-primary"
                       aria-label={`Open ${campaign.title}`}
                     >
                       <ArrowUpRight size={15} />

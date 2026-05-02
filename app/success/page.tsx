@@ -96,7 +96,7 @@ export default function SuccessPage() {
                   : "Expansion pressure is currently modest"
               }
               rail={
-                <div className="rounded-[22px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-3.5">
+                <div className="rounded-[18px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-3.5">
                   <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary/90">
                     Success posture
                   </p>

@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BuilderBottomNav,
   BuilderHero,
+  BuilderHorizontalStepRail,
   BuilderMetricCard,
   BuilderSidebarCard,
   BuilderSidebarStack,
   BuilderStepHeader,
-  BuilderStepRail,
 } from "@/components/layout/builder/BuilderPrimitives";
 import { AdminReward } from "@/types/entities/reward";
 import { AdminProject } from "@/types/entities/project";
@@ -297,8 +297,10 @@ export default function RewardForm({
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)_360px] xl:items-start">
-        <BuilderStepRail
+      <div className="space-y-4">
+        <BuilderHorizontalStepRail
+          title="Reward setup"
+          description="Keep reward type, delivery, gates and review in one compact setup rail."
           steps={rewardBuilderSteps.map((step, index) => ({
             ...step,
             eyebrow: `Step ${index + 1}`,
@@ -308,7 +310,8 @@ export default function RewardForm({
           onSelect={setCurrentStep}
         />
 
-        <div className="space-y-4 rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+        <div className="space-y-4 rounded-[20px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
           <BuilderStepHeader
             eyebrow={`Step ${currentStepIndex + 1}`}
             title={currentStepMeta.label}
@@ -336,7 +339,7 @@ export default function RewardForm({
                 className={`rounded-[16px] border p-3.5 text-left transition ${
                   isActive
                     ? "border-primary/24 bg-[linear-gradient(135deg,rgba(199,255,0,0.08),rgba(255,255,255,0.025))]"
-                    : "border-white/[0.04] bg-white/[0.02] hover:border-primary/20"
+                    : "border-white/[0.026] bg-white/[0.014] hover:border-primary/20"
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -353,7 +356,7 @@ export default function RewardForm({
           })}
         </div>
 
-        <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+        <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">{activePreset.label}</p>
@@ -361,7 +364,7 @@ export default function RewardForm({
             </div>
             <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
               <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.type}</span>
-              <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">{activePreset.claimMethod.replace(/_/g, " ")}</span>
+              <span className="rounded-full bg-primary/[0.075] px-3 py-1 text-primary">{activePreset.claimMethod.replace(/_/g, " ")}</span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-text">{activePreset.rarity}</span>
             </div>
           </div>
@@ -386,7 +389,7 @@ export default function RewardForm({
                   campaignId: "",
                 })
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
               required
             >
               <option value="">Select project</option>
@@ -404,7 +407,7 @@ export default function RewardForm({
               onChange={(e) =>
                 setValues({ ...values, campaignId: e.target.value || "" })
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             >
               <option value="">No linked campaign</option>
               {filteredCampaigns.map((campaign) => (
@@ -419,7 +422,7 @@ export default function RewardForm({
             <input
               value={values.title}
               onChange={(e) => setValues({ ...values, title: e.target.value })}
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
               required
             />
           </Field>
@@ -428,7 +431,7 @@ export default function RewardForm({
             <input
               value={values.type}
               onChange={(e) => setValues({ ...values, type: e.target.value })}
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
               placeholder="Reward"
             />
           </Field>
@@ -441,7 +444,7 @@ export default function RewardForm({
               setValues({ ...values, description: e.target.value })
             }
             rows={5}
-            className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             required
           />
         </Field>
@@ -471,7 +474,7 @@ export default function RewardForm({
               onChange={(e) =>
                 applyPreset(e.target.value as AdminReward["rewardType"])
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             >
               <option value="token">token</option>
               <option value="nft">nft</option>
@@ -493,7 +496,7 @@ export default function RewardForm({
                   rarity: e.target.value as AdminReward["rarity"],
                 })
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             >
               <option value="common">common</option>
               <option value="rare">rare</option>
@@ -510,7 +513,7 @@ export default function RewardForm({
               onChange={(e) =>
                 setValues({ ...values, cost: Number(e.target.value) })
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             />
           </Field>
 
@@ -523,7 +526,7 @@ export default function RewardForm({
                   status: e.target.value as AdminReward["status"],
                 })
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             >
               <option value="draft">draft</option>
               <option value="active">active</option>
@@ -574,7 +577,7 @@ export default function RewardForm({
             <input
               value={values.icon || ""}
               onChange={(e) => setValues({ ...values, icon: e.target.value })}
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
               placeholder="https://..."
             />
           </Field>
@@ -585,13 +588,13 @@ export default function RewardForm({
               onChange={(e) =>
                 setValues({ ...values, imageUrl: e.target.value })
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
               placeholder="https://..."
             />
           </Field>
         </div>
 
-        <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5 text-[12px] leading-5 text-sub">
+        <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5 text-[12px] leading-5 text-sub">
           <span className="font-semibold text-text">Builder hint:</span> keep the cost and rarity aligned with the effort of the quests that unlock this reward. The stronger the reward, the more important it is to make fulfillment and stock rules explicit.
         </div>
       </div>
@@ -617,7 +620,7 @@ export default function RewardForm({
                     stock: e.target.value === "" ? undefined : Number(e.target.value),
                   })
                 }
-                className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
               />
             </Field>
           ) : (
@@ -633,7 +636,7 @@ export default function RewardForm({
                   claimMethod: e.target.value as AdminReward["claimMethod"],
                 })
               }
-              className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
             >
               <option value="instant_auto">instant_auto</option>
               <option value="manual_fulfillment">manual_fulfillment</option>
@@ -651,7 +654,7 @@ export default function RewardForm({
                   setValues({ ...values, deliveryConfig: e.target.value })
                 }
                 rows={5}
-                className="w-full rounded-2xl border border-line bg-card2 px-4 py-3 outline-none"
+                className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
                 placeholder={activePreset.recommendedConfig}
               />
             </Field>
@@ -671,12 +674,12 @@ export default function RewardForm({
 
         <div className="grid gap-4 md:grid-cols-2">
           {readinessItems.map((item) => (
-            <div key={item.label} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3">
+            <div key={item.label} className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] p-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-bold text-text">{item.label}</p>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                    item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                    item.complete ? "bg-primary/[0.075] text-primary" : "bg-amber-500/[0.075] text-amber-300"
                   }`}
                 >
                   {item.complete ? "Ready" : "Needs work"}
@@ -721,12 +724,12 @@ export default function RewardForm({
           <BuilderSidebarCard title="Readiness Guide">
             <div className="space-y-2">
               {readinessItems.map((item) => (
-                <div key={item.label} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3">
+                <div key={item.label} className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] p-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
                     <span
                       className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-                        item.complete ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-300"
+                        item.complete ? "bg-primary/[0.075] text-primary" : "bg-amber-500/[0.075] text-amber-300"
                       }`}
                     >
                       {item.complete ? "Ready" : "Needs work"}
@@ -738,6 +741,7 @@ export default function RewardForm({
             </div>
           </BuilderSidebarCard>
         </BuilderSidebarStack>
+        </div>
       </div>
     </form>
   );
@@ -767,7 +771,7 @@ function RewardPreviewSurface({
   visible: boolean;
 }) {
   return (
-    <div className="overflow-hidden rounded-[16px] border border-white/[0.04] bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.08),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-3.5">
+    <div className="overflow-hidden rounded-[16px] border border-white/[0.026] bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.08),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-3.5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-xl">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -778,7 +782,7 @@ function RewardPreviewSurface({
           </h3>
           <p className="mt-2 text-[12px] leading-5 text-sub">{description}</p>
         </div>
-        <span className="rounded-[14px] border border-white/[0.04] bg-black/20 px-3 py-2 text-[12px] font-bold text-text">
+        <span className="rounded-[14px] border border-white/[0.026] bg-black/20 px-3 py-2 text-[12px] font-bold text-text">
           {cost} XP
         </span>
       </div>
@@ -787,7 +791,7 @@ function RewardPreviewSurface({
         <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
           {preset.type}
         </span>
-        <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+        <span className="rounded-full bg-primary/[0.075] px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
           {preset.rarity}
         </span>
         <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
@@ -796,7 +800,7 @@ function RewardPreviewSurface({
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-[14px] border border-white/[0.04] bg-black/20 px-3 py-2.5">
+        <div className="rounded-[14px] border border-white/[0.026] bg-black/20 px-3 py-2.5">
           <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">
             Claim state
           </p>
@@ -804,7 +808,7 @@ function RewardPreviewSurface({
             {claimable ? "Claimable" : "Auto-granted / gated"}
           </p>
         </div>
-        <div className="rounded-[14px] border border-white/[0.04] bg-black/20 px-3 py-2.5">
+        <div className="rounded-[14px] border border-white/[0.026] bg-black/20 px-3 py-2.5">
           <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">
             Visibility
           </p>
@@ -842,7 +846,7 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+    <label className="flex items-center justify-between rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
       <span className="text-[12px] font-semibold text-text">{label}</span>
       <input
         type="checkbox"

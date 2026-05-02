@@ -42,7 +42,7 @@ export default function ReceivedWorkspaceInvitesCard() {
     >
       <div className="space-y-4">
         {error ? (
-          <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          <div className="rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
             {error}
           </div>
         ) : null}
@@ -50,7 +50,7 @@ export default function ReceivedWorkspaceInvitesCard() {
         {invites.map((invite) => (
           <div
             key={invite.id}
-            className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-4 py-3.5"
+            className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-4 py-3.5"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

@@ -88,7 +88,7 @@ export function CommunityCommandsPanel({
         <button
           onClick={onRunCommandSync}
           disabled={runningDiscordBotAction === "command_sync"}
-          className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {runningDiscordBotAction === "command_sync"
             ? "Syncing commands..."
@@ -179,9 +179,9 @@ export function CommunityCommandsPanel({
           />
         </div>
 
-        <div className="rounded-[24px] border border-line bg-card2 p-5">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Enable slash commands</span>
               <input
                 type="checkbox"
@@ -195,7 +195,7 @@ export function CommunityCommandsPanel({
               />
             </label>
 
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Enable Telegram commands</span>
               <input
                 type="checkbox"
@@ -209,7 +209,7 @@ export function CommunityCommandsPanel({
               />
             </label>
 
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Enable mission commands</span>
               <input
                 type="checkbox"
@@ -223,7 +223,7 @@ export function CommunityCommandsPanel({
               />
             </label>
 
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Enable captain commands</span>
               <input
                 type="checkbox"
@@ -237,7 +237,7 @@ export function CommunityCommandsPanel({
               />
             </label>
 
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Keep deep links in replies</span>
               <input
                 type="checkbox"
@@ -251,7 +251,7 @@ export function CommunityCommandsPanel({
               />
             </label>
 
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Enable raid ops</span>
               <input
                 type="checkbox"
@@ -266,7 +266,7 @@ export function CommunityCommandsPanel({
             </label>
           </div>
 
-          <div className="mt-4 rounded-[22px] border border-line bg-card px-4 py-4">
+          <div className="mt-4 rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
             <p className="text-sm font-bold text-text">Current command surfaces</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {discordCommands.map((command) => (

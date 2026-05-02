@@ -233,7 +233,7 @@ export default function UserDetailPage() {
                 }
               />
             </div>
-            <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+            <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
               <p className="text-[12px] leading-5 text-sub">
                 Latest trust snapshot score:{" "}
                 <span className="font-semibold text-text">
@@ -252,21 +252,21 @@ export default function UserDetailPage() {
               <button
                 onClick={() => handleTrustAction("watch_wallet", "Applied from contributor detail operator read.")}
                 disabled={activeTrustAction === "watch"}
-                className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 font-bold text-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-2xl border border-amber-500/30 bg-amber-500/[0.055] px-4 py-3 font-bold text-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Put wallet on watch
               </button>
               <button
                 onClick={() => handleTrustAction("flag_user", "Contributor flagged from contributor detail operator read.")}
                 disabled={activeTrustAction === "flag"}
-                className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-2xl border border-rose-500/30 bg-rose-500/[0.055] px-4 py-3 font-bold text-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Flag contributor
               </button>
               <button
                 onClick={() => handleTrustAction("clear_watch", "Wallet watch cleared from contributor detail operator read.")}
                 disabled={activeTrustAction === "clear"}
-                className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 font-bold text-sub disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 font-bold text-sub disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Clear watch
               </button>
@@ -317,7 +317,7 @@ export default function UserDetailPage() {
                     label="Captured"
                     value={new Date(latestTrustSnapshot.created_at).toLocaleString()}
                   />
-                  <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+                  <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Reasons</p>
                     <pre className="mt-3 whitespace-pre-wrap break-all text-xs text-sub">
                       {JSON.stringify(latestTrustSnapshot.reasons ?? {}, null, 2)}
@@ -346,15 +346,15 @@ export default function UserDetailPage() {
               {userReviewFlags.length > 0 ? (
                 <div className="space-y-4">
                   {userReviewFlags.map((flag) => (
-                    <div key={flag.id} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+                    <div key={flag.id} className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-white/[0.05] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+                        <span className="rounded-full border border-white/[0.032] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
                           {flag.flagType.replace(/_/g, " ")}
                         </span>
-                        <span className="rounded-full border border-white/[0.05] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
+                        <span className="rounded-full border border-white/[0.032] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
                           {flag.status}
                         </span>
-                        <span className="rounded-full border border-white/[0.05] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
+                        <span className="rounded-full border border-white/[0.032] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
                           {flag.severity}
                         </span>
                       </div>

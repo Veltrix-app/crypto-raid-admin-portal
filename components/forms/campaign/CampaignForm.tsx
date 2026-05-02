@@ -433,7 +433,7 @@ export default function CampaignForm({
       }}
     >
       {Object.keys(errors).length > 0 ? (
-        <div className="rounded-[24px] border border-rose-500/30 bg-rose-500/10 p-4">
+        <div className="rounded-[18px] border border-rose-500/30 bg-rose-500/[0.055] p-4">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-rose-200">
             Missing required campaign fields
           </p>
@@ -446,7 +446,7 @@ export default function CampaignForm({
       ) : null}
 
         {isStoryboardLayout ? (
-          <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+          <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -458,7 +458,7 @@ export default function CampaignForm({
                 a different part of the journey.
               </p>
             </div>
-            <span className="rounded-full border border-white/8 bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-text">
+            <span className="rounded-full border border-white/[0.032] bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-text">
               {focusBlockId?.replace(/_/g, " ") ?? "full editor"}
             </span>
             </div>
@@ -466,7 +466,7 @@ export default function CampaignForm({
         ) : null}
 
         {entrySourceLabel ? (
-          <div className="rounded-[24px] border border-primary/20 bg-primary/10 p-4">
+          <div className="rounded-[18px] border border-primary/20 bg-primary/[0.055] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -476,7 +476,7 @@ export default function CampaignForm({
                   This campaign entered through <span className="font-semibold text-white">{entrySourceLabel}</span>. Keep the launch posture, starter fit and downstream quest lane aligned while you shape the storyboard.
                 </p>
               </div>
-              <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+              <span className="rounded-full border border-primary/25 bg-primary/[0.065] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
                 project-first
               </span>
             </div>
@@ -525,8 +525,8 @@ export default function CampaignForm({
                 onClick={() => applyPreset(campaignType)}
                 className={`rounded-2xl border p-4 text-left transition ${
                   isActive
-                    ? "border-primary bg-primary/10"
-                    : "border-line bg-card2 hover:border-primary/40"
+                    ? "border-primary bg-primary/[0.055]"
+                    : "border-white/[0.028] bg-white/[0.014] hover:border-primary/40"
                 }`}
               >
                 <p className="text-sm font-bold text-text">{preset.label}</p>
@@ -536,14 +536,14 @@ export default function CampaignForm({
           })}
         </div>
 
-        <div className="rounded-2xl border border-line bg-card2 p-5">
+        <div className="rounded-2xl border border-white/[0.028] bg-white/[0.014] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">{activePreset.label}</p>
               <p className="mt-2 text-sm leading-6 text-sub">{activePreset.summary}</p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
-              <span className="rounded-full bg-primary/15 px-3 py-1 text-primary">
+              <span className="rounded-full bg-primary/[0.075] px-3 py-1 text-primary">
                 {values.campaignType.replace(/_/g, " ")}
               </span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-text">
@@ -559,7 +559,7 @@ export default function CampaignForm({
       ) : null}
 
       {visibleSections.questGuidance ? (
-        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4 text-sm leading-6 text-sub">
+        <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] p-4 text-sm leading-6 text-sub">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
             Quest lane handoff
           </p>
@@ -756,7 +756,7 @@ export default function CampaignForm({
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-line bg-card2 p-4 text-sm text-sub">
+        <div className="rounded-2xl border border-white/[0.028] bg-white/[0.014] p-4 text-sm text-sub">
           <span className="font-semibold text-text">AESP hint:</span> reward pool, minimum active XP and lock window now drive the first staking and distribution tranche. Keep the values conservative until you see real campaign flow.
         </div>
       </div>
@@ -787,14 +787,14 @@ export default function CampaignForm({
           />
         </Field>
 
-        <div className="rounded-2xl border border-line bg-card2 p-4 text-sm text-sub">
+        <div className="rounded-2xl border border-white/[0.028] bg-white/[0.014] p-4 text-sm text-sub">
           <span className="font-semibold text-text">Builder hint:</span> write the short description like the campaign hook contributors see first, and use the long description to explain the full loop, reward logic and what success looks like.
         </div>
       </div>
       ) : null}
 
       {visibleSections.raidGuidance ? (
-        <div className="rounded-[24px] border border-amber-400/20 bg-amber-500/[0.06] p-4 text-sm leading-6 text-amber-100">
+        <div className="rounded-[18px] border border-amber-400/20 bg-amber-500/[0.06] p-4 text-sm leading-6 text-amber-100">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-300">
             Raid posture
           </p>
@@ -940,8 +940,8 @@ function Field({
 function getInputClassName(hasError: boolean) {
   return `w-full rounded-2xl border px-4 py-3 outline-none ${
     hasError
-      ? "border-rose-400/60 bg-rose-500/10 text-text"
-      : "border-line bg-card2"
+      ? "border-rose-400/60 bg-rose-500/[0.055] text-text"
+      : "border-white/[0.028] bg-white/[0.014]"
   }`;
 }
 
@@ -955,7 +955,7 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-4">
+    <label className="flex items-center justify-between rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-4">
       <span className="pr-4 text-sm font-semibold text-text">{label}</span>
       <input
         type="checkbox"

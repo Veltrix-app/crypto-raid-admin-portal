@@ -277,7 +277,7 @@ export default function SubmissionDetailPage() {
             </div>
 
             {verificationResult ? (
-              <div className="mt-4 rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+              <div className="mt-4 rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                   Verification Result
                 </p>
@@ -327,7 +327,7 @@ export default function SubmissionDetailPage() {
                   />
                 </div>
                 {verificationResult.metadata ? (
-                  <pre className="mt-3 whitespace-pre-wrap break-all rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-xs text-sub">
+                  <pre className="mt-3 whitespace-pre-wrap break-all rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 text-xs text-sub">
                     {verificationResult.metadata}
                   </pre>
                 ) : null}
@@ -335,13 +335,13 @@ export default function SubmissionDetailPage() {
             ) : null}
 
             {linkedFlags.length > 0 ? (
-              <div className="mt-4 rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+              <div className="mt-4 rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                   Linked Flags
                 </p>
                 <div className="mt-3 space-y-3">
                   {linkedFlags.map((flag) => (
-                    <div key={flag.id} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+                    <div key={flag.id} className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <DetailBadge>{flag.flagType.replace(/_/g, " ")}</DetailBadge>
                         <DetailBadge tone="warning">{flag.severity}</DetailBadge>
@@ -367,7 +367,7 @@ export default function SubmissionDetailPage() {
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
                   rows={4}
-                  className="w-full rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 outline-none"
+                  className="w-full rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 outline-none"
                   placeholder="Capture why you approved, rejected, or escalated this submission."
                 />
               </label>
@@ -385,7 +385,7 @@ export default function SubmissionDetailPage() {
               <button
                 onClick={handleReject}
                 disabled={working || currentSubmission.status === "rejected"}
-                className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-5 py-3 font-bold text-rose-300 disabled:opacity-50"
+                className="rounded-2xl border border-rose-500/30 bg-rose-500/[0.055] px-5 py-3 font-bold text-rose-300 disabled:opacity-50"
               >
                 {working ? "Working..." : "Reject"}
               </button>
@@ -454,7 +454,7 @@ export default function SubmissionDetailPage() {
               title="Proof"
               description="Review the submitted proof carefully before you confirm or reject the task."
             >
-              <div className="mt-4 rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+              <div className="mt-4 rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
                 {proofLooksLikeUrl ? (
                   <a
                     href={currentSubmission.proof}
@@ -487,7 +487,7 @@ export default function SubmissionDetailPage() {
             <DetailSidebarSurface title="Audit Trail">
               <div className="mt-4 space-y-3">
                 {auditLogs.map((log) => (
-                  <div key={log.id} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3">
+                  <div key={log.id} className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] p-3">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-bold capitalize text-text">
                         {log.action.replace(/_/g, " ")}
@@ -529,13 +529,13 @@ function DecisionCard({
 }) {
   const toneClass =
     tone === "ready"
-      ? "bg-primary/15 text-primary"
+      ? "bg-primary/[0.075] text-primary"
       : tone === "danger"
         ? "bg-rose-500/15 text-rose-300"
-        : "bg-amber-500/15 text-amber-300";
+        : "bg-amber-500/[0.075] text-amber-300";
 
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] p-3">
+    <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] p-3">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <div className="mt-3">
         <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${toneClass}`}>

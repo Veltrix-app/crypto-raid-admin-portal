@@ -8,7 +8,7 @@ export default function ActivityChart({ items }: Props) {
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-[18px] border border-line bg-card2 px-3.5 py-3.5"
+          className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-3.5"
         >
           <p className="text-[13px] text-sub">{item.label}</p>
           <p className="mt-1.5 text-[1.02rem] font-extrabold text-text">{item.value}</p>

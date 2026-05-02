@@ -130,7 +130,7 @@ export function CommunityPlaybooksPanel({
               const state = getPlaybookState(playbook, automations);
 
               return (
-                <div key={playbook.key} className="rounded-[24px] border border-line bg-card2 p-5">
+                <div key={playbook.key} className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="max-w-2xl">
                       <p className="text-sm font-bold text-text">{playbook.title}</p>
@@ -145,7 +145,7 @@ export function CommunityPlaybooksPanel({
                   </div>
 
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <label className="flex items-center gap-3 rounded-[18px] border border-line bg-card px-4 py-3 text-sm text-text">
+                    <label className="flex items-center gap-3 rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
                       <input
                         type="checkbox"
                         checked={playbook.enabled}
@@ -165,7 +165,7 @@ export function CommunityPlaybooksPanel({
                             providerScope: event.target.value as CommunityPlaybookConfig["providerScope"],
                           })
                         }
-                        className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
+                        className="w-full rounded-[16px] border border-white/[0.026] bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
                       >
                         <option value="both">Discord + Telegram</option>
                         <option value="discord">Discord only</option>
@@ -182,7 +182,7 @@ export function CommunityPlaybooksPanel({
                       return (
                         <div
                           key={`${playbook.key}-${step}`}
-                          className="rounded-[18px] border border-white/8 bg-card px-4 py-4"
+                          className="rounded-[18px] border border-white/[0.032] bg-white/[0.012] px-4 py-4"
                         >
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <p className="text-sm font-semibold text-text">
@@ -228,7 +228,7 @@ export function CommunityPlaybooksPanel({
                       type="button"
                       onClick={() => onRunPlaybook(playbook.key)}
                       disabled={runningPlaybookKey === playbook.key}
-                      className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {runningPlaybookKey === playbook.key ? "Running..." : "Run playbook"}
                     </button>
@@ -238,7 +238,7 @@ export function CommunityPlaybooksPanel({
             })}
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <p className="text-sm font-bold text-text">Recent playbook history</p>
             <p className="mt-2 text-sm text-sub">
               The latest manual or scheduled playbook runs for this project.
@@ -247,7 +247,7 @@ export function CommunityPlaybooksPanel({
             <div className="mt-4 space-y-3">
               {playbookRuns.length > 0 ? (
                 playbookRuns.map((run) => (
-                  <div key={run.id} className="rounded-[20px] border border-line bg-card px-4 py-4">
+                  <div key={run.id} className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-bold text-text">{run.playbookKey.replaceAll("_", " ")}</p>
@@ -273,7 +273,7 @@ export function CommunityPlaybooksPanel({
                   </div>
                 ))
               ) : (
-                <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+                <div className="rounded-[20px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-sm text-sub">
                   No playbook runs are recorded yet.
                 </div>
               )}
@@ -285,7 +285,7 @@ export function CommunityPlaybooksPanel({
           <div
             className={`rounded-[20px] border px-4 py-3 text-sm ${
               noticeTone === "error"
-                ? "border-rose-500/30 bg-rose-500/10 text-rose-200"
+                ? "border-rose-500/30 bg-rose-500/[0.055] text-rose-200"
                 : "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
             }`}
           >

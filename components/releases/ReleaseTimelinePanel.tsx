@@ -64,7 +64,7 @@ export function ReleaseTimelinePanel({ detail }: { detail: AdminReleaseDetail })
       {entries.length ? (
         <div className="space-y-3">
           {entries.map((entry) => (
-            <div key={entry.key} className="rounded-[22px] border border-line bg-card2 p-4">
+            <div key={entry.key} className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm font-bold text-text">{entry.label}</p>
                 <OpsStatusPill tone={entry.tone}>{formatDateTime(entry.at)}</OpsStatusPill>
@@ -74,7 +74,7 @@ export function ReleaseTimelinePanel({ detail }: { detail: AdminReleaseDetail })
           ))}
 
           {detail.migrationLinks.length ? (
-            <div className="rounded-[22px] border border-line bg-card2 p-4">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
               <p className="text-sm font-bold text-text">Linked migrations</p>
               <div className="mt-3 space-y-2">
                 {detail.migrationLinks.map((link) => (

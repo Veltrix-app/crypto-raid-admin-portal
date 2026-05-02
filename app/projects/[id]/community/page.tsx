@@ -2790,7 +2790,7 @@ export default function ProjectCommunityManagementPage() {
             <div className="grid gap-3 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
               <div className="space-y-3">
                 {projectOps.error ? (
-                  <div className="rounded-[22px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                  <div className="rounded-[18px] border border-rose-500/30 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
                     {projectOps.error}
                   </div>
                 ) : null}

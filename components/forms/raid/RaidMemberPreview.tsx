@@ -8,8 +8,8 @@ export default function RaidMemberPreview({
   preview: RaidMemberPreviewModel;
 }) {
   return (
-    <div className="overflow-hidden rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(88,146,255,0.16),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(199,255,0,0.12),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
-      <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(6,8,12,0.82))] p-4">
+    <div className="overflow-hidden rounded-[18px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(88,146,255,0.16),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(199,255,0,0.12),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
+      <div className="rounded-[18px] border border-white/[0.032] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(6,8,12,0.82))] p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-xl">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -20,7 +20,7 @@ export default function RaidMemberPreview({
             </h3>
             <p className="mt-3 text-sm leading-7 text-sub">{preview.summary}</p>
           </div>
-          <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3">
+          <div className="rounded-[20px] border border-white/[0.032] bg-black/20 px-4 py-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
               Reward posture
             </p>
@@ -29,7 +29,7 @@ export default function RaidMemberPreview({
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
-          <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+          <span className="rounded-full bg-primary/[0.075] px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
             {preview.verificationLabel}
           </span>
           <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
@@ -40,7 +40,7 @@ export default function RaidMemberPreview({
           </span>
         </div>
 
-        <div className="mt-5 rounded-[24px] border border-white/8 bg-black/25 p-4">
+        <div className="mt-5 rounded-[18px] border border-white/[0.032] bg-black/25 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
@@ -50,7 +50,7 @@ export default function RaidMemberPreview({
                 One live destination, one clear action, one guided wave.
               </p>
             </div>
-            <span className="rounded-full bg-primary/12 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+            <span className="rounded-full bg-primary/[0.065] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
               Raid live
             </span>
           </div>
@@ -82,7 +82,7 @@ function PreviewMeta({
   value: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-3">
+    <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] px-4 py-3">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>

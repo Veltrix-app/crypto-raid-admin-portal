@@ -47,7 +47,7 @@ export function SuccessOverviewPanel({
             <Link
               key={account.accountId}
               href={`/success/accounts/${account.accountId}`}
-              className="rounded-[18px] border border-white/[0.025] bg-white/[0.014] p-4 transition hover:border-white/[0.08]"
+              className="rounded-[18px] border border-white/[0.025] bg-white/[0.014] p-4 transition hover:border-white/[0.045]"
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-bold text-text">{account.accountName}</p>

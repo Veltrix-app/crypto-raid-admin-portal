@@ -43,7 +43,7 @@ function ServiceRow({
   }
 
   return (
-    <div className="rounded-[22px] border border-line bg-card2 p-4">
+    <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -69,7 +69,7 @@ function ServiceRow({
         <select
           value={inclusionStatus}
           onChange={(event) => setInclusionStatus(event.target.value as typeof inclusionStatus)}
-          className="rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
+          className="rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
         >
           <option value="included">Included</option>
           <option value="not_in_scope">Not in scope</option>
@@ -77,7 +77,7 @@ function ServiceRow({
         <select
           value={deployStatus}
           onChange={(event) => setDeployStatus(event.target.value as typeof deployStatus)}
-          className="rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
+          className="rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text focus:border-primary/50 focus:outline-none"
         >
           <option value="pending">Pending</option>
           <option value="ready">Ready</option>
@@ -89,13 +89,13 @@ function ServiceRow({
           value={versionLabel}
           onChange={(event) => setVersionLabel(event.target.value)}
           placeholder="Version label"
-          className="rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+          className="rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
         />
         <input
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           placeholder="Notes"
-          className="rounded-[18px] border border-line bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
+          className="rounded-[18px] border border-white/[0.026] bg-black/20 px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none"
         />
       </div>
     </div>

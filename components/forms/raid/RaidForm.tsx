@@ -415,13 +415,13 @@ export default function RaidForm({
           />
 
           {stepError ? (
-            <div className="rounded-[22px] border border-amber-400/16 bg-amber-500/10 px-4 py-4 text-sm leading-6 text-amber-200">
+            <div className="rounded-[18px] border border-amber-400/16 bg-amber-500/[0.055] px-4 py-4 text-sm leading-6 text-amber-200">
               {stepError}
             </div>
           ) : null}
 
           {submitError ? (
-            <div className="rounded-[22px] border border-rose-400/16 bg-rose-500/10 px-4 py-4 text-sm leading-6 text-rose-200">
+            <div className="rounded-[18px] border border-rose-400/16 bg-rose-500/[0.055] px-4 py-4 text-sm leading-6 text-rose-200">
               {submitError}
             </div>
           ) : null}
@@ -597,7 +597,7 @@ export default function RaidForm({
                 ) : null}
               </div>
 
-              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -610,7 +610,7 @@ export default function RaidForm({
                   <button
                     type="button"
                     onClick={addInstruction}
-                    className="rounded-[14px] border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[12px] font-bold text-text transition hover:border-primary/25 hover:bg-white/[0.04]"
+                    className="rounded-[14px] border border-white/[0.032] bg-white/[0.014] px-3 py-2 text-[12px] font-bold text-text transition hover:border-primary/25 hover:bg-white/[0.04]"
                   >
                     Add step
                   </button>
@@ -628,7 +628,7 @@ export default function RaidForm({
                       <button
                         type="button"
                         onClick={() => removeInstruction(index)}
-                        className="rounded-[14px] border border-rose-500/24 bg-rose-500/10 px-3 py-2 text-[12px] font-semibold text-rose-300 transition hover:border-rose-400/40"
+                        className="rounded-[14px] border border-rose-500/24 bg-rose-500/[0.055] px-3 py-2 text-[12px] font-semibold text-rose-300 transition hover:border-rose-400/40"
                       >
                         Remove
                       </button>
@@ -664,7 +664,7 @@ export default function RaidForm({
                   </select>
                 </Field>
 
-                <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+                <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
                   <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">
                     Recommended posture
                   </p>
@@ -846,10 +846,10 @@ function ContextPill({
 }) {
   const toneClass =
     tone === "accent"
-      ? "border-primary/20 bg-primary/12 text-primary"
+      ? "border-primary/20 bg-primary/[0.065] text-primary"
       : tone === "warning"
-        ? "border-amber-400/20 bg-amber-500/10 text-amber-300"
-        : "border-white/[0.04] bg-black/20 text-text";
+        ? "border-amber-400/20 bg-amber-500/[0.055] text-amber-300"
+        : "border-white/[0.026] bg-black/20 text-text";
 
   return (
     <span className={`rounded-full border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] ${toneClass}`}>
@@ -877,14 +877,14 @@ function Field({
 
 function StudioHint({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5 text-[12px] leading-5 text-sub">
+    <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5 text-[12px] leading-5 text-sub">
       <span className="font-semibold text-text">Studio hint:</span> {children}
     </div>
   );
 }
 
 function getInputClassName() {
-  return "w-full rounded-[14px] border border-white/[0.04] bg-black/20 px-3 py-2.5 text-[12px] outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/15";
+  return "w-full rounded-[14px] border border-white/[0.026] bg-black/20 px-3 py-2.5 text-[12px] outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/15";
 }
 
 function isValidJson(raw: string | undefined) {

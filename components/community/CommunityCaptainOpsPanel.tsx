@@ -140,7 +140,7 @@ export function CommunityCaptainOpsPanel({
                 return (
                   <div
                     key={`${captain.authUserId}-${captain.role}`}
-                    className="rounded-[24px] border border-line bg-card2 p-5"
+                    className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -172,7 +172,7 @@ export function CommunityCaptainOpsPanel({
                       {captain.readinessSummary}
                     </p>
 
-                    <div className="mt-4 rounded-[18px] border border-line bg-card px-4 py-4">
+                    <div className="mt-4 rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                       <label className="space-y-2 text-xs font-bold uppercase tracking-[0.12em] text-sub">
                         Seat scope
                         <select
@@ -184,7 +184,7 @@ export function CommunityCaptainOpsPanel({
                               event.target.value as CommunityCaptainSeatScope
                             )
                           }
-                          className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
+                          className="w-full rounded-[16px] border border-white/[0.026] bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
                         >
                           <option value="project_only">Project only</option>
                           <option value="community_only">Community only</option>
@@ -197,7 +197,7 @@ export function CommunityCaptainOpsPanel({
                       {permissionLabels.map(([permission, label]) => (
                         <label
                           key={`${captain.authUserId}-${permission}`}
-                          className="flex items-center gap-3 rounded-[18px] border border-line bg-card px-4 py-3 text-sm text-text"
+                          className="flex items-center gap-3 rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text"
                         >
                           <input
                             type="checkbox"
@@ -219,13 +219,13 @@ export function CommunityCaptainOpsPanel({
                 );
               })
             ) : (
-              <div className="rounded-[24px] border border-dashed border-line bg-card2 px-4 py-5 text-sm text-sub">
+              <div className="rounded-[18px] border border-dashed border-white/[0.028] bg-white/[0.014] px-4 py-5 text-sm text-sub">
                 No captain seats are assigned yet. Add seats first, then grant explicit permissions here.
               </div>
             )}
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <p className="text-sm font-bold text-text">Captain action history</p>
             <p className="mt-2 text-sm text-sub">
               Every captain-triggered action lands here so the project team can audit who ran what, when, and with what outcome.
@@ -234,7 +234,7 @@ export function CommunityCaptainOpsPanel({
             <div className="mt-4 space-y-3">
               {captainActions.length > 0 ? (
                 captainActions.map((action) => (
-                  <div key={action.id} className="rounded-[20px] border border-line bg-card px-4 py-4">
+                  <div key={action.id} className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-bold text-text">{action.actionType.replaceAll("_", " ")}</p>
@@ -256,19 +256,19 @@ export function CommunityCaptainOpsPanel({
                     </div>
 
                     <div className="mt-3 flex flex-wrap gap-2 text-xs text-sub">
-                      <span className="rounded-full border border-white/8 bg-card2 px-3 py-1">
+                      <span className="rounded-full border border-white/[0.032] bg-white/[0.014] px-3 py-1">
                         {action.actorScope || "captain"}
                       </span>
-                      <span className="rounded-full border border-white/8 bg-card2 px-3 py-1">
+                      <span className="rounded-full border border-white/[0.032] bg-white/[0.014] px-3 py-1">
                         {action.captainRole || "captain"}
                       </span>
                       {action.dueState ? (
-                        <span className="rounded-full border border-white/8 bg-card2 px-3 py-1">
+                        <span className="rounded-full border border-white/[0.032] bg-white/[0.014] px-3 py-1">
                           {COMMUNITY_CAPTAIN_DUE_STATE_LABELS[action.dueState]}
                         </span>
                       ) : null}
                       {action.resolutionState ? (
-                        <span className="rounded-full border border-white/8 bg-card2 px-3 py-1">
+                        <span className="rounded-full border border-white/[0.032] bg-white/[0.014] px-3 py-1">
                           {COMMUNITY_CAPTAIN_RESOLUTION_LABELS[action.resolutionState]}
                         </span>
                       ) : null}
@@ -280,7 +280,7 @@ export function CommunityCaptainOpsPanel({
                   </div>
                 ))
               ) : (
-                <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+                <div className="rounded-[20px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-sm text-sub">
                   No captain-triggered actions are logged yet.
                 </div>
               )}
@@ -292,7 +292,7 @@ export function CommunityCaptainOpsPanel({
           <div
             className={`rounded-[20px] border px-4 py-3 text-sm ${
               noticeTone === "error"
-                ? "border-rose-500/30 bg-rose-500/10 text-rose-200"
+                ? "border-rose-500/30 bg-rose-500/[0.055] text-rose-200"
                 : "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
             }`}
           >

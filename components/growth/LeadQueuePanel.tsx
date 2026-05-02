@@ -69,7 +69,7 @@ export function LeadQueuePanel({
           <option value="cooling_off">Cooling off</option>
           <option value="lost">Lost</option>
         </OpsSelect>
-        <div className="rounded-[20px] border border-line bg-card2 px-4 py-3 text-sm text-sub">
+        <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-sub">
           {loading ? "Loading queue..." : `${leads.length} leads in view`}
         </div>
       </OpsFilterBar>
@@ -78,7 +78,7 @@ export function LeadQueuePanel({
         {leads.length ? (
           leads.map((lead) => <LeadRow key={lead.id} lead={lead} />)
         ) : (
-          <div className="rounded-[24px] border border-line bg-card2 px-5 py-5 text-sm leading-6 text-sub">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-5 text-sm leading-6 text-sub">
             The growth queue is currently quiet.
           </div>
         )}
@@ -91,7 +91,7 @@ function LeadRow({ lead }: { lead: AdminGrowthLeadSummary }) {
   return (
     <Link
       href={`/growth/leads/${lead.id}`}
-      className="block rounded-[24px] border border-line bg-card2 p-5 transition hover:border-primary/35"
+      className="block rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5 transition hover:border-primary/35"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-3xl">

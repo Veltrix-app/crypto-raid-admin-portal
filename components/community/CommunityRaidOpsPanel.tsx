@@ -56,9 +56,9 @@ export function CommunityRaidOpsPanel({
           <OpsMetricCard label="Reminders" value={settings.raidRemindersEnabled ? "On" : "Off"} sub="Follow-up reminder waves." />
         </div>
 
-        <div className="rounded-[24px] border border-line bg-card2 p-5">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Enable raid ops</span>
               <input
                 type="checkbox"
@@ -71,7 +71,7 @@ export function CommunityRaidOpsPanel({
                 }
               />
             </label>
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Auto live alerts</span>
               <input
                 type="checkbox"
@@ -84,7 +84,7 @@ export function CommunityRaidOpsPanel({
                 }
               />
             </label>
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Reminder waves</span>
               <input
                 type="checkbox"
@@ -97,7 +97,7 @@ export function CommunityRaidOpsPanel({
                 }
               />
             </label>
-            <label className="flex items-center justify-between rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center justify-between rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <span>Result wraps</span>
               <input
                 type="checkbox"
@@ -112,7 +112,7 @@ export function CommunityRaidOpsPanel({
             </label>
           </div>
 
-          <label className="mt-4 block rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+          <label className="mt-4 block rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
             <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
               Raid cadence
             </span>
@@ -146,8 +146,8 @@ export function CommunityRaidOpsPanel({
             <p
               className={`mt-4 rounded-[18px] border px-4 py-3 text-sm leading-6 ${
                 raidNoticeTone === "error"
-                  ? "border-rose-400/30 bg-rose-500/10 text-rose-200"
-                  : "border-primary/20 bg-primary/10 text-primary"
+                  ? "border-rose-400/30 bg-rose-500/[0.055] text-rose-200"
+                  : "border-primary/20 bg-primary/[0.055] text-primary"
               }`}
             >
               {raidNotice}
@@ -155,7 +155,7 @@ export function CommunityRaidOpsPanel({
           ) : null}
         </div>
 
-        <div className="rounded-[24px] border border-line bg-card2 p-5">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">Live raid rail</p>
@@ -171,7 +171,7 @@ export function CommunityRaidOpsPanel({
           <select
             value={selectedRaidId}
             onChange={(event) => setSelectedRaidId(event.target.value)}
-            className="mt-4 w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none"
+            className="mt-4 w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none"
           >
             {raids.length > 0 ? (
               raids.map((raid) => (
@@ -188,21 +188,21 @@ export function CommunityRaidOpsPanel({
             <button
               onClick={() => selectedRaidId && onRunRaidAction(selectedRaidId, "live")}
               disabled={!selectedRaidId || runningRaidAction === "live"}
-              className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningRaidAction === "live" ? "Sending alert..." : "Send live alert"}
             </button>
             <button
               onClick={() => selectedRaidId && onRunRaidAction(selectedRaidId, "reminder")}
               disabled={!selectedRaidId || runningRaidAction === "reminder"}
-              className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningRaidAction === "reminder" ? "Sending reminder..." : "Send reminder wave"}
             </button>
             <button
               onClick={() => selectedRaidId && onRunRaidAction(selectedRaidId, "result")}
               disabled={!selectedRaidId || runningRaidAction === "result"}
-              className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningRaidAction === "result" ? "Sending result..." : "Send result wrap"}
             </button>

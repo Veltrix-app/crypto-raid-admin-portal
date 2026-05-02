@@ -218,7 +218,7 @@ export default function QuestDetailPage() {
                 <button
                   onClick={() => void handleLifecycleAction(primaryLifecycleAction.action)}
                   disabled={runningAction !== null}
-                  className="rounded-[14px] border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-[12px] font-bold text-primary transition hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-[14px] border border-primary/30 bg-primary/[0.055] px-3.5 py-2.5 text-[12px] font-bold text-primary transition hover:bg-primary/[0.075] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {runningAction === primaryLifecycleAction.action
                     ? `${primaryLifecycleAction.label}...`
@@ -229,7 +229,7 @@ export default function QuestDetailPage() {
                 <button
                   onClick={() => void handleLifecycleAction("archive")}
                   disabled={runningAction !== null}
-                  className="rounded-[14px] border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-[12px] font-bold text-amber-200 transition hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-[14px] border border-amber-500/30 bg-amber-500/[0.055] px-3.5 py-2.5 text-[12px] font-bold text-amber-200 transition hover:bg-amber-500/[0.075] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {runningAction === "archive" ? "Archiving..." : "Archive"}
                 </button>
@@ -239,7 +239,7 @@ export default function QuestDetailPage() {
                   await deleteQuest(quest.id);
                   router.push("/quests");
                 }}
-                className="rounded-[14px] border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-[12px] font-bold text-rose-300 transition hover:bg-rose-500/15"
+                className="rounded-[14px] border border-rose-500/30 bg-rose-500/[0.055] px-3.5 py-2.5 text-[12px] font-bold text-rose-300 transition hover:bg-rose-500/15"
               >
                 Delete Quest
               </button>
@@ -266,15 +266,15 @@ export default function QuestDetailPage() {
           <div
             className={`rounded-[18px] border px-4 py-3 text-[12px] font-semibold ${
               actionMessage.tone === "success"
-                ? "border-primary/30 bg-primary/10 text-primary"
-                : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+                ? "border-primary/30 bg-primary/[0.055] text-primary"
+                : "border-rose-500/30 bg-rose-500/[0.055] text-rose-200"
             }`}
           >
             {actionMessage.text}
           </div>
         ) : null}
 
-        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+        <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
@@ -304,7 +304,7 @@ export default function QuestDetailPage() {
               aside={<DetailMetricCard label="Pending reviews" value={pendingSubmissions.length} />}
             >
               <div className="space-y-3">
-                <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] px-4 py-4">
+                <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] px-4 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -396,7 +396,7 @@ export default function QuestDetailPage() {
             >
               <div className="mt-4 grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
                 <div className="space-y-4">
-                  <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+                  <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
@@ -542,7 +542,7 @@ export default function QuestDetailPage() {
               <DetailSidebarSurface title="Operator History">
                 <div className="mt-4 space-y-3">
                   {questOps.audits.slice(0, 4).map((audit) => (
-                    <div key={audit.id} className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+                    <div key={audit.id} className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
                       <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
                         {audit.action_type.replace(/_/g, " ")}
                       </p>
@@ -604,7 +604,7 @@ function QuestSignalCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] px-3.5 py-3.5">
+    <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] px-3.5 py-3.5">
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-2 text-[1.18rem] font-extrabold tracking-[-0.03em] text-text">{value}</p>
       <p className="mt-2 text-[11px] leading-5 text-sub">{hint}</p>

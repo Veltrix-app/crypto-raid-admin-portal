@@ -60,7 +60,7 @@ export function QaReadinessBoard({ overview }: { overview: AdminQaOverview }) {
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {overview.readinessByService.map((surface) => (
-            <div key={surface.serviceKey} className="rounded-[20px] border border-line bg-card2 px-4 py-3.5">
+            <div key={surface.serviceKey} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-4 py-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-bold text-text">{surface.label}</p>
                 <OpsStatusPill tone={readinessTone(surface.readiness)}>{surface.readiness}</OpsStatusPill>
@@ -170,7 +170,7 @@ export function QaReadinessBoard({ overview }: { overview: AdminQaOverview }) {
           {overview.blockingChecks.length ? (
             <div className="space-y-2">
               {overview.blockingChecks.map((check) => (
-                <div key={check.id} className="rounded-[16px] border border-rose-400/20 bg-rose-500/10 px-3.5 py-2.5">
+                <div key={check.id} className="rounded-[16px] border border-rose-400/20 bg-rose-500/[0.055] px-3.5 py-2.5">
                   <p className="text-sm font-bold text-text">{check.label}</p>
                   <p className="mt-1.5 text-xs leading-5 text-sub">{check.summary}</p>
                 </div>

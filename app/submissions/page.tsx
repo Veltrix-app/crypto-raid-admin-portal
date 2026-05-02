@@ -110,7 +110,7 @@ export default function SubmissionsPage() {
                 />
               </div>
 
-              <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(13,17,24,0.96),rgba(9,12,18,0.96))] p-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
+              <div className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,17,24,0.96),rgba(9,12,18,0.96))] p-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="max-w-2xl">
                     <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -205,7 +205,7 @@ export default function SubmissionsPage() {
                   <option value="approved">approved</option>
                   <option value="rejected">rejected</option>
                 </OpsSelect>
-                <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-[12px] text-sub">
+                <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 text-[12px] text-sub">
                   {filteredSubmissions.length} submissions in view
                 </div>
               </OpsFilterBar>
@@ -241,7 +241,7 @@ export default function SubmissionsPage() {
                             : "This submission did not meet the current verification requirements.");
 
                       return (
-                        <div key={submission.id} className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+                        <div key={submission.id} className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
                           <div className="flex flex-wrap items-start justify-between gap-4">
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-3">
@@ -279,7 +279,7 @@ export default function SubmissionsPage() {
 
                             <Link
                               href={`/submissions/${submission.id}`}
-                              className="rounded-[14px] border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[12px] font-bold text-text transition hover:border-primary/30 hover:text-primary"
+                              className="rounded-[14px] border border-white/[0.032] bg-white/[0.014] px-3 py-2 text-[12px] font-bold text-text transition hover:border-primary/30 hover:text-primary"
                             >
                               Open review
                             </Link>
@@ -289,7 +289,7 @@ export default function SubmissionsPage() {
                     })}
 
                     {filteredSubmissions.length === 0 ? (
-                      <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-4 text-[12px] text-sub">
+                      <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-4 text-[12px] text-sub">
                         No submissions match your filters.
                       </div>
                     ) : null}
@@ -350,7 +350,7 @@ function DecisionCard({
         : "text-rose-300";
 
   return (
-    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+    <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
       <p className="text-[12px] text-sub">{label}</p>
       <p className={`mt-1.5 text-[1.05rem] font-semibold ${toneClass}`}>{value}</p>
       <p className="mt-1.5 text-[12px] leading-5 text-sub">{hint}</p>
@@ -360,7 +360,7 @@ function DecisionCard({
 
 function SignalRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+    <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-1.5 text-[12px] font-semibold text-text">{value}</p>
     </div>
@@ -369,7 +369,7 @@ function SignalRow({ label, value }: { label: string; value: string }) {
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.018] px-3 py-2.5">
+    <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.018] px-3 py-2.5">
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-1.5 text-[12px] font-semibold text-text">{value}</p>
     </div>

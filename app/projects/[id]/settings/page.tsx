@@ -166,7 +166,7 @@ export default function ProjectSettingsPage() {
               await deleteProject(project.id);
               router.push("/projects");
             }}
-            className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
+            className="rounded-[18px] border border-rose-500/30 bg-rose-500/[0.055] px-4 py-3 font-bold text-rose-300 transition hover:bg-rose-500/15"
           >
             Delete project
           </button>

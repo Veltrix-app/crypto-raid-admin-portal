@@ -35,7 +35,7 @@ export default function PayoutQueuePanel({
     <OpsPanel eyebrow={eyebrow} title={title} description={description}>
       <div className="grid gap-3">
         {rows.length === 0 ? (
-          <div className="rounded-[24px] border border-line bg-card px-5 py-6 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-5 py-6 text-sm text-sub">
             {loading ? "Loading payout cases..." : emptyState}
           </div>
         ) : null}
@@ -53,10 +53,10 @@ export default function PayoutQueuePanel({
                     onClick: () => onSelect(row.id),
                   }
                 : {})}
-              className={`rounded-[24px] border px-5 py-5 text-left transition-all duration-200 ${
+              className={`rounded-[18px] border px-5 py-5 text-left transition-all duration-200 ${
                 selected
-                  ? "border-primary/45 bg-primary/10 shadow-[0_18px_50px_rgba(186,255,59,0.12)]"
-                  : "border-line bg-card2 hover:border-white/12 hover:bg-white/[0.03]"
+                  ? "border-primary/45 bg-primary/[0.055] shadow-[0_18px_50px_rgba(186,255,59,0.12)]"
+                  : "border-white/[0.028] bg-white/[0.014] hover:border-white/12 hover:bg-white/[0.018]"
               }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -68,7 +68,7 @@ export default function PayoutQueuePanel({
                   </div>
                   <p className="mt-3 text-sm leading-6 text-sub">{row.summary}</p>
                 </div>
-                <span className="rounded-full border border-line px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+                <span className="rounded-full border border-white/[0.026] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
                   {getPayoutEscalationLabel(row.escalationState)}
                 </span>
               </div>
@@ -83,7 +83,7 @@ export default function PayoutQueuePanel({
               </div>
 
               {row.evidenceSummary ? (
-                <div className="mt-4 rounded-[20px] border border-line bg-card px-4 py-4">
+                <div className="mt-4 rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                     Evidence summary
                   </p>
@@ -100,7 +100,7 @@ export default function PayoutQueuePanel({
 
 function QueueMeta({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] border border-line bg-card px-4 py-3">
+    <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>

@@ -111,7 +111,7 @@ export function CommunityFunnelsPanel({
         <div className="grid gap-5 xl:grid-cols-[1.02fr_0.98fr]">
           <div className="space-y-4">
             {funnelAutomations.map((automation) => (
-              <div key={automation.id} className="rounded-[20px] border border-line bg-card2 p-4">
+              <div key={automation.id} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-bold text-text">{automation.title}</p>
@@ -142,11 +142,11 @@ export function CommunityFunnelsPanel({
                 </div>
 
                 <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
-                  <div className="rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-sm text-sub">
+                  <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-sm text-sub">
                     <p className="font-bold text-text">Cadence</p>
                     <p className="mt-2">{automation.cadence}</p>
                   </div>
-                  <div className="rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-sm text-sub">
+                  <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-sm text-sub">
                     <p className="font-bold text-text">Next run</p>
                     <p className="mt-2">{formatTimestamp(automation.nextRunAt)}</p>
                   </div>
@@ -165,7 +165,7 @@ export function CommunityFunnelsPanel({
                   type="button"
                   onClick={() => onRunAutomation(automation.id)}
                   disabled={runningAutomationId === automation.id}
-                  className="mt-3.5 rounded-[16px] border border-line bg-card px-3.5 py-2.5 text-[13px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-3.5 rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5 text-[13px] font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {runningAutomationId === automation.id ? "Running..." : "Run funnel now"}
                 </button>
@@ -175,7 +175,7 @@ export function CommunityFunnelsPanel({
 
           <div className="space-y-4">
             {[conversionSignal, retentionSignal].filter(Boolean).map((signal) => (
-              <div key={signal?.key} className="rounded-[20px] border border-line bg-card2 p-4">
+              <div key={signal?.key} className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-bold text-text">{signal?.label}</p>
@@ -198,7 +198,7 @@ export function CommunityFunnelsPanel({
               </div>
             ))}
 
-            <div className="rounded-[20px] border border-line bg-card2 p-4">
+            <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] p-4">
               <p className="text-sm font-bold text-text">Queue balance</p>
               <p className="mt-2 text-sm text-sub">
                 Owners should use this read to decide whether to arm another funnel wave or first
@@ -206,7 +206,7 @@ export function CommunityFunnelsPanel({
               </p>
 
               <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
-                <div className="rounded-[16px] border border-line bg-card px-3.5 py-2.5">
+                <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                     Starter pressure
                   </p>
@@ -215,7 +215,7 @@ export function CommunityFunnelsPanel({
                     {newcomer?.blockedCount ?? 0} seats are currently blocked from graduating cleanly.
                   </p>
                 </div>
-                <div className="rounded-[16px] border border-line bg-card px-3.5 py-2.5">
+                <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.012] px-3.5 py-2.5">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                     Comeback pressure
                   </p>

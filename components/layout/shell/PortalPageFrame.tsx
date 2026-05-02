@@ -25,7 +25,7 @@ export default function PortalPageFrame({
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-primary">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/[0.055] px-2 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-primary">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 {eyebrow}
               </span>

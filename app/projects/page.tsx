@@ -171,7 +171,7 @@ function ProjectsPageContent() {
                     value={bootstrapName}
                     onChange={(event) => setBootstrapName(event.target.value)}
                     placeholder="VYNTRO Founding Campaign"
-                    className="w-full rounded-[18px] border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   />
                 </label>
 
@@ -182,7 +182,7 @@ function ProjectsPageContent() {
                   <select
                     value={bootstrapChain}
                     onChange={(event) => setBootstrapChain(event.target.value)}
-                    className="w-full rounded-[18px] border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   >
                     <option value="Base">Base</option>
                     <option value="Ethereum">Ethereum</option>
@@ -200,7 +200,7 @@ function ProjectsPageContent() {
                     value={bootstrapCategory}
                     onChange={(event) => setBootstrapCategory(event.target.value)}
                     placeholder="community"
-                    className="w-full rounded-[18px] border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   />
                 </label>
 
@@ -213,13 +213,13 @@ function ProjectsPageContent() {
                     onChange={(event) => setBootstrapDescription(event.target.value)}
                     placeholder="What is this project launching and what kind of community is it building?"
                     rows={4}
-                    className="w-full rounded-[18px] border border-white/[0.04] bg-white/[0.02] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-[18px] border border-white/[0.026] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   />
                 </label>
               </div>
 
               {bootstrapError ? (
-                <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                <div className="rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
                   {bootstrapError}
                 </div>
               ) : null}
@@ -236,7 +236,7 @@ function ProjectsPageContent() {
                 <button
                   type="button"
                   onClick={() => router.push("/getting-started")}
-                  className="rounded-full border border-white/[0.04] bg-white/[0.02] px-4 py-2.5 text-sm font-semibold text-text"
+                  className="rounded-full border border-white/[0.026] bg-white/[0.014] px-4 py-2.5 text-sm font-semibold text-text"
                 >
                   Back to Getting Started
                 </button>
@@ -291,7 +291,7 @@ function ProjectsPageContent() {
         </OpsSelect>
         <button
           onClick={resetFilters}
-          className="rounded-[20px] border border-white/[0.04] bg-white/[0.02] px-4 py-3 font-semibold text-text"
+          className="rounded-[20px] border border-white/[0.026] bg-white/[0.014] px-4 py-3 font-semibold text-text"
         >
           Reset
         </button>

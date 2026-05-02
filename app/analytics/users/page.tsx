@@ -34,7 +34,7 @@ export default function AnalyticsUsersPage() {
         </div>
 
         <div className="grid gap-5 xl:grid-cols-2">
-          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
+          <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">User Snapshot</h2>
             <div className="mt-5">
               <ActivityChart
@@ -49,7 +49,7 @@ export default function AnalyticsUsersPage() {
             </div>
           </div>
 
-          <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
+          <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">Contribution Tiers</h2>
             <div className="mt-5">
               <ActivityChart items={topTiers.map((item) => ({ label: item.label, value: item.value }))} />
@@ -57,10 +57,10 @@ export default function AnalyticsUsersPage() {
           </div>
         </div>
 
-        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.02] p-5">
+        <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-5">
           <h2 className="text-[1.08rem] font-extrabold text-text">Top Contributors</h2>
-          <div className="mt-4 overflow-hidden rounded-[18px] border border-white/[0.04] bg-white/[0.025]">
-            <div className="grid grid-cols-6 border-b border-white/[0.04] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
+          <div className="mt-4 overflow-hidden rounded-[18px] border border-white/[0.026] bg-white/[0.016]">
+            <div className="grid grid-cols-6 border-b border-white/[0.026] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
               <div>User</div>
               <div>Tier</div>
               <div>XP</div>

@@ -163,7 +163,7 @@ export default function CampaignsPage() {
                 </div>
               </OpsPanel>
 
-              <div className="space-y-2.5 rounded-[16px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-3.5">
+              <div className="space-y-2.5 rounded-[16px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-3.5">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
                   Signal rail
                 </p>
@@ -230,12 +230,12 @@ export default function CampaignsPage() {
                 <option value="content">content</option>
                 <option value="hybrid">hybrid</option>
               </OpsSelect>
-              <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-[12px] leading-5 text-sub">
+              <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 text-[12px] leading-5 text-sub">
                 {campaignsView === "portfolio"
                   ? "Portfolio mode keeps the system readable and helps you understand where campaign energy is concentrated."
                   : "Launch mode filters the noise down to campaigns that change the next operator decision."}
               </div>
-              <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-[12px] leading-5 text-sub">
+              <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 text-[12px] leading-5 text-sub">
                 {filteredCampaigns.length} campaigns in view /{" "}
                 {totalParticipants.toLocaleString()} participants across the full board
               </div>
@@ -301,7 +301,7 @@ export default function CampaignsPage() {
                 })}
 
                 {portfolioLeadCampaigns.length === 0 ? (
-                  <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-4 py-4 text-[12px] text-sub 2xl:col-span-2">
+                  <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-4 py-4 text-[12px] text-sub 2xl:col-span-2">
                     No campaigns match the current filters.
                   </div>
                 ) : null}
@@ -366,7 +366,7 @@ export default function CampaignsPage() {
                 })}
 
                 {launchCampaigns.length === 0 ? (
-                  <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-4 py-4 text-[12px] text-sub 2xl:col-span-2">
+                  <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-4 py-4 text-[12px] text-sub 2xl:col-span-2">
                     No launch campaigns match the current filters.
                   </div>
                 ) : null}
@@ -399,7 +399,7 @@ function CampaignSignal({
       className={`rounded-[18px] border px-3.5 py-3 ${
         tone === "warning"
           ? "border-amber-400/16 bg-amber-500/[0.07]"
-          : "border-white/[0.04] bg-white/[0.02]"
+          : "border-white/[0.026] bg-white/[0.014]"
       }`}
     >
       <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
@@ -430,7 +430,7 @@ function CampaignSurfaceCard({
       className={`relative overflow-hidden rounded-[18px] border p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)] ${
         accent
           ? "border-primary/14 bg-[radial-gradient(circle_at_top_right,rgba(186,255,59,0.1),transparent_22%),linear-gradient(180deg,rgba(18,24,35,0.96),rgba(10,14,22,0.94))]"
-          : "border-white/[0.04] bg-[linear-gradient(180deg,rgba(14,18,26,0.96),rgba(9,12,18,0.94))]"
+          : "border-white/[0.026] bg-[linear-gradient(180deg,rgba(14,18,26,0.96),rgba(9,12,18,0.94))]"
       }`}
     >
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.03),transparent_32%)]" />
@@ -452,7 +452,7 @@ function CampaignSurfaceCard({
             {stats.map((stat) => (
               <div
                 key={`${title}-${stat.label}`}
-                className="rounded-[12px] border border-white/[0.04] bg-white/[0.02] px-3 py-2"
+                className="rounded-[12px] border border-white/[0.026] bg-white/[0.014] px-3 py-2"
               >
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
                   {stat.label}
@@ -464,7 +464,7 @@ function CampaignSurfaceCard({
         </div>
         <Link
           href={href}
-          className="rounded-full border border-white/[0.05] bg-white/[0.025] px-3.5 py-2 text-[12px] font-semibold text-text transition hover:border-primary/24 hover:text-primary"
+          className="rounded-full border border-white/[0.032] bg-white/[0.016] px-3.5 py-2 text-[12px] font-semibold text-text transition hover:border-primary/24 hover:text-primary"
         >
           View
         </Link>

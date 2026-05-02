@@ -100,7 +100,7 @@ export default function SettingsPage() {
               <Link
                 key={item.title}
                 href={item.href}
-                className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] p-5 transition hover:border-primary/35 hover:-translate-y-0.5"
+                className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-5 transition hover:border-primary/35 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">

@@ -44,11 +44,11 @@ export default function AdminSidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 border-r border-white/[0.045] bg-[linear-gradient(180deg,rgba(8,10,14,0.99),rgba(5,7,10,0.995))] px-2.5 py-3 transition-[width] duration-300 lg:flex lg:flex-col",
-        expanded ? "w-[246px]" : "w-[74px]"
+        "sticky top-0 hidden h-screen shrink-0 border-r border-white/[0.026] bg-[linear-gradient(180deg,rgba(8,10,14,0.99),rgba(5,7,10,0.995))] px-2.5 py-3 transition-[width] duration-300 lg:flex lg:flex-col",
+        expanded ? "w-[246px]" : "w-[82px]"
       )}
     >
-      <div className="flex items-center gap-2">
+      <div className={cn("gap-2", expanded ? "flex items-center" : "flex flex-col items-center")}>
         <Link
           href="/overview"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-primary/20 bg-[linear-gradient(180deg,rgba(186,255,59,0.16),rgba(255,255,255,0.025))] text-primary shadow-[0_12px_30px_rgba(0,0,0,0.2)]"
@@ -73,8 +73,8 @@ export default function AdminSidebar() {
           type="button"
           onClick={toggleExpanded}
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-[13px] border border-white/[0.055] bg-white/[0.025] text-sub transition hover:border-primary/20 hover:bg-primary/10 hover:text-primary",
-            expanded ? "" : "mx-auto"
+            "flex shrink-0 items-center justify-center rounded-[13px] border border-white/[0.032] bg-white/[0.018] text-sub transition hover:border-primary/20 hover:bg-primary/[0.055] hover:text-primary",
+            expanded ? "h-9 w-9" : "h-8 w-12"
           )}
           aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
           title={expanded ? "Collapse sidebar" : "Expand sidebar"}
@@ -83,7 +83,7 @@ export default function AdminSidebar() {
         </button>
       </div>
 
-      <nav className="mt-4 flex-1 overflow-y-auto">
+      <nav className="portal-sidebar-scroll mt-4 flex-1 overflow-y-auto pr-0.5">
         <div className="flex flex-col gap-4">
           {GLOBAL_NAV_GROUPS.map((group) => {
             const groupItems = navItems.filter((item) => item.group === group.key);
@@ -128,7 +128,7 @@ export default function AdminSidebar() {
                           "group relative flex min-w-0 items-center rounded-[14px] border transition",
                           expanded
                             ? "h-10 w-full justify-start gap-2.5 px-2.5"
-                            : "mx-auto h-9 w-9 justify-center",
+                            : "mx-auto h-10 w-10 justify-center",
                           active
                             ? "border-primary/22 bg-[linear-gradient(90deg,rgba(186,255,59,0.13),rgba(255,255,255,0.028))] text-primary shadow-[0_12px_28px_rgba(186,255,59,0.09)]"
                             : "border-transparent bg-transparent text-sub hover:border-white/[0.055] hover:bg-white/[0.032] hover:text-text"
@@ -138,7 +138,7 @@ export default function AdminSidebar() {
                           <span
                             className={cn(
                               "absolute top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-primary",
-                              expanded ? "left-0" : "-left-[9px]"
+                              expanded ? "left-0" : "-left-[11px]"
                             )}
                           />
                         ) : null}
@@ -153,7 +153,7 @@ export default function AdminSidebar() {
                               "pointer-events-none absolute left-[calc(100%+0.55rem)] top-1/2 z-40 -translate-y-1/2 whitespace-nowrap rounded-full border px-2 py-1 text-[9px] font-semibold opacity-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition group-hover:opacity-100 group-focus-visible:opacity-100",
                               active
                                 ? "border-primary/20 bg-[#0d1117] text-primary"
-                                : "border-white/8 bg-[#0d1117] text-text"
+                                : "border-white/[0.032] bg-[#0d1117] text-text"
                             )}
                           >
                             {item.label}
@@ -172,7 +172,7 @@ export default function AdminSidebar() {
       <div className="space-y-2.5">
         <div
           className={cn(
-            "rounded-[16px] border border-white/[0.045] bg-white/[0.025] px-2 py-2.5",
+            "rounded-[16px] border border-white/[0.045] bg-white/[0.016] px-2 py-2.5",
             expanded ? "text-left" : "text-center"
           )}
           title={workspaceName}

@@ -72,12 +72,12 @@ export default function OnchainCaseDetailPanel({
       description="Inspect wallet, asset, source and failure context before you take the next bounded recovery action."
     >
       {!onchainCase ? (
-        <div className="rounded-[24px] border border-line bg-card px-5 py-6 text-sm text-sub">
+        <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-5 py-6 text-sm text-sub">
           {loading ? "Loading on-chain case..." : "Select an on-chain case to inspect the full detail rail."}
         </div>
       ) : (
         <div className="grid gap-5">
-          <div className="rounded-[24px] border border-line bg-card2 px-5 py-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-3">
@@ -89,7 +89,7 @@ export default function OnchainCaseDetailPanel({
                 </div>
                 <p className="mt-3 text-sm leading-6 text-sub">{onchainCase.summary}</p>
               </div>
-              <span className="rounded-full border border-line px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
+              <span className="rounded-full border border-white/[0.026] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
                 {onchainCase.escalationState.replace(/_/g, " ")}
               </span>
             </div>
@@ -162,7 +162,7 @@ export default function OnchainCaseDetailPanel({
           ) : null}
 
           {visibleActions.length > 0 && onAction ? (
-            <div className="rounded-[24px] border border-line bg-card2 px-5 py-5">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-5">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                 Actions
               </p>
@@ -171,7 +171,7 @@ export default function OnchainCaseDetailPanel({
                 onChange={(event) => setNotes(event.target.value)}
                 rows={4}
                 placeholder="Add recovery notes, provider context or project follow-through..."
-                className="mt-4 w-full rounded-[20px] border border-line bg-card px-4 py-4 text-sm text-text placeholder:text-sub/70 focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="mt-4 w-full rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4 text-sm text-text placeholder:text-sub/70 focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
               <div className="mt-4 flex flex-wrap gap-3">
                 {visibleActions.map((action) => (
@@ -184,8 +184,8 @@ export default function OnchainCaseDetailPanel({
                       action === "resolve"
                         ? "bg-primary text-black"
                         : action === "dismiss"
-                          ? "border border-rose-500/30 bg-rose-500/10 text-rose-300"
-                          : "border border-line bg-card text-text hover:border-primary/35"
+                          ? "border border-rose-500/30 bg-rose-500/[0.055] text-rose-300"
+                          : "border border-white/[0.026] bg-white/[0.012] text-text hover:border-primary/35"
                     } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {actionBusy === action ? "Working..." : ACTION_LABELS[action]}
@@ -202,7 +202,7 @@ export default function OnchainCaseDetailPanel({
 
 function DetailMeta({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] border border-line bg-card px-4 py-3">
+    <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 break-all text-sm font-semibold text-text">{value}</p>
     </div>
@@ -221,23 +221,23 @@ function EvidencePanel({
   emptyCopy?: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-line bg-card2 px-5 py-5">
+    <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-5">
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">{title}</p>
       {preformatted ? (
-        <pre className="mt-4 whitespace-pre-wrap break-all rounded-[20px] border border-line bg-card px-4 py-4 text-xs leading-6 text-sub">
+        <pre className="mt-4 whitespace-pre-wrap break-all rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4 text-xs leading-6 text-sub">
           {preformatted}
         </pre>
       ) : items && items.length > 0 ? (
         <div className="mt-4 grid gap-3">
           {items.map(([label, value]) => (
-            <div key={label} className="rounded-[20px] border border-line bg-card px-4 py-4">
+            <div key={label} className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
               <p className="mt-2 break-all text-sm leading-6 text-text">{value}</p>
             </div>
           ))}
         </div>
       ) : (
-        <div className="mt-4 rounded-[20px] border border-line bg-card px-4 py-4 text-sm text-sub">
+        <div className="mt-4 rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4 text-sm text-sub">
           {emptyCopy ?? "No detail recorded yet."}
         </div>
       )}

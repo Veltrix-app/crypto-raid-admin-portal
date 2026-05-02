@@ -62,7 +62,7 @@ export function SecuritySettingsCard({
         </div>
 
         <div className="space-y-3">
-          <div className="rounded-[22px] border border-line bg-card2 px-4 py-4">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-4 py-4">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
               Enterprise requirements
             </p>

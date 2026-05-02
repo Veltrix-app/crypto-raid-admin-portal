@@ -56,7 +56,7 @@ export function CommunityRanksPanel({
         <button
           onClick={onRunRankSync}
           disabled={runningDiscordBotAction === "rank_sync"}
-          className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {runningDiscordBotAction === "rank_sync" ? "Syncing ranks..." : "Sync Discord ranks now"}
         </button>
@@ -84,7 +84,7 @@ export function CommunityRanksPanel({
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-bold text-text">Quick ladders</p>
@@ -92,7 +92,7 @@ export function CommunityRanksPanel({
                   Load a proven starter rail, then paste the final Discord role IDs before saving.
                 </p>
               </div>
-              <label className="flex items-center gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+              <label className="flex items-center gap-3 rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
                 <span>Rank sync enabled</span>
                 <input
                   type="checkbox"
@@ -117,7 +117,7 @@ export function CommunityRanksPanel({
                     rankSource: event.target.value as DiscordRankSource,
                   }))
                 }
-                className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
               >
                 {rankSourceOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -132,7 +132,7 @@ export function CommunityRanksPanel({
                 <button
                   key={preset.id}
                   onClick={() => onLoadPreset(preset.id)}
-                  className="rounded-[22px] border border-line bg-card p-4 text-left transition hover:border-primary/35 hover:bg-primary/5"
+                  className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] p-4 text-left transition hover:border-primary/35 hover:bg-primary/5"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -146,7 +146,7 @@ export function CommunityRanksPanel({
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-bold text-text">Role mappings</p>
@@ -156,7 +156,7 @@ export function CommunityRanksPanel({
               </div>
               <button
                 onClick={() => setRankRules((current) => [...current, createEmptyDiscordRankRule()])}
-                className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
+                className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary"
               >
                 Add rule
               </button>
@@ -165,7 +165,7 @@ export function CommunityRanksPanel({
             <div className="mt-4 space-y-3">
               {rankRules.length > 0 ? (
                 rankRules.map((rule, index) => (
-                  <div key={`${rule.id ?? "rule"}-${index}`} className="rounded-[22px] border border-line bg-card p-4">
+                  <div key={`${rule.id ?? "rule"}-${index}`} className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] p-4">
                     <div className="grid gap-3 xl:grid-cols-[180px_150px_minmax(0,1fr)_auto]">
                       <select
                         value={rule.sourceType}
@@ -178,7 +178,7 @@ export function CommunityRanksPanel({
                             )
                           )
                         }
-                        className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       >
                         {rankSourceOptions.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -197,7 +197,7 @@ export function CommunityRanksPanel({
                           )
                         }
                         placeholder="Threshold"
-                        className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                        className="rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                       />
 
                       <div className="grid gap-3 md:grid-cols-2">
@@ -211,7 +211,7 @@ export function CommunityRanksPanel({
                             )
                           }
                           placeholder="Rank label"
-                          className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          className="rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                         />
                         <input
                           value={rule.discordRoleId}
@@ -225,7 +225,7 @@ export function CommunityRanksPanel({
                             )
                           }
                           placeholder="Discord role ID"
-                          className="rounded-2xl border border-line bg-card2 px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                          className="rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                         />
                       </div>
 
@@ -233,7 +233,7 @@ export function CommunityRanksPanel({
                         onClick={() =>
                           setRankRules((current) => current.filter((_, itemIndex) => itemIndex !== index))
                         }
-                        className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-300 transition hover:bg-rose-500/15"
+                        className="rounded-[18px] border border-rose-500/30 bg-rose-500/[0.055] px-4 py-3 text-sm font-bold text-rose-300 transition hover:bg-rose-500/15"
                       >
                         Remove
                       </button>
@@ -241,7 +241,7 @@ export function CommunityRanksPanel({
                   </div>
                 ))
               ) : (
-                <div className="rounded-[22px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+                <div className="rounded-[18px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-sm text-sub">
                   No Discord rank rules loaded yet. Start with a quick ladder or add your own first rule.
                 </div>
               )}
@@ -263,8 +263,8 @@ export function CommunityRanksPanel({
           <div
             className={`rounded-2xl px-4 py-3 text-sm ${
               discordBotNoticeTone === "error"
-                ? "border border-rose-500/25 bg-rose-500/10 text-rose-200"
-                : "border border-primary/20 bg-primary/10 text-primary"
+                ? "border border-rose-500/25 bg-rose-500/[0.055] text-rose-200"
+                : "border border-primary/20 bg-primary/[0.055] text-primary"
             }`}
           >
             {discordBotNotice}

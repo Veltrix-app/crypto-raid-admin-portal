@@ -50,3 +50,25 @@ textarea,
 button {
   font: inherit;
 }
+
+.portal-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+.portal-sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.portal-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.portal-sidebar-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.portal-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(186, 255, 59, 0.28);
+}

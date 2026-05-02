@@ -46,7 +46,7 @@ export function CommunityAutomationsPanel({
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <p className="text-sm font-bold text-text">Automation posture</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <OpsStatusPill tone={settings.missionDigestEnabled ? "success" : "default"}>
@@ -67,7 +67,7 @@ export function CommunityAutomationsPanel({
             </p>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <p className="text-sm font-bold text-text">Manual runs</p>
             <p className="mt-2 text-sm text-sub">
               Fire individual rails if you want to test cadence, verify targets, or kick a specific pressure wave now.
@@ -76,7 +76,7 @@ export function CommunityAutomationsPanel({
               <button
                 onClick={() => onRunAutomationAction("missions")}
                 disabled={runningAutomationAction === "missions"}
-                className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {runningAutomationAction === "missions"
                   ? "Running missions..."
@@ -85,7 +85,7 @@ export function CommunityAutomationsPanel({
               <button
                 onClick={() => onRunAutomationAction("raids")}
                 disabled={runningAutomationAction === "raids"}
-                className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {runningAutomationAction === "raids" ? "Running raids..." : "Run raid automation"}
               </button>
@@ -95,8 +95,8 @@ export function CommunityAutomationsPanel({
               <p
                 className={`mt-4 rounded-[18px] border px-4 py-3 text-sm leading-6 ${
                   automationNoticeTone === "error"
-                    ? "border-rose-400/30 bg-rose-500/10 text-rose-200"
-                    : "border-primary/20 bg-primary/10 text-primary"
+                    ? "border-rose-400/30 bg-rose-500/[0.055] text-rose-200"
+                    : "border-primary/20 bg-primary/[0.055] text-primary"
                 }`}
               >
                 {automationNotice}

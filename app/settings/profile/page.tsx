@@ -114,7 +114,7 @@ export default function SettingsProfilePage() {
               <OpsSnapshotRow label="Visibility" value={project?.isPublic ? "Public workspace" : "Private workspace"} />
             </div>
 
-            <div className="mt-5 rounded-[18px] border border-white/[0.04] bg-white/[0.025] p-5">
+            <div className="mt-5 rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-5">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Description</p>
               <p className="mt-3 text-sm leading-6 text-sub">
                 {project?.description ||
@@ -138,7 +138,7 @@ export default function SettingsProfilePage() {
           >
             <div className="space-y-3">
               {profileReadiness.map((item) => (
-                <div key={item.label} className="rounded-[22px] border border-white/[0.04] bg-white/[0.025] p-4">
+                <div key={item.label} className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-bold text-text">{item.label}</p>
                     <OpsStatusPill tone={item.complete ? "success" : "warning"}>

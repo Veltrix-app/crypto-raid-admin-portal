@@ -159,12 +159,12 @@ export function CommunityActivityPanel({
           />
         </div>
 
-        <div className="rounded-[24px] border border-line bg-card2 p-5">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">Latest issue</p>
           <p className="mt-3 text-sm leading-7 text-text">{latestIssue}</p>
         </div>
 
-        <div className="rounded-[24px] border border-line bg-card2 p-5">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">Recent log stream</p>
@@ -176,12 +176,12 @@ export function CommunityActivityPanel({
 
           <div className="mt-4 space-y-3">
             {loadingActivity ? (
-              <div className="rounded-[22px] border border-line bg-card px-4 py-5 text-sm text-sub">
+              <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-5 text-sm text-sub">
                 Loading community activity...
               </div>
             ) : recentActivity.length > 0 ? (
               recentActivity.map((log) => (
-                <div key={log.id} className="rounded-[22px] border border-line bg-card px-4 py-4">
+                <div key={log.id} className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="font-bold text-text">{formatActionLabel(log.action)}</p>
@@ -192,11 +192,11 @@ export function CommunityActivityPanel({
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs text-sub">
-                    <span className="rounded-full border border-white/8 bg-card2 px-3 py-1">
+                    <span className="rounded-full border border-white/[0.032] bg-white/[0.014] px-3 py-1">
                       {log.source_table}
                     </span>
                     {log.project_id ? (
-                      <span className="rounded-full border border-white/8 bg-card2 px-3 py-1">
+                      <span className="rounded-full border border-white/[0.032] bg-white/[0.014] px-3 py-1">
                         project scoped
                       </span>
                     ) : null}
@@ -204,7 +204,7 @@ export function CommunityActivityPanel({
                 </div>
               ))
             ) : (
-              <div className="rounded-[22px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+              <div className="rounded-[18px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-sm text-sub">
                 No recent community activity has been logged for this project yet.
               </div>
             )}

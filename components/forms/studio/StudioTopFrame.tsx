@@ -18,7 +18,7 @@ export default function StudioTopFrame({
   supporting?: ReactNode;
 }) {
   return (
-    <div className="relative self-start overflow-hidden rounded-[20px] border border-white/[0.04] bg-[radial-gradient(circle_at_top_left,rgba(199,255,0,0.08),transparent_20%),radial-gradient(circle_at_top_right,rgba(255,255,255,0.04),transparent_22%),linear-gradient(180deg,rgba(13,17,24,0.985),rgba(8,10,15,0.965))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.18)]">
+    <div className="relative self-start overflow-hidden rounded-[20px] border border-white/[0.026] bg-[radial-gradient(circle_at_top_left,rgba(199,255,0,0.08),transparent_20%),radial-gradient(circle_at_top_right,rgba(255,255,255,0.04),transparent_22%),linear-gradient(180deg,rgba(13,17,24,0.985),rgba(8,10,15,0.965))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.18)]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-[28%] bg-[radial-gradient(circle_at_center,rgba(199,255,0,0.045),transparent_58%)]" />
 
@@ -35,7 +35,7 @@ export default function StudioTopFrame({
           </div>
 
           {actions ? (
-            <div className="min-w-[220px] rounded-[16px] border border-white/[0.04] bg-black/20 p-3 xl:max-w-[300px]">
+            <div className="min-w-[220px] rounded-[16px] border border-white/[0.026] bg-black/20 p-3 xl:max-w-[300px]">
               {actions}
             </div>
           ) : null}
@@ -44,7 +44,7 @@ export default function StudioTopFrame({
         {context || supporting ? (
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
             {context ? (
-          <div className="rounded-[16px] border border-white/[0.04] bg-black/20 px-3 py-3">
+          <div className="rounded-[16px] border border-white/[0.026] bg-black/20 px-3 py-3">
             <div className="flex items-center gap-3">
               <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary">
                 Studio context
@@ -58,7 +58,7 @@ export default function StudioTopFrame({
             )}
 
             {supporting ? (
-              <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3 py-3">
+              <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-3 py-3">
                 <div className="flex items-center gap-3">
                   <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-primary/90">
                     Studio signals

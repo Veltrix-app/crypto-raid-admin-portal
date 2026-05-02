@@ -25,7 +25,7 @@ export default function ProjectTemplateLibrary({
               </p>
               <p className="mt-1.5 text-[11px] leading-5 text-sub">{section.description}</p>
             </div>
-            <span className="rounded-full bg-white/[0.025] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-sub">
+            <span className="rounded-full bg-white/[0.016] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-sub">
               {section.items.length} routes
             </span>
           </div>

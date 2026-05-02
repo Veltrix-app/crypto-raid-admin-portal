@@ -142,7 +142,7 @@ export default function GrowthPage() {
               <OpsMetricCard label="Converted" value={overview.counts.converted} emphasis={overview.counts.converted > 0 ? "primary" : "default"} />
             </div>
 
-            <div className="rounded-[20px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
+            <div className="rounded-[20px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(18,24,36,0.82),rgba(12,16,24,0.92))] px-3.5 py-3.5 shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-xl">
                   <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">

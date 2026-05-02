@@ -76,7 +76,7 @@ export function LeadDetailPanel({
           <OpsSnapshotRow label="Company domain" value={detail.companyDomain ?? "Not captured"} />
           <OpsSnapshotRow label="Latest signal" value={detail.lastSignalAt ?? "No signal timestamp"} />
           <OpsSnapshotRow label="Linked account" value={detail.accountName ?? "Not linked yet"} />
-          <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5">
+          <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-3.5">
             <div className="flex flex-wrap items-center gap-2">
               <OpsStatusPill tone={leadStateTone(detail.leadState)}>
                 {humanizeCommercialLabel(detail.leadState)}
@@ -88,7 +88,7 @@ export function LeadDetailPanel({
             {detail.accountName && detail.linkedCustomerAccountId ? (
               <Link
                 href={`/business/accounts/${detail.linkedCustomerAccountId}`}
-                className="mt-3 inline-flex rounded-full border border-line px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-primary"
+                className="mt-3 inline-flex rounded-full border border-white/[0.026] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-primary/35 hover:text-primary"
               >
                 Open linked account
               </Link>
@@ -102,7 +102,7 @@ export function LeadDetailPanel({
             <select
               value={leadState}
               onChange={(event) => setLeadState(event.target.value as AdminCommercialLeadState)}
-              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2.5 text-[13px] text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-2.5 text-[13px] text-text outline-none transition focus:border-primary/35"
             >
               {commercialLeadStateOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -118,7 +118,7 @@ export function LeadDetailPanel({
               value={qualificationSummary}
               onChange={(event) => setQualificationSummary(event.target.value)}
               rows={3}
-              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/35"
             />
           </label>
 
@@ -128,7 +128,7 @@ export function LeadDetailPanel({
               value={intentSummary}
               onChange={(event) => setIntentSummary(event.target.value)}
               rows={3}
-              className="mt-2 w-full rounded-[18px] border border-line bg-card px-3 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/35"
+              className="mt-2 w-full rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-3 py-2.5 text-[13px] leading-5 text-text outline-none transition focus:border-primary/35"
             />
           </label>
 
@@ -167,7 +167,7 @@ export function LeadDetailPanel({
 
 function RequestCard({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-[20px] border border-line bg-card2 px-3.5 py-3.5">
+    <div className="rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-3.5 py-3.5">
       <p className="text-[13px] font-bold text-text">{title}</p>
       <p className="mt-2.5 text-[13px] leading-5 text-sub">{body}</p>
     </div>

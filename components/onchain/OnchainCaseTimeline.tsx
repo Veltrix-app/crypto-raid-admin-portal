@@ -21,7 +21,7 @@ export default function OnchainCaseTimeline({
     >
       <div className="grid gap-4">
         {events.length === 0 ? (
-          <div className="rounded-[24px] border border-line bg-card px-5 py-6 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-5 py-6 text-sm text-sub">
             {loading ? "Loading on-chain timeline..." : emptyState}
           </div>
         ) : null}
@@ -29,7 +29,7 @@ export default function OnchainCaseTimeline({
         {events.map((event) => (
           <div
             key={event.id}
-            className="rounded-[24px] border border-line bg-card2 px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+            className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -49,7 +49,7 @@ export default function OnchainCaseTimeline({
             </div>
 
             {event.eventPayload ? (
-              <div className="mt-4 rounded-[20px] border border-line bg-card px-4 py-4">
+              <div className="mt-4 rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                 <pre className="whitespace-pre-wrap break-all text-xs leading-6 text-sub">
                   {JSON.stringify(event.eventPayload, null, 2)}
                 </pre>

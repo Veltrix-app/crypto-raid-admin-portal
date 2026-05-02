@@ -35,7 +35,7 @@ export function CommunityLeaderboardsPanel({
         <button
           onClick={onRunLeaderboardPost}
           disabled={runningDiscordBotAction === "leaderboard_post"}
-          className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {runningDiscordBotAction === "leaderboard_post"
             ? "Posting leaderboard..."
@@ -64,7 +64,7 @@ export function CommunityLeaderboardsPanel({
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-bold text-text">Leaderboard rail toggles</p>
@@ -72,7 +72,7 @@ export function CommunityLeaderboardsPanel({
                   Use this to turn competitive posting on or off for the project community.
                 </p>
               </div>
-              <label className="flex items-center gap-3 rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text">
+              <label className="flex items-center gap-3 rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
                 <span>Leaderboard enabled</span>
                 <input
                   type="checkbox"
@@ -98,7 +98,7 @@ export function CommunityLeaderboardsPanel({
                       leaderboardScope: event.target.value as DiscordLeaderboardScope,
                     }))
                   }
-                  className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                  className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                 >
                   <option value="project">Project contributors only</option>
                   <option value="global">Global contributors</option>
@@ -115,7 +115,7 @@ export function CommunityLeaderboardsPanel({
                       leaderboardPeriod: event.target.value as DiscordLeaderboardPeriod,
                     }))
                   }
-                  className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                  className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                 >
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
@@ -133,7 +133,7 @@ export function CommunityLeaderboardsPanel({
                       leaderboardCadence: event.target.value as DiscordLeaderboardCadence,
                     }))
                   }
-                  className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                  className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                 >
                   <option value="manual">Manual only</option>
                   <option value="daily">Daily</option>
@@ -152,13 +152,13 @@ export function CommunityLeaderboardsPanel({
                     }))
                   }
                   placeholder="10"
-                  className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                  className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
                 />
               </label>
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 p-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
             <p className="text-sm font-bold text-text">Delivery rail</p>
             <p className="mt-2 text-sm text-sub">
               Set the Discord channel that should receive leaderboard posts and save the scheduling rail.
@@ -174,10 +174,10 @@ export function CommunityLeaderboardsPanel({
                   }))
                 }
                 placeholder="Discord channel ID for leaderboard posts"
-                className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
+                className="w-full rounded-2xl border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/50"
               />
 
-              <div className="rounded-[22px] border border-line bg-card px-4 py-4 text-sm text-sub">
+              <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-4 text-sm text-sub">
                 Manual mode keeps posting on-demand only. Daily and weekly are the foundation for the community autopost cadence that makes the bot feel alive.
               </div>
 

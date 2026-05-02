@@ -86,7 +86,7 @@ export function IncidentStatusComposer({
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          className="w-full rounded-[18px] border border-line bg-[linear-gradient(180deg,rgba(18,26,38,0.95),rgba(13,19,29,0.95))] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="w-full rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(18,26,38,0.95),rgba(13,19,29,0.95))] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
           placeholder="Optional update label"
         />
       </label>
@@ -97,7 +97,7 @@ export function IncidentStatusComposer({
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           rows={4}
-          className="w-full rounded-[18px] border border-line bg-[linear-gradient(180deg,rgba(18,26,38,0.95),rgba(13,19,29,0.95))] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="w-full rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(18,26,38,0.95),rgba(13,19,29,0.95))] px-3.5 py-2.5 text-[13px] text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
           placeholder={
             action === "internal_note"
               ? "Capture internal reasoning, next checks or provider detail."
@@ -110,7 +110,7 @@ export function IncidentStatusComposer({
         <button
           type="submit"
           disabled={busy}
-          className="rounded-full border border-primary/35 bg-primary/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full border border-primary/35 bg-primary/[0.075] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {busy ? "Saving..." : "Publish update"}
         </button>

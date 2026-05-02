@@ -112,7 +112,7 @@ export function ReleaseOverviewPanel({ overview }: { overview: AdminReleaseOverv
               <Link
                 key={release.id}
                 href={`/releases/${release.id}`}
-                className="block rounded-[20px] border border-line bg-card2 px-4 py-3.5 transition hover:border-primary/30"
+                className="block rounded-[20px] border border-white/[0.028] bg-white/[0.014] px-4 py-3.5 transition hover:border-primary/30"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>

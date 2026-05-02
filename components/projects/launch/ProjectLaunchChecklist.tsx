@@ -103,7 +103,7 @@ export default function ProjectLaunchChecklist({
 
             <Link
               href={selectedStep.href}
-              className="mt-4 inline-flex items-center gap-2 rounded-[14px] bg-primary/12 px-3.5 py-2.5 text-[13px] font-bold text-primary transition hover:bg-primary/18"
+              className="mt-4 inline-flex items-center gap-2 rounded-[14px] bg-primary/[0.065] px-3.5 py-2.5 text-[13px] font-bold text-primary transition hover:bg-primary/18"
             >
               Open step rail
               <ArrowRight size={16} />

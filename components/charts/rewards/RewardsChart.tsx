@@ -13,7 +13,7 @@ export default function RewardsChart({ items }: Props) {
         return (
           <div
             key={item.label}
-            className="flex items-center justify-between rounded-2xl border border-line bg-card2 px-4 py-4"
+            className="flex items-center justify-between rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-4"
           >
             <span className="text-text">{item.label}</span>
             <span className="font-bold text-primary">

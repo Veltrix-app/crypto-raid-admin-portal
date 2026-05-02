@@ -129,7 +129,7 @@ export default function UsersPage() {
               }
             >
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3">
+                <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-3.5 py-3">
                   <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary">
                     Roster
                   </p>
@@ -137,7 +137,7 @@ export default function UsersPage() {
                     Scan contribution depth, tiers, titles and rank posture across the community.
                   </p>
                 </div>
-                <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] px-3.5 py-3">
+                <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-3.5 py-3">
                   <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary">
                     Risk
                   </p>
@@ -166,7 +166,7 @@ export default function UsersPage() {
                 <option value="active">active</option>
                 <option value="flagged">flagged</option>
               </OpsSelect>
-              <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-[12px] text-sub">
+              <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 text-[12px] text-sub">
                 {filteredUsers.length} users in view
               </div>
             </OpsFilterBar>
@@ -226,7 +226,7 @@ export default function UsersPage() {
             >
               <div className="grid gap-4 xl:items-start xl:grid-cols-2">
                 {filteredUsers.map((user) => (
-                  <div key={user.id} className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+                  <div key={user.id} className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-3">
@@ -247,7 +247,7 @@ export default function UsersPage() {
                         </div>
                       </div>
 
-                      <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.018] px-3 py-2.5 text-right">
+                      <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.018] px-3 py-2.5 text-right">
                         <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">Rank</p>
                         <p className="mt-1.5 text-[1.05rem] font-semibold text-text">
                           {user.reputationRank > 0 ? `#${user.reputationRank}` : "-"}
@@ -259,7 +259,7 @@ export default function UsersPage() {
                         </div>
                         <Link
                           href={`/users/${user.authUserId ?? user.id}`}
-                          className="mt-3 inline-flex rounded-[12px] border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[12px] font-bold text-text transition hover:border-primary/30 hover:text-primary"
+                          className="mt-3 inline-flex rounded-[12px] border border-white/[0.032] bg-white/[0.014] px-3 py-2 text-[12px] font-bold text-text transition hover:border-primary/30 hover:text-primary"
                         >
                           Open profile
                         </Link>
@@ -269,7 +269,7 @@ export default function UsersPage() {
                 ))}
 
                 {filteredUsers.length === 0 ? (
-                  <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-4 text-[12px] text-sub">
+                  <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-4 text-[12px] text-sub">
                     No users match your filters.
                   </div>
                 ) : null}
@@ -302,7 +302,7 @@ export default function UsersPage() {
               >
                 <div className="grid gap-4 xl:items-start xl:grid-cols-2">
                   {riskUsers.slice(0, 8).map((user) => (
-                    <div key={user.id} className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+                    <div key={user.id} className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-3">
@@ -322,7 +322,7 @@ export default function UsersPage() {
 
                         <Link
                           href={`/users/${user.authUserId ?? user.id}`}
-                          className="rounded-[14px] border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[12px] font-bold text-text transition hover:border-primary/30 hover:text-primary"
+                          className="rounded-[14px] border border-white/[0.032] bg-white/[0.014] px-3 py-2 text-[12px] font-bold text-text transition hover:border-primary/30 hover:text-primary"
                         >
                           Open profile
                         </Link>
@@ -331,7 +331,7 @@ export default function UsersPage() {
                   ))}
 
                   {riskUsers.length === 0 ? (
-                    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-4 text-[12px] text-sub">
+                    <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-4 text-[12px] text-sub">
                       No risk-heavy users match the current filters.
                     </div>
                   ) : null}
@@ -357,7 +357,7 @@ function DecisionCard({
   tone?: "default" | "warning";
 }) {
   return (
-    <div className="rounded-[16px] border border-white/[0.04] bg-white/[0.02] p-3.5">
+    <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3.5">
       <p className="text-[12px] text-sub">{label}</p>
       <p className={`mt-1.5 text-[1.05rem] font-semibold ${tone === "warning" ? "text-amber-300" : "text-text"}`}>
         {value}
@@ -369,7 +369,7 @@ function DecisionCard({
 
 function SignalRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.02] px-3 py-2.5">
+    <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5">
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-1.5 text-[12px] font-semibold text-text">{value}</p>
     </div>
@@ -378,7 +378,7 @@ function SignalRow({ label, value }: { label: string; value: string }) {
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.04] bg-white/[0.018] px-3 py-2.5">
+    <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.018] px-3 py-2.5">
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-1.5 text-[12px] font-semibold text-text">{value}</p>
     </div>

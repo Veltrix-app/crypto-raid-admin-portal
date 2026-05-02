@@ -143,7 +143,7 @@ export function CommunityAutomationCenterPanel({
         </div>
 
         {recommendedPlayTitle ? (
-          <div className="rounded-[24px] border border-line bg-card2 p-5 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5 text-sm text-sub">
             <span className="font-bold uppercase tracking-[0.14em] text-primary">Owner cue</span>
             <p className="mt-3 leading-7">
               Current recommended play: <span className="font-semibold text-text">{recommendedPlayTitle}</span>
@@ -210,7 +210,7 @@ export function CommunityAutomationCenterPanel({
             {automations.map((automation) => (
               <div
                 key={automation.id}
-                className="rounded-[24px] border border-line bg-card2 p-5"
+                className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="max-w-2xl">
@@ -265,7 +265,7 @@ export function CommunityAutomationCenterPanel({
                           status: event.target.value as CommunityAutomationRecord["status"],
                         })
                       }
-                      className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
+                      className="w-full rounded-[16px] border border-white/[0.026] bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
                     >
                       <option value="active">Active</option>
                       <option value="paused">Paused</option>
@@ -281,7 +281,7 @@ export function CommunityAutomationCenterPanel({
                           cadence: event.target.value as CommunityAutomationRecord["cadence"],
                         })
                       }
-                      className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
+                      className="w-full rounded-[16px] border border-white/[0.026] bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
                     >
                       <option value="manual">Manual</option>
                       <option value="daily">Daily</option>
@@ -299,7 +299,7 @@ export function CommunityAutomationCenterPanel({
                           targetProvider: event.target.value as CommunityAutomationRecord["targetProvider"],
                         })
                       }
-                      className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
+                      className="w-full rounded-[16px] border border-white/[0.026] bg-panel px-4 py-3 text-sm normal-case tracking-normal text-text"
                     >
                       <option value="both">Discord + Telegram</option>
                       <option value="discord">Discord only</option>
@@ -309,19 +309,19 @@ export function CommunityAutomationCenterPanel({
                 </div>
 
                 <div className="mt-4 grid gap-3 md:grid-cols-4">
-                  <div className="rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm text-sub">
+                  <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.012] px-4 py-3 text-sm text-sub">
                     <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">Next run</p>
                     <p className="mt-2 font-semibold text-text">{formatTimestamp(automation.nextRunAt)}</p>
                   </div>
-                  <div className="rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm text-sub">
+                  <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.012] px-4 py-3 text-sm text-sub">
                     <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">Last run</p>
                     <p className="mt-2 font-semibold text-text">{formatTimestamp(automation.lastRunAt)}</p>
                   </div>
-                  <div className="rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm text-sub">
+                  <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.012] px-4 py-3 text-sm text-sub">
                     <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">Last success</p>
                     <p className="mt-2 font-semibold text-text">{formatTimestamp(automation.lastSuccessAt)}</p>
                   </div>
-                  <div className="rounded-[18px] border border-white/8 bg-card px-4 py-3 text-sm text-sub">
+                  <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.012] px-4 py-3 text-sm text-sub">
                     <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">Last error</p>
                     <p className="mt-2 font-semibold text-text">
                       {automation.lastErrorCode || formatTimestamp(automation.lastErrorAt)}
@@ -349,7 +349,7 @@ export function CommunityAutomationCenterPanel({
                     type="button"
                     onClick={() => onRunAutomation(automation.id)}
                     disabled={runningAutomationId === automation.id}
-                    className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {runningAutomationId === automation.id ? "Running..." : "Run now"}
                   </button>
@@ -359,14 +359,14 @@ export function CommunityAutomationCenterPanel({
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
               <p className="text-sm font-bold text-text">Execution posture</p>
               <p className="mt-2 text-sm text-sub">
                 Keep the owner view focused on confidence, not just on/off settings.
               </p>
 
               <div className="mt-4 grid gap-3">
-                <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <div className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
                     Journey-linked automations
                   </p>
@@ -375,7 +375,7 @@ export function CommunityAutomationCenterPanel({
                     Automations tied directly to newcomer, comeback and activation outcomes.
                   </p>
                 </div>
-                <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <div className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
                     Failed runs
                   </p>
@@ -384,7 +384,7 @@ export function CommunityAutomationCenterPanel({
                     Recent automation failures visible in project history.
                   </p>
                 </div>
-                <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+                <div className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">
                     Blocked or degraded automations
                   </p>
@@ -396,7 +396,7 @@ export function CommunityAutomationCenterPanel({
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-line bg-card2 p-5">
+            <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
               <p className="text-sm font-bold text-text">Recent automation history</p>
               <p className="mt-2 text-sm text-sub">
                 The latest scheduled or manual execution records for this project's automations.
@@ -405,7 +405,7 @@ export function CommunityAutomationCenterPanel({
               <div className="mt-4 space-y-3">
                 {automationRuns.length > 0 ? (
                   automationRuns.map((run) => (
-                    <div key={run.id} className="rounded-[20px] border border-line bg-card px-4 py-4">
+                    <div key={run.id} className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <p className="font-bold text-text">{COMMUNITY_AUTOMATION_LABELS[run.automationType]}</p>
@@ -423,7 +423,7 @@ export function CommunityAutomationCenterPanel({
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-[20px] border border-dashed border-line bg-card px-4 py-5 text-sm text-sub">
+                  <div className="rounded-[20px] border border-dashed border-white/[0.026] bg-white/[0.01] px-4 py-5 text-sm text-sub">
                     No automation runs have been recorded yet.
                   </div>
                 )}
@@ -436,7 +436,7 @@ export function CommunityAutomationCenterPanel({
           <div
             className={`rounded-[20px] border px-4 py-3 text-sm ${
               noticeTone === "error"
-                ? "border-rose-500/30 bg-rose-500/10 text-rose-200"
+                ? "border-rose-500/30 bg-rose-500/[0.055] text-rose-200"
                 : "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
             }`}
           >

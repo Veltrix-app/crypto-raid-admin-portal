@@ -58,7 +58,7 @@ export default function ProjectLaunchRail({
               Move through the project setup in a calm, fixed order instead of hunting through routes.
             </p>
           </div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-white/[0.025] text-sub">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-white/[0.016] text-sub">
             <Rocket size={18} />
           </div>
         </div>

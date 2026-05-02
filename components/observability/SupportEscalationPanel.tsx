@@ -252,13 +252,13 @@ export default function SupportEscalationPanel({
       ) : null}
 
       {error ? (
-        <div className="rounded-[22px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+        <div className="rounded-[18px] border border-rose-500/30 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
           {error}
         </div>
       ) : null}
 
       {!enabled ? (
-        <div className="rounded-[24px] border border-line bg-card2 px-5 py-5">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-5">
           <p className="font-semibold text-text">{emptyTitle}</p>
           <p className="mt-2 text-sm leading-6 text-sub">{emptyDescription}</p>
         </div>
@@ -266,11 +266,11 @@ export default function SupportEscalationPanel({
         <div className="grid gap-5 xl:grid-cols-[0.92fr_1.08fr]">
           <div className="space-y-3">
             {loading ? (
-              <div className="rounded-[24px] border border-line bg-card2 px-5 py-6 text-sm text-sub">
+              <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-6 text-sm text-sub">
                 Loading support escalations...
               </div>
             ) : escalations.length === 0 ? (
-              <div className="rounded-[24px] border border-line bg-card2 px-5 py-5">
+              <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-5">
                 <p className="font-semibold text-text">{emptyTitle}</p>
                 <p className="mt-2 text-sm leading-6 text-sub">{emptyDescription}</p>
               </div>
@@ -280,10 +280,10 @@ export default function SupportEscalationPanel({
                   key={escalation.id}
                   type="button"
                   onClick={() => setSelectedEscalationId(escalation.id)}
-                  className={`w-full rounded-[24px] border px-5 py-4 text-left transition-all ${
+                  className={`w-full rounded-[18px] border px-5 py-4 text-left transition-all ${
                     escalation.id === selectedEscalationId
-                      ? "border-primary/40 bg-primary/10"
-                      : "border-line bg-card2 hover:border-white/12"
+                      ? "border-primary/40 bg-primary/[0.055]"
+                      : "border-white/[0.028] bg-white/[0.014] hover:border-white/12"
                   }`}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -309,7 +309,7 @@ export default function SupportEscalationPanel({
             )}
           </div>
 
-          <div className="rounded-[24px] border border-line bg-card2 px-5 py-5">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-5">
             {selectedEscalation ? (
               <div className="space-y-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
@@ -384,7 +384,7 @@ export default function SupportEscalationPanel({
                     value={nextActionSummary}
                     onChange={(event) => setNextActionSummary(event.target.value)}
                     rows={3}
-                    className="w-full rounded-[20px] border border-line bg-[linear-gradient(180deg,rgba(18,26,38,0.95),rgba(13,19,29,0.95))] px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    className="w-full rounded-[20px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(18,26,38,0.95),rgba(13,19,29,0.95))] px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                     placeholder="What should happen next to clear this escalation?"
                   />
                 </label>
@@ -397,7 +397,7 @@ export default function SupportEscalationPanel({
                     value={resolutionNotes}
                     onChange={(event) => setResolutionNotes(event.target.value)}
                     rows={3}
-                    className="w-full rounded-[20px] border border-line bg-[linear-gradient(180deg,rgba(18,26,38,0.95),rgba(13,19,29,0.95))] px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    className="w-full rounded-[20px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(18,26,38,0.95),rgba(13,19,29,0.95))] px-4 py-3 text-sm text-text placeholder:text-sub/70 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                     placeholder="Capture the operator note or the final resolution context."
                   />
                 </label>
@@ -410,14 +410,14 @@ export default function SupportEscalationPanel({
                     type="button"
                     onClick={() => void handleSave()}
                     disabled={saving}
-                    className="rounded-[18px] border border-primary/35 bg-primary/15 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-[18px] border border-primary/35 bg-primary/[0.075] px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/50 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving ? "Saving..." : "Save escalation"}
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="rounded-[20px] border border-dashed border-line px-4 py-6 text-sm leading-6 text-sub">
+              <div className="rounded-[20px] border border-dashed border-white/[0.026] px-4 py-6 text-sm leading-6 text-sub">
                 Select an escalation to inspect the current owner, next action and waiting state.
               </div>
             )}
@@ -430,7 +430,7 @@ export default function SupportEscalationPanel({
 
 function Snapshot({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] border border-line bg-black/20 px-4 py-3">
+    <div className="rounded-[20px] border border-white/[0.026] bg-black/20 px-4 py-3">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>

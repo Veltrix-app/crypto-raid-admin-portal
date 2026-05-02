@@ -49,7 +49,7 @@ export default function LaunchHealthBoard({
           />
         </div>
 
-        <div className="rounded-[24px] border border-white/10 bg-black/20 p-5">
+        <div className="rounded-[18px] border border-white/10 bg-black/20 p-5">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
             Snapshot posture
           </p>
@@ -60,7 +60,7 @@ export default function LaunchHealthBoard({
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
               href="/analytics"
-              className="inline-flex items-center gap-2 rounded-[18px] border border-primary/30 bg-primary/12 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/18"
+              className="inline-flex items-center gap-2 rounded-[18px] border border-primary/30 bg-primary/[0.065] px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/18"
             >
               Open analytics
               <ArrowRight size={14} />
@@ -91,9 +91,9 @@ function MetricSurface({
   sub: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-white/10 bg-black/20 p-5">
+    <div className="rounded-[18px] border border-white/10 bg-black/20 p-5">
       <div className="flex items-center gap-3 text-primary">
-        <span className="flex h-9 w-9 items-center justify-center rounded-[14px] border border-primary/20 bg-primary/10">
+        <span className="flex h-9 w-9 items-center justify-center rounded-[14px] border border-primary/20 bg-primary/[0.055]">
           {icon}
         </span>
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
@@ -106,7 +106,7 @@ function MetricSurface({
 
 function SnapshotRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-3">
+    <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] px-4 py-3">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm font-semibold text-text">{value}</p>
     </div>

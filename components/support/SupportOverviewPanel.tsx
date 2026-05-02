@@ -28,7 +28,7 @@ export function SupportOverviewPanel({
       }
     >
       {error ? (
-        <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+        <div className="rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
           {error}
         </div>
       ) : null}
@@ -72,7 +72,7 @@ export function SupportOverviewPanel({
             <Link
               key={incident.id}
               href={`/support/incidents/${incident.id}`}
-              className="rounded-[22px] border border-line bg-card2 p-4 transition hover:border-primary/30 hover:bg-primary/8"
+              className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-4 transition hover:border-primary/30 hover:bg-primary/8"
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">

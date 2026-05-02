@@ -11,14 +11,14 @@ function getStatusClasses(status: CampaignStoryboardBlockStatus, selected: boole
   }
 
   if (status === "ready") {
-    return "border-white/8 bg-white/[0.03] hover:border-primary/20 hover:bg-white/[0.05]";
+    return "border-white/[0.032] bg-white/[0.018] hover:border-primary/20 hover:bg-white/[0.05]";
   }
 
   if (status === "needs_attention") {
     return "border-amber-400/18 bg-amber-500/[0.06] hover:border-amber-300/28";
   }
 
-  return "border-white/8 bg-black/20 hover:border-white/14 hover:bg-white/[0.04]";
+  return "border-white/[0.032] bg-black/20 hover:border-white/14 hover:bg-white/[0.04]";
 }
 
 function getStatusLabel(status: CampaignStoryboardBlockStatus) {
@@ -49,7 +49,7 @@ export default function CampaignStoryboardBlock({
     <button
       type="button"
       onClick={onSelect}
-      className={`relative overflow-hidden rounded-[22px] border p-4 text-left transition ${getStatusClasses(
+      className={`relative overflow-hidden rounded-[18px] border p-4 text-left transition ${getStatusClasses(
         block.status,
         selected
       )}`}
@@ -74,9 +74,9 @@ export default function CampaignStoryboardBlock({
         <span
           className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
             block.status === "ready"
-              ? "bg-primary/15 text-primary"
+              ? "bg-primary/[0.075] text-primary"
               : block.status === "needs_attention"
-                ? "bg-amber-500/15 text-amber-300"
+                ? "bg-amber-500/[0.075] text-amber-300"
                 : "bg-white/[0.08] text-sub"
           }`}
         >
@@ -87,7 +87,7 @@ export default function CampaignStoryboardBlock({
       <p className="mt-3 min-h-[64px] pl-4 text-sm leading-5.5 text-sub/95">{block.summary}</p>
 
       <div className="mt-4 grid gap-2.5 pl-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <div className="rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-3.5 py-3.5">
+        <div className="rounded-[18px] border border-white/[0.032] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-3.5 py-3.5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
@@ -103,7 +103,7 @@ export default function CampaignStoryboardBlock({
         </div>
 
         {block.notes[0] ? (
-          <div className="rounded-[18px] border border-white/8 bg-black/20 px-3.5 py-3.5">
+          <div className="rounded-[18px] border border-white/[0.032] bg-black/20 px-3.5 py-3.5">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
               Guidance
             </p>

@@ -80,7 +80,7 @@ export function CommunityActivationBoardsPanel({
           />
         </div>
 
-        <div className="rounded-[24px] border border-line bg-card2 p-5">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-text">Activation board controls</p>
@@ -95,7 +95,7 @@ export function CommunityActivationBoardsPanel({
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-[1fr_0.8fr]">
-            <label className="flex items-center gap-3 rounded-[20px] border border-line bg-card px-4 py-3 text-sm text-text">
+            <label className="flex items-center gap-3 rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text">
               <input
                 type="checkbox"
                 checked={settings.activationBoardsEnabled}
@@ -122,7 +122,7 @@ export function CommunityActivationBoardsPanel({
                       | "weekly",
                   }))
                 }
-                className="w-full rounded-[16px] border border-line bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
+                className="w-full rounded-[16px] border border-white/[0.026] bg-panel px-4 py-3 text-sm font-medium normal-case tracking-normal text-text"
               >
                 <option value="manual">Manual only</option>
                 <option value="daily">Daily pulse</option>
@@ -136,7 +136,7 @@ export function CommunityActivationBoardsPanel({
               type="button"
               onClick={onSaveSettings}
               disabled={savingSettings}
-              className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm font-bold text-text transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               {savingSettings ? "Saving board settings..." : "Save board settings"}
             </button>
@@ -146,7 +146,7 @@ export function CommunityActivationBoardsPanel({
             <div
               className={`mt-4 rounded-[20px] border px-4 py-3 text-sm ${
                 activationNoticeTone === "error"
-                  ? "border-rose-500/30 bg-rose-500/10 text-rose-200"
+                  ? "border-rose-500/30 bg-rose-500/[0.055] text-rose-200"
                   : "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
               }`}
             >
@@ -160,7 +160,7 @@ export function CommunityActivationBoardsPanel({
             boards.map((board) => (
               <div
                 key={board.campaignId}
-                className="rounded-[24px] border border-line bg-card2 p-5"
+                className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -177,25 +177,25 @@ export function CommunityActivationBoardsPanel({
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  <div className="rounded-[18px] border border-line bg-card px-4 py-3">
+                  <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3">
                     <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Ready</p>
                     <p className="mt-2 text-lg font-black text-text">{board.readyContributors}</p>
                   </div>
-                  <div className="rounded-[18px] border border-line bg-card px-4 py-3">
+                  <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3">
                     <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Newcomer</p>
                     <p className="mt-2 text-lg font-black text-text">{board.newcomerCandidates}</p>
                   </div>
-                  <div className="rounded-[18px] border border-line bg-card px-4 py-3">
+                  <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3">
                     <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Reactivation</p>
                     <p className="mt-2 text-lg font-black text-text">
                       {board.reactivationCandidates}
                     </p>
                   </div>
-                  <div className="rounded-[18px] border border-line bg-card px-4 py-3">
+                  <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3">
                     <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">Core</p>
                     <p className="mt-2 text-lg font-black text-text">{board.coreCandidates}</p>
                   </div>
-                  <div className="rounded-[18px] border border-line bg-card px-4 py-3 sm:col-span-2">
+                  <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 sm:col-span-2">
                     <p className="text-xs font-bold uppercase tracking-[0.12em] text-sub">
                       Live content
                     </p>
@@ -220,7 +220,7 @@ export function CommunityActivationBoardsPanel({
               </div>
             ))
           ) : (
-            <div className="rounded-[24px] border border-dashed border-line bg-card2 px-4 py-6 text-sm text-sub xl:col-span-2">
+            <div className="rounded-[18px] border border-dashed border-white/[0.028] bg-white/[0.014] px-4 py-6 text-sm text-sub xl:col-span-2">
               No activation boards are live yet. Launch or activate a campaign first.
             </div>
           )}

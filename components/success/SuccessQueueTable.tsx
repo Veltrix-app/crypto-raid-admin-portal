@@ -99,7 +99,7 @@ export function SuccessQueueTable({
             <Link
               key={account.accountId}
               href={`/success/accounts/${account.accountId}`}
-              className="block rounded-[18px] border border-white/[0.025] bg-white/[0.014] px-4 py-4 transition hover:border-white/[0.08]"
+              className="block rounded-[18px] border border-white/[0.025] bg-white/[0.014] px-4 py-4 transition hover:border-white/[0.045]"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>

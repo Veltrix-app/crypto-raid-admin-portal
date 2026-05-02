@@ -72,7 +72,7 @@ export default function DeployCheckPanel() {
   }, []);
 
   return (
-    <div className="space-y-4 rounded-[22px] border border-line bg-[linear-gradient(180deg,rgba(13,19,29,0.96),rgba(10,15,24,0.98))] p-5 shadow-[0_16px_48px_rgba(0,0,0,0.22)]">
+    <div className="space-y-4 rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,19,29,0.96),rgba(10,15,24,0.98))] p-5 shadow-[0_16px_48px_rgba(0,0,0,0.22)]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
@@ -92,7 +92,7 @@ export default function DeployCheckPanel() {
       </div>
 
       {error ? (
-        <div className="rounded-[18px] border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-sm text-rose-200">
+        <div className="rounded-[18px] border border-rose-500/30 bg-rose-500/[0.055] px-3.5 py-2.5 text-sm text-rose-200">
           {error}
         </div>
       ) : null}
@@ -106,7 +106,7 @@ export default function DeployCheckPanel() {
       ) : null}
 
       {loading ? (
-        <div className="rounded-[18px] border border-line bg-card2 px-4 py-5 text-sm text-sub">
+        <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-4 py-5 text-sm text-sub">
           Loading deploy checks...
         </div>
       ) : summary ? (
@@ -114,7 +114,7 @@ export default function DeployCheckPanel() {
           {summary.checks.map((check) => (
             <div
               key={check.key}
-              className="rounded-[18px] border border-line bg-card2 px-4 py-3.5"
+              className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-4 py-3.5"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>

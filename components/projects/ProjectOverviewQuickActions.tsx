@@ -56,7 +56,7 @@ export default function ProjectOverviewQuickActions({
                 <Link
                   key={action.label}
                   href={action.href}
-                  className="group flex items-start justify-between gap-3 rounded-[12px] px-2.5 py-2 transition-colors duration-200 hover:bg-white/[0.03]"
+                  className="group flex items-start justify-between gap-3 rounded-[12px] px-2.5 py-2 transition-colors duration-200 hover:bg-white/[0.018]"
                 >
                   <div className="min-w-0">
                     <p className="text-[12px] font-semibold text-text">{action.label}</p>

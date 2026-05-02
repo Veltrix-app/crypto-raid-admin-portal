@@ -16,7 +16,7 @@ export default function CampaignMissionMap({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+      <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] p-5">
         <p className="text-sm font-bold text-text">Mission map is empty</p>
         <p className="mt-2 text-sm leading-6 text-sub">
           Pick a playbook or include generated drafts to see the first-wave campaign architecture.
@@ -26,8 +26,8 @@ export default function CampaignMissionMap({
   }
 
   return (
-    <div className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/8 pb-4">
+    <div className="rounded-[18px] border border-white/[0.032] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/[0.032] pb-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
             Mission architecture
@@ -36,7 +36,7 @@ export default function CampaignMissionMap({
             The first-wave member path
           </h3>
         </div>
-        <span className="rounded-full border border-white/8 bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
+        <span className="rounded-full border border-white/[0.032] bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
           {items.length} blocks
         </span>
       </div>
@@ -48,10 +48,10 @@ export default function CampaignMissionMap({
               <div
                 className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-full border text-sm font-black tracking-[-0.02em] ${
                   item.status === "ready"
-                    ? "border-primary/35 bg-primary/12 text-primary shadow-[0_0_24px_rgba(199,255,0,0.18)]"
+                    ? "border-primary/35 bg-primary/[0.065] text-primary shadow-[0_0_24px_rgba(199,255,0,0.18)]"
                     : item.status === "needs_context"
                       ? "border-amber-400/30 bg-amber-500/12 text-amber-300"
-                      : "border-white/12 bg-white/[0.03] text-text"
+                      : "border-white/12 bg-white/[0.018] text-text"
                 }`}
               >
                 {index + 1}
@@ -62,7 +62,7 @@ export default function CampaignMissionMap({
             </div>
 
             <div className="pb-5">
-              <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
+              <div className="rounded-[18px] border border-white/[0.032] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="max-w-2xl">
                     <div className="flex flex-wrap items-center gap-2">
@@ -81,9 +81,9 @@ export default function CampaignMissionMap({
                     <span
                       className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
                         item.status === "ready"
-                          ? "bg-primary/15 text-primary"
+                          ? "bg-primary/[0.075] text-primary"
                           : item.status === "needs_context"
-                            ? "bg-amber-500/15 text-amber-300"
+                            ? "bg-amber-500/[0.075] text-amber-300"
                             : "bg-white/5 text-sub"
                       }`}
                     >
@@ -96,7 +96,7 @@ export default function CampaignMissionMap({
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-[20px] border border-white/8 bg-black/20 px-4 py-3">
+                <div className="mt-4 rounded-[20px] border border-white/[0.032] bg-black/20 px-4 py-3">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
                     Operator note
                   </p>

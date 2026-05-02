@@ -36,7 +36,7 @@ export function SuccessSignalPanel({
           signals.map((signal) => (
             <div
               key={signal.id}
-              className="rounded-[22px] border border-line bg-card2 px-4 py-4"
+              className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-4 py-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-text">
@@ -53,7 +53,7 @@ export function SuccessSignalPanel({
             </div>
           ))
         ) : (
-          <div className="rounded-[22px] border border-line bg-card2 px-4 py-4 text-sm text-sub">
+          <div className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-4 py-4 text-sm text-sub">
             No success signals are open for this account right now.
           </div>
         )}

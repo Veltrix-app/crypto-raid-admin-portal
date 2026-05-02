@@ -14,7 +14,7 @@ export default function RaidVerificationRail({
   const configState = getConfigState(verificationConfig);
 
   return (
-    <div className="space-y-4 rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5">
+    <div className="space-y-4 rounded-[18px] border border-white/[0.032] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
@@ -34,7 +34,7 @@ export default function RaidVerificationRail({
         and strong enough for operators to trust the result.
       </p>
 
-      <div className="rounded-[22px] border border-white/8 bg-black/20 px-4 py-4">
+      <div className="rounded-[18px] border border-white/[0.032] bg-black/20 px-4 py-4">
         <div className="grid gap-3 md:grid-cols-2">
           <InfoRow label="Config state" value={configState.label} />
           <InfoRow
@@ -93,7 +93,7 @@ function InfoRow({
   value: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-4">
+    <div className="rounded-[20px] border border-white/[0.032] bg-white/[0.018] px-4 py-4">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
       <p className="mt-2 text-sm leading-6 text-text">{value}</p>
     </div>

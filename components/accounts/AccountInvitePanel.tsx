@@ -200,7 +200,7 @@ export default function AccountInvitePanel({
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="teammate@workspace.com"
-              className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-[20px] border border-white/[0.026] bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
             />
           </label>
 
@@ -214,7 +214,7 @@ export default function AccountInvitePanel({
                 setRole(event.target.value as TeamInvite["role"]);
                 setInviteBlock(null);
               }}
-              className="w-full rounded-[20px] border border-line bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-[20px] border border-white/[0.026] bg-black/20 px-4 py-4 text-sm text-text outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
             >
               <option value="member">member</option>
               <option value="admin">admin</option>
@@ -229,13 +229,13 @@ export default function AccountInvitePanel({
           </div>
 
           {error ? (
-            <div className="rounded-[22px] border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+            <div className="rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
               {error}
             </div>
           ) : null}
 
           {notice ? (
-            <div className="rounded-[22px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            <div className="rounded-[18px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
               {notice}
             </div>
           ) : null}
@@ -252,7 +252,7 @@ export default function AccountInvitePanel({
             <button
               type="button"
               onClick={() => void loadState()}
-              className="rounded-full border border-line bg-card2 px-5 py-3 text-sm font-semibold text-text"
+              className="rounded-full border border-white/[0.028] bg-white/[0.014] px-5 py-3 text-sm font-semibold text-text"
             >
               Refresh
             </button>
@@ -276,7 +276,7 @@ export default function AccountInvitePanel({
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="rounded-[22px] border border-line bg-card2 px-4 py-4"
+                  className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-4 py-4"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -319,7 +319,7 @@ export default function AccountInvitePanel({
                 return (
                   <div
                     key={invite.id}
-                    className="rounded-[22px] border border-line bg-card2 px-4 py-4"
+                    className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-4 py-4"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-2">
@@ -339,7 +339,7 @@ export default function AccountInvitePanel({
                             type="button"
                             onClick={() => void handleInviteAction(invite.id, "resend")}
                             disabled={actioningInviteId === invite.id}
-                            className="rounded-full border border-line bg-black/20 px-4 py-2 text-sm font-semibold text-text transition hover:border-primary/20 hover:bg-primary/10"
+                            className="rounded-full border border-white/[0.026] bg-black/20 px-4 py-2 text-sm font-semibold text-text transition hover:border-primary/20 hover:bg-primary/[0.055]"
                           >
                             {actioningInviteId === invite.id ? "Working..." : "Resend"}
                           </button>
@@ -350,7 +350,7 @@ export default function AccountInvitePanel({
                             type="button"
                             onClick={() => void handleInviteAction(invite.id, "revoke")}
                             disabled={actioningInviteId === invite.id}
-                            className="rounded-full border border-line bg-black/20 px-4 py-2 text-sm font-semibold text-text transition hover:border-rose-400/20 hover:bg-rose-500/10"
+                            className="rounded-full border border-white/[0.026] bg-black/20 px-4 py-2 text-sm font-semibold text-text transition hover:border-rose-400/20 hover:bg-rose-500/[0.055]"
                           >
                             {actioningInviteId === invite.id ? "Working..." : "Revoke"}
                           </button>

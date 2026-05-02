@@ -886,7 +886,7 @@ function SoftRouteLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.08] hover:text-text"
+      className="inline-flex items-center rounded-full border border-white/[0.025] bg-white/[0.014] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sub transition hover:border-white/[0.045] hover:text-text"
     >
       {label}
     </Link>
@@ -962,7 +962,7 @@ function LinkRow({
   body: string;
 }) {
   return (
-    <Link href={href} className="rounded-[16px] border border-white/[0.025] bg-white/[0.016] px-3.5 py-3 transition hover:border-white/[0.08]">
+    <Link href={href} className="rounded-[16px] border border-white/[0.025] bg-white/[0.016] px-3.5 py-3 transition hover:border-white/[0.045]">
       <p className="text-[13px] font-bold text-text">{title}</p>
       <p className="mt-1.5 text-[11px] leading-5 text-sub">{body}</p>
     </Link>

@@ -39,7 +39,7 @@ export default function ProjectNextActions({
               className={`block rounded-[15px] border px-3.5 py-3 transition-colors duration-200 ${
                 action.tone === "primary"
                   ? "border-white/[0.026] bg-white/[0.032] hover:bg-white/[0.048]"
-                  : "border-transparent bg-white/[0.014] hover:border-white/[0.028] hover:bg-white/[0.03]"
+                  : "border-transparent bg-white/[0.014] hover:border-white/[0.028] hover:bg-white/[0.018]"
               }`}
             >
               <div className="flex items-start justify-between gap-4">
@@ -69,7 +69,7 @@ export default function ProjectNextActions({
             <Link
               key={link.label}
               href={link.href}
-              className="block rounded-[15px] border border-transparent bg-white/[0.014] px-3.5 py-3 transition-colors duration-200 hover:border-white/[0.028] hover:bg-white/[0.03]"
+              className="block rounded-[15px] border border-transparent bg-white/[0.014] px-3.5 py-3 transition-colors duration-200 hover:border-white/[0.028] hover:bg-white/[0.018]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">

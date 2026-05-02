@@ -228,19 +228,19 @@ export default function ProjectOnchainPermissionsPanel({
       }
     >
       {!canManage ? (
-        <div className="rounded-[24px] border border-line bg-card px-5 py-6 text-sm text-sub">
+        <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-5 py-6 text-sm text-sub">
           Only project owners can change on-chain visibility and action grants.
         </div>
       ) : (
         <div className="grid gap-4">
           {notice ? (
-            <div className="rounded-[20px] border border-line bg-card px-4 py-4 text-sm text-sub">
+            <div className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4 text-sm text-sub">
               {notice}
             </div>
           ) : null}
 
           {eligibleMembers.length === 0 ? (
-            <div className="rounded-[24px] border border-line bg-card px-5 py-6 text-sm text-sub">
+            <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-5 py-6 text-sm text-sub">
               No active teammates with linked accounts are available for on-chain grants yet.
             </div>
           ) : null}
@@ -253,7 +253,7 @@ export default function ProjectOnchainPermissionsPanel({
             return (
               <div
                 key={member.id}
-                className="rounded-[24px] border border-line bg-card2 px-5 py-5"
+                className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] px-5 py-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
@@ -269,7 +269,7 @@ export default function ProjectOnchainPermissionsPanel({
                     onChange={(event) =>
                       updatePreset(member.authUserId!, event.target.value as PermissionPresetKey)
                     }
-                    className="rounded-[18px] border border-line bg-card px-4 py-3 text-sm text-text focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="rounded-[18px] border border-white/[0.026] bg-white/[0.012] px-4 py-3 text-sm text-text focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
                     {PRESET_OPTIONS.map((option) => (
                       <option key={option.key} value={option.key}>
@@ -321,14 +321,14 @@ function PermissionList({
   fallback: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-line bg-card px-4 py-4">
+    <div className="rounded-[20px] border border-white/[0.026] bg-white/[0.012] px-4 py-4">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sub">{title}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {items.length > 0 ? (
           items.map((item) => (
             <span
               key={item}
-              className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-text"
+              className="rounded-full border border-white/[0.026] px-3 py-1 text-xs font-semibold text-text"
             >
               {item}
             </span>
