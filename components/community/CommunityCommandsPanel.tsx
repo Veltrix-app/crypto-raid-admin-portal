@@ -77,6 +77,7 @@ export function CommunityCommandsPanel({
     },
   ];
   const liveCommandCount = discordCommands.filter((command) => command.enabled).length;
+  const newRaidReady = settings.telegramCommandsEnabled && settings.raidOpsEnabled;
 
   return (
     <OpsPanel
@@ -96,6 +97,44 @@ export function CommunityCommandsPanel({
       }
     >
       <div className="space-y-5">
+        <div className="grid gap-3 md:grid-cols-3">
+          <OpsMetricCard
+            label="/newraid"
+            value={newRaidReady ? "Ready" : "Blocked"}
+            sub={
+              newRaidReady
+                ? "Telegram can create live raids."
+                : "Enable Telegram commands and raid ops."
+            }
+            emphasis={newRaidReady ? "primary" : "warning"}
+          />
+          <OpsMetricCard
+            label="Discord"
+            value={settings.commandsEnabled ? "Ready" : "Off"}
+            sub="Discord remains the richer admin command surface."
+            emphasis={settings.commandsEnabled ? "primary" : "default"}
+          />
+          <OpsMetricCard
+            label="Deep links"
+            value={settings.commandDeepLinksEnabled ? "On" : "Off"}
+            sub="Replies route admins and members back into the correct surface."
+            emphasis={settings.commandDeepLinksEnabled ? "primary" : "default"}
+          />
+        </div>
+
+        <div className="rounded-[16px] border border-white/[0.028] bg-white/[0.014] p-3">
+          <p className="text-[8px] font-black uppercase tracking-[0.18em] text-primary/90">
+            Telegram live raid
+          </p>
+          <p className="mt-2 break-words text-[13px] font-semibold text-text [overflow-wrap:anywhere]">
+            /newraid https://x.com/.../status/...
+          </p>
+          <p className="mt-1.5 text-[12px] leading-5 text-sub">
+            Authorized project admins can create a live raid immediately when Telegram commands,
+            raid ops and the default campaign are configured.
+          </p>
+        </div>
+
         <div className="grid gap-3 md:grid-cols-3">
           <OpsMetricCard
             label="Commands"

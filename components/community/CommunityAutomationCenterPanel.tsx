@@ -45,6 +45,14 @@ function getOutcomeTone(run: CommunityAutomationRunRecord["status"]) {
   return "default";
 }
 
+function groupAutomationsBySequence(automations: CommunityAutomationRecord[]) {
+  return automations.reduce<Record<string, CommunityAutomationRecord[]>>((groups, automation) => {
+    const key = automation.sequencingKey ?? "standalone";
+    groups[key] = [...(groups[key] ?? []), automation];
+    return groups;
+  }, {});
+}
+
 export function CommunityAutomationCenterPanel({
   automations,
   automationRuns,
@@ -76,6 +84,7 @@ export function CommunityAutomationCenterPanel({
   ).length;
   const successRuns = automationRuns.filter((run) => run.status === "success").length;
   const successRate = completedRuns > 0 ? (successRuns / completedRuns) * 100 : 0;
+  const groupedAutomations = groupAutomationsBySequence(automations);
 
   return (
     <OpsPanel
@@ -141,6 +150,60 @@ export function CommunityAutomationCenterPanel({
             </p>
           </div>
         ) : null}
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {Object.entries(groupedAutomations).map(([sequence, sequenceAutomations]) => {
+            const blockedInSequence = sequenceAutomations.filter(
+              (automation) =>
+                automation.executionPosture === "blocked" ||
+                automation.executionPosture === "degraded"
+            ).length;
+            const readyInSequence = sequenceAutomations.filter(
+              (automation) =>
+                automation.executionPosture === "ready" ||
+                automation.executionPosture === "running"
+            ).length;
+
+            return (
+              <div
+                key={sequence}
+                className="rounded-[18px] border border-white/[0.028] bg-white/[0.014] p-3"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary/90">
+                      {sequence === "standalone"
+                        ? "Standalone"
+                        : COMMUNITY_AUTOMATION_SEQUENCE_LABELS[
+                            sequence as keyof typeof COMMUNITY_AUTOMATION_SEQUENCE_LABELS
+                          ]}
+                    </p>
+                    <p className="mt-1 text-[12px] font-semibold text-text">
+                      {sequenceAutomations.length} automation rails
+                    </p>
+                  </div>
+                  <OpsStatusPill tone={blockedInSequence > 0 ? "warning" : "success"}>
+                    {blockedInSequence > 0 ? "Needs action" : "Readable"}
+                  </OpsStatusPill>
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <OpsMetricCard
+                    label="Ready"
+                    value={readyInSequence}
+                    sub="Rails with healthy execution posture."
+                    emphasis={readyInSequence > 0 ? "primary" : "default"}
+                  />
+                  <OpsMetricCard
+                    label="Blocked"
+                    value={blockedInSequence}
+                    sub="Rails that need owner attention."
+                    emphasis={blockedInSequence > 0 ? "warning" : "default"}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
         <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-3">

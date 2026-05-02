@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
 import { CommunityActivityPanel } from "@/components/community/CommunityActivityPanel";
@@ -57,6 +57,7 @@ import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import {
+  OpsCommandRead,
   OpsMetricCard,
   OpsPanel,
   OpsSnapshotRow,
@@ -111,6 +112,29 @@ type CommunityMembersPayload = {
   topContributors: CommunityContributor[];
   readinessWatch: CommunityContributor[];
 };
+
+type CommunitySurface =
+  | "overview"
+  | "raid-ops"
+  | "automations"
+  | "commands"
+  | "captains"
+  | "members"
+  | "outcomes";
+
+const COMMUNITY_SURFACES: Array<{ value: CommunitySurface; label: string }> = [
+  { value: "overview", label: "Overview" },
+  { value: "raid-ops", label: "Raid Ops" },
+  { value: "automations", label: "Automations" },
+  { value: "commands", label: "Commands" },
+  { value: "captains", label: "Captains" },
+  { value: "members", label: "Members" },
+  { value: "outcomes", label: "Outcomes" },
+];
+
+function isCommunitySurface(value: string | null): value is CommunitySurface {
+  return COMMUNITY_SURFACES.some((surface) => surface.value === value);
+}
 
 type CaptainAssignment = {
   authUserId: string;
@@ -564,6 +588,8 @@ function parseCaptainCoverage(value: unknown): CommunityCaptainCoverageState {
 
 export default function ProjectCommunityManagementPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const memberships = useAdminAuthStore((s) => s.memberships);
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const setActiveProjectId = useAdminAuthStore((s) => s.setActiveProjectId);
@@ -702,9 +728,8 @@ export default function ProjectCommunityManagementPage() {
     "success"
   );
   const [communityViewMode, setCommunityViewMode] = useState<"owner" | "captain">("owner");
-  const [communitySurfaceMode, setCommunitySurfaceMode] = useState<
-    "overview" | "commands" | "automations" | "captains" | "growth"
-  >("overview");
+  const [communitySurfaceMode, setCommunitySurfaceMode] =
+    useState<CommunitySurface>("overview");
   const [communityCaptainWorkspace, setCommunityCaptainWorkspace] = useState<CommunityCaptainWorkspaceState>(
     emptyCommunityCaptainWorkspace
   );
@@ -724,7 +749,12 @@ export default function ProjectCommunityManagementPage() {
     function syncSurfaceFromHash() {
       const hash = window.location.hash;
 
-      if (["#tweet-to-raid", "#commands", "#raid-ops", "#missions"].includes(hash)) {
+      if (["#tweet-to-raid", "#raid-ops", "#missions"].includes(hash)) {
+        setCommunitySurfaceMode("raid-ops");
+        return;
+      }
+
+      if (["#commands"].includes(hash)) {
         setCommunitySurfaceMode("commands");
         return;
       }
@@ -740,7 +770,12 @@ export default function ProjectCommunityManagementPage() {
       }
 
       if (["#growth", "#members", "#cohorts", "#leaderboards"].includes(hash)) {
-        setCommunitySurfaceMode("growth");
+        setCommunitySurfaceMode("members");
+        return;
+      }
+
+      if (["#outcomes", "#recommendations"].includes(hash)) {
+        setCommunitySurfaceMode("outcomes");
       }
     }
 
@@ -750,7 +785,21 @@ export default function ProjectCommunityManagementPage() {
     return () => window.removeEventListener("hashchange", syncSurfaceFromHash);
   }, []);
 
+  useEffect(() => {
+    const querySurface = searchParams.get("surface");
+    if (isCommunitySurface(querySurface)) {
+      setCommunitySurfaceMode(querySurface);
+    }
+  }, [searchParams]);
+
   const project = useMemo(() => getProjectById(params.id), [getProjectById, params.id]);
+  function selectCommunitySurface(next: CommunitySurface) {
+    setCommunitySurfaceMode(next);
+    if (project?.id) {
+      router.replace(`/projects/${project.id}/community?surface=${next}`, { scroll: false });
+    }
+  }
+
   const projectOps = useProjectOps(project?.id, {
     objectType: undefined,
     objectId: undefined,
@@ -2519,6 +2568,27 @@ export default function ProjectCommunityManagementPage() {
         projectChain={project.chain}
         healthPills={communityWorkspaceHealthPills}
       >
+        <OpsCommandRead
+          eyebrow="Community command read"
+          title="Choose the operating surface"
+          description="Community OS should not stack every module at once. Pick the surface that matches the job: raid ops, automations, commands, captains, members or outcomes."
+          now={
+            discordBotSettings.telegramCommandsEnabled && discordBotSettings.raidOpsEnabled
+              ? "Raid ops can create live work"
+              : "Raid ops needs configuration"
+          }
+          next={
+            discordBotSettings.telegramCommandsEnabled
+              ? "Prove /newraid with a controlled post"
+              : "Enable Telegram commands before live raid commands"
+          }
+          watch={
+            blockedAutomationCount > 0 || degradedAutomationCount > 0
+              ? `${blockedAutomationCount + degradedAutomationCount} blocked automation signals`
+              : "Automation rail is clear"
+          }
+        />
+
         <OpsPanel
           eyebrow="Community OS"
           title="Community control room"
@@ -2555,14 +2625,8 @@ export default function ProjectCommunityManagementPage() {
                 <div className="mt-2.5">
                   <SegmentToggle
                     value={communitySurfaceMode}
-                    options={[
-                      { value: "overview", label: "Overview" },
-                      { value: "commands", label: "Commands / Raids" },
-                      { value: "automations", label: "Automations" },
-                      { value: "captains", label: "Captains" },
-                      { value: "growth", label: "Growth" },
-                    ]}
-                    onChange={setCommunitySurfaceMode}
+                    options={COMMUNITY_SURFACES}
+                    onChange={selectCommunitySurface}
                   />
                 </div>
               </div>
@@ -2607,13 +2671,17 @@ export default function ProjectCommunityManagementPage() {
               value={
                 communitySurfaceMode === "overview"
                   ? "Orientation, health and the safest next move are the main reading path."
-                  : communitySurfaceMode === "commands"
-                    ? "Command setup, Tweet-to-Raid and live raid delivery are the main reading path."
-                    : communitySurfaceMode === "automations"
+                  : communitySurfaceMode === "raid-ops"
+                    ? "Tweet-to-Raid, mission handoff and live raid delivery are the main reading path."
+                    : communitySurfaceMode === "commands"
+                      ? "Discord, Telegram, /newraid readiness and deep-link command setup are the main reading path."
+                  : communitySurfaceMode === "automations"
                       ? "Automation rails, playbooks and activation loops are the main reading path."
                       : communitySurfaceMode === "captains"
                         ? "Captain ownership, queue pressure and delegation are the main reading path."
-                        : "Members, cohorts, leaderboards and growth quality are the main reading path."
+                        : communitySurfaceMode === "members"
+                          ? "Members, cohorts, leaderboards and growth quality are the main reading path."
+                          : "Outcomes, recommendations and health signals are the main reading path."
               }
             />
             <OpsSnapshotRow
@@ -2702,7 +2770,7 @@ export default function ProjectCommunityManagementPage() {
           />
         ) : null}
 
-        {communitySurfaceMode === "commands" ? (
+        {communitySurfaceMode === "raid-ops" ? (
           <TweetToRaidAutopilotPanel
             projectId={project.id}
             projectName={project.name}
@@ -2762,6 +2830,54 @@ export default function ProjectCommunityManagementPage() {
               emptyDescription="No support escalations are currently open for this project's community execution workspace."
             />
           </OpsPanel>
+        ) : null}
+
+        {communitySurfaceMode === "outcomes" ? (
+          <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+            <CommunityOutcomesPanel
+              mode={communityViewMode}
+              recommendations={communityRecommendations.recommendations}
+              healthSignals={communityOutcomes.healthSignals}
+              journeyOutcomes={communityOutcomes.journeyOutcomes}
+              execution={communityOutcomes.execution}
+              captainWorkspace={communityOutcomes.captainWorkspace}
+              cohortSnapshots={communityOutcomes.cohortSnapshots}
+              healthRollups={communityOutcomes.healthRollups}
+              captainCoverage={communityOutcomes.captainCoverage}
+            />
+            <CommunityActivityPanel
+              callbackFailures={operatorSignals.callbackFailures}
+              onchainFailures={operatorSignals.onchainFailures}
+              watchlistCount={communityGrowth.cohorts.summary.watchlist}
+              openFlagCount={communityGrowth.trust.openFlagCount}
+              latestIssue={
+                communityGrowth.trust.openFlagCount > 0 ||
+                communityGrowth.trust.watchlistCount > 0
+                  ? communityGrowth.trust.latestIssue
+                  : operatorSignals.latestIssue
+              }
+              recentActivity={recentActivity}
+              loadingActivity={loadingActivity}
+              automationRunCount={communityAutomationRuns.length}
+              playbookRunCount={communityPlaybookRuns.length}
+              captainActionCount={captainActions.length}
+              recentAutomationFailureCount={recentAutomationFailureCount}
+              onboardingRecentCompleted={
+                communityOutcomes.journeyOutcomes.onboarding.recentCompletedCount
+              }
+              comebackRecentCompleted={
+                communityOutcomes.journeyOutcomes.comeback.recentCompletedCount
+              }
+              captainPriorityCount={captainHighPriorityCount}
+              captainBlockedCount={communityCaptainWorkspace.blockedItems.length}
+              captainOverdueCount={captainOverdueCount}
+              captainUnassignedCount={captainUnassignedCount}
+              captainCoverageRate={captainCoverageRate}
+              automationBlockedCount={blockedAutomationCount}
+              automationDegradedCount={degradedAutomationCount}
+              automationSuccessRate={automationSuccessRate}
+            />
+          </div>
         ) : null}
 
         {communitySurfaceMode === "commands" || communitySurfaceMode === "captains" ? (
@@ -2849,11 +2965,11 @@ export default function ProjectCommunityManagementPage() {
           </>
         ) : null}
 
-        {communitySurfaceMode === "growth" ||
-        communitySurfaceMode === "commands" ||
+        {communitySurfaceMode === "members" ||
+        communitySurfaceMode === "raid-ops" ||
         communitySurfaceMode === "automations" ? (
           <>
-            {communitySurfaceMode === "growth" ? (
+            {communitySurfaceMode === "members" ? (
               <CommunityMembersPanel
                 loading={loadingCommunityMembers}
                 summary={communityMembers.summary}
@@ -2865,7 +2981,7 @@ export default function ProjectCommunityManagementPage() {
               />
             ) : null}
 
-            {communitySurfaceMode === "commands" ? (
+            {communitySurfaceMode === "raid-ops" ? (
               <div className="grid gap-3 xl:grid-cols-[1fr_1fr] xl:items-start">
                 <CommunityMissionsPanel
                   settings={discordBotSettings}
@@ -2913,7 +3029,7 @@ export default function ProjectCommunityManagementPage() {
               </div>
             ) : null}
 
-            {communitySurfaceMode === "automations" || communitySurfaceMode === "growth" ? (
+            {communitySurfaceMode === "automations" || communitySurfaceMode === "members" ? (
               <div className="grid gap-3 xl:grid-cols-[0.95fr_1.05fr] xl:items-start">
                 {communitySurfaceMode === "automations" ? (
                   <CommunityAutomationsPanel
@@ -2925,7 +3041,7 @@ export default function ProjectCommunityManagementPage() {
                   />
                 ) : null}
 
-                {communitySurfaceMode === "growth" ? (
+                {communitySurfaceMode === "members" ? (
                   <CommunityAnalyticsPanel
                     analytics={communityGrowth.analytics}
                     cohortSnapshots={communityOutcomes.cohortSnapshots}
@@ -2935,9 +3051,9 @@ export default function ProjectCommunityManagementPage() {
               </div>
             ) : null}
 
-            {communitySurfaceMode === "growth" || communitySurfaceMode === "automations" ? (
+            {communitySurfaceMode === "members" || communitySurfaceMode === "automations" ? (
               <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
-                {communitySurfaceMode === "growth" ? (
+                {communitySurfaceMode === "members" ? (
                   <CommunityCohortsPanel
                     settings={discordBotSettings}
                     setSettings={setDiscordBotSettings}
@@ -3002,7 +3118,7 @@ export default function ProjectCommunityManagementPage() {
         ) : null}
 
         {communitySurfaceMode === "commands" ||
-        communitySurfaceMode === "growth" ||
+        communitySurfaceMode === "members" ||
         communitySurfaceMode === "automations" ||
         communitySurfaceMode === "captains" ? (
           <>
@@ -3038,7 +3154,7 @@ export default function ProjectCommunityManagementPage() {
               />
             ) : null}
 
-            {communitySurfaceMode === "growth" ? (
+            {communitySurfaceMode === "members" ? (
               <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
                 <CommunityRanksPanel
                   settings={discordBotSettings}
