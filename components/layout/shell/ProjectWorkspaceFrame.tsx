@@ -66,14 +66,14 @@ export default function ProjectWorkspaceFrame({
               ))}
             </div>
             <p className="mt-1.5 max-w-2xl text-[11px] leading-5 text-sub">
-              Operate launch, community, rewards and trust from one project-first surface.
+              One project workspace. Start with the next move, then open the exact surface you need.
             </p>
           </div>
 
           <div className="rounded-[14px] border border-white/[0.024] bg-white/[0.018] px-3 py-2">
             <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-sub">Focus</p>
             <p className="mt-1 text-[11px] font-semibold text-text">
-              One route, one job.
+              Overview first. Deep work by surface.
             </p>
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function ProjectWorkspaceFrame({
                         className={cn(
                           "rounded-[10px] px-2.5 py-1.5 text-[11px] font-semibold transition",
                           active
-                            ? "bg-primary text-black shadow-[0_10px_22px_rgba(186,255,59,0.1)]"
+                            ? "bg-white/[0.08] text-text shadow-[inset_0_0_0_1px_rgba(186,255,59,0.12)]"
                             : "text-sub hover:bg-white/[0.028] hover:text-text"
                         )}
                       >
