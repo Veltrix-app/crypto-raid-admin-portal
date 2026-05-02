@@ -208,6 +208,95 @@ export function OpsCommandRead({
   );
 }
 
+export function OpsCommandCanvas({
+  children,
+  rail,
+}: {
+  children: ReactNode;
+  rail?: ReactNode;
+}) {
+  return (
+    <div className={cx("grid gap-3.5", rail ? "xl:grid-cols-[minmax(0,1fr)_320px]" : "")}>
+      <div className="min-w-0 space-y-3.5">{children}</div>
+      {rail ? <aside className="min-w-0 space-y-3.5">{rail}</aside> : null}
+    </div>
+  );
+}
+
+export function OpsRouteGrid({ children }: { children: ReactNode }) {
+  return <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">{children}</div>;
+}
+
+export function OpsRouteCard({
+  href,
+  eyebrow,
+  title,
+  description,
+  meta,
+  cta = "Open",
+  emphasis = false,
+}: {
+  href: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  meta?: ReactNode;
+  cta?: string;
+  emphasis?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      className={cx(
+        "group block min-w-0 rounded-[18px] border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/24",
+        emphasis
+          ? "border-primary/14 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.08),transparent_34%),linear-gradient(180deg,rgba(13,18,16,0.98),rgba(7,9,14,0.98))]"
+          : "border-white/[0.028] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[8px] font-black uppercase tracking-[0.18em] text-primary/90">
+            {eyebrow}
+          </p>
+          <h3 className="mt-2 break-words text-[0.94rem] font-semibold tracking-[-0.025em] text-text [overflow-wrap:anywhere]">
+            {title}
+          </h3>
+          <p className="mt-1.5 break-words text-[12px] leading-5 text-sub [overflow-wrap:anywhere]">
+            {description}
+          </p>
+        </div>
+        <span className="shrink-0 text-[11px] font-bold text-primary transition-transform duration-200 group-hover:translate-x-0.5">
+          {cta}
+        </span>
+      </div>
+      {meta ? <div className="mt-3">{meta}</div> : null}
+    </a>
+  );
+}
+
+export function OpsRailCard({
+  eyebrow,
+  title,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-[18px] border border-white/[0.026] bg-white/[0.015] p-3">
+      <p className="text-[8px] font-black uppercase tracking-[0.18em] text-primary/90">
+        {eyebrow}
+      </p>
+      <h3 className="mt-2 text-[0.9rem] font-semibold tracking-[-0.02em] text-text">
+        {title}
+      </h3>
+      <div className="mt-3 space-y-2.5">{children}</div>
+    </section>
+  );
+}
+
 export function OpsFilterBar({ children }: { children: ReactNode }) {
   return (
     <div className="rounded-[18px] border border-white/[0.04] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-2.5">
