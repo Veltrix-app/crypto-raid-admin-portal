@@ -17,8 +17,11 @@ import {
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import {
+  OpsCommandRead,
   OpsMetricCard,
   OpsPanel,
+  OpsRouteCard,
+  OpsRouteGrid,
   OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
@@ -1621,6 +1624,70 @@ export default function ProjectDetailPage() {
         ) : null}
 
         <div className="space-y-3">
+          <OpsCommandRead
+            eyebrow="Project command read"
+            title="Open the next workspace move"
+            description="The project home orients owners first, then routes them into launch, community, rewards or safety work."
+            now={project.status === "active" ? "Workspace is active" : "Workspace needs readiness"}
+            next={
+              showLaunchpad
+                ? "Open Launch and clear readiness blockers"
+                : "Open the surface that matches the work"
+            }
+            watch={
+              operatorIncidentCount > 0
+                ? `${operatorIncidentCount} open incident signals`
+                : "No open incident pressure"
+            }
+          />
+
+          <OpsRouteGrid>
+            <OpsRouteCard
+              href={`/projects/${project.id}/launch`}
+              eyebrow="Launch"
+              title="Clear launch readiness"
+              description="Review blockers, campaign handoff and the next safe launch action."
+              cta="Open"
+              emphasis={showLaunchpad}
+            />
+            <OpsRouteCard
+              href={`/projects/${project.id}/campaigns`}
+              eyebrow="Campaigns"
+              title="Manage activation work"
+              description="Open the campaign board and keep quest or raid work connected to launch pressure."
+              cta="Open"
+            />
+            <OpsRouteCard
+              href={`/projects/${project.id}/community?surface=raid-ops`}
+              eyebrow="Community"
+              title="Run raid and command ops"
+              description="Manage Tweet-to-Raid, /newraid, Telegram, Discord and captain execution."
+              cta="Open"
+            />
+            <OpsRouteCard
+              href={`/projects/${project.id}/rewards`}
+              eyebrow="Rewards"
+              title="Check reward readiness"
+              description="Keep reward stock, claim pressure and payout readiness aligned."
+              cta="Open"
+            />
+            <OpsRouteCard
+              href={`/projects/${project.id}/trust`}
+              eyebrow="Safety"
+              title="Review trust posture"
+              description="Open fraud posture, suspicious users and project-visible review signals."
+              cta="Open"
+              emphasis={operatorIncidentCount > 0}
+            />
+            <OpsRouteCard
+              href={`/projects/${project.id}/settings`}
+              eyebrow="Control"
+              title="Edit project setup"
+              description="Change identity, integrations, links and public readiness from one dedicated surface."
+              cta="Open"
+            />
+          </OpsRouteGrid>
+
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
             <div className="min-w-0 space-y-3">
               <ProjectOverviewSummary

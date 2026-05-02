@@ -300,7 +300,7 @@ export default function ProjectForm({
       sticky={false}
       className={
         layout === "horizontal"
-          ? "grid gap-3 space-y-0 xl:grid-cols-4"
+          ? ""
           : "xl:col-span-2 xl:grid xl:grid-cols-4 xl:gap-4 xl:space-y-0"
       }
     >
@@ -394,8 +394,10 @@ export default function ProjectForm({
             currentStep={currentStep}
             onSelect={setCurrentStep}
           />
-          {editorSurface}
-          {supportCards}
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+            {editorSurface}
+            {supportCards}
+          </div>
         </div>
       ) : (
         <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)] xl:items-start">

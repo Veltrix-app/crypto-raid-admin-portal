@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
 import ProjectForm from "@/components/forms/project/ProjectForm";
-import { OpsPanel } from "@/components/layout/ops/OpsPrimitives";
+import { OpsCommandRead, OpsPanel } from "@/components/layout/ops/OpsPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -80,6 +80,19 @@ export default function ProjectSettingsPage() {
           operatorIncidentCount: 0,
         })}
       >
+        <OpsCommandRead
+          eyebrow="Project setup"
+          title="Change identity, links and integrations"
+          description="Settings is the dedicated surface for configuration changes, so the project home can stay calm and action-led."
+          now={`${project.name} is ${project.status}`}
+          next="Update the field group that blocks readiness"
+          watch={
+            project.onboardingStatus === "approved"
+              ? "Public posture is approved"
+              : "Public posture still needs approval"
+          }
+        />
+
         <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
           <OpsPanel
             eyebrow="Project settings"
