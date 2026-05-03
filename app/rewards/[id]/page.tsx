@@ -25,6 +25,10 @@ import {
   getPrimaryProjectContentAction,
   type ProjectContentAction,
 } from "@/lib/projects/content-actions";
+import {
+  getRewardTreasuryConfig,
+  getRewardTreasuryPosture,
+} from "@/lib/rewards/reward-treasury";
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -77,7 +81,26 @@ export default function RewardDetailPage() {
   const pendingClaims = relatedClaims.filter((claim) => claim.status === "pending");
   const relatedQuests = quests.filter((quest) => quest.projectId === currentReward.projectId);
   const rewardSummary = getRewardBlueprintSummary(currentReward.rewardType);
+  const treasuryConfig = getRewardTreasuryConfig(currentReward.deliveryConfig, {
+    rewardType: currentReward.rewardType,
+    claimable: currentReward.claimable,
+  });
+  const treasuryPosture = getRewardTreasuryPosture(
+    treasuryConfig,
+    currentReward.rewardType,
+    currentReward.claimable
+  );
+  const treasuryTone = treasuryPosture.ready
+    ? "primary"
+    : treasuryPosture.tone === "danger"
+      ? "danger"
+      : "warning";
   const rewardReadinessItems = [
+    {
+      label: "Funding",
+      value: treasuryPosture.label,
+      complete: treasuryPosture.ready,
+    },
     {
       label: "Fulfillment",
       value: reward.claimMethod.replace(/_/g, " "),
@@ -174,6 +197,7 @@ export default function RewardDetailPage() {
               <DetailBadge>{reward.rewardType}</DetailBadge>
               <DetailBadge>{reward.rarity}</DetailBadge>
               <DetailBadge>{reward.claimMethod}</DetailBadge>
+              <DetailBadge tone={treasuryTone}>{treasuryPosture.label}</DetailBadge>
               <LifecycleStatusPill state={lifecycleState} fallback="draft" />
             </>
           }
@@ -221,8 +245,8 @@ export default function RewardDetailPage() {
             <>
               <DetailMetricCard label="Project" value={project?.name || "-"} hint="Workspace owning this incentive." />
               <DetailMetricCard label="Cost" value={reward.cost} hint="XP pressure required to unlock it." />
+              <DetailMetricCard label="Funding" value={treasuryPosture.label} hint={treasuryPosture.nextAction} />
               <DetailMetricCard label="Claimable" value={reward.claimable ? "Yes" : "No"} hint="Whether contributors can actively claim it." />
-              <DetailMetricCard label="Visible" value={reward.visible ? "Yes" : "No"} hint="Whether it currently surfaces in the app." />
             </>
           }
         />
@@ -282,6 +306,28 @@ export default function RewardDetailPage() {
                     tone={item.complete ? "primary" : "warning"}
                   />
                 ))}
+              </div>
+            </DetailSurface>
+
+            <DetailSurface
+              eyebrow="Reward treasury"
+              title="Funding proof and distribution route"
+              description="This is the trust layer behind the public reward promise: where value is held, how it is verified and how winners are paid."
+              aside={<DetailMetricCard label="Funding" value={treasuryPosture.label} />}
+            >
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <DetailMetaRow label="Funding model" value={treasuryConfig.fundingModel.replace(/_/g, " ")} />
+                <DetailMetaRow label="Status" value={treasuryConfig.fundingStatus.replace(/_/g, " ")} />
+                <DetailMetaRow label="Distribution" value={treasuryConfig.distributionRule.replace(/_/g, " ")} />
+                <DetailMetaRow label="Network" value={treasuryConfig.network || "-"} />
+                <DetailMetaRow label="Asset" value={treasuryConfig.assetSymbol || "-"} />
+                <DetailMetaRow label="Pool" value={treasuryConfig.totalAmount || "-"} />
+                <DetailMetaRow label="Treasury" value={treasuryConfig.treasuryAddress || "-"} />
+                <DetailMetaRow label="Proof" value={treasuryConfig.proofUrl || "-"} />
+                <DetailMetaRow label="Payout window" value={treasuryConfig.payoutWindow || "-"} />
+              </div>
+              <div className="mt-3 rounded-[16px] border border-white/[0.018] bg-white/[0.01] px-3 py-2.5 text-[12px] leading-5 text-sub">
+                {treasuryPosture.nextAction}
               </div>
             </DetailSurface>
 
@@ -444,6 +490,15 @@ export default function RewardDetailPage() {
                     label="Stock"
                     value={reward.unlimitedStock ? "Unlimited" : reward.stock ?? "-"}
                   />
+                </div>
+              </DetailSidebarSurface>
+
+              <DetailSidebarSurface title="Treasury Read">
+                <div className="mt-4 space-y-4">
+                  <DetailMetaRow label="Funding" value={treasuryPosture.label} />
+                  <DetailMetaRow label="Model" value={treasuryConfig.fundingModel.replace(/_/g, " ")} />
+                  <DetailMetaRow label="Proof" value={treasuryConfig.proofUrl || "-"} />
+                  <DetailMetaRow label="Next action" value={treasuryPosture.nextAction} />
                 </div>
               </DetailSidebarSurface>
 

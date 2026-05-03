@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import RewardForm from "@/components/forms/reward/RewardForm";
 import {
   OpsMetricCard,
@@ -13,25 +14,47 @@ import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function NewRewardPage() {
+  return (
+    <Suspense
+      fallback={
+        <AdminShell>
+          <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-4 text-sm text-sub">
+            Loading Reward Studio...
+          </div>
+        </AdminShell>
+      }
+    >
+      <NewRewardContent />
+    </Suspense>
+  );
+}
+
+function NewRewardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
   const createReward = useAdminPortalStore((s) => s.createReward);
   const projects = useAdminPortalStore((s) => s.projects);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const rewards = useAdminPortalStore((s) => s.rewards);
 
-  const activeProject = projects.find((project) => project.id === activeProjectId);
-  const activeProjectRewards = rewards.filter((reward) => reward.projectId === activeProjectId);
+  const requestedProjectId = searchParams.get("projectId");
+  const defaultProjectId =
+    requestedProjectId && projects.some((project) => project.id === requestedProjectId)
+      ? requestedProjectId
+      : activeProjectId;
+  const activeProject = projects.find((project) => project.id === defaultProjectId);
+  const activeProjectRewards = rewards.filter((reward) => reward.projectId === defaultProjectId);
 
   return (
     <AdminShell>
       <PortalPageFrame
-        eyebrow="Reward builder"
-        title="New Reward"
-        description="Create a reward from a calmer catalog-first surface so visibility, stock and fulfillment settings are easier to reason about."
+        eyebrow="Reward Treasury Studio"
+        title="Create funded reward"
+        description="Build the public reward, choose the funding route, attach proof and define how winners receive value before the reward becomes live."
         actions={
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Default workspace</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">Reward will land in</p>
             <p className="text-lg font-extrabold text-text">{activeProject?.name || "No active project"}</p>
           </div>
         }
@@ -51,12 +74,12 @@ export default function NewRewardPage() {
           <OpsPanel
             eyebrow="Reward setup"
             title="Catalog and fulfillment configuration"
-            description="Define the reward itself first, then make the claim and inventory posture explicit from the start."
+            description="Projects create rewards here: first the public offer, then treasury proof, claim logic and launch readiness."
           >
             <RewardForm
               projects={projects}
               campaigns={campaigns}
-              defaultProjectId={activeProjectId ?? undefined}
+              defaultProjectId={defaultProjectId ?? undefined}
               onSubmit={async (values) => {
                 const id = await createReward(values);
                 router.push(`/rewards/${id}`);
@@ -73,6 +96,7 @@ export default function NewRewardPage() {
             >
               <div className="space-y-3">
                 <OpsSnapshotRow label="Catalog signal" value="Title, type and rarity are legible" />
+                <OpsSnapshotRow label="Funding proof" value="Token-like rewards need Safe, escrow or provider proof before going active" />
                 <OpsSnapshotRow label="Stock posture" value="Unlimited vs limited stock is intentional" />
                 <OpsSnapshotRow label="Claim path" value="Fulfillment method matches the reward type" />
                 <OpsSnapshotRow label="Visibility" value="Public-facing availability is set deliberately" />

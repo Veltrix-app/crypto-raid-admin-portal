@@ -10,6 +10,15 @@ import {
   BuilderSidebarStack,
   BuilderStepHeader,
 } from "@/components/layout/builder/BuilderPrimitives";
+import {
+  getRewardTreasuryConfig,
+  getRewardTreasuryPosture,
+  REWARD_DISTRIBUTION_RULES,
+  REWARD_FUNDING_MODELS,
+  REWARD_FUNDING_STATUSES,
+  setRewardTreasuryConfig,
+  type RewardTreasuryConfig,
+} from "@/lib/rewards/reward-treasury";
 import { AdminReward } from "@/types/entities/reward";
 import { AdminProject } from "@/types/entities/project";
 import { AdminCampaign } from "@/types/entities/campaign";
@@ -27,6 +36,7 @@ type RewardBuilderStepId =
   | "blueprint"
   | "setup"
   | "value"
+  | "funding"
   | "delivery"
   | "launch";
 
@@ -137,6 +147,11 @@ const rewardBuilderSteps: Array<{
     description: "Tune rarity, cost, visibility, stock, and the visual feel of the reward.",
   },
   {
+    id: "funding",
+    label: "Lock funding",
+    description: "Choose the treasury route, funding proof and distribution rules before the reward goes live.",
+  },
+  {
     id: "delivery",
     label: "Configure delivery",
     description: "Make the fulfillment route explicit so claims and ops stay clean later.",
@@ -195,6 +210,19 @@ export default function RewardForm({
   }, [campaigns, values.projectId]);
   const selectedProject = projects.find((project) => project.id === values.projectId);
   const activePreset = REWARD_TYPE_PRESETS[selectedPreset];
+  const treasuryConfig = useMemo(
+    () =>
+      getRewardTreasuryConfig(values.deliveryConfig, {
+        rewardType: values.rewardType,
+        claimable: values.claimable,
+      }),
+    [values.claimable, values.deliveryConfig, values.rewardType]
+  );
+  const treasuryPosture = useMemo(
+    () => getRewardTreasuryPosture(treasuryConfig, values.rewardType, values.claimable),
+    [treasuryConfig, values.claimable, values.rewardType]
+  );
+  const launchBlocked = values.status === "active" && !treasuryPosture.ready;
   const currentStepIndex = rewardBuilderSteps.findIndex((step) => step.id === currentStep);
   const currentStepMeta = rewardBuilderSteps[currentStepIndex];
   const previousStep = rewardBuilderSteps[currentStepIndex - 1];
@@ -220,6 +248,11 @@ export default function RewardForm({
       complete: values.cost >= 0,
     },
     {
+      label: "Funding",
+      value: treasuryPosture.label,
+      complete: treasuryPosture.ready,
+    },
+    {
       label: "Delivery",
       value: values.claimMethod.replace(/_/g, " "),
       complete: Boolean(values.claimMethod),
@@ -234,8 +267,9 @@ export default function RewardForm({
     blueprint: Boolean(values.rewardType),
     setup: Boolean(values.projectId && values.title && values.description),
     value: Boolean(values.rarity && values.cost >= 0),
+    funding: treasuryPosture.ready,
     delivery: Boolean(values.claimMethod),
-    launch: Boolean(values.status),
+    launch: Boolean(values.status) && !launchBlocked,
   };
 
   useEffect(() => {
@@ -275,11 +309,22 @@ export default function RewardForm({
     }));
   }
 
+  function updateTreasuryConfig(patch: Partial<RewardTreasuryConfig>) {
+    setValues((current) => ({
+      ...current,
+      deliveryConfig: setRewardTreasuryConfig(current.deliveryConfig, patch, {
+        rewardType: current.rewardType,
+        claimable: current.claimable,
+      }),
+    }));
+  }
+
   return (
     <form
       className="space-y-6"
       onSubmit={async (e) => {
         e.preventDefault();
+        if (launchBlocked) return;
         await onSubmit(values);
       }}
     >
@@ -291,7 +336,7 @@ export default function RewardForm({
         metrics={
           <>
             <BuilderMetricCard label="Blueprint" value={activePreset.label} />
-            <BuilderMetricCard label="Cost" value={`${values.cost} XP`} />
+            <BuilderMetricCard label="Funding" value={treasuryPosture.label} />
             <BuilderMetricCard label="Claim Flow" value={values.claimMethod.replace(/_/g, " ")} />
           </>
         }
@@ -601,6 +646,193 @@ export default function RewardForm({
       </>
       ) : null}
 
+      {currentStep === "funding" ? (
+      <div className="space-y-4">
+        <div className="rounded-[18px] border border-white/[0.026] bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.08),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.022),rgba(255,255,255,0.012))] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+                Reward Treasury
+              </p>
+              <h3 className="mt-2 text-lg font-extrabold tracking-[-0.04em] text-text">
+                {treasuryPosture.label}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-sub">{treasuryPosture.summary}</p>
+            </div>
+            <span
+              className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
+                treasuryPosture.ready
+                  ? "border-primary/18 bg-primary/[0.075] text-primary"
+                  : treasuryPosture.tone === "danger"
+                    ? "border-rose-400/24 bg-rose-500/[0.09] text-rose-300"
+                    : "border-amber-400/24 bg-amber-500/[0.08] text-amber-300"
+              }`}
+            >
+              {treasuryPosture.ready ? "Launch safe" : "Needs proof"}
+            </span>
+          </div>
+          <p className="mt-4 rounded-[14px] border border-white/[0.026] bg-black/20 px-3 py-2.5 text-[12px] leading-5 text-sub">
+            {treasuryPosture.nextAction}
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+            Funding Route
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            {REWARD_FUNDING_MODELS.map((model) => {
+              const active = treasuryConfig.fundingModel === model.value;
+
+              return (
+                <button
+                  key={model.value}
+                  type="button"
+                  onClick={() =>
+                    updateTreasuryConfig({
+                      fundingModel: model.value,
+                      fundingStatus:
+                        model.value === "not_required" ? "not_required" : treasuryConfig.fundingStatus,
+                    })
+                  }
+                  className={`rounded-[16px] border p-3.5 text-left transition ${
+                    active
+                      ? "border-primary/22 bg-primary/[0.055]"
+                      : "border-white/[0.026] bg-white/[0.014] hover:border-primary/18"
+                  }`}
+                >
+                  <p className="text-sm font-bold text-text">{model.label}</p>
+                  <p className="mt-2 text-[12px] leading-5 text-sub">{model.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Verification status">
+            <select
+              value={treasuryConfig.fundingStatus}
+              onChange={(e) =>
+                updateTreasuryConfig({
+                  fundingStatus: e.target.value as RewardTreasuryConfig["fundingStatus"],
+                })
+              }
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            >
+              {REWARD_FUNDING_STATUSES.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Distribution rule">
+            <select
+              value={treasuryConfig.distributionRule}
+              onChange={(e) =>
+                updateTreasuryConfig({
+                  distributionRule: e.target.value as RewardTreasuryConfig["distributionRule"],
+                })
+              }
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            >
+              {REWARD_DISTRIBUTION_RULES.map((rule) => (
+                <option key={rule.value} value={rule.value}>
+                  {rule.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Network">
+            <input
+              value={treasuryConfig.network}
+              onChange={(e) => updateTreasuryConfig({ network: e.target.value })}
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+              placeholder="Base"
+            />
+          </Field>
+
+          <Field label="Asset symbol">
+            <input
+              value={treasuryConfig.assetSymbol}
+              onChange={(e) => updateTreasuryConfig({ assetSymbol: e.target.value })}
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+              placeholder="USDC"
+            />
+          </Field>
+
+          <Field label="Asset address">
+            <input
+              value={treasuryConfig.assetAddress}
+              onChange={(e) => updateTreasuryConfig({ assetAddress: e.target.value })}
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+              placeholder="0x..."
+            />
+          </Field>
+
+          <Field label="Total reward pool">
+            <input
+              value={treasuryConfig.totalAmount}
+              onChange={(e) => updateTreasuryConfig({ totalAmount: e.target.value })}
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+              placeholder="1000"
+            />
+          </Field>
+
+          <Field label="Treasury / escrow address">
+            <input
+              value={treasuryConfig.treasuryAddress}
+              onChange={(e) => updateTreasuryConfig({ treasuryAddress: e.target.value })}
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+              placeholder="Safe or escrow address"
+            />
+          </Field>
+
+          <Field label="Proof URL or transaction">
+            <input
+              value={treasuryConfig.proofUrl}
+              onChange={(e) => updateTreasuryConfig({ proofUrl: e.target.value })}
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+              placeholder="Basescan, Safe, escrow or provider URL"
+            />
+          </Field>
+
+          <Field label="External provider">
+            <input
+              value={treasuryConfig.externalProvider}
+              onChange={(e) => updateTreasuryConfig({ externalProvider: e.target.value })}
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+              placeholder="Safe, Hedgey, thirdweb, Sablier..."
+            />
+          </Field>
+
+          <Field label="Payout window">
+            <input
+              value={treasuryConfig.payoutWindow}
+              onChange={(e) => updateTreasuryConfig({ payoutWindow: e.target.value })}
+              className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+              placeholder="After eligibility review"
+            />
+          </Field>
+
+          <div className="md:col-span-2">
+            <Field label="Funding notes">
+              <textarea
+                value={treasuryConfig.notes}
+                onChange={(e) => updateTreasuryConfig({ notes: e.target.value })}
+                rows={4}
+                className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+                placeholder="Explain lock terms, payout timing, exclusions or manual verification notes."
+              />
+            </Field>
+          </div>
+        </div>
+      </div>
+      ) : null}
+
       {currentStep === "delivery" ? (
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
@@ -647,7 +879,7 @@ export default function RewardForm({
           </Field>
 
           <div className="md:col-span-2">
-            <Field label="Delivery Config (JSON)">
+            <Field label="Advanced delivery config (JSON)">
               <textarea
                 value={values.deliveryConfig || ""}
                 onChange={(e) =>
@@ -659,7 +891,7 @@ export default function RewardForm({
               />
             </Field>
             <p className="mt-2 text-sm text-sub">
-              Start from the recommended config for <span className="font-semibold text-text">{activePreset.label}</span> and adapt the delivery details for this project.
+              Start from the recommended config for <span className="font-semibold text-text">{activePreset.label}</span>. Funding details are stored under <span className="font-semibold text-text">rewardTreasury</span>, so ops and future escrow checks can read one source of truth.
             </p>
           </div>
         </div>
@@ -671,6 +903,12 @@ export default function RewardForm({
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           Launch Review
         </p>
+
+        {launchBlocked ? (
+          <div className="rounded-[16px] border border-amber-400/24 bg-amber-500/[0.08] px-4 py-3 text-[12px] leading-5 text-amber-200">
+            This reward is marked active, but its funding posture is not verified yet. Keep it as draft or verify the treasury route before saving it as a live reward.
+          </div>
+        ) : null}
 
         <div className="grid gap-4 md:grid-cols-2">
           {readinessItems.map((item) => (
@@ -700,8 +938,11 @@ export default function RewardForm({
             footerLabel={`Step ${currentStepIndex + 1} - ${currentStepMeta.label}`}
             submitButton={
               nextStep ? undefined : (
-                <button className="rounded-2xl bg-primary px-5 py-3 font-bold text-black">
-                  {submitLabel}
+                <button
+                  disabled={launchBlocked}
+                  className="rounded-2xl bg-primary px-5 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {launchBlocked ? "Funding required" : submitLabel}
                 </button>
               )
             }
@@ -718,6 +959,8 @@ export default function RewardForm({
               claimMethod={values.claimMethod}
               claimable={values.claimable}
               visible={values.visible}
+              fundingLabel={treasuryPosture.label}
+              fundingReady={treasuryPosture.ready}
             />
           </BuilderSidebarCard>
 
@@ -755,6 +998,8 @@ function RewardPreviewSurface({
   claimMethod,
   claimable,
   visible,
+  fundingLabel,
+  fundingReady,
 }: {
   preset: {
     label: string;
@@ -769,6 +1014,8 @@ function RewardPreviewSurface({
   claimMethod: string;
   claimable: boolean;
   visible: boolean;
+  fundingLabel: string;
+  fundingReady: boolean;
 }) {
   return (
     <div className="overflow-hidden rounded-[16px] border border-white/[0.026] bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.08),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-3.5">
@@ -814,6 +1061,14 @@ function RewardPreviewSurface({
           </p>
           <p className="mt-1.5 text-[12px] font-semibold text-text">
             {visible ? "Visible in app" : "Hidden from app"}
+          </p>
+        </div>
+        <div className="rounded-[14px] border border-white/[0.026] bg-black/20 px-3 py-2.5 sm:col-span-2">
+          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">
+            Funding
+          </p>
+          <p className={`mt-1.5 text-[12px] font-semibold ${fundingReady ? "text-primary" : "text-amber-300"}`}>
+            {fundingLabel}
           </p>
         </div>
       </div>

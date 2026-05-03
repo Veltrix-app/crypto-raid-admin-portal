@@ -9,6 +9,10 @@ import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/
 import OpsTable, { type OpsTableColumn } from "@/components/layout/ops/OpsTable";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
+import {
+  getRewardTreasuryConfig,
+  getRewardTreasuryPosture,
+} from "@/lib/rewards/reward-treasury";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminReward } from "@/types/entities/reward";
@@ -64,6 +68,33 @@ export default function ProjectRewardsPage() {
   const projectClaims = claims.filter((claim) => claim.projectId === project.id);
   const projectCampaigns = campaigns.filter((campaign) => campaign.projectId === project.id);
   const projectQuests = quests.filter((quest) => quest.projectId === project.id);
+  const rewardFundingPostures = projectRewards.map((reward) =>
+    getRewardTreasuryPosture(
+      getRewardTreasuryConfig(reward.deliveryConfig, {
+        rewardType: reward.rewardType,
+        claimable: reward.claimable,
+      }),
+      reward.rewardType,
+      reward.claimable
+    )
+  );
+  const fundedRewardCount = rewardFundingPostures.filter(
+    (posture) => !posture.requiresFunding || posture.ready
+  ).length;
+  const needsFundingCount = rewardFundingPostures.filter(
+    (posture) => posture.requiresFunding && !posture.ready
+  ).length;
+
+  function getFundingPosture(reward: AdminReward) {
+    return getRewardTreasuryPosture(
+      getRewardTreasuryConfig(reward.deliveryConfig, {
+        rewardType: reward.rewardType,
+        claimable: reward.claimable,
+      }),
+      reward.rewardType,
+      reward.claimable
+    );
+  }
 
   const rewardColumns: OpsTableColumn<AdminReward>[] = [
     {
@@ -84,6 +115,15 @@ export default function ProjectRewardsPage() {
           {reward.status}
         </OpsStatusPill>
       ),
+    },
+    {
+      key: "funding",
+      label: "Funding",
+      render: (reward) => {
+        const posture = getFundingPosture(reward);
+
+        return <OpsStatusPill tone={posture.tone}>{posture.label}</OpsStatusPill>;
+      },
     },
     {
       key: "cost",
@@ -124,6 +164,14 @@ export default function ProjectRewardsPage() {
         <OpsPanel
           eyebrow="Reward rail"
           title="Project rewards"
+          action={
+            <Link
+              href={`/rewards/new?projectId=${project.id}`}
+              className="rounded-full bg-primary px-4 py-2 text-[12px] font-black text-black shadow-[0_14px_30px_rgba(186,255,59,0.18)]"
+            >
+              Create funded reward
+            </Link>
+          }
           description="Track reward inventory, claim pressure and the items that shape this workspace’s payout posture."
         >
           <div className="grid gap-2.5 md:grid-cols-4">
@@ -134,11 +182,15 @@ export default function ProjectRewardsPage() {
               emphasis="primary"
             />
             <OpsMetricCard
-              label="Pending claims"
-              value={projectClaims.filter((claim) => claim.status === "pending").length}
-              emphasis="warning"
+              label="Funded / safe"
+              value={fundedRewardCount}
+              emphasis="primary"
             />
-            <OpsMetricCard label="Claims total" value={projectClaims.length} />
+            <OpsMetricCard
+              label="Needs funding"
+              value={needsFundingCount}
+              emphasis={needsFundingCount > 0 ? "warning" : "default"}
+            />
           </div>
         </OpsPanel>
 

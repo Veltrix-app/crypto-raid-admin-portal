@@ -18,12 +18,12 @@ export function OpsHero({
   aside?: ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[18px] border border-white/[0.025] bg-[linear-gradient(180deg,rgba(10,12,16,0.995),rgba(6,8,12,0.995))] px-3.5 py-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)] md:px-4 md:py-4">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.055] to-transparent" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.02),transparent_34%,transparent_68%,rgba(255,255,255,0.01))]" />
+    <div className="relative overflow-hidden rounded-[18px] border border-white/[0.018] bg-[linear-gradient(180deg,rgba(10,12,16,0.82),rgba(6,8,12,0.72))] px-3.5 py-3.5 shadow-[0_10px_24px_rgba(0,0,0,0.11)] md:px-4 md:py-4">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.035] to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.012),transparent_34%,transparent_68%,rgba(255,255,255,0.008))]" />
       <div className="relative z-10 grid gap-3 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-start">
         <div className="max-w-4xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.035] bg-white/[0.014] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.02] bg-white/[0.01] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.18em] text-primary">
             <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_18px_rgba(186,255,59,0.55)]" />
             {eyebrow}
           </div>
@@ -34,7 +34,7 @@ export function OpsHero({
         </div>
 
         {aside ? (
-          <div className="rounded-[14px] border border-white/[0.035] bg-white/[0.014] px-3 py-2.5 backdrop-blur-xl xl:justify-self-end xl:min-w-[210px]">
+          <div className="rounded-[14px] border border-white/[0.02] bg-white/[0.01] px-3 py-2.5 backdrop-blur-xl xl:justify-self-end xl:min-w-[210px]">
             {aside}
           </div>
         ) : null}
@@ -63,15 +63,15 @@ export function OpsPanel({
   return (
     <section
       className={cx(
-        "relative min-w-0 self-start overflow-hidden rounded-[18px] border p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.13)]",
+        "relative min-w-0 self-start overflow-hidden rounded-[18px] border p-3.5 shadow-[0_10px_24px_rgba(0,0,0,0.1)]",
         tone === "accent"
-          ? "border-white/[0.035] bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.028),transparent_22%),radial-gradient(circle_at_88%_14%,rgba(74,217,255,0.025),transparent_20%),linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
-          : "border-white/[0.028] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]",
+          ? "border-white/[0.022] bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.022),transparent_22%),radial-gradient(circle_at_88%_14%,rgba(74,217,255,0.018),transparent_20%),linear-gradient(180deg,rgba(11,14,20,0.9),rgba(7,9,14,0.9))]"
+          : "border-white/[0.018] bg-[linear-gradient(180deg,rgba(11,14,20,0.88),rgba(7,9,14,0.86))]",
         className
       )}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.055] to-transparent" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.02),transparent_34%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.035] to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.012),transparent_34%)]" />
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-3.5">
         <div className="min-w-0 max-w-2xl">
           {eyebrow ? (
@@ -102,12 +102,12 @@ export function OpsMetricCard({
   return (
     <div
       className={cx(
-        "relative overflow-hidden rounded-[14px] border px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.1)]",
+        "relative overflow-hidden rounded-[14px] border px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.075)]",
         emphasis === "primary"
-          ? "border-white/[0.026] bg-white/[0.014]"
+          ? "border-primary/10 bg-primary/[0.018]"
           : emphasis === "warning"
-            ? "border-white/[0.026] bg-white/[0.014]"
-            : "border-white/[0.024] bg-white/[0.016]"
+            ? "border-amber-300/12 bg-amber-300/[0.018]"
+            : "border-white/[0.016] bg-white/[0.01]"
       )}
     >
       <div
@@ -116,8 +116,8 @@ export function OpsMetricCard({
           emphasis === "primary"
             ? "bg-primary/18"
             : emphasis === "warning"
-              ? "bg-amber-300/14"
-              : "bg-white/[0.035]"
+              ? "bg-amber-300/12"
+              : "bg-white/[0.025]"
         )}
       />
       <div className="relative z-10">
@@ -131,7 +131,7 @@ export function OpsMetricCard({
 
 export function OpsSnapshotRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[14px] border border-white/[0.024] bg-white/[0.014] px-3 py-2.5">
+    <div className="rounded-[14px] border border-white/[0.016] bg-white/[0.01] px-3 py-2.5">
       <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
       <p className="mt-1.5 break-words text-[12px] font-semibold leading-5 text-text [overflow-wrap:anywhere]">{value}</p>
     </div>
@@ -157,8 +157,8 @@ export function OpsPriorityLink({
       className={cx(
         "group block rounded-[16px] border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/24",
         emphasis
-          ? "border-primary/16 bg-[linear-gradient(180deg,rgba(186,255,59,0.08),rgba(12,15,22,0.98))]"
-          : "border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,17,25,0.98),rgba(8,11,16,0.98))]"
+          ? "border-primary/14 bg-[linear-gradient(180deg,rgba(186,255,59,0.055),rgba(12,15,22,0.9))]"
+          : "border-white/[0.018] bg-[linear-gradient(180deg,rgba(13,17,25,0.9),rgba(8,11,16,0.88))]"
       )}
     >
       <div className="flex items-start justify-between gap-4">
@@ -250,8 +250,8 @@ export function OpsRouteCard({
       className={cx(
         "group block min-w-0 rounded-[18px] border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/24",
         emphasis
-          ? "border-primary/14 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.08),transparent_34%),linear-gradient(180deg,rgba(13,18,16,0.98),rgba(7,9,14,0.98))]"
-          : "border-white/[0.028] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))]"
+          ? "border-primary/12 bg-[radial-gradient(circle_at_top_left,rgba(186,255,59,0.055),transparent_34%),linear-gradient(180deg,rgba(13,18,16,0.9),rgba(7,9,14,0.9))]"
+          : "border-white/[0.018] bg-[linear-gradient(180deg,rgba(11,14,20,0.88),rgba(7,9,14,0.86))]"
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -285,7 +285,7 @@ export function OpsRailCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[18px] border border-white/[0.026] bg-white/[0.015] p-3">
+    <section className="rounded-[18px] border border-white/[0.016] bg-white/[0.01] p-3">
       <p className="text-[8px] font-black uppercase tracking-[0.18em] text-primary/90">
         {eyebrow}
       </p>
@@ -299,7 +299,7 @@ export function OpsRailCard({
 
 export function OpsFilterBar({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(11,14,20,0.98),rgba(7,9,14,0.98))] p-2.5">
+    <div className="rounded-[18px] border border-white/[0.016] bg-[linear-gradient(180deg,rgba(11,14,20,0.9),rgba(7,9,14,0.88))] p-2.5">
       <div className="grid gap-2.5 md:grid-cols-[minmax(0,1fr)_210px_auto]">{children}</div>
     </div>
   );
@@ -319,7 +319,7 @@ export function OpsSearchInput({
   name?: string;
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2 transition-colors duration-200 hover:border-white/10 focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20">
+    <label className="flex items-center gap-3 rounded-[14px] border border-white/[0.016] bg-white/[0.01] px-3 py-2 transition-colors duration-200 hover:border-white/10 focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20">
       <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">Search</span>
       <input
         type="search"
@@ -355,7 +355,7 @@ export function OpsSelect({
       aria-label={ariaLabel}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2 text-[12px] text-text transition-colors duration-200 hover:border-white/10 focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
+      className="rounded-[14px] border border-white/[0.016] bg-white/[0.01] px-3 py-2 text-[12px] text-text transition-colors duration-200 hover:border-white/10 focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
     >
       {children}
     </select>
@@ -379,7 +379,7 @@ export function OpsStatusPill({
             ? "border-amber-400/20 bg-amber-500/[0.075] text-amber-300"
             : tone === "danger"
               ? "border-rose-400/20 bg-rose-500/15 text-rose-300"
-              : "border-white/[0.026] bg-white/[0.014] text-sub"
+              : "border-white/[0.018] bg-white/[0.01] text-sub"
       )}
     >
       {children}

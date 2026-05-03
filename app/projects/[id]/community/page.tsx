@@ -2591,17 +2591,17 @@ export default function ProjectCommunityManagementPage() {
 
         <OpsPanel
           eyebrow="Community OS"
-          title="Community control room"
-          description="This workspace is now arranged like a premium command deck: choose the role you are in, lock into one mode and read only the signals that matter for that intent."
+          title="Pick one operating surface"
+          description="Choose the role and surface first. The page should then show only the signals that matter for that job."
         >
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-start">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+            <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-1">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-sub">
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
                   Operating stance
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sub">
-                  Switch between owner and captain mode to change the reading path without mixing strategic and execution pressure into one wall.
+                <p className="mt-1.5 text-[11px] leading-5 text-sub">
+                  Switch between owner and captain mode without mixing strategy and execution.
                 </p>
                 <div className="mt-2.5">
                   <SegmentToggle
@@ -2616,11 +2616,11 @@ export default function ProjectCommunityManagementPage() {
               </div>
 
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-sub">
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
                   Workspace focus
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sub">
-                  Use one surface at a time: overview for orientation, commands for raids, automations for rails, captains for delegation, and growth for member movement.
+                <p className="mt-1.5 text-[11px] leading-5 text-sub">
+                  One surface at a time: overview, raids, commands, automations, captains, members or outcomes.
                 </p>
                 <div className="mt-2.5">
                   <SegmentToggle

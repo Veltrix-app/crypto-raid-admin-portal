@@ -13,6 +13,11 @@ import {
 import { requireProjectGrowthCapacity } from "@/lib/billing/entitlement-guard";
 import { getServiceSupabaseClient } from "@/lib/community/project-community-ops";
 import { createProjectOperationAudit } from "@/lib/platform/core-ops";
+import {
+  getRewardTreasuryConfig,
+  getRewardTreasuryPosture,
+} from "@/lib/rewards/reward-treasury";
+import type { AdminReward } from "@/types/entities/reward";
 import type { DbCampaign, DbQuest, DbRaid, DbReward } from "@/types/database";
 
 type ContentActionBody = {
@@ -240,6 +245,27 @@ async function enforceProjectGrowthAction(params: {
   }
 }
 
+function assertRewardCanGoLive(row: DbReward) {
+  const treasury = getRewardTreasuryConfig(
+    row.delivery_config ? JSON.stringify(row.delivery_config) : "",
+    {
+      rewardType: row.reward_type as AdminReward["rewardType"],
+      claimable: Boolean(row.claimable),
+    }
+  );
+  const posture = getRewardTreasuryPosture(
+    treasury,
+    row.reward_type as AdminReward["rewardType"],
+    Boolean(row.claimable)
+  );
+
+  if (!posture.ready) {
+    throw new Error(
+      `Reward funding is not launch-ready yet: ${posture.label}. ${posture.nextAction}`
+    );
+  }
+}
+
 async function loadSourceRow(
   objectType: ProjectContentType,
   objectId: string
@@ -363,6 +389,10 @@ export async function POST(
     }
 
     const nextStatus = resolveProjectContentStatus(body.objectType, body.action);
+    if (body.objectType === "reward" && nextStatus === "active") {
+      assertRewardCanGoLive(sourceRow as DbReward);
+    }
+
     await enforceProjectGrowthAction({
       projectId: access.projectId,
       objectId,

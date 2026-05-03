@@ -27,6 +27,10 @@ import {
   type ProjectContentAction,
   type ProjectContentType,
 } from "@/lib/projects/content-actions";
+import {
+  getRewardTreasuryConfig,
+  getRewardTreasuryPosture,
+} from "@/lib/rewards/reward-treasury";
 import { readBillingAwareJsonResponse } from "@/lib/billing/entitlement-blocks";
 import {
   DbAuditLog,
@@ -209,6 +213,26 @@ function isRaidDispatchEligible(raid: Pick<AdminRaid, "status">) {
 
 function isRewardDispatchEligible(reward: Pick<AdminReward, "status" | "visible">) {
   return reward.status === "active" && reward.visible;
+}
+
+function assertRewardFundingReadyForLaunch(reward: Omit<AdminReward, "id">) {
+  if (reward.status !== "active") return;
+
+  const treasury = getRewardTreasuryConfig(reward.deliveryConfig, {
+    rewardType: reward.rewardType,
+    claimable: reward.claimable,
+  });
+  const posture = getRewardTreasuryPosture(
+    treasury,
+    reward.rewardType,
+    reward.claimable
+  );
+
+  if (!posture.ready) {
+    throw new Error(
+      `Reward funding is not launch-ready yet: ${posture.label}. ${posture.nextAction}`
+    );
+  }
 }
 
 function mapProject(row: DbProject): AdminProject {
@@ -1612,6 +1636,8 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       }
     }
 
+    assertRewardFundingReadyForLaunch(input);
+
     const { data, error } = await supabase
       .from("rewards")
       .insert({
@@ -1666,6 +1692,8 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
         throw new Error("Delivery config must be valid JSON.");
       }
     }
+
+    assertRewardFundingReadyForLaunch(input);
 
     const { data, error } = await supabase
       .from("rewards")

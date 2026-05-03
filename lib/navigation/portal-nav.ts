@@ -118,7 +118,7 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Claims",
     description: "Payout queue, blocked claims, incidents and resolution history.",
     icon: WalletCards,
-    group: "primary",
+    group: "ops",
   },
   {
     href: "/onchain",
@@ -209,7 +209,7 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Settings",
     description: "Workspace identity, team access, billing and platform controls.",
     icon: Settings,
-    group: "primary",
+    group: "workspace",
   },
 ] as const;
 

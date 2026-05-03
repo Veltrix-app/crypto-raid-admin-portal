@@ -13,7 +13,12 @@ import {
 } from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
+import {
+  getRewardTreasuryConfig,
+  getRewardTreasuryPosture,
+} from "@/lib/rewards/reward-treasury";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
+import type { AdminReward } from "@/types/entities/reward";
 
 export default function RewardsPage() {
   const rewards = useAdminPortalStore((s) => s.rewards);
@@ -54,6 +59,13 @@ export default function RewardsPage() {
   const manualFulfillmentCount = rewards.filter(
     (reward) => reward.claimMethod === "manual_fulfillment"
   ).length;
+  const rewardFundingPostures = rewards.map((reward) => getFundingPosture(reward));
+  const fundingReadyCount = rewardFundingPostures.filter(
+    (posture) => !posture.requiresFunding || posture.ready
+  ).length;
+  const needsFundingCount = rewardFundingPostures.filter(
+    (posture) => posture.requiresFunding && !posture.ready
+  ).length;
 
   const catalogLeadRewards = useMemo(
     () =>
@@ -82,7 +94,7 @@ export default function RewardsPage() {
             href="/rewards/new"
             className="rounded-full bg-primary px-5 py-3 text-sm font-black text-black shadow-[0_18px_40px_rgba(186,255,59,0.22)]"
           >
-            New Reward
+            Create funded reward
           </Link>
         }
         statusBand={
@@ -143,7 +155,13 @@ export default function RewardsPage() {
                   value={`${limitedStockCount}`}
                   tone={limitedStockCount > 0 ? "warning" : "default"}
                 />
+                <RewardSignal label="Funding ready" value={`${fundingReadyCount}`} />
                 <RewardSignal label="Avg cost" value={`${avgCost}`} />
+                <RewardSignal
+                  label="Needs funding"
+                  value={`${needsFundingCount}`}
+                  tone={needsFundingCount > 0 ? "warning" : "default"}
+                />
               </div>
             </div>
 
@@ -234,6 +252,7 @@ export default function RewardsPage() {
                 {catalogLeadRewards.map((reward) => {
                   const project = projects.find((item) => item.id === reward.projectId);
                   const campaign = campaigns.find((item) => item.id === reward.campaignId);
+                  const fundingPosture = getFundingPosture(reward);
 
                   return (
                     <RewardSurfaceCard
@@ -245,11 +264,16 @@ export default function RewardsPage() {
                       badges={[
                         reward.status,
                         reward.rewardType,
+                        fundingPosture.label,
                         campaign?.title || null,
                       ]}
                       stats={[
                         { label: "Project", value: project?.name || "-" },
                         { label: "Cost", value: reward.cost },
+                        {
+                          label: "Funding",
+                          value: fundingPosture.ready ? "Safe" : "Needs proof",
+                        },
                         {
                           label: "Stock",
                           value: reward.unlimitedStock ? "Unlimited" : reward.stock ?? "-",
@@ -302,6 +326,7 @@ export default function RewardsPage() {
                 {claimFlowRewards.map((reward) => {
                   const project = projects.find((item) => item.id === reward.projectId);
                   const campaign = campaigns.find((item) => item.id === reward.campaignId);
+                  const fundingPosture = getFundingPosture(reward);
 
                   return (
                     <RewardSurfaceCard
@@ -313,11 +338,16 @@ export default function RewardsPage() {
                       badges={[
                         reward.claimMethod.replace(/_/g, " "),
                         reward.claimable ? "claimable" : null,
+                        fundingPosture.label,
                         campaign?.title || null,
                       ]}
                       stats={[
                         { label: "Project", value: project?.name || "-" },
                         { label: "Cost", value: reward.cost },
+                        {
+                          label: "Funding",
+                          value: fundingPosture.ready ? "Safe" : "Needs proof",
+                        },
                         {
                           label: "Stock",
                           value: reward.unlimitedStock ? "Unlimited" : reward.stock ?? "-",
@@ -339,6 +369,17 @@ export default function RewardsPage() {
         ) : null}
       </PortalPageFrame>
     </AdminShell>
+  );
+}
+
+function getFundingPosture(reward: AdminReward) {
+  return getRewardTreasuryPosture(
+    getRewardTreasuryConfig(reward.deliveryConfig, {
+      rewardType: reward.rewardType,
+      claimable: reward.claimable,
+    }),
+    reward.rewardType,
+    reward.claimable
   );
 }
 

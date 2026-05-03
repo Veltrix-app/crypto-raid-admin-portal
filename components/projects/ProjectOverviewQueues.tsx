@@ -30,7 +30,7 @@ export default function ProjectOverviewQueues({
           <Link
             key={signal.label}
             href={signal.href}
-            className="rounded-[15px] border border-white/[0.026] bg-white/[0.018] p-3 shadow-[0_8px_18px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/18"
+            className="rounded-[15px] border border-white/[0.016] bg-white/[0.01] p-3 shadow-[0_8px_18px_rgba(0,0,0,0.075)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/18"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">

@@ -27,7 +27,7 @@ export default function ProjectOverviewSummary({
           {metrics.map((metric) => (
             <div
               key={metric.label}
-              className="min-w-0 rounded-[14px] border border-white/[0.026] bg-white/[0.018] px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.1)]"
+              className="min-w-0 rounded-[14px] border border-white/[0.016] bg-white/[0.01] px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.075)]"
             >
               <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">
                 {metric.label}

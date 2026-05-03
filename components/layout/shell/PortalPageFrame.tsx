@@ -20,16 +20,16 @@ export default function PortalPageFrame({
   children,
 }: PortalPageFrameProps) {
   return (
-    <div className="space-y-3.5">
-      <section className="rounded-[16px] border border-white/[0.018] bg-[linear-gradient(180deg,rgba(11,14,20,0.64),rgba(7,9,14,0.52))] px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.1)] md:px-3.5">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+    <div className="space-y-3">
+      <section className="border-b border-white/[0.018] pb-3">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/[0.055] px-2 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-primary">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/[0.045] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.18em] text-primary/90">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 {eyebrow}
               </span>
-              <h1 className="truncate text-[0.98rem] font-semibold tracking-[-0.025em] text-text">
+              <h1 className="min-w-0 truncate text-[1rem] font-semibold tracking-[-0.025em] text-text">
                 {title}
               </h1>
             </div>
@@ -37,14 +37,14 @@ export default function PortalPageFrame({
           </div>
 
           {actions ? (
-            <div className="rounded-[14px] border border-white/[0.024] bg-white/[0.018] px-3 py-2">
+            <div className="rounded-[14px] border border-white/[0.02] bg-white/[0.012] px-2.5 py-2">
               {actions}
             </div>
           ) : null}
         </div>
       </section>
       {statusBand ? <div>{statusBand}</div> : null}
-      <div className="space-y-3.5">{children}</div>
+      <div className="space-y-3">{children}</div>
     </div>
   );
 }
