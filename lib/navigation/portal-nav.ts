@@ -36,6 +36,7 @@ export type GlobalNavItem = {
 export type ProjectWorkspaceTab = {
   slug:
     | ""
+    | "showcase"
     | "launch"
     | "campaigns"
     | "community"
@@ -227,6 +228,12 @@ export const PROJECT_WORKSPACE_TABS: readonly ProjectWorkspaceTab[] = [
     slug: "",
     label: "Overview",
     description: "Project status, next move and the shortest route into daily operation.",
+    group: "Core",
+  },
+  {
+    slug: "showcase",
+    label: "Showcase",
+    description: "Public premium project profile, token context, scan posture and activation modules.",
     group: "Core",
   },
   {

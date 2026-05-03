@@ -1057,6 +1057,12 @@ export default function ProjectDetailPage() {
       href: `/projects/${project.id}/launch`,
     },
     {
+      label: "Open Showcase Studio",
+      description:
+        "Prepare the public premium project page with profile, token, scan, swap, quests and reward trust.",
+      href: `/projects/${project.id}/showcase`,
+    },
+    {
       label: "Open Community OS",
       description:
         "Run commands, ranks, captains, playbooks and delivery rails from the project community workspace.",
@@ -1649,6 +1655,14 @@ export default function ProjectDetailPage() {
               description="Review blockers, campaign handoff and the next safe launch action."
               cta="Open"
               emphasis={showLaunchpad}
+            />
+            <OpsRouteCard
+              href={`/projects/${project.id}/showcase`}
+              eyebrow="Showcase"
+              title="Prepare public project page"
+              description="Review profile, token, scan, swap, daily quests and reward trust before users arrive."
+              cta="Open"
+              emphasis={!project.tokenContractAddress || !project.longDescription}
             />
             <OpsRouteCard
               href={`/projects/${project.id}/campaigns`}
