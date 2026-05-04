@@ -13,6 +13,7 @@ import CampaignLaunchPreview from "@/components/forms/campaign/CampaignLaunchPre
 import CampaignMissionMap from "@/components/forms/campaign/CampaignMissionMap";
 import CampaignStoryboardCanvas from "@/components/forms/campaign/CampaignStoryboardCanvas";
 import CampaignStoryboardInspector from "@/components/forms/campaign/CampaignStoryboardInspector";
+import StudioEntryCommandDeck from "@/components/forms/studio/StudioEntryCommandDeck";
 import StudioModeToggle from "@/components/forms/studio/StudioModeToggle";
 import StudioPreviewCard from "@/components/forms/studio/StudioPreviewCard";
 import StudioShell from "@/components/forms/studio/StudioShell";
@@ -1407,22 +1408,23 @@ function NewCampaignPageContent() {
   return (
     <AdminShell>
       <div className="space-y-4">
-        {entrySourceLabel ? (
-          <div className="rounded-[18px] border border-primary/20 bg-primary/[0.055] p-4 text-sm leading-7 text-primary">
-            <span className="font-semibold text-white">{entrySourceLabel}</span> handed this campaign into the studio with project context already loaded.
-            {returnHref ? (
-              <>
-                {" "}
-                <a href={returnHref} className="font-semibold text-primary underline underline-offset-4">
-                  Go back to that workspace
-                </a>
-                {" "}if you want to recheck launch posture or starter selection first.
-              </>
-            ) : null}
-          </div>
-        ) : null}
+        <StudioEntryCommandDeck
+          studio="Campaign Studio"
+          title="Create a campaign from one guided mission lane"
+          description="Project, template and source context stay visible here, while the storyboard below focuses the team on the next campaign decision."
+          projectName={selectedProject?.name}
+          entrySourceLabel={entrySourceLabel}
+          returnHref={returnHref}
+          metrics={[
+            { label: "Project", value: selectedProject?.name || "Choose" },
+            { label: "Template", value: selectedTemplate?.label || "Choose" },
+            { label: "Source", value: entrySourceLabel || "Direct" },
+          ]}
+          builderAnchor="campaign-studio-builder"
+        />
 
-        <StudioShell
+        <div id="campaign-studio-builder">
+          <StudioShell
           eyebrow="Campaign Studio"
           title="Design the mission lane before you launch it"
           description="Move from project intent into a clean storyboard. Pick the block you want to shape, keep the member-facing preview visible, and only see the controls that matter for the current campaign decision."
@@ -1589,7 +1591,8 @@ function NewCampaignPageContent() {
           canvasClassName="space-y-4"
         >
           {renderStudioCore()}
-        </StudioShell>
+          </StudioShell>
+        </div>
 
         {generatedCampaign ? (
           <SuccessCampaignModal
