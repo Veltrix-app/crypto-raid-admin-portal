@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { ArrowUpRight, Compass, Layers3, Rocket, Users2 } from "lucide-react";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import { PortalBillingBlockNotice } from "@/components/billing/PortalBillingBlockNotice";
 import AdminShell from "@/components/layout/shell/AdminShell";
@@ -25,6 +27,7 @@ import {
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminFiltersStore } from "@/store/filters/useAdminFiltersStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
+import type { AdminProject } from "@/types/entities/project";
 
 function ProjectsPageContent() {
   const router = useRouter();
@@ -80,6 +83,12 @@ function ProjectsPageContent() {
       project.status === "paused"
   );
   const rosterProjects = boardView === "onboarding" ? onboardingProjects : filteredProjects;
+  const priorityProject =
+    onboardingProjects[0] ??
+    filteredProjects.find((project) => project.status === "active") ??
+    filteredProjects[0] ??
+    projects[0] ??
+    null;
   const primaryAccount = accessState?.primaryAccount ?? null;
   const primaryAccountProjectCount = primaryAccount?.projectCount ?? 0;
   const showBootstrapEmptyState =
@@ -136,6 +145,16 @@ function ProjectsPageContent() {
         onViewChange={setBoardView}
       />
 
+      {!showBootstrapEmptyState ? (
+        <ProjectCommandCockpit
+          project={priorityProject}
+          pendingRequests={pendingRequests.length}
+          onboardingProjects={onboardingProjects.length}
+          totalProjects={projects.length}
+          isSuperAdmin={isSuperAdmin}
+        />
+      ) : null}
+
       {showBootstrapEmptyState ? (
         <OpsPanel
           eyebrow="First project bootstrap"
@@ -143,7 +162,7 @@ function ProjectsPageContent() {
           description="Projects are the actual operating unit. Keep this first payload intentionally small and move into Launch right after creation."
           tone="accent"
         >
-          <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(290px,0.42fr)]">
             <div className="space-y-4">
               {bootstrapBlock ? (
                 <PortalBillingBlockNotice
@@ -243,20 +262,20 @@ function ProjectsPageContent() {
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <OpsPanel
-                eyebrow="Why this matters"
-                title="Projects are the operational unit"
-                description="Campaigns, quests, raids, rewards and launch readiness all hang off a project workspace."
+                eyebrow="After creation"
+                title="Launch opens next"
+                description="The project lands directly in Launch so profile, community, missions and rewards stay in one guided path."
               >
                 <div className="space-y-3">
                   <OpsSnapshotRow
                     label="What gets created"
-                    value="Project workspace, owner linkage and initial team membership."
+                    value="Project workspace, owner link and initial team membership."
                   />
                   <OpsSnapshotRow
                     label="What happens next"
-                    value="You land directly in Launch so the setup spine stays obvious."
+                    value="Launch checklist becomes the next working surface."
                   />
                   <div className="pt-1">
                     <OpsStatusPill tone="warning">Small bootstrap payload only</OpsStatusPill>
@@ -381,6 +400,196 @@ function ProjectsPageContent() {
         </div>
       </div>
     </div>
+  );
+}
+
+function getProjectRoute(project: AdminProject) {
+  if (
+    project.status === "draft" ||
+    project.status === "paused" ||
+    project.onboardingStatus !== "approved"
+  ) {
+    return {
+      href: `/projects/${project.id}/launch`,
+      label: "Open launch",
+      body: "This project still needs setup attention before the wider workspace becomes the focus.",
+      tone: "warning" as const,
+    };
+  }
+
+  return {
+    href: `/projects/${project.id}`,
+    label: "Open workspace",
+    body: "This project is ready for normal workspace operations and cross-module work.",
+    tone: "success" as const,
+  };
+}
+
+function ProjectCommandCockpit({
+  project,
+  pendingRequests,
+  onboardingProjects,
+  totalProjects,
+  isSuperAdmin,
+}: {
+  project: AdminProject | null;
+  pendingRequests: number;
+  onboardingProjects: number;
+  totalProjects: number;
+  isSuperAdmin: boolean;
+}) {
+  if (!project) {
+    return (
+      <OpsPanel
+        eyebrow="Project command"
+        title="Create the first project workspace"
+        description="The portfolio has no projects yet. Start with one focused project and move straight into Launch setup."
+        tone="accent"
+        action={
+          <Link
+            href="/projects/new"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-3.5 py-2 text-[12px] font-black text-black transition hover:brightness-105"
+          >
+            {isSuperAdmin ? "New project" : "Apply project"}
+            <ArrowUpRight size={13} />
+          </Link>
+        }
+      >
+        <div className="grid gap-2.5 md:grid-cols-3">
+          <OpsMetricCard label="Projects" value="0" emphasis="warning" />
+          <OpsMetricCard label="Onboarding" value="Not started" />
+          <OpsMetricCard label="Next surface" value="Launch" emphasis="primary" />
+        </div>
+      </OpsPanel>
+    );
+  }
+
+  const route = getProjectRoute(project);
+
+  return (
+    <OpsPanel
+      eyebrow="Project command"
+      title={route.label}
+      description={route.body}
+      tone="accent"
+      action={
+        <Link
+          href={route.href}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-3.5 py-2 text-[12px] font-black text-black transition hover:brightness-105"
+        >
+          {route.label}
+          <ArrowUpRight size={13} />
+        </Link>
+      }
+    >
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.38fr)] xl:items-start">
+        <div className="rounded-[18px] border border-white/[0.026] bg-black/20 p-3.5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-white/[0.032] bg-white/[0.018] text-[1.2rem]">
+                {project.logo}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[1rem] font-semibold tracking-[-0.02em] text-text">
+                  {project.name}
+                </p>
+                <p className="mt-1 truncate text-[12px] text-sub">
+                  {project.chain}
+                  {project.category ? ` / ${project.category}` : ""}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <OpsStatusPill tone={route.tone}>{project.status}</OpsStatusPill>
+              <OpsStatusPill
+                tone={project.onboardingStatus === "approved" ? "success" : "warning"}
+              >
+                {project.onboardingStatus}
+              </OpsStatusPill>
+            </div>
+          </div>
+
+          <p className="mt-3 line-clamp-2 text-[12px] leading-5 text-sub">
+            {project.description || "No public project description has been added yet."}
+          </p>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <ProjectQuickRoute
+              href={`/projects/${project.id}/launch`}
+              icon={<Rocket size={15} />}
+              label="Launch"
+              body="Setup checklist"
+            />
+            <ProjectQuickRoute
+              href={`/projects/${project.id}`}
+              icon={<Layers3 size={15} />}
+              label="Workspace"
+              body="Project home"
+            />
+            <ProjectQuickRoute
+              href={`/projects/${project.id}/community`}
+              icon={<Users2 size={15} />}
+              label="Community"
+              body="Activation rail"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-2.5 rounded-[18px] border border-white/[0.024] bg-white/[0.014] p-3.5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-[0.16em] text-sub">
+                Board route
+              </p>
+              <p className="mt-1 text-[0.95rem] font-semibold tracking-[-0.02em] text-text">
+                {onboardingProjects > 0 ? "Setup pressure" : "Portfolio ready"}
+              </p>
+            </div>
+            <Compass size={17} className="shrink-0 text-primary" />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+            <OpsSnapshotRow label="Projects" value={`${totalProjects} total`} />
+            <OpsSnapshotRow
+              label="Needs setup"
+              value={onboardingProjects > 0 ? `${onboardingProjects}` : "None"}
+            />
+            <OpsSnapshotRow
+              label="Intake"
+              value={pendingRequests > 0 ? `${pendingRequests} pending` : "Queue clear"}
+            />
+          </div>
+        </div>
+      </div>
+    </OpsPanel>
+  );
+}
+
+function ProjectQuickRoute({
+  href,
+  icon,
+  label,
+  body,
+}: {
+  href: string;
+  icon: ReactNode;
+  label: string;
+  body: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 transition hover:border-primary/20 hover:bg-primary/[0.035]"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-primary">{icon}</span>
+        <ArrowUpRight
+          size={13}
+          className="text-sub transition group-hover:translate-x-0.5 group-hover:text-primary"
+        />
+      </div>
+      <p className="mt-2 text-[12px] font-semibold text-text">{label}</p>
+      <p className="mt-0.5 text-[10px] text-sub">{body}</p>
+    </Link>
   );
 }
 
