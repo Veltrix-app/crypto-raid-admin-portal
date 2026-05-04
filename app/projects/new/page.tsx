@@ -12,9 +12,6 @@ import {
   PROJECT_FIRST_RUN_STEPS,
   PROJECT_INTAKE_STEPS,
   ProjectOnboardingActionLink,
-  ProjectOnboardingHero,
-  ProjectOnboardingPriorityPill,
-  ProjectOnboardingRail,
   ProjectOnboardingStepGrid,
 } from "@/components/projects/onboarding/ProjectOnboardingPrimitives";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -33,71 +30,32 @@ export default function NewProjectPage() {
       <PortalPageFrame
         eyebrow="Project onboarding"
         title="Create Project Workspace"
-        description="Start with the essentials, then let the launch workspace guide the project into campaigns, missions, rewards and public readiness."
+        description="Set the project basics, then continue into launch readiness with the workspace already prepared."
         actions={
-          <div className="space-y-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sub">
-              Creation mode
-            </p>
-            <p className="text-[0.98rem] font-semibold text-text">
-              {isSuperAdmin ? "Create now" : "Submit for review"}
-            </p>
+          <div className="flex min-w-[190px] items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sub">
+                Creation mode
+              </p>
+              <p className="mt-1 text-[0.92rem] font-semibold text-text">
+                {isSuperAdmin ? "Create now" : "Submit for review"}
+              </p>
+            </div>
             <OpsStatusPill tone={isSuperAdmin ? "success" : "warning"}>
               {isSuperAdmin ? "Opens instantly" : "Approval needed"}
             </OpsStatusPill>
           </div>
         }
-        statusBand={
-          <ProjectOnboardingHero
-            title="Give the project a clear path to its first launch."
-            description="This flow only asks for the context Veltrix needs to create a useful workspace. The deeper setup comes after creation, inside the project launch cockpit, so teams are never left guessing where to go next."
-            modeLabel={isSuperAdmin ? "Admin creates the workspace directly" : "Project submits an onboarding request"}
-            outcomeLabel={
-              isSuperAdmin
-                ? "The project opens and can continue setup immediately"
-                : "The request lands in the onboarding queue for review"
-            }
-          >
-            <div className="flex flex-wrap gap-2">
-              <ProjectOnboardingPriorityPill priority="required" />
-              <ProjectOnboardingPriorityPill priority="recommended" />
-              <ProjectOnboardingPriorityPill priority="later" />
-            </div>
-          </ProjectOnboardingHero>
-        }
       >
-        <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_360px]">
-          <OpsPanel
-            eyebrow="Intake map"
-            title="What the project needs to provide"
-            description="The page now separates must-have launch context from helpful polish and advanced automation context."
-            tone="accent"
-          >
-            <ProjectOnboardingStepGrid steps={PROJECT_INTAKE_STEPS} />
-          </OpsPanel>
-
-          <ProjectOnboardingRail
-            title="What happens after creation"
-            description="The first launch cockpit turns the project into a checklist instead of sending teams through the portal tree."
-            steps={PROJECT_FIRST_RUN_STEPS}
-            action={
-              projects.length > 0 ? (
-                <ProjectOnboardingActionLink href="/projects">
-                  View current projects
-                </ProjectOnboardingActionLink>
-              ) : null
-            }
-          />
-        </div>
-
         <OpsPanel
-          eyebrow="Project intake"
-          title="Create the workspace from guided basics"
+          eyebrow="Start here"
+          title="Create the workspace"
           description={
             isSuperAdmin
-              ? "Create the project with the same backend flow, then continue into launch setup from the new workspace."
-              : "Submit a focused onboarding request with enough context for review and setup handoff."
+              ? "Fill the basics, create the project, then continue directly into Launch setup."
+              : "Fill the basics and submit a focused onboarding request for review."
           }
+          tone="accent"
         >
           <ProjectForm
             layout="horizontal"
@@ -128,6 +86,31 @@ export default function NewProjectPage() {
             }}
           />
         </OpsPanel>
+
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.78fr)] xl:items-start">
+          <OpsPanel
+            eyebrow="Reference"
+            title="What helps this project onboard well"
+            description="Required fields come first. Token and launch context can follow when the project is ready."
+          >
+            <ProjectOnboardingStepGrid steps={PROJECT_INTAKE_STEPS} />
+          </OpsPanel>
+
+          <OpsPanel
+            eyebrow="After submit"
+            title="Where the project goes next"
+            description="Launch turns the new project into a checklist for profile, community, campaign, missions and rewards."
+          >
+            <ProjectOnboardingStepGrid steps={PROJECT_FIRST_RUN_STEPS} />
+            {projects.length > 0 ? (
+              <div className="mt-3">
+                <ProjectOnboardingActionLink href="/projects">
+                  View current projects
+                </ProjectOnboardingActionLink>
+              </div>
+            ) : null}
+          </OpsPanel>
+        </div>
       </PortalPageFrame>
     </AdminShell>
   );

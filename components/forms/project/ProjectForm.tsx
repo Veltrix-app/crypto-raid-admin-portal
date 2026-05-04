@@ -15,6 +15,16 @@ import {
   ProjectOnboardingPriorityPill,
   type ProjectOnboardingPriority,
 } from "@/components/projects/onboarding/ProjectOnboardingPrimitives";
+import {
+  CheckCircle2,
+  CircleAlert,
+  Link2,
+  LockKeyhole,
+  Radio,
+  Rocket,
+  Sparkles,
+} from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 import { AdminProject } from "@/types/entities/project";
 
 type Props = {
@@ -108,6 +118,7 @@ export default function ProjectForm({
   const [values, setValues] = useState<Omit<AdminProject, "id">>(initialValues || defaultValues);
   const [slugTouched, setSlugTouched] = useState(Boolean(initialValues?.slug));
   const [currentStep, setCurrentStep] = useState<StepId>("identity");
+  const isHorizontalLayout = layout === "horizontal";
 
   useEffect(() => {
     setValues(initialValues || defaultValues);
@@ -272,8 +283,8 @@ export default function ProjectForm({
   const editorSurface = (
     <div
       className={
-        layout === "horizontal"
-          ? "space-y-4 rounded-[20px] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.13)]"
+        isHorizontalLayout
+          ? "space-y-4 rounded-[18px] border border-white/[0.022] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.13)]"
           : "space-y-4 rounded-[20px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]"
       }
     >
@@ -311,69 +322,74 @@ export default function ProjectForm({
     </div>
   );
   const supportCards = (
-    <BuilderSidebarStack
-      sticky={false}
-      className={
-        layout === "horizontal"
-          ? ""
-          : "xl:col-span-2 xl:grid xl:grid-cols-4 xl:gap-4 xl:space-y-0"
-      }
-    >
-      <ProjectPreviewSurface values={values} />
+    isHorizontalLayout ? (
+      <ProjectWorkspaceIntelligenceDock
+        values={values}
+        readiness={brandingReadiness}
+        connectedModules={connectedModules}
+        capabilitySignals={capabilitySignals}
+      />
+    ) : (
+      <BuilderSidebarStack
+        sticky={false}
+        className="xl:col-span-2 xl:grid xl:grid-cols-4 xl:gap-4 xl:space-y-0"
+      >
+        <ProjectPreviewSurface values={values} />
 
-      <BuilderSidebarCard title="Launch Readiness">
-        <div className="space-y-2">
-          {brandingReadiness.map((item) => (
-            <div key={item.label} className="rounded-[14px] bg-white/[0.018] p-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-bold text-text">{item.label}</p>
-                <ProjectOnboardingPriorityPill
-                  priority={item.complete ? "complete" : item.priority}
-                />
+        <BuilderSidebarCard title="Launch Readiness">
+          <div className="space-y-2">
+            {brandingReadiness.map((item) => (
+              <div key={item.label} className="rounded-[14px] bg-white/[0.018] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold text-text">{item.label}</p>
+                  <ProjectOnboardingPriorityPill
+                    priority={item.complete ? "complete" : item.priority}
+                  />
+                </div>
+                <p className="mt-2 text-[12px] leading-5 text-sub">{item.value}</p>
               </div>
-              <p className="mt-2 text-[12px] leading-5 text-sub">{item.value}</p>
-            </div>
-          ))}
-        </div>
-      </BuilderSidebarCard>
+            ))}
+          </div>
+        </BuilderSidebarCard>
 
-      <BuilderSidebarCard title="Connected Modules">
-        <div className="grid gap-2.5 sm:grid-cols-2">
-          {connectedModules.map((item) => (
-            <ConnectedModuleCard
-              key={item.label}
-              label={item.label}
-              ready={Boolean(item.value)}
-            />
-          ))}
-        </div>
-      </BuilderSidebarCard>
+        <BuilderSidebarCard title="Connected Modules">
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {connectedModules.map((item) => (
+              <ConnectedModuleCard
+                key={item.label}
+                label={item.label}
+                ready={Boolean(item.value)}
+              />
+            ))}
+          </div>
+        </BuilderSidebarCard>
 
-      <BuilderSidebarCard title="Unlocks Later">
-        <div className="space-y-2.5">
-          {capabilitySignals.map((item) => (
-            <div
-              key={item.label}
-              className="rounded-[14px] bg-white/[0.018] p-3"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-bold text-text">{item.label}</p>
-                <span
-                  className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-                    item.ready
-                      ? "bg-primary/[0.075] text-primary"
-                      : "bg-white/5 text-sub"
-                  }`}
-                >
-                  {item.ready ? "Unlocked" : "Not ready"}
-                </span>
+        <BuilderSidebarCard title="Unlocks Later">
+          <div className="space-y-2.5">
+            {capabilitySignals.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-[14px] bg-white/[0.018] p-3"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold text-text">{item.label}</p>
+                  <span
+                    className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
+                      item.ready
+                        ? "bg-primary/[0.075] text-primary"
+                        : "bg-white/5 text-sub"
+                    }`}
+                  >
+                    {item.ready ? "Unlocked" : "Not ready"}
+                  </span>
+                </div>
+                <p className="mt-2 text-[12px] leading-5 text-sub">{item.hint}</p>
               </div>
-              <p className="mt-2 text-[12px] leading-5 text-sub">{item.hint}</p>
-            </div>
-          ))}
-        </div>
-      </BuilderSidebarCard>
-    </BuilderSidebarStack>
+            ))}
+          </div>
+        </BuilderSidebarCard>
+      </BuilderSidebarStack>
+    )
   );
 
   return (
@@ -384,33 +400,43 @@ export default function ProjectForm({
         onSubmit(values);
       }}
     >
-      <BuilderHero
-        eyebrow="Project setup"
-        title="Create the workspace one clear decision at a time"
-        description="Start with the fields needed for launch, then add polish and advanced context only when the project has it ready."
-        progressPercent={progressPercent}
-        metrics={
-          <>
-            <BuilderMetricCard label="Launch basics" value={`${readinessCount}/${brandingReadiness.length}`} sublabel="ready inputs" />
-            <BuilderMetricCard label="Community links" value={String(connectedLinks)} sublabel="connected" />
-            <BuilderMetricCard label="Can wait" value={String(templateContextCount)} sublabel="advanced inputs" />
-          </>
-        }
-      />
+      {isHorizontalLayout ? (
+        <ProjectFormCommandHeader
+          progressPercent={progressPercent}
+          readinessCount={readinessCount}
+          readinessTotal={brandingReadiness.length}
+          connectedLinks={connectedLinks}
+          templateContextCount={templateContextCount}
+          currentStep={currentStepMeta.label}
+        />
+      ) : (
+        <BuilderHero
+          eyebrow="Project setup"
+          title="Create the workspace one clear decision at a time"
+          description="Start with the fields needed for launch, then add polish and advanced context only when the project has it ready."
+          progressPercent={progressPercent}
+          metrics={
+            <>
+              <BuilderMetricCard label="Launch basics" value={`${readinessCount}/${brandingReadiness.length}`} sublabel="ready inputs" />
+              <BuilderMetricCard label="Community links" value={String(connectedLinks)} sublabel="connected" />
+              <BuilderMetricCard label="Can wait" value={String(templateContextCount)} sublabel="advanced inputs" />
+            </>
+          }
+        />
+      )}
 
-      {layout === "horizontal" ? (
-        <div className="space-y-4">
+      {isHorizontalLayout ? (
+        <div className="space-y-3">
           <BuilderHorizontalStepRail
             title="Workspace setup"
             description="Move from required basics into recommended polish without losing the next step."
+            density="compact"
             steps={stepItems}
             currentStep={currentStep}
             onSelect={setCurrentStep}
           />
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
-            {editorSurface}
-            {supportCards}
-          </div>
+          {editorSurface}
+          {supportCards}
         </div>
       ) : (
         <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)] xl:items-start">
@@ -923,15 +949,438 @@ function SummaryPanel({
   );
 }
 
-function ProjectPreviewSurface({
+function ProjectFormCommandHeader({
+  progressPercent,
+  readinessCount,
+  readinessTotal,
+  connectedLinks,
+  templateContextCount,
+  currentStep,
+}: {
+  progressPercent: number;
+  readinessCount: number;
+  readinessTotal: number;
+  connectedLinks: number;
+  templateContextCount: number;
+  currentStep: string;
+}) {
+  const metrics = [
+    ["Current", currentStep],
+    ["Basics", `${readinessCount}/${readinessTotal}`],
+    ["Links", String(connectedLinks)],
+    ["Later", String(templateContextCount)],
+  ];
+
+  return (
+    <section className="relative overflow-hidden rounded-[18px] border border-white/[0.024] bg-[linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]" />
+      <div className="relative grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)] lg:items-center">
+        <div className="min-w-0">
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
+            Active setup
+          </p>
+          <h2 className="mt-1.5 text-[1.06rem] font-semibold tracking-[-0.02em] text-text md:text-[1.18rem]">
+            Create the workspace one decision at a time
+          </h2>
+          <p className="mt-1.5 max-w-3xl text-[12px] leading-5 text-sub">
+            Start with the fields required to create a recognizable workspace. Launch, community and reward context can grow with the project.
+          </p>
+        </div>
+
+        <div className="min-w-0 rounded-[15px] border border-white/[0.022] bg-black/20 p-2.5">
+          <div className="grid gap-2 sm:grid-cols-4 lg:grid-cols-2">
+            {metrics.map(([label, value]) => (
+              <div key={label} className="min-w-0 rounded-[12px] bg-white/[0.016] px-2.5 py-2">
+                <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+                <p className="mt-1 truncate text-[12px] font-semibold text-text">{value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
+            <div
+              className="h-full rounded-full bg-[linear-gradient(90deg,rgba(199,255,0,0.82),rgba(102,255,198,0.92))]"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProjectWorkspaceIntelligenceDock({
   values,
+  readiness,
+  connectedModules,
+  capabilitySignals,
 }: {
   values: Omit<AdminProject, "id">;
+  readiness: Array<{
+    label: string;
+    value: string;
+    complete: boolean;
+    priority: ProjectOnboardingPriority;
+  }>;
+  connectedModules: Array<{ label: string; value?: string }>;
+  capabilitySignals: Array<{ label: string; ready: boolean; hint: string }>;
+}) {
+  const requiredItems = readiness.filter((item) => item.priority === "required");
+  const requiredReady = requiredItems.filter((item) => item.complete).length;
+  const readyCount = readiness.filter((item) => item.complete).length;
+  const readinessPercent = Math.round((readyCount / readiness.length) * 100);
+  const requiredMissing = requiredItems.length - requiredReady;
+  const connectedCount = connectedModules.filter((item) => Boolean(item.value)).length;
+  const unlockedCount = capabilitySignals.filter((item) => item.ready).length;
+  const nextGap =
+    readiness.find((item) => !item.complete && item.priority === "required") ??
+    readiness.find((item) => !item.complete) ??
+    null;
+  const identityReady = Boolean(readiness.find((item) => item.label === "Project basics")?.complete);
+  const storyReady = Boolean(readiness.find((item) => item.label === "Public copy")?.complete);
+  const communityReady = Boolean(readiness.find((item) => item.label === "Community links")?.complete);
+  const launchReady = Boolean(readiness.find((item) => item.label === "Launch context")?.complete);
+  const routeSteps = [
+    { label: "Identity", body: "Name, logo and slug", ready: identityReady },
+    { label: "Story", body: "Short public copy", ready: storyReady },
+    { label: "Channels", body: "At least one route", ready: communityReady },
+    { label: "Launch", body: "Docs, waitlist or post", ready: launchReady },
+  ];
+
+  return (
+    <section className="relative overflow-hidden rounded-[22px] border border-white/[0.024] bg-[radial-gradient(circle_at_9%_0%,rgba(199,255,0,0.085),transparent_25%),radial-gradient(circle_at_92%_7%,rgba(0,255,163,0.055),transparent_24%),linear-gradient(180deg,rgba(11,14,20,0.985),rgba(7,9,14,0.965))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.014)_1px,transparent_1px)] bg-[length:64px_64px] opacity-[0.35]" />
+
+      <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(290px,0.36fr)] xl:items-start">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Launch cockpit
+          </p>
+          <h3 className="mt-1.5 text-[1.05rem] font-semibold tracking-[-0.025em] text-text md:text-[1.18rem]">
+            One command view for preview, blockers and rails
+          </h3>
+          <p className="mt-1.5 max-w-3xl text-[12px] leading-5 text-sub">
+            Teams can see what is public, what blocks launch, and which modules become useful next.
+          </p>
+        </div>
+
+        <div className="rounded-[16px] border border-white/[0.026] bg-black/25 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-[0.16em] text-sub">
+                Readiness score
+              </p>
+              <p className="mt-1 text-[1.15rem] font-semibold tracking-[-0.03em] text-text">
+                {readinessPercent}%
+              </p>
+            </div>
+            <ProjectDockMetric label="Required" value={`${requiredReady}/${requiredItems.length}`} />
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.055]">
+            <div
+              className="h-full rounded-full bg-[linear-gradient(90deg,rgba(199,255,0,0.82),rgba(0,255,163,0.82))] shadow-[0_0_18px_rgba(199,255,0,0.2)]"
+              style={{ width: `${readinessPercent}%` }}
+            />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <ProjectDockMetric label="Channels" value={`${connectedCount}/6`} quiet />
+            <ProjectDockMetric label="Unlocks" value={`${unlockedCount}/${capabilitySignals.length}`} quiet />
+          </div>
+        </div>
+      </div>
+
+      <div className="relative mt-4 grid gap-3 2xl:grid-cols-[minmax(260px,0.86fr)_minmax(360px,1.16fr)_minmax(270px,0.86fr)]">
+        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-1">
+          <div className="overflow-hidden rounded-[18px] border border-white/[0.024] bg-black/20">
+            <div
+              className="h-16 bg-gradient-to-br from-primary/15 via-card to-card2"
+              style={
+                values.bannerUrl
+                  ? {
+                      backgroundImage: `linear-gradient(180deg,rgba(7,9,14,0.08),rgba(7,9,14,0.3)),url(${values.bannerUrl})`,
+                      backgroundPosition: "center",
+                      backgroundSize: "cover",
+                    }
+                  : values.brandAccent
+                  ? {
+                      backgroundImage: `linear-gradient(135deg, ${values.brandAccent}24, rgba(10,12,18,0.86), rgba(18,22,32,0.98))`,
+                    }
+                  : undefined
+              }
+            />
+            <div className="p-3.5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] border border-white/[0.032] bg-white/[0.04] text-[1.16rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  {values.logo || "\uD83D\uDE80"}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-[0.98rem] font-semibold tracking-[-0.02em] text-text">
+                    {values.name || "Project name"}
+                  </p>
+                  <p className="truncate text-[12px] text-sub">/{values.slug || "project-slug"}</p>
+                </div>
+              </div>
+              <p className="mt-3 line-clamp-2 text-[12px] leading-5 text-sub">
+                {values.description || "Short public description will appear here."}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <PreviewBadge>{values.chain}</PreviewBadge>
+                <PreviewBadge>{values.isPublic ? "Public" : "Private"}</PreviewBadge>
+                {values.category ? <PreviewBadge>{values.category}</PreviewBadge> : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[18px] border border-white/[0.024] bg-white/[0.014] p-3.5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sub">
+                  Handoff route
+                </p>
+                <p className="mt-1 text-[12px] font-semibold text-text">
+                  From project basics to launch modules
+                </p>
+              </div>
+              <Rocket size={16} className="shrink-0 text-primary" />
+            </div>
+            <div className="mt-3 grid gap-2">
+              {routeSteps.map((item, index) => (
+                <div
+                  key={item.label}
+                  className="grid grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-2 rounded-[13px] bg-black/[0.18] px-3 py-2"
+                >
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 items-center justify-center rounded-full border text-[9px] font-black",
+                      item.ready
+                        ? "border-emerald-300/[0.22] bg-emerald-300/[0.07] text-emerald-200"
+                        : "border-white/[0.05] bg-white/[0.018] text-sub"
+                    )}
+                  >
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[12px] font-semibold text-text">{item.label}</p>
+                    <p className="mt-0.5 truncate text-[10px] text-sub">{item.body}</p>
+                  </div>
+                  {item.ready ? (
+                    <CheckCircle2 size={15} className="text-emerald-200" />
+                  ) : (
+                    <CircleAlert size={15} className="text-sub" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[18px] border border-primary/[0.12] bg-[linear-gradient(135deg,rgba(199,255,0,0.075),rgba(255,255,255,0.018)_34%,rgba(0,255,163,0.035))] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 gap-3">
+              <div
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-[15px] border",
+                  nextGap
+                    ? "border-primary/[0.22] bg-primary/[0.075] text-primary"
+                    : "border-emerald-300/[0.24] bg-emerald-300/[0.075] text-emerald-200"
+                )}
+              >
+                {nextGap ? <CircleAlert size={18} /> : <CheckCircle2 size={18} />}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                  Next project action
+                </p>
+                <h4 className="mt-1 text-[0.98rem] font-semibold tracking-[-0.02em] text-text">
+                  {nextGap ? nextGap.label : "Ready for launch setup"}
+                </h4>
+                <p className="mt-1.5 max-w-xl text-[12px] leading-5 text-sub">
+                  {nextGap
+                    ? nextGap.value
+                    : "Required inputs are ready. The project can move into profile polish, community routes and launch modules."}
+                </p>
+              </div>
+            </div>
+            <ProjectOnboardingPriorityPill priority={nextGap ? nextGap.priority : "complete"}>
+              {nextGap
+                ? nextGap.priority === "required"
+                  ? `${requiredMissing} blocker${requiredMissing === 1 ? "" : "s"}`
+                  : "Recommended"
+                : "Ready"}
+            </ProjectOnboardingPriorityPill>
+          </div>
+
+          <div className="mt-4 grid gap-2">
+            {readiness.map((item, index) => (
+              <div
+                key={item.label}
+                className={cn(
+                  "grid gap-2 rounded-[14px] border px-3 py-2.5 sm:grid-cols-[28px_minmax(0,1fr)_auto] sm:items-center",
+                  item.complete
+                    ? "border-emerald-300/[0.1] bg-emerald-300/[0.035]"
+                    : item.priority === "required"
+                      ? "border-primary/[0.13] bg-primary/[0.04]"
+                      : "border-white/[0.024] bg-black/[0.18]"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-black",
+                    item.complete
+                      ? "border-emerald-300/[0.22] bg-emerald-300/[0.07] text-emerald-200"
+                      : item.priority === "required"
+                        ? "border-primary/[0.24] bg-primary/[0.07] text-primary"
+                        : "border-white/[0.05] bg-white/[0.02] text-sub"
+                  )}
+                >
+                  {item.complete ? <CheckCircle2 size={14} /> : index + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-semibold text-text">{item.label}</p>
+                  <p className="mt-0.5 truncate text-[11px] text-sub">{item.value}</p>
+                </div>
+                <ProjectOnboardingPriorityPill priority={item.complete ? "complete" : item.priority} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-1">
+          <div className="rounded-[18px] border border-white/[0.024] bg-black/20 p-3.5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sub">
+                  Connected rails
+                </p>
+                <p className="mt-1 text-[12px] font-semibold text-text">
+                  {connectedCount} active module{connectedCount === 1 ? "" : "s"}
+                </p>
+              </div>
+              <Radio size={16} className="shrink-0 text-primary" />
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {connectedModules.map((item) => (
+                <SignalChip key={item.label} label={item.label} ready={Boolean(item.value)} />
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[18px] border border-white/[0.024] bg-white/[0.014] p-3.5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sub">
+                  Smart unlocks
+                </p>
+                <p className="mt-1 text-[12px] font-semibold text-text">
+                  {unlockedCount} ready for automation
+                </p>
+              </div>
+              <Sparkles size={16} className="shrink-0 text-primary" />
+            </div>
+            <div className="mt-3 grid gap-2">
+              {capabilitySignals.map((item) => (
+                <div
+                  key={item.label}
+                  className="grid grid-cols-[26px_minmax(0,1fr)_auto] items-center gap-2 rounded-[13px] bg-black/[0.18] px-3 py-2"
+                >
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 items-center justify-center rounded-full",
+                      item.ready ? "bg-primary/[0.08] text-primary" : "bg-white/[0.045] text-sub"
+                    )}
+                  >
+                    {item.ready ? <Sparkles size={13} /> : <LockKeyhole size={13} />}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[12px] font-semibold text-text">{item.label}</p>
+                    <p className="mt-0.5 line-clamp-1 text-[10px] text-sub">{item.hint}</p>
+                  </div>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em]",
+                      item.ready ? "bg-primary/[0.075] text-primary" : "bg-white/[0.05] text-sub"
+                    )}
+                  >
+                    {item.ready ? "Live" : "Later"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProjectDockMetric({
+  label,
+  value,
+  quiet = false,
+}: {
+  label: string;
+  value: string;
+  quiet?: boolean;
 }) {
   return (
-    <div className="min-w-0 self-start overflow-hidden rounded-[20px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] shadow-[0_10px_24px_rgba(0,0,0,0.13)] xl:col-span-2">
+    <div
+      className={cn(
+        "rounded-[13px] border px-3 py-2",
+        quiet
+          ? "border-white/[0.02] bg-white/[0.012]"
+          : "border-primary/[0.12] bg-primary/[0.055]"
+      )}
+    >
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 text-[12px] font-semibold text-text">{value}</p>
+    </div>
+  );
+}
+
+function SignalChip({ label, ready }: { label: string; ready: boolean }) {
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-[16px_minmax(0,1fr)_8px] items-center gap-2 rounded-[12px] border px-2.5 py-2",
+        ready
+          ? "border-primary/[0.18] bg-primary/[0.055]"
+          : "border-white/[0.024] bg-black/[0.18]"
+      )}
+    >
+      <Link2
+        size={13}
+        className={cn("shrink-0", ready ? "text-primary" : "text-sub")}
+      />
+      <span className="truncate text-[11px] font-semibold text-text">{label}</span>
+      <span
+        className={cn(
+          "h-2 w-2 shrink-0 rounded-full",
+          ready ? "bg-primary shadow-[0_0_12px_rgba(199,255,0,0.38)]" : "bg-white/[0.18]"
+        )}
+      />
+    </div>
+  );
+}
+
+function ProjectPreviewSurface({
+  values,
+  compact = false,
+}: {
+  values: Omit<AdminProject, "id">;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "min-w-0 self-start overflow-hidden rounded-[20px] border border-white/[0.028] bg-[linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] shadow-[0_10px_24px_rgba(0,0,0,0.13)]",
+        compact ? "" : "xl:col-span-2"
+      )}
+    >
       <div
-        className="h-40 bg-gradient-to-br from-primary/15 via-card to-card2"
+        className={cn(
+          "bg-gradient-to-br from-primary/15 via-card to-card2",
+          compact ? "h-20" : "h-40"
+        )}
         style={
           values.brandAccent
             ? {
@@ -949,12 +1398,17 @@ function ProjectPreviewSurface({
         ) : null}
       </div>
 
-      <div className="p-4">
+      <div className={compact ? "p-3.5" : "p-4"}>
         <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
           Public Project Preview
         </p>
-        <div className="mt-4 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/[0.032] bg-white/[0.04] text-[1.35rem]">
+        <div className={cn("flex items-center gap-3", compact ? "mt-3" : "mt-4")}>
+          <div
+            className={cn(
+              "flex shrink-0 items-center justify-center rounded-[18px] border border-white/[0.032] bg-white/[0.04]",
+              compact ? "h-10 w-10 text-[1.1rem]" : "h-12 w-12 text-[1.35rem]"
+            )}
+          >
             {values.logo || "\uD83D\uDE80"}
           </div>
           <div className="min-w-0">
@@ -965,7 +1419,12 @@ function ProjectPreviewSurface({
           </div>
         </div>
 
-        <p className="mt-3 break-words text-[12px] leading-5 text-sub [overflow-wrap:anywhere]">
+        <p
+          className={cn(
+            "mt-3 break-words text-[12px] leading-5 text-sub [overflow-wrap:anywhere]",
+            compact ? "line-clamp-2" : ""
+          )}
+        >
           {values.description || "Short public description will appear here."}
         </p>
 
@@ -976,10 +1435,12 @@ function ProjectPreviewSurface({
           {values.brandMood ? <PreviewBadge>{values.brandMood}</PreviewBadge> : null}
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <PreviewStat label="Members" value={String(values.members)} />
-          <PreviewStat label="Campaigns" value={String(values.campaigns)} />
-        </div>
+        {compact ? null : (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <PreviewStat label="Members" value={String(values.members)} />
+            <PreviewStat label="Campaigns" value={String(values.campaigns)} />
+          </div>
+        )}
       </div>
     </div>
   );

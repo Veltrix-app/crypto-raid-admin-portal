@@ -159,12 +159,14 @@ export function BuilderStepRail<TStep extends string>({
 export function BuilderHorizontalStepRail<TStep extends string>({
   title = "Setup progress",
   description = "Keep the full path visible without stealing a permanent side column from the workspace.",
+  density = "default",
   steps,
   currentStep,
   onSelect,
 }: {
   title?: string;
   description?: string;
+  density?: "default" | "compact";
   steps: Array<{
     id: TStep;
     eyebrow: string;
@@ -181,26 +183,38 @@ export function BuilderHorizontalStepRail<TStep extends string>({
   );
 
   return (
-    <section className="relative overflow-hidden rounded-[18px] border border-white/[0.024] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] p-3.5 shadow-[0_10px_24px_rgba(0,0,0,0.12)]">
+    <section
+      className={cn(
+        "relative overflow-hidden rounded-[18px] border border-white/[0.024] bg-[linear-gradient(180deg,rgba(12,15,22,0.98),rgba(8,10,15,0.96))] shadow-[0_10px_24px_rgba(0,0,0,0.12)]",
+        density === "compact" ? "p-2.5" : "p-3.5"
+      )}
+    >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.052] to-transparent" />
       <div className="relative flex flex-wrap items-center justify-between gap-3">
         <div className="max-w-2xl">
           <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">{title}</p>
-          <p className="mt-1.5 text-[12px] leading-5 text-sub">{description}</p>
+          {density === "compact" ? null : (
+            <p className="mt-1.5 text-[12px] leading-5 text-sub">{description}</p>
+          )}
         </div>
         <span className="rounded-full bg-white/[0.018] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sub">
           Step {currentIndex + 1} of {steps.length}
         </span>
       </div>
 
-      <div className="relative mt-3.5 h-1.5 overflow-hidden rounded-full bg-white/[0.045]">
+      <div className="relative mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/[0.045]">
         <div
           className="h-full rounded-full bg-[linear-gradient(90deg,rgba(199,255,0,0.78),rgba(102,255,198,0.96))] shadow-[0_0_18px_rgba(199,255,0,0.18)] transition-all"
           style={{ width: `${((currentIndex + 1) / steps.length) * 100}%` }}
         />
       </div>
 
-      <div className="relative mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+      <div
+        className={cn(
+          "relative mt-2.5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6",
+          density === "compact" ? "2xl:grid-cols-6" : ""
+        )}
+      >
         {steps.map((step, index) => {
           const active = step.id === currentStep;
 
@@ -209,11 +223,11 @@ export function BuilderHorizontalStepRail<TStep extends string>({
               key={step.id}
               type="button"
               onClick={() => onSelect(step.id)}
-              className={`group rounded-[15px] px-3 py-3 text-left transition-colors duration-200 ${
+              className={`group rounded-[15px] px-3 text-left transition-colors duration-200 ${
                 active
                   ? "bg-white/[0.04] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
                   : "bg-white/[0.012] hover:bg-white/[0.018]"
-              }`}
+              } ${density === "compact" ? "py-2.5" : "py-3"}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -236,13 +250,15 @@ export function BuilderHorizontalStepRail<TStep extends string>({
                   {step.complete ? "Ready" : active ? "Now" : "Open"}
                 </span>
               </div>
-              <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-sub">
-                {step.description}
-              </p>
+              {density === "compact" ? null : (
+                <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-sub">
+                  {step.description}
+                </p>
+              )}
               <div
-                className={`mt-3 h-1 rounded-full ${
-                  index <= currentIndex ? "bg-primary/70" : "bg-white/[0.055]"
-                }`}
+                className={`h-1 rounded-full ${
+                  density === "compact" ? "mt-2" : "mt-3"
+                } ${index <= currentIndex ? "bg-primary/70" : "bg-white/[0.055]"}`}
               />
             </button>
           );
