@@ -1,8 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  BadgeCheck,
+  Gift,
+  Megaphone,
+  Rocket,
+  Settings2,
+  ShieldCheck,
+  Users2,
+} from "lucide-react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
 import ProjectForm from "@/components/forms/project/ProjectForm";
@@ -17,11 +28,8 @@ import {
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import {
-  OpsCommandRead,
   OpsMetricCard,
   OpsPanel,
-  OpsRouteCard,
-  OpsRouteGrid,
   OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
@@ -34,6 +42,21 @@ import { createClient } from "@/lib/supabase/client";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminProjectGrowthSummary } from "@/types/entities/growth-analytics";
+
+type ProjectCommandRouteTone = "default" | "success" | "warning" | "danger";
+
+type ProjectCommandRoute = {
+  key: "launch" | "showcase" | "campaigns" | "community" | "rewards" | "trust" | "settings";
+  eyebrow: string;
+  title: string;
+  description: string;
+  href: string;
+  cta: string;
+  status: string;
+  tone: ProjectCommandRouteTone;
+  icon: ReactNode;
+  emphasis?: boolean;
+};
 
 type PushScopeMode =
   | "project_only"
@@ -1049,6 +1072,93 @@ export default function ProjectDetailPage() {
       tone: operatorIncidentCount > 0 ? ("warning" as const) : ("success" as const),
     },
   ];
+  const projectCommandRoutes: ProjectCommandRoute[] = [
+    {
+      key: "launch",
+      eyebrow: "Launch",
+      title: "Clear launch readiness",
+      description: "Review blockers, campaign handoff and the next safe launch action.",
+      href: `/projects/${project.id}/launch`,
+      cta: "Open launch",
+      status: showLaunchpad ? `${completedLaunchpadSteps}/4 ready` : "Ready",
+      tone: showLaunchpad ? "warning" : "success",
+      icon: <Rocket size={15} />,
+      emphasis: showLaunchpad,
+    },
+    {
+      key: "showcase",
+      eyebrow: "Showcase",
+      title: "Prepare public project page",
+      description: "Review profile, token, scan, swap, daily quests and reward trust before users arrive.",
+      href: `/projects/${project.id}/showcase`,
+      cta: "Open showcase",
+      status: project.tokenContractAddress && project.longDescription ? "Ready" : "Needs polish",
+      tone: project.tokenContractAddress && project.longDescription ? "success" : "warning",
+      icon: <BadgeCheck size={15} />,
+      emphasis: !project.tokenContractAddress || !project.longDescription,
+    },
+    {
+      key: "community",
+      eyebrow: "Community",
+      title: "Run raid and command ops",
+      description: "Manage Tweet-to-Raid, /newraid, Telegram, Discord and captain execution.",
+      href: `/projects/${project.id}/community?surface=raid-ops`,
+      cta: "Open community",
+      status: `${connectedSystemCount}/3 systems`,
+      tone: connectedSystemCount >= 2 ? "success" : "warning",
+      icon: <Users2 size={15} />,
+      emphasis: connectedSystemCount < 2,
+    },
+    {
+      key: "campaigns",
+      eyebrow: "Campaigns",
+      title: "Manage activation work",
+      description: "Open the campaign board and keep quest or raid work connected to launch pressure.",
+      href: `/projects/${project.id}/campaigns`,
+      cta: "Open board",
+      status: `${relatedCampaigns.length} live`,
+      tone: relatedCampaigns.length > 0 ? "success" : "warning",
+      icon: <Megaphone size={15} />,
+    },
+    {
+      key: "rewards",
+      eyebrow: "Rewards",
+      title: "Check reward readiness",
+      description: "Keep reward stock, claim pressure and payout readiness aligned.",
+      href: `/projects/${project.id}/rewards`,
+      cta: "Open rewards",
+      status: `${relatedRewards.length} rewards`,
+      tone: relatedRewards.length > 0 ? "success" : "default",
+      icon: <Gift size={15} />,
+    },
+    {
+      key: "trust",
+      eyebrow: "Safety",
+      title: "Review trust posture",
+      description: "Open fraud posture, suspicious users and project-visible review signals.",
+      href: `/projects/${project.id}/trust`,
+      cta: "Open safety",
+      status: operatorIncidentCount > 0 ? `${operatorIncidentCount} incidents` : "Clear",
+      tone: operatorIncidentCount > 0 ? "warning" : "success",
+      icon: <ShieldCheck size={15} />,
+      emphasis: operatorIncidentCount > 0,
+    },
+    {
+      key: "settings",
+      eyebrow: "Control",
+      title: "Edit project setup",
+      description: "Change identity, integrations, links and public readiness from one dedicated surface.",
+      href: `/projects/${project.id}/settings`,
+      cta: "Open settings",
+      status: "Profile",
+      tone: "default",
+      icon: <Settings2 size={15} />,
+    },
+  ];
+  const primaryCommandRoute =
+    projectCommandRoutes.find((route) => route.emphasis) ??
+    projectCommandRoutes.find((route) => route.key === "launch") ??
+    projectCommandRoutes[0];
   const overviewQuickActions = [
     {
       label: "Open Launch Workspace",
@@ -1111,6 +1221,14 @@ export default function ProjectDetailPage() {
       href: "/settings/team",
     },
   ];
+  const secondaryOverviewQuickActions = overviewQuickActions.filter(
+    (action) =>
+      ![
+        "Open Launch Workspace",
+        "Open Showcase Studio",
+        "Open Community OS",
+      ].includes(action.label)
+  );
 
   async function saveProjectIntegration(provider: "discord" | "telegram") {
     if (!project?.id) return;
@@ -1630,77 +1748,16 @@ export default function ProjectDetailPage() {
         ) : null}
 
         <div className="space-y-3">
-          <OpsCommandRead
-            eyebrow="Project command read"
-            title="Open the next workspace move"
-            description="The project home orients owners first, then routes them into launch, community, rewards or safety work."
-            now={project.status === "active" ? "Workspace is active" : "Workspace needs readiness"}
-            next={
-              showLaunchpad
-                ? "Open Launch and clear readiness blockers"
-                : "Open the surface that matches the work"
-            }
-            watch={
-              operatorIncidentCount > 0
-                ? `${operatorIncidentCount} open incident signals`
-                : "No open incident pressure"
-            }
+          <ProjectHomeCommandCenter
+            projectName={project.name}
+            projectStatus={project.status}
+            routes={projectCommandRoutes}
+            primaryRoute={primaryCommandRoute}
+            completedLaunchpadSteps={completedLaunchpadSteps}
+            showLaunchpad={showLaunchpad}
+            connectedSystemCount={connectedSystemCount}
+            operatorIncidentCount={operatorIncidentCount}
           />
-
-          <OpsRouteGrid>
-            <OpsRouteCard
-              href={`/projects/${project.id}/launch`}
-              eyebrow="Launch"
-              title="Clear launch readiness"
-              description="Review blockers, campaign handoff and the next safe launch action."
-              cta="Open"
-              emphasis={showLaunchpad}
-            />
-            <OpsRouteCard
-              href={`/projects/${project.id}/showcase`}
-              eyebrow="Showcase"
-              title="Prepare public project page"
-              description="Review profile, token, scan, swap, daily quests and reward trust before users arrive."
-              cta="Open"
-              emphasis={!project.tokenContractAddress || !project.longDescription}
-            />
-            <OpsRouteCard
-              href={`/projects/${project.id}/campaigns`}
-              eyebrow="Campaigns"
-              title="Manage activation work"
-              description="Open the campaign board and keep quest or raid work connected to launch pressure."
-              cta="Open"
-            />
-            <OpsRouteCard
-              href={`/projects/${project.id}/community?surface=raid-ops`}
-              eyebrow="Community"
-              title="Run raid and command ops"
-              description="Manage Tweet-to-Raid, /newraid, Telegram, Discord and captain execution."
-              cta="Open"
-            />
-            <OpsRouteCard
-              href={`/projects/${project.id}/rewards`}
-              eyebrow="Rewards"
-              title="Check reward readiness"
-              description="Keep reward stock, claim pressure and payout readiness aligned."
-              cta="Open"
-            />
-            <OpsRouteCard
-              href={`/projects/${project.id}/trust`}
-              eyebrow="Safety"
-              title="Review trust posture"
-              description="Open fraud posture, suspicious users and project-visible review signals."
-              cta="Open"
-              emphasis={operatorIncidentCount > 0}
-            />
-            <OpsRouteCard
-              href={`/projects/${project.id}/settings`}
-              eyebrow="Control"
-              title="Edit project setup"
-              description="Change identity, integrations, links and public readiness from one dedicated surface."
-              cta="Open"
-            />
-          </OpsRouteGrid>
 
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
             <div className="min-w-0 space-y-3">
@@ -1713,7 +1770,7 @@ export default function ProjectDetailPage() {
                 }
                 metrics={overviewMetrics}
               />
-              <ProjectOverviewQuickActions actions={overviewQuickActions} />
+              <ProjectOverviewQuickActions actions={secondaryOverviewQuickActions} />
             </div>
 
             <div className="min-w-0 space-y-3">
@@ -3500,3 +3557,158 @@ export default function ProjectDetailPage() {
   );
 }
 
+function ProjectHomeCommandCenter({
+  projectName,
+  projectStatus,
+  routes,
+  primaryRoute,
+  completedLaunchpadSteps,
+  showLaunchpad,
+  connectedSystemCount,
+  operatorIncidentCount,
+}: {
+  projectName: string;
+  projectStatus: string;
+  routes: ProjectCommandRoute[];
+  primaryRoute: ProjectCommandRoute;
+  completedLaunchpadSteps: number;
+  showLaunchpad: boolean;
+  connectedSystemCount: number;
+  operatorIncidentCount: number;
+}) {
+  const secondaryRoutes = routes.filter((route) => route.key !== primaryRoute.key);
+
+  return (
+    <section className="relative overflow-hidden rounded-[22px] border border-white/[0.024] bg-[radial-gradient(circle_at_8%_0%,rgba(199,255,0,0.09),transparent_26%),radial-gradient(circle_at_88%_10%,rgba(0,255,163,0.055),transparent_24%),linear-gradient(180deg,rgba(11,14,20,0.985),rgba(7,9,14,0.965))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.09),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.016)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[length:64px_64px] opacity-[0.32]" />
+
+      <div className="relative grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.36fr)] xl:items-start">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <OpsStatusPill tone={projectStatus === "active" ? "success" : "warning"}>
+              {projectStatus === "active" ? "Active workspace" : "Needs readiness"}
+            </OpsStatusPill>
+            <OpsStatusPill tone={operatorIncidentCount > 0 ? "warning" : "success"}>
+              {operatorIncidentCount > 0 ? `${operatorIncidentCount} incidents` : "No incidents"}
+            </OpsStatusPill>
+          </div>
+
+          <h1 className="mt-3 text-[1.24rem] font-semibold tracking-[-0.035em] text-text md:text-[1.55rem]">
+            Run {projectName} from one command center
+          </h1>
+          <p className="mt-2 max-w-4xl text-[12px] leading-5 text-sub">
+            Start with the recommended route, then move into launch, showcase, community, rewards or safety without hunting through setup panels.
+          </p>
+
+          <div className="mt-4 grid gap-2.5 md:grid-cols-3">
+            <ProjectCommandMetric
+              label="Launchpad"
+              value={`${completedLaunchpadSteps}/4`}
+              tone={showLaunchpad ? "warning" : "success"}
+            />
+            <ProjectCommandMetric
+              label="Systems"
+              value={`${connectedSystemCount}/3`}
+              tone={connectedSystemCount >= 2 ? "success" : "warning"}
+            />
+            <ProjectCommandMetric
+              label="Incidents"
+              value={operatorIncidentCount > 0 ? String(operatorIncidentCount) : "Clear"}
+              tone={operatorIncidentCount > 0 ? "warning" : "success"}
+            />
+          </div>
+        </div>
+
+        <Link
+          href={primaryRoute.href}
+          className="group rounded-[18px] border border-primary/[0.14] bg-[linear-gradient(135deg,rgba(199,255,0,0.075),rgba(255,255,255,0.018)_42%,rgba(0,255,163,0.04))] p-3.5 transition hover:border-primary/[0.26] hover:bg-primary/[0.075]"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+                Recommended next move
+              </p>
+              <h2 className="mt-1.5 text-[0.98rem] font-semibold tracking-[-0.02em] text-text">
+                {primaryRoute.title}
+              </h2>
+            </div>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] border border-primary/[0.18] bg-primary/[0.07] text-primary">
+              {primaryRoute.icon}
+            </span>
+          </div>
+          <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-sub">
+            {primaryRoute.description}
+          </p>
+          <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-3.5 py-2 text-[11px] font-black text-black transition group-hover:brightness-105">
+            {primaryRoute.cta}
+            <ArrowRight size={13} />
+          </span>
+        </Link>
+      </div>
+
+      <div className="relative mt-4 grid gap-2.5 md:grid-cols-2 2xl:grid-cols-3">
+        {secondaryRoutes.map((route) => (
+          <Link
+            key={route.key}
+            href={route.href}
+            className="group min-w-0 rounded-[16px] border border-white/[0.024] bg-white/[0.014] p-3 transition hover:border-primary/[0.16] hover:bg-white/[0.026]"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-sub">
+                  {route.eyebrow}
+                </p>
+                <p className="mt-1.5 truncate text-[12px] font-semibold text-text">
+                  {route.title}
+                </p>
+              </div>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[12px] border border-white/[0.026] bg-black/20 text-primary">
+                {route.icon}
+              </span>
+            </div>
+            <p className="mt-2 line-clamp-2 text-[11px] leading-5 text-sub">
+              {route.description}
+            </p>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <OpsStatusPill tone={route.tone}>{route.status}</OpsStatusPill>
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-primary">
+                {route.cta}
+                <ArrowUpRight size={12} className="transition group-hover:translate-x-0.5" />
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProjectCommandMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: ProjectCommandRouteTone;
+}) {
+  return (
+    <div className="min-w-0 rounded-[15px] border border-white/[0.024] bg-white/[0.014] px-3 py-2.5">
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p
+        className={`mt-1.5 truncate text-[13px] font-semibold ${
+          tone === "success"
+            ? "text-emerald-200"
+            : tone === "warning"
+              ? "text-amber-200"
+              : tone === "danger"
+                ? "text-rose-200"
+                : "text-text"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}

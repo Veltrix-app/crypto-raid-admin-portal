@@ -22,9 +22,9 @@ export default function ProjectOverviewQuickActions({
 
   return (
     <OpsPanel
-      eyebrow="Operate"
-      title="Open the next workspace directly"
-      description="Put the main working surfaces first and keep the supporting routes secondary."
+      eyebrow="Create"
+      title="Create or inspect the next work item"
+      description="Use these routes after the command center has oriented the project. They stay focused on object creation, queues and team support."
       className={className}
     >
       <div className="space-y-3">
