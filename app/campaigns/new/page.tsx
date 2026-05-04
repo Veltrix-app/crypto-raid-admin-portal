@@ -7,6 +7,7 @@ import {
   BadgeCheck,
   CheckCircle2,
   FileWarning,
+  Layers3,
   ListChecks,
   Route,
   Sparkles,
@@ -133,6 +134,77 @@ type CampaignStudioWatchItem = {
 
 type CampaignLaunchPreviewModel = ReturnType<typeof getCampaignLaunchPreview>;
 
+function CampaignPlaybookCommandSurface({
+  projectName,
+  selectedTemplate,
+  templateCount,
+  savedTemplateCount,
+  intentLabel,
+  audienceLabel,
+}: {
+  projectName: string;
+  selectedTemplate?: CampaignTemplateOption | null;
+  templateCount: number;
+  savedTemplateCount: number;
+  intentLabel: string;
+  audienceLabel: string;
+}) {
+  const fitLabel = selectedTemplate
+    ? `${selectedTemplate.fitLabel} (${selectedTemplate.fitScore}/100)`
+    : "Choose playbook";
+
+  return (
+    <section className="relative overflow-hidden rounded-[20px] border border-white/[0.026] bg-[radial-gradient(circle_at_4%_0%,rgba(199,255,0,0.07),transparent_30%),radial-gradient(circle_at_92%_8%,rgba(88,146,255,0.045),transparent_25%),linear-gradient(180deg,rgba(13,16,23,0.985),rgba(8,10,15,0.965))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]" />
+      <div className="relative flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 max-w-3xl">
+          <p className="inline-flex items-center gap-2 rounded-full border border-primary/[0.14] bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+            <Layers3 size={12} />
+            Playbook command
+          </p>
+          <h3 className="mt-3 text-[1.08rem] font-semibold tracking-[-0.03em] text-text md:text-[1.24rem]">
+            Pick the campaign system before anything gets wired
+          </h3>
+          <p className="mt-2 max-w-3xl text-[12px] leading-5 text-sub">
+            The selected playbook decides the first quests, reward posture and launch route. Keep this step clear so onboarding teams understand the decision.
+          </p>
+        </div>
+        <span
+          className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.14em] ${
+            selectedTemplate ? "bg-primary/[0.08] text-primary" : "bg-amber-500/[0.09] text-amber-300"
+          }`}
+        >
+          {selectedTemplate ? <BadgeCheck size={13} /> : <FileWarning size={13} />}
+          {fitLabel}
+        </span>
+      </div>
+
+      <div className="relative mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+        <PlaybookCommandMetric label="Project" value={projectName} />
+        <PlaybookCommandMetric label="Intent" value={intentLabel} />
+        <PlaybookCommandMetric label="Audience" value={audienceLabel} />
+        <PlaybookCommandMetric label="Options" value={templateCount} />
+        <PlaybookCommandMetric label="Saved" value={savedTemplateCount} />
+      </div>
+    </section>
+  );
+}
+
+function PlaybookCommandMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="min-w-0 rounded-[14px] border border-white/[0.022] bg-black/25 px-3 py-2.5">
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 truncate text-[12px] font-semibold text-text">{value}</p>
+    </div>
+  );
+}
+
 function CampaignLaunchCommandSurface({
   preview,
   projectName,
@@ -186,7 +258,7 @@ function CampaignLaunchCommandSurface({
         <div className="min-w-0 rounded-[18px] border border-white/[0.026] bg-black/20 p-3.5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 max-w-3xl">
-              <p className="inline-flex items-center gap-2 rounded-full border border-primary/14 bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+              <p className="inline-flex items-center gap-2 rounded-full border border-primary/[0.14] bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
                 <Sparkles size={12} />
                 Launch command
               </p>
@@ -292,7 +364,7 @@ function CampaignLaunchCommandSurface({
             <ArrowRight size={13} />
           </button>
           {savedTemplateMessage ? (
-            <p className="mt-2.5 rounded-[14px] border border-primary/14 bg-primary/[0.045] px-3 py-2 text-[11px] leading-5 text-primary">
+            <p className="mt-2.5 rounded-[14px] border border-primary/[0.14] bg-primary/[0.045] px-3 py-2 text-[11px] leading-5 text-primary">
               {savedTemplateMessage}
             </p>
           ) : null}
@@ -482,9 +554,9 @@ function CampaignStudioSideDock({
                 key={item.label}
                 className={`rounded-[14px] border p-2.5 ${
                   item.tone === "warning"
-                    ? "border-amber-400/16 bg-amber-500/[0.055]"
+                    ? "border-amber-400/[0.16] bg-amber-500/[0.055]"
                     : item.tone === "success"
-                      ? "border-primary/14 bg-primary/[0.045]"
+                      ? "border-primary/[0.14] bg-primary/[0.045]"
                       : "border-white/[0.022] bg-white/[0.014]"
                 }`}
               >
@@ -501,7 +573,7 @@ function CampaignStudioSideDock({
               </div>
             ))
           ) : (
-            <p className="rounded-[14px] border border-primary/14 bg-primary/[0.045] p-3 text-[11px] leading-5 text-primary">
+            <p className="rounded-[14px] border border-primary/[0.14] bg-primary/[0.045] p-3 text-[11px] leading-5 text-primary">
               No blockers on this step. Continue when the campaign shape feels right.
             </p>
           )}
@@ -1195,38 +1267,87 @@ function NewCampaignPageContent() {
       );
     }
 
+    const patchedContextCount =
+      selectedTemplate.requiredProjectFields.length - currentMissingContextFields.length;
+    const contextIsClear = currentMissingContextFields.length === 0;
+
     return (
-      <div className="space-y-5">
-        <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.018] p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-            Workspace context usage
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {selectedTemplate.requiredProjectFields.map((field) => (
-              <span
-                key={field}
-                className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-                  currentMissingContextFields.includes(field)
-                    ? "bg-amber-500/[0.075] text-amber-300"
-                    : "bg-primary/[0.075] text-primary"
-                }`}
-              >
-                {formatProjectFieldLabel(field)}
-              </span>
-            ))}
+      <div className="space-y-4">
+        <section className="relative overflow-hidden rounded-[22px] border border-white/[0.026] bg-[radial-gradient(circle_at_4%_0%,rgba(199,255,0,0.065),transparent_32%),radial-gradient(circle_at_94%_6%,rgba(88,146,255,0.045),transparent_28%),linear-gradient(180deg,rgba(13,16,23,0.98),rgba(8,10,15,0.955))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]" />
+          <div className="relative flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 max-w-3xl">
+              <p className="inline-flex items-center gap-2 rounded-full border border-primary/[0.14] bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                <Route size={12} />
+                Context router
+              </p>
+              <h3 className="mt-3 text-[1.05rem] font-semibold tracking-[-0.03em] text-text md:text-[1.22rem]">
+                Patch only the fields this playbook needs
+              </h3>
+              <p className="mt-2 max-w-3xl text-[12px] leading-5 text-sub">
+                Missing workspace data stays in one compact control surface, then gets saved back to the project so future campaigns start cleaner.
+              </p>
+            </div>
+            <span
+              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.14em] ${
+                contextIsClear ? "bg-primary/[0.08] text-primary" : "bg-amber-500/[0.09] text-amber-300"
+              }`}
+            >
+              {contextIsClear ? <BadgeCheck size={13} /> : <FileWarning size={13} />}
+              {contextIsClear ? "Context clear" : `${currentMissingContextFields.length} missing`}
+            </span>
           </div>
-          <p className="mt-4 text-sm leading-7 text-sub">
-            Patch the missing workspace context here once, and future campaigns for this project
-            get a much cleaner autofill path.
-          </p>
-        </div>
+
+          <div className="relative mt-3 grid gap-2 sm:grid-cols-3">
+            <PlaybookCommandMetric label="Required" value={selectedTemplate.requiredProjectFields.length} />
+            <PlaybookCommandMetric label="Ready" value={patchedContextCount} />
+            <PlaybookCommandMetric label="Missing" value={currentMissingContextFields.length} />
+          </div>
+
+          <div className="relative mt-3 flex flex-wrap gap-2">
+            {selectedTemplate.requiredProjectFields.map((field) => {
+              const missing = currentMissingContextFields.includes(field);
+
+              return (
+                <span
+                  key={field}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] ${
+                    missing
+                      ? "border border-amber-400/[0.16] bg-amber-500/[0.07] text-amber-300"
+                      : "border border-primary/[0.12] bg-primary/[0.055] text-primary"
+                  }`}
+                >
+                  {missing ? <FileWarning size={12} /> : <CheckCircle2 size={12} />}
+                  {formatProjectFieldLabel(field)}
+                </span>
+              );
+            })}
+          </div>
+        </section>
 
         {currentMissingContextFields.length > 0 ? (
-          <div className="rounded-[18px] border border-white/[0.026] bg-black/20 p-5">
-            <div className="grid gap-4 md:grid-cols-2">
+          <section className="rounded-[20px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,16,23,0.96),rgba(8,10,15,0.94))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                  Missing inputs
+                </p>
+                <p className="mt-1.5 text-[12px] leading-5 text-sub">
+                  Add these once. The builder refreshes template autofill after save.
+                </p>
+              </div>
+              <span className="rounded-full border border-white/[0.026] bg-black/25 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.13em] text-sub">
+                {editableContextFields.length} fields
+              </span>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
               {editableContextFields.map((field) => (
-                <label key={field} className="block">
-                  <span className="mb-2 block text-sm font-semibold text-text">
+                <label
+                  key={field}
+                  className="block min-w-0 rounded-[16px] border border-white/[0.026] bg-black/[0.22] p-3.5"
+                >
+                  <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
                     {formatProjectFieldLabel(field)}
                   </span>
                   <input
@@ -1241,49 +1362,77 @@ function NewCampaignPageContent() {
                         [field as EditableProjectContextField]: event.target.value,
                       }))
                     }
-                    className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
+                    className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm text-text outline-none transition focus:border-primary/25"
                     placeholder={`Add ${formatProjectFieldLabel(field)}`}
                   />
                 </label>
               ))}
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={saveProjectContextFields}
-                disabled={
-                  contextSaving ||
-                  !selectedProject ||
-                  Object.keys(projectContextDraft).length === 0
-                }
-                className="rounded-2xl bg-primary px-4 py-3 font-bold text-black shadow-[0_12px_28px_rgba(141,255,89,0.18)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {contextSaving ? "Saving workspace context..." : "Save workspace context"}
-              </button>
-              {contextMessage ? <p className="text-sm text-sub">{contextMessage}</p> : null}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[16px] border border-white/[0.026] bg-black/20 px-3.5 py-3">
+              <p className="max-w-2xl text-[12px] leading-5 text-sub">
+                Save here updates the selected project context. Campaign generation stays blocked until the required fields are present.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {contextMessage ? <p className="text-[12px] font-semibold text-sub">{contextMessage}</p> : null}
+                <button
+                  type="button"
+                  onClick={saveProjectContextFields}
+                  disabled={
+                    contextSaving ||
+                    !selectedProject ||
+                    Object.keys(projectContextDraft).length === 0
+                  }
+                  className="inline-flex items-center gap-2 rounded-[14px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.13em] text-black shadow-[0_12px_28px_rgba(141,255,89,0.18)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {contextSaving ? "Saving..." : "Save context"}
+                  <ArrowRight size={14} />
+                </button>
+              </div>
             </div>
-          </div>
+          </section>
         ) : (
-          <div className="rounded-[18px] border border-emerald-500/30 bg-emerald-500/10 p-5">
-            <p className="text-sm leading-7 text-emerald-100">
-              All required workspace fields are already present. This campaign can move into the
-              generated journey with a clean autofill posture.
-            </p>
-          </div>
+          <section className="rounded-[20px] border border-primary/[0.18] bg-[linear-gradient(135deg,rgba(199,255,0,0.09),rgba(255,255,255,0.026))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/[0.08] text-primary">
+                  <CheckCircle2 size={17} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[0.96rem] font-semibold tracking-[-0.02em] text-text">
+                    Autofill is ready for this playbook
+                  </p>
+                  <p className="mt-1.5 text-[12px] leading-5 text-sub">
+                    All required workspace fields are present, so the generated journey can use clean routes and project context.
+                  </p>
+                </div>
+              </div>
+              <span className="rounded-full bg-primary/[0.08] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.13em] text-primary">
+                ready
+              </span>
+            </div>
+          </section>
         )}
 
         {contextSections.length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {contextSections.map((section) => (
-              <TemplateMetaCard
-                key={section.title}
-                title={section.title}
-                description={section.description}
-                value={section.value}
-              />
-            ))}
-          </div>
+          <section className="rounded-[20px] border border-white/[0.026] bg-black/[0.18] p-3.5">
+            <div className="mb-3 flex items-center gap-3">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                Connected context
+              </p>
+              <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.13),transparent)]" />
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {contextSections.map((section) => (
+                <TemplateMetaCard
+                  key={section.title}
+                  title={section.title}
+                  description={section.description}
+                  value={section.value}
+                />
+              ))}
+            </div>
+          </section>
         ) : null}
       </div>
     );
@@ -1531,6 +1680,15 @@ function NewCampaignPageContent() {
             totalSteps={builderSteps.length}
           />
 
+          <CampaignPlaybookCommandSurface
+            projectName={selectedProject?.name || "No project"}
+            selectedTemplate={selectedTemplate}
+            templateCount={templateOptions.length}
+            savedTemplateCount={savedProjectTemplates.length}
+            intentLabel={inferredIntentState.intent.label}
+            audienceLabel={inferredIntentState.audience.label}
+          />
+
           <CampaignIntentStep
             selectedIntent={selectedIntent}
             selectedAudience={selectedAudience}
@@ -1539,20 +1697,31 @@ function NewCampaignPageContent() {
           />
 
           {savedProjectTemplates.length > 0 ? (
-            <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.018] p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Saved project templates
-              </p>
-              <div className="mt-4 space-y-3">
+            <div className="rounded-[20px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,16,23,0.96),rgba(8,10,15,0.94))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="inline-flex items-center gap-2 rounded-full border border-primary/[0.14] bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                    <ListChecks size={12} />
+                    Saved variants
+                  </p>
+                  <p className="mt-2 text-[12px] leading-5 text-sub">
+                    Reuse a project-specific setup when this workspace already has a proven campaign lane.
+                  </p>
+                </div>
+                <span className="rounded-full border border-white/[0.026] bg-black/25 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.13em] text-sub">
+                  {savedProjectTemplates.length} saved
+                </span>
+              </div>
+              <div className="mt-3 grid gap-2">
                 {savedProjectTemplates.map((template) => (
                   <div
                     key={template.id}
-                    className="rounded-[16px] border border-white/[0.026] bg-black/20 px-4 py-4"
+                    className="rounded-[16px] border border-white/[0.026] bg-black/25 px-3.5 py-3.5"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-bold text-text">{template.name}</p>
-                        <p className="mt-2 text-sm leading-6 text-sub">
+                      <div className="min-w-0">
+                        <p className="break-words text-[13px] font-semibold text-text [overflow-wrap:anywhere]">{template.name}</p>
+                        <p className="mt-1.5 line-clamp-2 text-[12px] leading-5 text-sub">
                           {template.description || "Reusable project-specific template"}
                         </p>
                       </div>
@@ -1560,14 +1729,15 @@ function NewCampaignPageContent() {
                         <button
                           type="button"
                           onClick={() => applySavedTemplate(template.configuration)}
-                          className="rounded-xl border border-white/10 bg-white/[0.018] px-3 py-2 text-sm font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+                          className="inline-flex items-center gap-2 rounded-[13px] border border-white/[0.04] bg-white/[0.035] px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-text transition hover:-translate-y-0.5 hover:bg-white/[0.07]"
                         >
-                          Load variant
+                          Load
+                          <ArrowRight size={12} />
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteProjectCampaignTemplate(template.id)}
-                          className="rounded-xl border border-rose-500/30 bg-rose-500/[0.055] px-3 py-2 text-sm font-bold text-rose-300 transition hover:bg-rose-500/15"
+                          className="rounded-[13px] border border-rose-500/24 bg-rose-500/[0.055] px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-rose-300 transition hover:bg-rose-500/15"
                         >
                           Delete
                         </button>
@@ -1617,51 +1787,85 @@ function NewCampaignPageContent() {
             totalSteps={builderSteps.length}
           />
 
-          <div className="grid gap-4 lg:items-start lg:grid-cols-2">
-            <label className="block rounded-[18px] border border-white/[0.026] bg-white/[0.018] p-4">
-              <span className="mb-2 block text-sm font-semibold text-text">Campaign title</span>
-              <input
-                value={campaignTitleDraft}
-                onChange={(event) => setCampaignTitleDraft(event.target.value)}
-                className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-                placeholder="Chainwars Custom Sprint"
-              />
-              <p className="mt-3 text-sm leading-6 text-sub">
-                This becomes the public campaign title and anchors the rest of the custom setup
-                path.
-              </p>
-            </label>
-
-            <label className="block rounded-[18px] border border-white/[0.026] bg-white/[0.018] p-4">
-              <span className="mb-2 block text-sm font-semibold text-text">
-                Short campaign hook
+          <section className="relative overflow-hidden rounded-[22px] border border-white/[0.026] bg-[radial-gradient(circle_at_4%_0%,rgba(199,255,0,0.065),transparent_30%),radial-gradient(circle_at_92%_10%,rgba(88,146,255,0.045),transparent_28%),linear-gradient(180deg,rgba(13,16,23,0.98),rgba(8,10,15,0.955))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]" />
+            <div className="relative flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 max-w-3xl">
+                <p className="inline-flex items-center gap-2 rounded-full border border-primary/[0.14] bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                  <Layers3 size={12} />
+                  Custom command
+                </p>
+                <h3 className="mt-3 text-[1.05rem] font-semibold tracking-[-0.03em] text-text md:text-[1.22rem]">
+                  Build a blank campaign without losing direction
+                </h3>
+                <p className="mt-2 max-w-3xl text-[12px] leading-5 text-sub">
+                  Give the custom route a title, public hook and internal intent before the builder starts wiring workspace context and launch controls.
+                </p>
+              </div>
+              <span
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.14em] ${
+                  campaignTitleDraft.trim() ? "bg-primary/[0.08] text-primary" : "bg-amber-500/[0.09] text-amber-300"
+                }`}
+              >
+                {campaignTitleDraft.trim() ? <BadgeCheck size={13} /> : <FileWarning size={13} />}
+                {campaignTitleDraft.trim() ? "Ready to wire" : "Title required"}
               </span>
-              <input
-                value={customPlaybookSummary}
-                onChange={(event) => setCustomPlaybookSummary(event.target.value)}
-                className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-                placeholder="A custom campaign for holders, community and launch traffic"
+            </div>
+
+            <div className="relative mt-3 grid gap-2 sm:grid-cols-3">
+              <PlaybookCommandMetric label="Title" value={campaignTitleDraft.trim() ? "Ready" : "Required"} />
+              <PlaybookCommandMetric label="Hook" value={customPlaybookSummary.trim() ? "Added" : "Optional"} />
+              <PlaybookCommandMetric label="Direction" value={customPlaybookGoal.trim() ? "Added" : "Optional"} />
+            </div>
+
+            <div className="relative mt-3 grid gap-3 lg:items-start lg:grid-cols-2">
+              <label className="block min-w-0 rounded-[16px] border border-white/[0.026] bg-black/25 p-3.5">
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                  Campaign title
+                </span>
+                <input
+                  value={campaignTitleDraft}
+                  onChange={(event) => setCampaignTitleDraft(event.target.value)}
+                  className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm text-text outline-none transition focus:border-primary/25"
+                  placeholder="Chainwars Custom Sprint"
+                />
+                <p className="mt-2 text-[12px] leading-5 text-sub">
+                  The public title anchors the custom setup path and final campaign route.
+                </p>
+              </label>
+
+              <label className="block min-w-0 rounded-[16px] border border-white/[0.026] bg-black/25 p-3.5">
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                  Short campaign hook
+                </span>
+                <input
+                  value={customPlaybookSummary}
+                  onChange={(event) => setCustomPlaybookSummary(event.target.value)}
+                  className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm text-text outline-none transition focus:border-primary/25"
+                  placeholder="A custom campaign for holders, community and launch traffic"
+                />
+                <p className="mt-2 text-[12px] leading-5 text-sub">
+                  One member-facing sentence that explains why the campaign exists.
+                </p>
+              </label>
+            </div>
+
+            <label className="relative mt-3 block rounded-[16px] border border-white/[0.026] bg-black/25 p-3.5">
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                Internal direction
+              </span>
+              <textarea
+                value={customPlaybookGoal}
+                onChange={(event) => setCustomPlaybookGoal(event.target.value)}
+                rows={5}
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm text-text outline-none transition focus:border-primary/25"
+                placeholder="Describe the flow you want to build: what should users do first, what should this campaign unlock, and what kind of reward logic should it support?"
               />
-              <p className="mt-3 text-sm leading-6 text-sub">
-                Use one sentence to frame what this custom campaign is trying to do.
+              <p className="mt-2 text-[12px] leading-5 text-sub">
+                This stays internal and keeps the launch step intentional instead of blank.
               </p>
             </label>
-          </div>
-
-          <label className="block rounded-[18px] border border-white/[0.026] bg-white/[0.018] p-4">
-            <span className="mb-2 block text-sm font-semibold text-text">Internal direction</span>
-            <textarea
-              value={customPlaybookGoal}
-              onChange={(event) => setCustomPlaybookGoal(event.target.value)}
-              rows={5}
-              className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-              placeholder="Describe the flow you want to build: what should users do first, what should this campaign unlock, and what kind of reward logic should it support?"
-            />
-            <p className="mt-3 text-sm leading-6 text-sub">
-              This is your own custom playbook note. It helps the launch step feel intentional
-              instead of blank.
-            </p>
-          </label>
+          </section>
         </div>
       );
     }
@@ -2033,64 +2237,87 @@ function SuccessCampaignModal({
   onOpenCampaign: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4 backdrop-blur-md">
-      <div className="w-full max-w-2xl rounded-[20px] border border-primary/20 bg-[linear-gradient(180deg,rgba(16,20,28,0.98),rgba(8,10,16,0.98))] p-5 shadow-[0_26px_80px_rgba(0,0,0,0.38)]">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
-              Campaign Generated
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-md">
+      <div className="relative w-full max-w-3xl overflow-hidden rounded-[24px] border border-primary/[0.18] bg-[radial-gradient(circle_at_8%_0%,rgba(199,255,0,0.12),transparent_34%),radial-gradient(circle_at_92%_8%,rgba(88,146,255,0.07),transparent_28%),linear-gradient(180deg,rgba(16,20,28,0.985),rgba(8,10,16,0.985))] p-4 shadow-[0_28px_90px_rgba(0,0,0,0.46)]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(199,255,0,0.34),transparent)]" />
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
+          <section className="rounded-[20px] border border-white/[0.026] bg-black/20 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="inline-flex items-center gap-2 rounded-full border border-primary/[0.14] bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                  <CheckCircle2 size={12} />
+                  Campaign generated
+                </p>
+                <h3 className="mt-3 break-words text-2xl font-semibold tracking-[-0.04em] text-text md:text-3xl [overflow-wrap:anywhere]">
+                  {campaign.title}
+                </h3>
+                <p className="mt-3 max-w-2xl text-[13px] leading-6 text-sub">
+                  The campaign shell is created. Next, inspect the generated campaign workspace, confirm linked quests and rewards, then publish when the route is ready.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full border border-white/[0.04] bg-white/[0.025] px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-sub transition hover:bg-white/[0.08] hover:text-text"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <PreviewStat label="Status" value="Generated" />
+              <PreviewStat label="Review" value="Campaign workspace" />
+              <PreviewStat label="Next" value="Publish check" />
+            </div>
+          </section>
+
+          <aside className="rounded-[20px] border border-white/[0.026] bg-black/25 p-4">
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+              Launch handoff
             </p>
-            <h3 className="mt-3 text-3xl font-extrabold tracking-[-0.03em] text-text">
-              Your campaign is ready to go
-            </h3>
-            <p className="mt-3 max-w-xl text-sm leading-7 text-sub">
-              <span className="font-semibold text-text">{campaign.title}</span> has
-              been generated successfully. You can check its status in the campaign
-              overview or jump straight into the campaign workspace.
+            <div className="mt-3 space-y-2">
+              {[
+                "Inspect campaign details",
+                "Check linked quests",
+                "Confirm reward posture",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-2.5 rounded-[14px] border border-white/[0.026] bg-white/[0.018] px-3 py-2.5"
+                >
+                  <CheckCircle2 size={13} className="shrink-0 text-primary" />
+                  <p className="text-[12px] font-semibold text-text">{item}</p>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
+
+        <div className="mt-3 rounded-[18px] border border-white/[0.026] bg-white/[0.018] p-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="max-w-2xl text-[12px] leading-5 text-sub">
+              Use overview for pipeline status, or open the generated workspace directly when you want to inspect the campaign, quests and rewards in context.
             </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={onOpenCampaign}
+                className="inline-flex items-center gap-2 rounded-[14px] border border-white/[0.04] bg-white/[0.035] px-4 py-3 text-[11px] font-black uppercase tracking-[0.13em] text-text transition hover:-translate-y-0.5 hover:bg-white/[0.07]"
+              >
+                Open campaign
+                <ArrowRight size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={onOpenOverview}
+                className="inline-flex items-center gap-2 rounded-[14px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.13em] text-black transition hover:-translate-y-0.5 hover:brightness-110"
+              >
+                Check overview
+                <ArrowRight size={14} />
+              </button>
+            </div>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-white/10 bg-white/[0.018] px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-sub transition hover:bg-white/[0.08] hover:text-text"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
-          <PreviewStat label="Campaign title" value={campaign.title} />
-          <PreviewStat label="Status route" value="Check in overview" />
-          <PreviewStat label="Next move" value="Review and publish" />
-        </div>
-
-        <div className="mt-6 rounded-[18px] border border-white/[0.026] bg-white/[0.018] p-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-            Next step
-          </p>
-          <p className="mt-3 text-sm leading-7 text-sub">
-            Open the campaign overview to confirm status, continue editing drafts,
-            or jump directly into the generated campaign if you want to inspect the
-            linked quest and reward flow right away.
-          </p>
-        </div>
-
-        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onOpenCampaign}
-            className="rounded-2xl border border-white/10 bg-white/[0.018] px-5 py-3 font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
-          >
-            Open Campaign
-          </button>
-          <button
-            type="button"
-            onClick={onOpenOverview}
-            className="rounded-2xl bg-primary px-5 py-3 font-bold text-black transition hover:-translate-y-0.5 hover:brightness-110"
-          >
-            Check Status In Overview
-          </button>
         </div>
       </div>
     </div>
@@ -2108,69 +2335,85 @@ function TemplateOptionCard({
   featured?: boolean;
   onSelect: () => void;
 }) {
+  const fitTone =
+    template.fitLabel === "Best fit"
+      ? "bg-primary/[0.11] text-primary"
+      : template.fitLabel === "Strong fit"
+        ? "bg-emerald-500/15 text-emerald-300"
+        : template.fitLabel === "Good fit"
+          ? "bg-white/[0.055] text-text"
+          : "bg-amber-500/[0.08] text-amber-300";
+
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-[20px] border text-left transition ${
-        featured ? "p-6" : "p-4"
+      className={`group overflow-hidden rounded-[20px] border text-left transition duration-200 hover:-translate-y-0.5 ${
+        featured ? "p-4 md:p-5" : "p-3.5"
       } ${
         active
-          ? "border-primary/40 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))] shadow-[0_18px_36px_rgba(0,0,0,0.24)]"
-          : "border-white/[0.026] bg-white/[0.018] hover:border-white/[0.045] hover:bg-white/[0.05]"
+          ? "border-primary/35 bg-[linear-gradient(135deg,rgba(199,255,0,0.105),rgba(255,255,255,0.035))] shadow-[0_18px_36px_rgba(0,0,0,0.22)]"
+          : "border-white/[0.026] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.014))] hover:border-white/[0.05] hover:bg-white/[0.045]"
       }`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className={featured ? "max-w-2xl" : "min-w-0"}>
+        <div className="min-w-0 max-w-3xl">
           <div className="flex flex-wrap items-center gap-2">
             {featured ? (
-              <span className="rounded-full bg-primary/[0.075] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/[0.075] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-primary">
+                <Sparkles size={11} />
                 Featured fit
               </span>
             ) : null}
-            <span
-              className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
-                template.fitLabel === "Best fit"
-                  ? "bg-primary/20 text-primary"
-                  : template.fitLabel === "Strong fit"
-                    ? "bg-emerald-500/15 text-emerald-300"
-                    : template.fitLabel === "Good fit"
-                      ? "bg-white/5 text-text"
-                      : "bg-amber-500/[0.075] text-amber-300"
-              }`}
-            >
+            <span className={`rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] ${fitTone}`}>
               {template.fitLabel}
             </span>
           </div>
-          <p className={`mt-3 font-bold text-text ${featured ? "text-[1.02rem]" : "text-sm"}`}>
+          <p className={`mt-3 break-words font-semibold tracking-[-0.02em] text-text [overflow-wrap:anywhere] ${featured ? "text-[1.06rem]" : "text-[0.95rem]"}`}>
             {template.label}
           </p>
-          <p className="mt-2 text-sm leading-6 text-sub">{template.summary}</p>
+          <p className="mt-2 line-clamp-3 text-[12px] leading-5 text-sub">{template.summary}</p>
           {template.fitReasons[0] ? (
-            <p className="mt-4 text-sm leading-6 text-sub">
+            <p className="mt-3 line-clamp-2 text-[11px] leading-5 text-sub">
               <span className="font-semibold text-text">Why it fits:</span>{" "}
               {template.fitReasons[0]}
             </p>
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
-            {template.fitScore}/100
-          </span>
-          <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text">
-            {template.quests.length}Q / {template.rewards.length}R
-          </span>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <span
-            className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
-              active ? "bg-primary/[0.075] text-primary" : "bg-black/20 text-sub"
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.13em] ${
+              active ? "bg-primary/[0.08] text-primary" : "bg-black/25 text-sub"
             }`}
           >
+            {active ? <BadgeCheck size={12} /> : <ArrowRight size={12} />}
             {active ? "Selected" : "Choose"}
           </span>
         </div>
       </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <TemplateOptionMetric label="Fit" value={`${template.fitScore}/100`} />
+        <TemplateOptionMetric label="Quests" value={template.quests.length} />
+        <TemplateOptionMetric label="Rewards" value={template.rewards.length} />
+      </div>
     </button>
+  );
+}
+
+function TemplateOptionMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="min-w-0 rounded-[14px] border border-white/[0.022] bg-black/20 px-3 py-2.5">
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 truncate text-[12px] font-semibold text-text">{value}</p>
+    </div>
   );
 }
 
@@ -2191,71 +2434,6 @@ function PreviewStat({
   );
 }
 
-function CampaignStepNavigator({
-  steps,
-  currentStep,
-  currentStepIndex,
-  visitedSteps,
-  onSelect,
-}: {
-  steps: Array<{
-    id: BuilderStepId;
-    label: string;
-    description: string;
-  }>;
-  currentStep: BuilderStepId;
-  currentStepIndex: number;
-  visitedSteps: BuilderStepId[];
-  onSelect: (step: BuilderStepId) => void;
-}) {
-  return (
-    <div className="rounded-[16px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(15,19,28,0.94),rgba(10,12,18,0.92))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
-      <div className="grid gap-3 xl:grid-cols-4">
-        {steps.map((step, index) => {
-          const active = step.id === currentStep;
-          const complete = index < currentStepIndex && visitedSteps.includes(step.id);
-
-          return (
-          <button
-            key={step.id}
-            type="button"
-            onClick={() => onSelect(step.id)}
-              className={`rounded-[16px] border px-4 py-4 text-left transition ${
-                active
-                  ? "border-primary/35 bg-[linear-gradient(135deg,rgba(199,255,0,0.12),rgba(255,255,255,0.04))]"
-                  : "border-white/[0.026] bg-white/[0.018] hover:bg-white/[0.05]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
-                    Step {index + 1}
-                  </p>
-                  <p className="mt-2 text-sm font-bold tracking-[-0.01em] text-text">
-                    {step.label}
-                  </p>
-                </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
-                    complete
-                      ? "bg-primary/[0.075] text-primary"
-                    : active
-                        ? "bg-white/[0.08] text-text"
-                        : "bg-black/20 text-sub"
-                  }`}
-                >
-                  {complete ? "Locked in" : active ? "Current" : "Next"}
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-sub">{step.description}</p>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function TemplateDraftLaneHeader({
   eyebrow,
   title,
@@ -2271,7 +2449,7 @@ function TemplateDraftLaneHeader({
     <div className="overflow-hidden rounded-[20px] border border-white/[0.026] bg-[radial-gradient(circle_at_4%_0%,rgba(199,255,0,0.07),transparent_30%),linear-gradient(180deg,rgba(13,16,23,0.98),rgba(8,10,15,0.96))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 max-w-3xl">
-          <p className="inline-flex items-center gap-2 rounded-full border border-primary/14 bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+          <p className="inline-flex items-center gap-2 rounded-full border border-primary/[0.14] bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
             <Route size={12} />
             {eyebrow}
           </p>
