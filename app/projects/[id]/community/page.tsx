@@ -2,6 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  ArrowRight,
+  Bot,
+  CheckCircle2,
+  Compass,
+  Gauge,
+  RadioTower,
+  ShieldCheck,
+  Swords,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
 import { CommunityActivityPanel } from "@/components/community/CommunityActivityPanel";
@@ -57,8 +69,6 @@ import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import {
-  OpsCommandRead,
-  OpsMetricCard,
   OpsPanel,
   OpsSnapshotRow,
   OpsStatusPill,
@@ -131,6 +141,60 @@ const COMMUNITY_SURFACES: Array<{ value: CommunitySurface; label: string }> = [
   { value: "members", label: "Members" },
   { value: "outcomes", label: "Outcomes" },
 ];
+
+const COMMUNITY_SURFACE_DETAILS: Record<
+  CommunitySurface,
+  {
+    label: string;
+    description: string;
+    currentRead: string;
+    icon: LucideIcon;
+  }
+> = {
+  overview: {
+    label: "Overview",
+    description: "Orientation, health, escalations and the safest next move.",
+    currentRead: "Orientation, health and the safest next move are the main reading path.",
+    icon: Compass,
+  },
+  "raid-ops": {
+    label: "Raid Ops",
+    description: "Tweet-to-Raid, missions, live raid delivery and proof loops.",
+    currentRead: "Tweet-to-Raid, mission handoff and live raid delivery are the main reading path.",
+    icon: Swords,
+  },
+  automations: {
+    label: "Automations",
+    description: "Automation rails, playbooks, funnels and activation boards.",
+    currentRead: "Automation rails, playbooks and activation loops are the main reading path.",
+    icon: Bot,
+  },
+  commands: {
+    label: "Commands",
+    description: "Discord, Telegram, slash command readiness and test pushes.",
+    currentRead:
+      "Discord, Telegram, /newraid readiness and deep-link command setup are the main reading path.",
+    icon: RadioTower,
+  },
+  captains: {
+    label: "Captains",
+    description: "Captain seats, queue ownership, permissions and delegation.",
+    currentRead: "Captain ownership, queue pressure and delegation are the main reading path.",
+    icon: ShieldCheck,
+  },
+  members: {
+    label: "Members",
+    description: "Contributor quality, cohorts, ranks and leaderboard motion.",
+    currentRead: "Members, cohorts, leaderboards and growth quality are the main reading path.",
+    icon: UsersRound,
+  },
+  outcomes: {
+    label: "Outcomes",
+    description: "Recommendations, health signals and completion outcomes.",
+    currentRead: "Outcomes, recommendations and health signals are the main reading path.",
+    icon: Gauge,
+  },
+};
 
 function isCommunitySurface(value: string | null): value is CommunitySurface {
   return COMMUNITY_SURFACES.some((surface) => surface.value === value);
@@ -519,6 +583,285 @@ const emptyCommunityOutcomes: CommunityOutcomesState = {
   healthRollups: [],
   captainCoverage: emptyCommunityCaptainCoverage,
 };
+
+function CommunityCommandDeck({
+  projectName,
+  projectChain,
+  isPublic,
+  viewMode,
+  surfaceMode,
+  onViewModeChange,
+  onSurfaceChange,
+  activeAutomationCount,
+  dueAutomationCount,
+  readyAutomationCount,
+  blockedAutomationCount,
+  degradedAutomationCount,
+  commandLayer,
+  commandLayerReady,
+  captainPriorityCount,
+  captainSeatCount,
+  captainCoverageRate,
+  captainUnassignedCount,
+  memberCount,
+  commandReadyCount,
+  raidCount,
+  recommendationCount,
+  healthSignalCount,
+  topRecommendationTitle,
+  latestIssue,
+}: {
+  projectName: string;
+  projectChain: string;
+  isPublic: boolean;
+  viewMode: "owner" | "captain";
+  surfaceMode: CommunitySurface;
+  onViewModeChange: (mode: "owner" | "captain") => void;
+  onSurfaceChange: (surface: CommunitySurface) => void;
+  activeAutomationCount: number;
+  dueAutomationCount: number;
+  readyAutomationCount: number;
+  blockedAutomationCount: number;
+  degradedAutomationCount: number;
+  commandLayer: string;
+  commandLayerReady: boolean;
+  captainPriorityCount: number;
+  captainSeatCount: number;
+  captainCoverageRate: number;
+  captainUnassignedCount: number;
+  memberCount: number;
+  commandReadyCount: number;
+  raidCount: number;
+  recommendationCount: number;
+  healthSignalCount: number;
+  topRecommendationTitle: string;
+  latestIssue: string;
+}) {
+  const activeSurface = COMMUNITY_SURFACE_DETAILS[surfaceMode];
+  const ActiveIcon = activeSurface.icon;
+  const automationPressure = blockedAutomationCount + degradedAutomationCount;
+  const roundedCoverage = Math.round(captainCoverageRate);
+  const ownerModeActive = viewMode === "owner";
+  const routeMetrics: Record<
+    CommunitySurface,
+    {
+      value: string;
+      label: string;
+      tone: "default" | "success" | "warning";
+    }
+  > = {
+    overview: {
+      value: automationPressure > 0 ? String(automationPressure) : "Clear",
+      label: automationPressure > 0 ? "Signals" : "Watch",
+      tone: automationPressure > 0 ? "warning" : "success",
+    },
+    "raid-ops": {
+      value: String(raidCount),
+      label: "Raids",
+      tone: raidCount > 0 ? "success" : "default",
+    },
+    automations: {
+      value: `${activeAutomationCount}/${readyAutomationCount}`,
+      label: "Live",
+      tone: automationPressure > 0 ? "warning" : activeAutomationCount > 0 ? "success" : "default",
+    },
+    commands: {
+      value: commandLayer,
+      label: "Layer",
+      tone: commandLayerReady ? "success" : "warning",
+    },
+    captains: {
+      value: captainPriorityCount > 0 ? String(captainPriorityCount) : String(captainSeatCount),
+      label: captainPriorityCount > 0 ? "Priority" : "Seats",
+      tone: captainPriorityCount > 0 ? "warning" : "default",
+    },
+    members: {
+      value: String(memberCount),
+      label: "Members",
+      tone: memberCount > 0 ? "success" : "default",
+    },
+    outcomes: {
+      value: String(recommendationCount),
+      label: "Plays",
+      tone: recommendationCount > 0 ? "warning" : "default",
+    },
+  };
+
+  return (
+    <section className="relative overflow-hidden rounded-[22px] border border-white/[0.024] bg-[radial-gradient(circle_at_8%_0%,rgba(199,255,0,0.08),transparent_28%),radial-gradient(circle_at_92%_3%,rgba(77,214,255,0.05),transparent_24%),linear-gradient(180deg,rgba(12,16,23,0.985),rgba(7,9,14,0.965))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.09),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.014)_1px,transparent_1px)] bg-[length:72px_72px] opacity-[0.3]" />
+
+      <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.36fr)] xl:items-stretch">
+        <div className="min-w-0 rounded-[18px] border border-white/[0.022] bg-black/20 p-3.5">
+          <div className="flex min-w-0 gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[17px] border border-primary/[0.16] bg-primary/[0.06] text-primary">
+              <ActiveIcon size={21} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[8px] font-black uppercase tracking-[0.18em] text-primary">
+                Community command
+              </p>
+              <h2 className="mt-1.5 break-words text-[1.12rem] font-semibold tracking-[-0.03em] text-text [overflow-wrap:anywhere] md:text-[1.28rem]">
+                {activeSurface.label} for {projectName}
+              </h2>
+              <p className="mt-1.5 max-w-3xl text-[12px] leading-5 text-sub">
+                {activeSurface.description}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-3 grid gap-2.5 md:grid-cols-4">
+            <CommunitySignalTile label="Mode" value={ownerModeActive ? "Owner" : "Captain"} />
+            <CommunitySignalTile label="Commands" value={commandLayer} strong={commandLayerReady} />
+            <CommunitySignalTile
+              label="Automations"
+              value={
+                automationPressure > 0
+                  ? `${automationPressure} watch`
+                  : dueAutomationCount > 0
+                    ? `${dueAutomationCount} due`
+                    : `${activeAutomationCount} live`
+              }
+              warn={automationPressure > 0}
+            />
+            <CommunitySignalTile label="Coverage" value={`${roundedCoverage}%`} />
+          </div>
+        </div>
+
+        <div className="rounded-[18px] border border-white/[0.022] bg-white/[0.014] p-3.5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[8px] font-black uppercase tracking-[0.16em] text-sub">
+                Operating stance
+              </p>
+              <p className="mt-1.5 text-[12px] font-semibold text-text">
+                {ownerModeActive ? "Strategy and approval" : "Execution queue"}
+              </p>
+              <p className="mt-1.5 text-[11px] leading-5 text-sub">
+                {ownerModeActive
+                  ? "Use owner mode for routing, approvals, automation posture and outcomes."
+                  : "Use captain mode for task ownership, blocked items and execution handoff."}
+              </p>
+            </div>
+            <CheckCircle2
+              size={17}
+              className={ownerModeActive ? "shrink-0 text-primary" : "shrink-0 text-sky-300"}
+            />
+          </div>
+          <div className="mt-3">
+            <SegmentToggle
+              value={viewMode}
+              options={[
+                { value: "owner", label: "Owner mode" },
+                { value: "captain", label: "Captain mode" },
+              ]}
+              onChange={onViewModeChange}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="relative mt-3 grid gap-2.5 md:grid-cols-2 2xl:grid-cols-7">
+        {COMMUNITY_SURFACES.map((surface) => {
+          const details = COMMUNITY_SURFACE_DETAILS[surface.value];
+          const Icon = details.icon;
+          const active = surface.value === surfaceMode;
+          const metric = routeMetrics[surface.value];
+
+          return (
+            <button
+              key={surface.value}
+              type="button"
+              onClick={() => onSurfaceChange(surface.value)}
+              className={`group min-w-0 rounded-[16px] border p-3 text-left transition ${
+                active
+                  ? "border-primary/[0.2] bg-primary/[0.065] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+                  : "border-white/[0.022] bg-black/20 hover:border-white/[0.06] hover:bg-white/[0.024]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[12px] border ${
+                    active
+                      ? "border-primary/[0.2] bg-primary/[0.08] text-primary"
+                      : "border-white/[0.035] bg-white/[0.018] text-sub"
+                  }`}
+                >
+                  <Icon size={15} />
+                </span>
+                <OpsStatusPill tone={metric.tone}>{metric.value}</OpsStatusPill>
+              </div>
+              <p className="mt-3 truncate text-[12px] font-semibold text-text">{surface.label}</p>
+              <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-sub">
+                {details.description}
+              </p>
+              <span
+                className={`mt-3 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.13em] ${
+                  active ? "text-primary" : "text-sub group-hover:text-primary"
+                }`}
+              >
+                {active ? "Active" : `Open ${metric.label}`}
+                <ArrowRight size={11} className="transition group-hover:translate-x-0.5" />
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="relative mt-3 grid gap-2.5 xl:grid-cols-[1.08fr_0.92fr_0.78fr]">
+        <OpsSnapshotRow label="Current read" value={activeSurface.currentRead} />
+        <OpsSnapshotRow
+          label="Next move"
+          value={topRecommendationTitle || "No urgent owner recommendation is active right now."}
+        />
+        <div className="rounded-[14px] border border-white/[0.022] bg-white/[0.012] px-3 py-2.5">
+          <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-sub">Posture</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <OpsStatusPill tone="success">{projectChain}</OpsStatusPill>
+            <OpsStatusPill tone={isPublic ? "success" : "default"}>
+              {isPublic ? "Public" : "Private"}
+            </OpsStatusPill>
+            <OpsStatusPill tone={healthSignalCount > 0 ? "warning" : "default"}>
+              {healthSignalCount > 0 ? `${healthSignalCount} signals` : "Calm"}
+            </OpsStatusPill>
+          </div>
+          <p className="mt-2 line-clamp-1 text-[11px] text-sub">
+            {latestIssue ||
+              `${commandReadyCount} command-ready members, ${captainUnassignedCount}/${captainSeatCount} captain seats open.`}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CommunitySignalTile({
+  label,
+  value,
+  strong = false,
+  warn = false,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  warn?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-[13px] border px-3 py-2 ${
+        warn
+          ? "border-amber-300/[0.12] bg-amber-300/[0.035]"
+          : strong
+            ? "border-primary/[0.12] bg-primary/[0.045]"
+            : "border-white/[0.022] bg-white/[0.014]"
+      }`}
+    >
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 truncate text-[12px] font-semibold text-text">{value}</p>
+    </div>
+  );
+}
 
 function buildCaptainSeatKey(authUserId: string, role: CaptainAssignment["role"]) {
   return `${authUserId}:${role}`;
@@ -2560,6 +2903,16 @@ export default function ProjectCommunityManagementPage() {
     );
   }
 
+  const commandLayerLabel = discordBotSettings.commandsEnabled
+    ? discordBotSettings.telegramCommandsEnabled
+      ? "Dual rail"
+      : "Discord live"
+    : "Parked";
+  const latestCommunityIssue =
+    communityGrowth.trust.openFlagCount > 0 || communityGrowth.trust.watchlistCount > 0
+      ? communityGrowth.trust.latestIssue
+      : operatorSignals.latestIssue;
+
   return (
     <AdminShell>
       <ProjectWorkspaceFrame
@@ -2568,150 +2921,33 @@ export default function ProjectCommunityManagementPage() {
         projectChain={project.chain}
         healthPills={communityWorkspaceHealthPills}
       >
-        <OpsCommandRead
-          eyebrow="Community command read"
-          title="Choose the operating surface"
-          description="Community OS should not stack every module at once. Pick the surface that matches the job: raid ops, automations, commands, captains, members or outcomes."
-          now={
-            discordBotSettings.telegramCommandsEnabled && discordBotSettings.raidOpsEnabled
-              ? "Raid ops can create live work"
-              : "Raid ops needs configuration"
-          }
-          next={
-            discordBotSettings.telegramCommandsEnabled
-              ? "Prove /newraid with a controlled post"
-              : "Enable Telegram commands before live raid commands"
-          }
-          watch={
-            blockedAutomationCount > 0 || degradedAutomationCount > 0
-              ? `${blockedAutomationCount + degradedAutomationCount} blocked automation signals`
-              : "Automation rail is clear"
-          }
+        <CommunityCommandDeck
+          projectName={project.name}
+          projectChain={project.chain}
+          isPublic={Boolean(project.isPublic)}
+          viewMode={communityViewMode}
+          surfaceMode={communitySurfaceMode}
+          onViewModeChange={setCommunityViewMode}
+          onSurfaceChange={selectCommunitySurface}
+          activeAutomationCount={activeAutomationCount}
+          dueAutomationCount={dueAutomationCount}
+          readyAutomationCount={readyAutomationCount}
+          blockedAutomationCount={blockedAutomationCount}
+          degradedAutomationCount={degradedAutomationCount}
+          commandLayer={commandLayerLabel}
+          commandLayerReady={discordBotSettings.commandsEnabled}
+          captainPriorityCount={communityCaptainWorkspace.priorities.length}
+          captainSeatCount={communityGrowth.captains.assignments.length}
+          captainCoverageRate={communityRecommendations.captainCoverage.coverageRate}
+          captainUnassignedCount={communityRecommendations.captainCoverage.unassignedSeats}
+          memberCount={communityMembers.summary.totalContributors}
+          commandReadyCount={communityMembers.summary.commandReady}
+          raidCount={relatedRaids.length}
+          recommendationCount={communityRecommendations.recommendations.length}
+          healthSignalCount={communityRecommendations.healthSignals.length}
+          topRecommendationTitle={communityRecommendations.recommendations[0]?.title ?? ""}
+          latestIssue={latestCommunityIssue}
         />
-
-        <OpsPanel
-          eyebrow="Community OS"
-          title="Pick one operating surface"
-          description="Choose the role and surface first. The page should then show only the signals that matter for that job."
-        >
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
-            <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-1">
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
-                  Operating stance
-                </p>
-                <p className="mt-1.5 text-[11px] leading-5 text-sub">
-                  Switch between owner and captain mode without mixing strategy and execution.
-                </p>
-                <div className="mt-2.5">
-                  <SegmentToggle
-                    value={communityViewMode}
-                    options={[
-                      { value: "owner", label: "Owner mode" },
-                      { value: "captain", label: "Captain mode" },
-                    ]}
-                    onChange={setCommunityViewMode}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-sub">
-                  Workspace focus
-                </p>
-                <p className="mt-1.5 text-[11px] leading-5 text-sub">
-                  One surface at a time: overview, raids, commands, automations, captains, members or outcomes.
-                </p>
-                <div className="mt-2.5">
-                  <SegmentToggle
-                    value={communitySurfaceMode}
-                    options={COMMUNITY_SURFACES}
-                    onChange={selectCommunitySurface}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              <OpsMetricCard
-                label="Active automations"
-                value={activeAutomationCount}
-                emphasis={activeAutomationCount > 0 ? "primary" : "default"}
-                sub={`${dueAutomationCount} automation${dueAutomationCount === 1 ? "" : "s"} due next.`}
-              />
-              <OpsMetricCard
-                label="Captain priorities"
-                value={communityCaptainWorkspace.priorities.length}
-                emphasis={communityCaptainWorkspace.priorities.length > 0 ? "warning" : "default"}
-                sub={`${communityGrowth.captains.assignments.length} captain seat${communityGrowth.captains.assignments.length === 1 ? "" : "s"} assigned.`}
-              />
-              <OpsMetricCard
-                label="Coverage rate"
-                value={`${Math.round(communityRecommendations.captainCoverage.coverageRate)}%`}
-                sub={`${communityRecommendations.captainCoverage.unassignedSeats} unassigned seats still visible.`}
-              />
-              <OpsMetricCard
-                label="Command layer"
-                value={
-                  discordBotSettings.commandsEnabled
-                    ? discordBotSettings.telegramCommandsEnabled
-                      ? "Dual rail"
-                      : "Discord live"
-                    : "Parked"
-                }
-                emphasis={discordBotSettings.commandsEnabled ? "primary" : "warning"}
-                sub={project.isPublic ? "Public project surface" : "Private project surface"}
-              />
-            </div>
-          </div>
-
-          <div className="mt-3 grid gap-2.5 md:grid-cols-2 xl:grid-cols-[1.1fr_0.9fr]">
-            <OpsSnapshotRow
-              label="Current read"
-              value={
-                communitySurfaceMode === "overview"
-                  ? "Orientation, health and the safest next move are the main reading path."
-                  : communitySurfaceMode === "raid-ops"
-                    ? "Tweet-to-Raid, mission handoff and live raid delivery are the main reading path."
-                    : communitySurfaceMode === "commands"
-                      ? "Discord, Telegram, /newraid readiness and deep-link command setup are the main reading path."
-                  : communitySurfaceMode === "automations"
-                      ? "Automation rails, playbooks and activation loops are the main reading path."
-                      : communitySurfaceMode === "captains"
-                        ? "Captain ownership, queue pressure and delegation are the main reading path."
-                        : communitySurfaceMode === "members"
-                          ? "Members, cohorts, leaderboards and growth quality are the main reading path."
-                          : "Outcomes, recommendations and health signals are the main reading path."
-              }
-            />
-            <OpsSnapshotRow
-              label="Next move"
-              value={
-                communityRecommendations.recommendations[0]?.title ??
-                "No urgent owner recommendation is active right now."
-              }
-            />
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <OpsStatusPill tone="success">{project.chain}</OpsStatusPill>
-            <OpsStatusPill tone="default">
-              {project.isPublic ? "Public surface" : "Private surface"}
-            </OpsStatusPill>
-            <OpsStatusPill tone={discordBotSettings.commandsEnabled ? "success" : "warning"}>
-              {discordBotSettings.commandsEnabled
-                ? "Discord commands live"
-                : "Discord commands parked"}
-            </OpsStatusPill>
-            <OpsStatusPill
-              tone={discordBotSettings.telegramCommandsEnabled ? "success" : "default"}
-            >
-              {discordBotSettings.telegramCommandsEnabled
-                ? "Telegram commands live"
-                : "Telegram commands parked"}
-            </OpsStatusPill>
-          </div>
-        </OpsPanel>
 
         {communitySurfaceMode === "overview" ? (
           <CommunityOverviewPanel
