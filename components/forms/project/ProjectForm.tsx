@@ -120,6 +120,9 @@ const steps: Array<{
   },
 ];
 
+const projectInputClassName =
+  "w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm text-text outline-none transition focus:border-primary/[0.26] focus:ring-2 focus:ring-primary/[0.14]";
+
 export default function ProjectForm({
   initialValues,
   onSubmit,
@@ -329,7 +332,9 @@ export default function ProjectForm({
         totalSteps={steps.length}
       />
 
-      {currentStep === "identity" ? renderIdentity(values, setField, setSlugTouched) : null}
+      {currentStep === "identity"
+        ? renderIdentity(values, setField, setSlugTouched, isSettingsMode)
+        : null}
       {currentStep === "brand" ? renderBrand(values, setField) : null}
       {currentStep === "links" ? renderLinks(values, setField) : null}
       {currentStep === "context" ? renderContext(values, setField) : null}
@@ -473,8 +478,25 @@ export default function ProjectForm({
             currentStep={currentStep}
             onSelect={setCurrentStep}
           />
-          {editorSurface}
-          {supportCards}
+          {isSettingsMode ? (
+            <>
+              {editorSurface}
+              {supportCards}
+            </>
+          ) : (
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+              {editorSurface}
+              <ProjectCreationCommandDock
+                values={values}
+                readiness={brandingReadiness}
+                connectedModules={connectedModules}
+                capabilitySignals={capabilitySignals}
+                currentStep={currentStepMeta.label}
+                progressPercent={progressPercent}
+                onSelectStep={setCurrentStep}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)] xl:items-start">
@@ -497,20 +519,45 @@ function renderIdentity(
     key: K,
     value: Omit<AdminProject, "id">[K]
   ) => void,
-  setSlugTouched: (value: boolean) => void
+  setSlugTouched: (value: boolean) => void,
+  showAdminState: boolean
 ) {
+  const identityReady = Boolean(values.name && values.slug && values.chain);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <SectionIntro
-        title="Start with the fields needed to create the workspace"
-        body="These basics make the project easy to recognize across the portal, public pages and launch tools."
+        title="Name the workspace and route it correctly"
+        body="Project teams should only need the minimum creation payload first: name, slug, chain and category. Status controls stay out of the way during first-time creation."
       />
-      <div className="grid gap-5 md:grid-cols-2">
+
+      <div className="rounded-[18px] border border-white/[0.026] bg-[radial-gradient(circle_at_5%_0%,rgba(199,255,0,0.055),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.032),rgba(255,255,255,0.012))] p-3.5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+              Required creation payload
+            </p>
+            <p className="mt-1.5 max-w-2xl text-[12px] leading-5 text-sub">
+              These fields create the actual project workspace. Everything else can be tightened once Launch opens.
+            </p>
+          </div>
+          <ProjectOnboardingPriorityPill priority={identityReady ? "complete" : "required"}>
+            {identityReady ? "Ready" : "Needed"}
+          </ProjectOnboardingPriorityPill>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <ProjectDockMetric label="Name" value={values.name ? "Ready" : "Missing"} quiet={!values.name} />
+          <ProjectDockMetric label="Slug" value={values.slug ? "Ready" : "Missing"} quiet={!values.slug} />
+          <ProjectDockMetric label="Chain" value={values.chain || "Missing"} quiet={!values.chain} />
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
         <Field label="Project Name">
           <input
             value={values.name}
             onChange={(e) => setField("name", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             required
           />
         </Field>
@@ -522,7 +569,7 @@ function renderIdentity(
               setSlugTouched(true);
               setField("slug", e.target.value);
             }}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="pepe-raiders"
             required
           />
@@ -532,7 +579,7 @@ function renderIdentity(
           <select
             value={values.chain}
             onChange={(e) => setField("chain", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
           >
             <option>Base</option>
             <option>Ethereum</option>
@@ -547,37 +594,41 @@ function renderIdentity(
           <input
             value={values.category || ""}
             onChange={(e) => setField("category", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="Meme, DeFi, NFT, Gaming..."
           />
         </Field>
-
-        <Field label="Status">
-          <select
-            value={values.status}
-            onChange={(e) => setField("status", e.target.value as AdminProject["status"])}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
-          >
-            <option value="draft">draft</option>
-            <option value="active">active</option>
-            <option value="paused">paused</option>
-          </select>
-        </Field>
-
-        <Field label="Onboarding Status">
-          <select
-            value={values.onboardingStatus}
-            onChange={(e) =>
-              setField("onboardingStatus", e.target.value as AdminProject["onboardingStatus"])
-            }
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
-          >
-            <option value="draft">draft</option>
-            <option value="pending">pending</option>
-            <option value="approved">approved</option>
-          </select>
-        </Field>
       </div>
+
+      {showAdminState ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Status">
+            <select
+              value={values.status}
+              onChange={(e) => setField("status", e.target.value as AdminProject["status"])}
+              className={projectInputClassName}
+            >
+              <option value="draft">draft</option>
+              <option value="active">active</option>
+              <option value="paused">paused</option>
+            </select>
+          </Field>
+
+          <Field label="Onboarding Status">
+            <select
+              value={values.onboardingStatus}
+              onChange={(e) =>
+                setField("onboardingStatus", e.target.value as AdminProject["onboardingStatus"])
+              }
+              className={projectInputClassName}
+            >
+              <option value="draft">draft</option>
+              <option value="pending">pending</option>
+              <option value="approved">approved</option>
+            </select>
+          </Field>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -600,7 +651,7 @@ function renderBrand(
           <input
             value={values.logo}
             onChange={(e) => setField("logo", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="Rocket, monogram, or logo hint"
           />
         </Field>
@@ -609,7 +660,7 @@ function renderBrand(
           <input
             value={values.bannerUrl || ""}
             onChange={(e) => setField("bannerUrl", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="https://..."
           />
         </Field>
@@ -619,7 +670,7 @@ function renderBrand(
             type="email"
             value={values.contactEmail || ""}
             onChange={(e) => setField("contactEmail", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="team@project.com"
           />
         </Field>
@@ -628,7 +679,7 @@ function renderBrand(
           <input
             value={values.brandAccent || ""}
             onChange={(e) => setField("brandAccent", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="#C7FF00"
           />
         </Field>
@@ -637,7 +688,7 @@ function renderBrand(
           <input
             value={values.brandMood || ""}
             onChange={(e) => setField("brandMood", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="Launch, premium, playful..."
           />
         </Field>
@@ -664,7 +715,7 @@ function renderLinks(
           <input
             value={values.website || ""}
             onChange={(e) => setField("website", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="https://..."
           />
         </Field>
@@ -673,7 +724,7 @@ function renderLinks(
           <input
             value={values.xUrl || ""}
             onChange={(e) => setField("xUrl", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="https://x.com/..."
           />
         </Field>
@@ -682,7 +733,7 @@ function renderLinks(
           <input
             value={values.telegramUrl || ""}
             onChange={(e) => setField("telegramUrl", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="https://t.me/..."
           />
         </Field>
@@ -691,7 +742,7 @@ function renderLinks(
           <input
             value={values.discordUrl || ""}
             onChange={(e) => setField("discordUrl", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="https://discord.gg/..."
           />
         </Field>
@@ -700,7 +751,7 @@ function renderLinks(
           <input
             value={values.docsUrl || ""}
             onChange={(e) => setField("docsUrl", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="https://docs..."
           />
         </Field>
@@ -709,7 +760,7 @@ function renderLinks(
           <input
             value={values.waitlistUrl || ""}
             onChange={(e) => setField("waitlistUrl", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="https://..."
           />
         </Field>
@@ -736,7 +787,7 @@ function renderContext(
           <input
             value={values.launchPostUrl || ""}
             onChange={(e) => setField("launchPostUrl", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="https://x.com/.../status/..."
           />
         </Field>
@@ -745,7 +796,7 @@ function renderContext(
           <input
             value={values.tokenContractAddress || ""}
             onChange={(e) => setField("tokenContractAddress", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="0x..."
           />
         </Field>
@@ -754,7 +805,7 @@ function renderContext(
           <input
             value={values.nftContractAddress || ""}
             onChange={(e) => setField("nftContractAddress", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="0x..."
           />
         </Field>
@@ -763,7 +814,7 @@ function renderContext(
           <input
             value={values.primaryWallet || ""}
             onChange={(e) => setField("primaryWallet", e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             placeholder="0x..."
           />
         </Field>
@@ -791,7 +842,7 @@ function renderPublicProfile(
           value={values.description}
           onChange={(e) => setField("description", e.target.value)}
           rows={5}
-          className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+          className={projectInputClassName}
           placeholder="Short project description..."
         />
       </Field>
@@ -801,7 +852,7 @@ function renderPublicProfile(
           value={values.longDescription || ""}
           onChange={(e) => setField("longDescription", e.target.value)}
           rows={8}
-          className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+          className={projectInputClassName}
           placeholder="Longer project overview, mission, value proposition..."
         />
       </Field>
@@ -812,7 +863,7 @@ function renderPublicProfile(
             type="number"
             value={values.members}
             onChange={(e) => setField("members", Number(e.target.value))}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             min={0}
           />
         </Field>
@@ -822,7 +873,7 @@ function renderPublicProfile(
             type="number"
             value={values.campaigns}
             onChange={(e) => setField("campaigns", Number(e.target.value))}
-            className="w-full rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-3 outline-none"
+            className={projectInputClassName}
             min={0}
           />
         </Field>
@@ -1071,6 +1122,138 @@ function ProjectFormCommandHeader({
         </button>
       </div>
     </section>
+  );
+}
+
+function ProjectCreationCommandDock({
+  values,
+  readiness,
+  connectedModules,
+  capabilitySignals,
+  currentStep,
+  progressPercent,
+  onSelectStep,
+}: {
+  values: Omit<AdminProject, "id">;
+  readiness: ProjectReadinessItem[];
+  connectedModules: Array<{ label: string; value?: string }>;
+  capabilitySignals: Array<{ label: string; ready: boolean; hint: string }>;
+  currentStep: string;
+  progressPercent: number;
+  onSelectStep: (step: StepId) => void;
+}) {
+  const requiredItems = readiness.filter((item) => item.priority === "required");
+  const requiredReady = requiredItems.filter((item) => item.complete).length;
+  const readyCount = readiness.filter((item) => item.complete).length;
+  const connectedCount = connectedModules.filter((item) => Boolean(item.value)).length;
+  const unlockedCount = capabilitySignals.filter((item) => item.ready).length;
+  const nextGap =
+    readiness.find((item) => !item.complete && item.priority === "required") ??
+    readiness.find((item) => !item.complete) ??
+    null;
+
+  return (
+    <aside className="space-y-3 xl:sticky xl:top-4">
+      <section className="relative overflow-hidden rounded-[20px] border border-primary/[0.12] bg-[radial-gradient(circle_at_12%_0%,rgba(199,255,0,0.09),transparent_28%),linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(199,255,0,0.24),transparent)]" />
+        <div className="relative flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+              Creation command
+            </p>
+            <h3 className="mt-2 text-[1rem] font-semibold tracking-[-0.025em] text-text">
+              {nextGap ? nextGap.label : "Ready for Launch"}
+            </h3>
+            <p className="mt-1.5 text-[12px] leading-5 text-sub">
+              {nextGap
+                ? nextGap.value
+                : "The required setup inputs are ready. Create the project and continue into Launch setup."}
+            </p>
+          </div>
+          <ProjectOnboardingPriorityPill priority={nextGap ? nextGap.priority : "complete"}>
+            {nextGap ? "Next" : "Ready"}
+          </ProjectOnboardingPriorityPill>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onSelectStep(nextGap?.step ?? "review")}
+          className="relative mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[14px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.13em] text-black transition hover:brightness-105"
+        >
+          {nextGap ? nextGap.action : "Review workspace"}
+          <ArrowRight size={13} />
+        </button>
+
+        <div className="relative mt-3 grid grid-cols-2 gap-2">
+          <ProjectDockMetric label="Step" value={currentStep} quiet />
+          <ProjectDockMetric label="Progress" value={`${progressPercent}%`} quiet />
+          <ProjectDockMetric label="Required" value={`${requiredReady}/${requiredItems.length}`} />
+          <ProjectDockMetric label="Ready" value={`${readyCount}/${readiness.length}`} />
+        </div>
+      </section>
+
+      <ProjectPreviewSurface values={values} compact />
+
+      <section className="rounded-[20px] border border-white/[0.024] bg-[linear-gradient(180deg,rgba(12,15,22,0.96),rgba(8,10,15,0.94))] p-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sub">
+              After creation
+            </p>
+            <p className="mt-1 text-[12px] font-semibold text-text">
+              Launch setup opens next
+            </p>
+          </div>
+          <Rocket size={16} className="shrink-0 text-primary" />
+        </div>
+        <p className="mt-2 text-[12px] leading-5 text-sub">
+          The submit action keeps the existing backend behavior: create or request the project, then route the workspace into its next setup surface.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <ProjectDockMetric label="Channels" value={`${connectedCount}/6`} quiet />
+          <ProjectDockMetric label="Unlocks" value={`${unlockedCount}/${capabilitySignals.length}`} quiet />
+        </div>
+      </section>
+
+      <section className="rounded-[20px] border border-white/[0.024] bg-black/20 p-3.5">
+        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sub">
+          Setup gates
+        </p>
+        <div className="mt-3 grid gap-2">
+          {readiness.map((item, index) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => onSelectStep(item.step)}
+              className={cn(
+                "grid grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-2 rounded-[13px] border px-3 py-2 text-left transition hover:bg-white/[0.026]",
+                item.complete
+                  ? "border-emerald-300/[0.12] bg-emerald-300/[0.035]"
+                  : item.priority === "required"
+                    ? "border-primary/[0.13] bg-primary/[0.04]"
+                    : "border-white/[0.024] bg-white/[0.014]"
+              )}
+            >
+              <span
+                className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-full border text-[9px] font-black",
+                  item.complete
+                    ? "border-emerald-300/[0.22] bg-emerald-300/[0.07] text-emerald-200"
+                    : "border-white/[0.05] bg-black/[0.18] text-sub"
+                )}
+              >
+                {item.complete ? <CheckCircle2 size={13} /> : index + 1}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[12px] font-semibold text-text">{item.label}</p>
+                <p className="mt-0.5 truncate text-[10px] text-sub">{item.value}</p>
+              </div>
+              <ArrowRight size={12} className="shrink-0 text-primary" />
+            </button>
+          ))}
+        </div>
+      </section>
+    </aside>
   );
 }
 
