@@ -131,6 +131,207 @@ type CampaignStudioWatchItem = {
   tone?: "default" | "warning" | "success";
 };
 
+type CampaignLaunchPreviewModel = ReturnType<typeof getCampaignLaunchPreview>;
+
+function CampaignLaunchCommandSurface({
+  preview,
+  projectName,
+  templateLabel,
+  questCount,
+  rewardCount,
+  missingContextCount,
+  editedDraftCount,
+  savedTemplateName,
+  savedTemplateDescription,
+  onSavedTemplateNameChange,
+  onSavedTemplateDescriptionChange,
+  onSaveVariant,
+  savingTemplate,
+  canSaveVariant,
+  savedTemplateMessage,
+  generationMessage,
+}: {
+  preview: CampaignLaunchPreviewModel;
+  projectName: string;
+  templateLabel: string;
+  questCount: number;
+  rewardCount: number;
+  missingContextCount: number;
+  editedDraftCount: number;
+  savedTemplateName: string;
+  savedTemplateDescription: string;
+  onSavedTemplateNameChange: (value: string) => void;
+  onSavedTemplateDescriptionChange: (value: string) => void;
+  onSaveVariant: () => void;
+  savingTemplate: boolean;
+  canSaveVariant: boolean;
+  savedTemplateMessage: string | null;
+  generationMessage: string | null;
+}) {
+  const readyCount = preview.readiness.filter((item) => item.complete).length;
+  const readinessPercent = Math.round(
+    (readyCount / Math.max(preview.readiness.length, 1)) * 100
+  );
+  const launchTone =
+    missingContextCount > 0
+      ? "Context watch"
+      : questCount > 0 && rewardCount > 0
+        ? "Ready to generate"
+        : "Drafting";
+
+  return (
+    <section className="relative overflow-hidden rounded-[20px] border border-white/[0.026] bg-[radial-gradient(circle_at_3%_0%,rgba(199,255,0,0.07),transparent_30%),radial-gradient(circle_at_92%_10%,rgba(88,146,255,0.045),transparent_25%),linear-gradient(180deg,rgba(13,16,23,0.985),rgba(8,10,15,0.965))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]" />
+      <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 rounded-[18px] border border-white/[0.026] bg-black/20 p-3.5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 max-w-3xl">
+              <p className="inline-flex items-center gap-2 rounded-full border border-primary/14 bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                <Sparkles size={12} />
+                Launch command
+              </p>
+              <h3 className="mt-3 text-[1.08rem] font-semibold tracking-[-0.03em] text-text md:text-[1.24rem]">
+                Generate the campaign from a locked mission lane
+              </h3>
+              <p className="mt-2 max-w-3xl text-[12px] leading-5 text-sub">
+                Finalize timing, media and campaign signals here. The quest and reward lanes stay attached when the campaign is generated.
+              </p>
+            </div>
+            <span
+              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.14em] ${
+                missingContextCount > 0
+                  ? "bg-amber-500/[0.09] text-amber-300"
+                  : "bg-primary/[0.08] text-primary"
+              }`}
+            >
+              {missingContextCount > 0 ? <FileWarning size={13} /> : <BadgeCheck size={13} />}
+              {launchTone}
+            </span>
+          </div>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <LaunchCommandMetric label="Project" value={projectName} />
+            <LaunchCommandMetric label="Playbook" value={templateLabel} />
+            <LaunchCommandMetric label="Quests" value={questCount} />
+            <LaunchCommandMetric label="Rewards" value={rewardCount} />
+          </div>
+
+          <div className="mt-3 rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                  Launch pressure
+                </p>
+                <p className="mt-1.5 text-[12px] font-semibold text-text">
+                  {readyCount}/{preview.readiness.length} readiness checks clear
+                </p>
+              </div>
+              <span className="rounded-full border border-white/[0.026] bg-black/25 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.13em] text-primary">
+                {readinessPercent}%
+              </span>
+            </div>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/35">
+              <div
+                className="h-full rounded-full bg-primary shadow-[0_0_18px_rgba(199,255,0,0.3)]"
+                style={{ width: `${readinessPercent}%` }}
+              />
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <LaunchCommandSignal label="First moment" value={preview.firstMemberMoment} />
+              <LaunchCommandSignal label="Missing" value={missingContextCount} />
+              <LaunchCommandSignal label="Edited drafts" value={editedDraftCount} />
+            </div>
+          </div>
+
+          {generationMessage ? (
+            <div className="mt-3 flex items-center gap-2.5 rounded-[16px] border border-primary/20 bg-primary/[0.055] px-3.5 py-3 text-[12px] font-semibold text-primary">
+              <CheckCircle2 size={14} className="shrink-0" />
+              <span>{generationMessage}</span>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-3.5">
+          <div className="flex items-center gap-3">
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+              Save variant
+            </p>
+            <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.13),transparent)]" />
+          </div>
+          <div className="mt-3 space-y-2.5">
+            <label className="block">
+              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                Template name
+              </span>
+              <input
+                value={savedTemplateName}
+                onChange={(event) => onSavedTemplateNameChange(event.target.value)}
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm outline-none transition focus:border-primary/25"
+                placeholder="Chainwars launch variant"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                Short note
+              </span>
+              <input
+                value={savedTemplateDescription}
+                onChange={(event) => onSavedTemplateDescriptionChange(event.target.value)}
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm outline-none transition focus:border-primary/25"
+                placeholder="For launch pushes with quote-post proof"
+              />
+            </label>
+          </div>
+          <button
+            type="button"
+            onClick={onSaveVariant}
+            disabled={!canSaveVariant || savingTemplate}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[14px] border border-white/[0.04] bg-white/[0.035] px-3.5 py-3 text-[10px] font-black uppercase tracking-[0.13em] text-text transition hover:-translate-y-0.5 hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-55"
+          >
+            {savingTemplate ? "Saving variant..." : "Save project variant"}
+            <ArrowRight size={13} />
+          </button>
+          {savedTemplateMessage ? (
+            <p className="mt-2.5 rounded-[14px] border border-primary/14 bg-primary/[0.045] px-3 py-2 text-[11px] leading-5 text-primary">
+              {savedTemplateMessage}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LaunchCommandMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="min-w-0 rounded-[14px] border border-white/[0.022] bg-black/25 px-3 py-2.5">
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 truncate text-[12px] font-semibold text-text">{value}</p>
+    </div>
+  );
+}
+
+function LaunchCommandSignal({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="min-w-0 rounded-[14px] border border-white/[0.022] bg-black/20 px-3 py-2.5">
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 truncate text-[11px] font-semibold text-text">{value}</p>
+    </div>
+  );
+}
+
 function CampaignStudioSideDock({
   currentStepLabel,
   progressPercent,
@@ -1524,50 +1725,25 @@ function NewCampaignPageContent() {
         />
 
         <div className="grid gap-4 xl:items-start xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-5">
-            <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.018] p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Save this variant
-              </p>
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-text">Template name</span>
-                  <input
-                    value={savedTemplateName}
-                    onChange={(event) => setSavedTemplateName(event.target.value)}
-                    className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-                    placeholder="Chainwars launch variant"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-text">Short note</span>
-                  <input
-                    value={savedTemplateDescription}
-                    onChange={(event) => setSavedTemplateDescription(event.target.value)}
-                    className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-                    placeholder="For launch pushes with quote-post proof"
-                  />
-                </label>
-              </div>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={saveCurrentTemplateVariant}
-                  disabled={!selectedProject || !selectedTemplate || savingTemplate}
-                  className="rounded-2xl border border-white/10 bg-white/[0.018] px-4 py-3 font-bold text-text transition hover:-translate-y-0.5 hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {savingTemplate ? "Saving variant..." : "Save as project variant"}
-                </button>
-                {savedTemplateMessage ? <p className="text-sm text-sub">{savedTemplateMessage}</p> : null}
-              </div>
-            </div>
-
-            {generationMessage ? (
-              <div className="rounded-[16px] border border-primary/25 bg-primary/[0.055] px-4 py-4 text-sm text-primary">
-                {generationMessage}
-              </div>
-            ) : null}
-
+          <div className="space-y-4">
+            <CampaignLaunchCommandSurface
+              preview={launchPreview}
+              projectName={selectedProject?.name || "No project"}
+              templateLabel={selectedTemplate?.label || "No playbook"}
+              questCount={includedQuestDrafts.length}
+              rewardCount={includedRewardDrafts.length}
+              missingContextCount={currentMissingContextFields.length}
+              editedDraftCount={editedQuestCount + editedRewardCount}
+              savedTemplateName={savedTemplateName}
+              savedTemplateDescription={savedTemplateDescription}
+              onSavedTemplateNameChange={setSavedTemplateName}
+              onSavedTemplateDescriptionChange={setSavedTemplateDescription}
+              onSaveVariant={saveCurrentTemplateVariant}
+              savingTemplate={savingTemplate}
+              canSaveVariant={Boolean(selectedProject && selectedTemplate)}
+              savedTemplateMessage={savedTemplateMessage}
+              generationMessage={generationMessage}
+            />
             <CampaignForm
               projects={projects}
               defaultProjectId={selectedProject?.id}
