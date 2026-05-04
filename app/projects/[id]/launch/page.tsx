@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
+import { ArrowUpRight, CheckCircle2, Gauge, Rocket, ShieldAlert } from "lucide-react";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
@@ -15,12 +16,7 @@ import {
 import { LoadingState, NotFoundState } from "@/components/layout/state/StatePrimitives";
 import ProjectLaunchChecklist from "@/components/projects/launch/ProjectLaunchChecklist";
 import ProjectLaunchRail from "@/components/projects/launch/ProjectLaunchRail";
-import ProjectLaunchScorecard from "@/components/projects/launch/ProjectLaunchScorecard";
 import ProjectNextActions from "@/components/projects/launch/ProjectNextActions";
-import {
-  ProjectOnboardingHero,
-  ProjectOnboardingPriorityPill,
-} from "@/components/projects/onboarding/ProjectOnboardingPrimitives";
 import ProjectTemplateLibrary from "@/components/projects/templates/ProjectTemplateLibrary";
 import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
@@ -464,31 +460,13 @@ function ProjectLaunchContent() {
           </OpsPanel>
         ) : null}
 
-        <ProjectOnboardingHero
-          title={`Launch ${project.name} with one clear setup path.`}
-          description="Use this cockpit to finish the required setup, choose the right creation studio, and see what still needs attention before members arrive."
-          modeLabel={view === "setup" ? "Setup checklist" : "Launch blockers"}
-          outcomeLabel={snapshot.onboarding.nextAction?.title ?? "Review launch blockers"}
-        >
-          <div className="space-y-3">
-            <SegmentToggle value={view} options={[...VIEW_OPTIONS]} onChange={setView} />
-            <div className="flex flex-wrap gap-2">
-              <ProjectOnboardingPriorityPill priority="required">
-                {snapshot.onboarding.completedSteps}/{snapshot.onboarding.totalSteps} ready
-              </ProjectOnboardingPriorityPill>
-              <ProjectOnboardingPriorityPill
-                priority={snapshot.readiness.ops.openIncidents > 0 ? "recommended" : "complete"}
-              >
-                {snapshot.readiness.ops.openIncidents > 0
-                  ? `${snapshot.readiness.ops.openIncidents} incident${snapshot.readiness.ops.openIncidents === 1 ? "" : "s"}`
-                  : "No incidents"}
-              </ProjectOnboardingPriorityPill>
-              <OpsStatusPill tone="default">
-                {snapshot.readiness.tier.replaceAll("_", " ")}
-              </OpsStatusPill>
-            </div>
-          </div>
-        </ProjectOnboardingHero>
+        <ProjectLaunchCommandDeck
+          projectName={project.name}
+          snapshot={snapshot}
+          view={view}
+          onViewChange={setView}
+          primaryAction={nextActions[0] ?? null}
+        />
 
         <div className="grid gap-3 xl:grid-cols-[260px,minmax(0,1fr)] xl:items-start">
           <ProjectLaunchRail
@@ -499,17 +477,6 @@ function ProjectLaunchContent() {
           />
 
           <div className="space-y-3">
-            <ProjectLaunchScorecard
-              score={snapshot.readiness.score}
-              tier={snapshot.readiness.tier}
-              completionRatio={snapshot.onboarding.completionRatio}
-              completedSteps={snapshot.onboarding.completedSteps}
-              totalSteps={snapshot.onboarding.totalSteps}
-              openIncidents={snapshot.readiness.ops.openIncidents}
-              criticalIncidents={snapshot.readiness.ops.criticalIncidents}
-              activeOverrides={snapshot.readiness.ops.activeOverrides}
-            />
-
             <div className="grid gap-3 2xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] 2xl:items-start">
               <OpsPanel
                 eyebrow={view === "setup" ? "Setup checklist" : "Launch checklist"}
@@ -646,6 +613,161 @@ function ProjectLaunchContent() {
           </div>
         </div>
       </ProjectWorkspaceFrame>
+  );
+}
+
+function labelForTier(tier: LaunchTier) {
+  if (tier === "live_ready") return "Live ready";
+  if (tier === "launchable") return "Launchable";
+  if (tier === "warming_up") return "Warming up";
+  return "Blocked";
+}
+
+function toneForTier(tier: LaunchTier) {
+  if (tier === "live_ready") return "success" as const;
+  if (tier === "launchable") return "warning" as const;
+  if (tier === "warming_up") return "warning" as const;
+  return "danger" as const;
+}
+
+function ProjectLaunchCommandDeck({
+  projectName,
+  snapshot,
+  view,
+  onViewChange,
+  primaryAction,
+}: {
+  projectName: string;
+  snapshot: LaunchSnapshot;
+  view: LaunchWorkspaceView;
+  onViewChange: (next: LaunchWorkspaceView) => void;
+  primaryAction: {
+    title: string;
+    summary: string;
+    href: string;
+    tone: "primary" | "default";
+  } | null;
+}) {
+  const completionPercent = Math.round(snapshot.onboarding.completionRatio * 100);
+  const incidentCount = snapshot.readiness.ops.openIncidents;
+  const hardBlockerCount = snapshot.readiness.hardBlockers.length;
+  const nextTitle =
+    primaryAction?.title ??
+    snapshot.onboarding.nextAction?.title ??
+    "Review launch posture";
+
+  return (
+    <section className="relative overflow-hidden rounded-[22px] border border-white/[0.024] bg-[radial-gradient(circle_at_8%_0%,rgba(199,255,0,0.09),transparent_26%),radial-gradient(circle_at_88%_10%,rgba(0,255,163,0.06),transparent_24%),linear-gradient(180deg,rgba(11,14,20,0.985),rgba(7,9,14,0.965))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.09),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.016)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[length:64px_64px] opacity-[0.32]" />
+
+      <div className="relative grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.38fr)] xl:items-start">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <OpsStatusPill tone={toneForTier(snapshot.readiness.tier)}>
+              {labelForTier(snapshot.readiness.tier)}
+            </OpsStatusPill>
+            <OpsStatusPill tone={incidentCount > 0 ? "warning" : "success"}>
+              {incidentCount > 0 ? `${incidentCount} incident${incidentCount === 1 ? "" : "s"}` : "No incidents"}
+            </OpsStatusPill>
+          </div>
+          <h1 className="mt-3 text-[1.24rem] font-semibold tracking-[-0.035em] text-text md:text-[1.55rem]">
+            Launch {projectName} from one command surface
+          </h1>
+          <p className="mt-2 max-w-4xl text-[12px] leading-5 text-sub">
+            Finish required setup first, then choose the exact studio that closes the next launch gap.
+          </p>
+
+          <div className="mt-4 grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
+            <LaunchCommandMetric
+              icon={<Gauge size={15} />}
+              label="Launch score"
+              value={`${snapshot.readiness.score}/100`}
+              tone={snapshot.readiness.score >= 85 ? "success" : snapshot.readiness.score >= 65 ? "warning" : "default"}
+            />
+            <LaunchCommandMetric
+              icon={<CheckCircle2 size={15} />}
+              label="Setup"
+              value={`${completionPercent}%`}
+              tone={completionPercent >= 75 ? "success" : "warning"}
+            />
+            <LaunchCommandMetric
+              icon={<ShieldAlert size={15} />}
+              label="Blockers"
+              value={`${hardBlockerCount} hard`}
+              tone={hardBlockerCount > 0 ? "danger" : "success"}
+            />
+            <LaunchCommandMetric
+              icon={<Rocket size={15} />}
+              label="Next move"
+              value={nextTitle}
+              tone="default"
+            />
+          </div>
+        </div>
+
+        <div className="rounded-[18px] border border-white/[0.026] bg-black/25 p-3.5">
+          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-sub">
+            Working mode
+          </p>
+          <div className="mt-2">
+            <SegmentToggle value={view} options={[...VIEW_OPTIONS]} onChange={onViewChange} />
+          </div>
+
+          <div className="mt-3 rounded-[15px] border border-white/[0.024] bg-white/[0.014] p-3">
+            <p className="text-[12px] font-semibold text-text">{nextTitle}</p>
+            <p className="mt-1.5 line-clamp-2 text-[11px] leading-5 text-sub">
+              {primaryAction?.summary ??
+                snapshot.onboarding.nextAction?.summary ??
+                "Switch between setup and launch blockers to decide the next move."}
+            </p>
+            {primaryAction ? (
+              <Link
+                href={primaryAction.href}
+                className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-3.5 py-2 text-[12px] font-black text-black transition hover:brightness-105"
+              >
+                Open next move
+                <ArrowUpRight size={13} />
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LaunchCommandMetric({
+  icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  tone: "default" | "success" | "warning" | "danger";
+}) {
+  return (
+    <div className="rounded-[15px] border border-white/[0.024] bg-white/[0.014] px-3 py-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+        <span
+          className={
+            tone === "success"
+              ? "text-emerald-200"
+              : tone === "warning"
+                ? "text-amber-200"
+                : tone === "danger"
+                  ? "text-rose-200"
+                  : "text-primary"
+          }
+        >
+          {icon}
+        </span>
+      </div>
+      <p className="mt-1.5 truncate text-[13px] font-semibold text-text">{value}</p>
+    </div>
   );
 }
 
