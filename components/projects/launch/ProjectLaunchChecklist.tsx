@@ -4,6 +4,10 @@ import Link from "next/link";
 import { AlertTriangle, ArrowRight, ShieldAlert } from "lucide-react";
 import { InlineEmptyNotice } from "@/components/layout/state/StatePrimitives";
 import { OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import {
+  ProjectOnboardingPriorityPill,
+  type ProjectOnboardingPriority,
+} from "@/components/projects/onboarding/ProjectOnboardingPrimitives";
 import { cn } from "@/lib/utils/cn";
 
 type StepStatus = "complete" | "attention" | "blocked";
@@ -39,6 +43,18 @@ type ReadinessGroup = {
 
 type LaunchWorkspaceView = "setup" | "launch";
 
+function priorityForStepStatus(status: StepStatus): ProjectOnboardingPriority {
+  if (status === "complete") return "complete";
+  if (status === "attention") return "recommended";
+  return "required";
+}
+
+function labelForStepStatus(status: StepStatus) {
+  if (status === "complete") return "Ready";
+  if (status === "attention") return "Recommended";
+  return "Needed";
+}
+
 export default function ProjectLaunchChecklist({
   view,
   steps,
@@ -64,24 +80,16 @@ export default function ProjectLaunchChecklist({
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-2xl">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                  Active setup step
+                  Next setup step
                 </p>
                 <h3 className="mt-2 text-[1.05rem] font-bold text-text">
                   {selectedStep.title}
                 </h3>
                 <p className="mt-2 text-[12px] leading-5 text-sub">{selectedStep.summary}</p>
               </div>
-              <OpsStatusPill
-                tone={
-                  selectedStep.status === "complete"
-                    ? "success"
-                    : selectedStep.status === "attention"
-                      ? "warning"
-                      : "danger"
-                }
-              >
+              <ProjectOnboardingPriorityPill priority={priorityForStepStatus(selectedStep.status)}>
                 {selectedStep.metric}
-              </OpsStatusPill>
+              </ProjectOnboardingPriorityPill>
             </div>
 
             {selectedStep.blockers.length > 0 ? (
@@ -105,7 +113,7 @@ export default function ProjectLaunchChecklist({
               href={selectedStep.href}
               className="mt-4 inline-flex items-center gap-2 rounded-[14px] bg-primary/[0.065] px-3.5 py-2.5 text-[13px] font-bold text-primary transition hover:bg-primary/18"
             >
-              Open step rail
+              Open this step
               <ArrowRight size={16} />
             </Link>
           </div>
@@ -127,17 +135,9 @@ export default function ProjectLaunchChecklist({
                   <p className="text-[13px] font-bold text-text">{step.title}</p>
                   <p className="mt-1.5 text-[12px] leading-5 text-sub">{step.summary}</p>
                 </div>
-                <OpsStatusPill
-                  tone={
-                    step.status === "complete"
-                      ? "success"
-                      : step.status === "attention"
-                        ? "warning"
-                        : "danger"
-                  }
-                >
-                  {step.status}
-                </OpsStatusPill>
+                <ProjectOnboardingPriorityPill priority={priorityForStepStatus(step.status)}>
+                  {labelForStepStatus(step.status)}
+                </ProjectOnboardingPriorityPill>
               </div>
             </div>
           ))}

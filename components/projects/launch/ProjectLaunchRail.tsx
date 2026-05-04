@@ -49,13 +49,13 @@ export default function ProjectLaunchRail({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
-              Launch rail
+              Setup path
             </p>
             <h2 className="mt-1.5 text-[0.96rem] font-semibold text-text">
-              Setup spine
+              From setup to live
             </h2>
             <p className="mt-2 text-[12px] leading-5 text-sub">
-              Move through the project setup in a calm, fixed order instead of hunting through routes.
+              Follow the project steps in order, then jump into the exact workspace that closes the current gap.
             </p>
           </div>
           <div className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-white/[0.016] text-sub">

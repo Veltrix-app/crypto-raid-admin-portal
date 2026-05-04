@@ -11,6 +11,10 @@ import {
   BuilderStepHeader,
   BuilderStepRail,
 } from "@/components/layout/builder/BuilderPrimitives";
+import {
+  ProjectOnboardingPriorityPill,
+  type ProjectOnboardingPriority,
+} from "@/components/projects/onboarding/ProjectOnboardingPrimitives";
 import { AdminProject } from "@/types/entities/project";
 
 type Props = {
@@ -65,33 +69,33 @@ const steps: Array<{
 }> = [
   {
     id: "identity",
-    label: "Identity",
-    description: "Name the workspace and lock in the core metadata.",
+    label: "Basics",
+    description: "Add the name, slug and chain so the workspace can exist.",
   },
   {
     id: "brand",
-    label: "Brand",
-    description: "Set the tone and public-facing assets.",
+    label: "Look and feel",
+    description: "Set the visual identity users will see first.",
   },
   {
     id: "links",
-    label: "Links",
-    description: "Connect the channels templates can use automatically.",
+    label: "Community links",
+    description: "Connect the places members should visit, join or verify.",
   },
   {
     id: "context",
-    label: "Campaign Context",
-    description: "Add launch, contract, and wallet context for smarter automation.",
+    label: "Launch context",
+    description: "Add token, wallet or launch links when they are ready.",
   },
   {
     id: "public-profile",
-    label: "Public Profile",
-    description: "Refine the story, metrics, and visibility settings users will see.",
+    label: "Public story",
+    description: "Write the project story that members and reviewers can trust.",
   },
   {
     id: "review",
     label: "Review",
-    description: "Check readiness before saving the workspace.",
+    description: "Check what is ready now and what can wait until later.",
   },
 ];
 
@@ -159,34 +163,44 @@ export default function ProjectForm({
     ]
   );
 
-  const brandingReadiness = [
+  const brandingReadiness: Array<{
+    label: string;
+    value: string;
+    complete: boolean;
+    priority: ProjectOnboardingPriority;
+  }> = [
     {
-      label: "Identity",
-      value: values.logo && values.name ? "Ready" : "Missing logo or project name",
+      label: "Project basics",
+      value: values.logo && values.name ? "Name and logo are ready" : "Add a project name and logo",
       complete: Boolean(values.logo && values.name),
+      priority: "required",
     },
     {
       label: "Public copy",
-      value: values.description ? "Short profile added" : "Add a short public description",
+      value: values.description ? "Short description is ready" : "Add a short public description",
       complete: Boolean(values.description),
+      priority: "required",
     },
     {
-      label: "Distribution links",
-      value: connectedLinks > 0 ? `${connectedLinks} channels connected` : "No channels linked yet",
+      label: "Community links",
+      value: connectedLinks > 0 ? `${connectedLinks} channels connected` : "Connect at least one channel",
       complete: connectedLinks > 0,
+      priority: "required",
     },
     {
-      label: "Campaign context",
+      label: "Launch context",
       value:
         values.launchPostUrl || values.docsUrl || values.waitlistUrl
-          ? "Template autofill context is expanding"
-          : "Add docs, waitlist or launch links for richer templates",
+          ? "Extra launch context is ready"
+          : "Add docs, waitlist or launch links when available",
       complete: Boolean(values.launchPostUrl || values.docsUrl || values.waitlistUrl),
+      priority: "recommended",
     },
     {
       label: "Visibility",
-      value: values.isPublic ? "Workspace can appear publicly" : "Workspace remains private",
+      value: values.isPublic ? "Project can appear publicly" : "Project remains private",
       complete: true,
+      priority: "later",
     },
   ];
 
@@ -307,19 +321,15 @@ export default function ProjectForm({
     >
       <ProjectPreviewSurface values={values} />
 
-      <BuilderSidebarCard title="Readiness Guide">
+      <BuilderSidebarCard title="Launch Readiness">
         <div className="space-y-2">
           {brandingReadiness.map((item) => (
             <div key={item.label} className="rounded-[14px] bg-white/[0.018] p-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-bold text-text">{item.label}</p>
-                <span
-                  className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] ${
-                    item.complete ? "bg-primary/[0.075] text-primary" : "bg-amber-500/[0.075] text-amber-300"
-                  }`}
-                >
-                  {item.complete ? "Ready" : "Missing"}
-                </span>
+                <ProjectOnboardingPriorityPill
+                  priority={item.complete ? "complete" : item.priority}
+                />
               </div>
               <p className="mt-2 text-[12px] leading-5 text-sub">{item.value}</p>
             </div>
@@ -339,7 +349,7 @@ export default function ProjectForm({
         </div>
       </BuilderSidebarCard>
 
-      <BuilderSidebarCard title="Capabilities Unlocked">
+      <BuilderSidebarCard title="Unlocks Later">
         <div className="space-y-2.5">
           {capabilitySignals.map((item) => (
             <div
@@ -375,15 +385,15 @@ export default function ProjectForm({
       }}
     >
       <BuilderHero
-        eyebrow="Project Setup Wizard"
-        title="Build the workspace through a guided walkthrough"
-        description="Move through identity, brand, links, and campaign context step by step. The public preview and readiness stay visible while you work."
+        eyebrow="Project setup"
+        title="Create the workspace one clear decision at a time"
+        description="Start with the fields needed for launch, then add polish and advanced context only when the project has it ready."
         progressPercent={progressPercent}
         metrics={
           <>
-            <BuilderMetricCard label="Readiness" value={`${readinessCount}/${brandingReadiness.length}`} sublabel="sections ready" />
-            <BuilderMetricCard label="Connected Links" value={String(connectedLinks)} sublabel="channels" />
-            <BuilderMetricCard label="Template Context" value={String(templateContextCount)} sublabel="advanced fields" />
+            <BuilderMetricCard label="Launch basics" value={`${readinessCount}/${brandingReadiness.length}`} sublabel="ready inputs" />
+            <BuilderMetricCard label="Community links" value={String(connectedLinks)} sublabel="connected" />
+            <BuilderMetricCard label="Can wait" value={String(templateContextCount)} sublabel="advanced inputs" />
           </>
         }
       />
@@ -392,7 +402,7 @@ export default function ProjectForm({
         <div className="space-y-4">
           <BuilderHorizontalStepRail
             title="Workspace setup"
-            description="Move through identity, brand, links and review from one compact rail."
+            description="Move from required basics into recommended polish without losing the next step."
             steps={stepItems}
             currentStep={currentStep}
             onSelect={setCurrentStep}
@@ -428,8 +438,8 @@ function renderIdentity(
   return (
     <div className="space-y-6">
       <SectionIntro
-        title="Anchor the workspace basics"
-        body="These fields shape project pages, template names, and how the workspace appears across the portal and app."
+        title="Start with the fields needed to create the workspace"
+        body="These basics make the project easy to recognize across the portal, public pages and launch tools."
       />
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="Project Name">
@@ -518,8 +528,8 @@ function renderBrand(
   return (
     <div className="space-y-6">
       <SectionIntro
-        title="Define the mood and public surface"
-        body="Set the hero assets and emotional tone once, then let project pages and templates inherit that identity."
+        title="Make the project feel credible before users arrive"
+        body="Add the logo, banner and brand cues that help the public page and launch assets feel intentional."
       />
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="Logo / Emoji">
@@ -582,8 +592,8 @@ function renderLinks(
   return (
     <div className="space-y-6">
       <SectionIntro
-        title="Connect the channels templates depend on"
-        body="The more destination links you connect here, the less your team needs to type when generating campaigns and quests."
+        title="Connect the places members should go"
+        body="Add the channels and destinations that campaigns, quests and raids can reuse later."
       />
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="Website">
@@ -654,8 +664,8 @@ function renderContext(
   return (
     <div className="space-y-6">
       <SectionIntro
-        title="Feed the automation layer"
-        body="Launch, contract, and wallet context unlock better holder flows, creator loops, launch templates, and future automation."
+        title="Add advanced context only when it is ready"
+        body="Token, NFT, wallet and launch links unlock better automation later, but they should not block the first workspace setup."
       />
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="Launch Post URL">
@@ -708,8 +718,8 @@ function renderPublicProfile(
   return (
     <div className="space-y-6">
       <SectionIntro
-        title="Shape the story users will actually read"
-        body="This is the copy and context your users feel first in the app, public project pages, and template previews."
+        title="Write the story users and reviewers will read"
+        body="Keep the short description clear first, then use the longer story for context, positioning and credibility."
       />
 
       <Field label="Description">
@@ -780,8 +790,8 @@ function renderReview(
   return (
     <div className="space-y-6">
       <SectionIntro
-        title="Review the workspace before you save it"
-        body="This final pass is meant to feel like a preflight: what is ready, what is still thin, and what will strengthen templates instantly."
+        title="Review what is ready and what can wait"
+        body="The project can start once the required basics are clear. Recommended and advanced inputs can be tightened later."
       />
 
       <div className="grid gap-4 md:grid-cols-2">

@@ -17,6 +17,10 @@ import ProjectLaunchChecklist from "@/components/projects/launch/ProjectLaunchCh
 import ProjectLaunchRail from "@/components/projects/launch/ProjectLaunchRail";
 import ProjectLaunchScorecard from "@/components/projects/launch/ProjectLaunchScorecard";
 import ProjectNextActions from "@/components/projects/launch/ProjectNextActions";
+import {
+  ProjectOnboardingHero,
+  ProjectOnboardingPriorityPill,
+} from "@/components/projects/onboarding/ProjectOnboardingPrimitives";
 import ProjectTemplateLibrary from "@/components/projects/templates/ProjectTemplateLibrary";
 import OpsIncidentPanel from "@/components/platform/OpsIncidentPanel";
 import OpsOverridePanel from "@/components/platform/OpsOverridePanel";
@@ -450,58 +454,41 @@ function ProjectLaunchContent() {
           <OpsPanel
             eyebrow="Account handoff"
             title="The first project is now inside Launch"
-            description="This project was created from the new account setup rail, and Veltrix has handed the owner into the launch workspace so the next setup moves stay on one spine."
+            description="The project is now in the guided launch workspace. Finish the required steps first, then add recommended polish before going live."
             tone="accent"
           >
             <div className="flex flex-wrap gap-3">
               <OpsStatusPill tone="success">Launch workspace opened</OpsStatusPill>
-              <OpsStatusPill tone="warning">First-run handoff complete</OpsStatusPill>
+              <OpsStatusPill tone="warning">Next steps visible</OpsStatusPill>
             </div>
           </OpsPanel>
         ) : null}
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
-          <OpsPanel
-            eyebrow="Project launch workspace"
-            title={`Bring ${project.name} from setup into launch posture`}
-            description="This workspace should keep onboarding, readiness, first content and launch pressure on one calm spine instead of scattering setup across the portal."
-          >
-            <div className="grid gap-2.5 md:grid-cols-3">
-              <OpsSnapshotRow
-                label="Workspace view"
-                value={view === "setup" ? "Setup posture" : "Launch posture"}
-              />
-              <OpsSnapshotRow
-                label="Next action"
-                value={snapshot.onboarding.nextAction?.title ?? "Read launch blockers"}
-              />
-              <OpsSnapshotRow
-                label="Launch tier"
-                value={snapshot.readiness.tier.replaceAll("_", " ")}
-              />
+        <ProjectOnboardingHero
+          title={`Launch ${project.name} with one clear setup path.`}
+          description="Use this cockpit to finish the required setup, choose the right creation studio, and see what still needs attention before members arrive."
+          modeLabel={view === "setup" ? "Setup checklist" : "Launch blockers"}
+          outcomeLabel={snapshot.onboarding.nextAction?.title ?? "Review launch blockers"}
+        >
+          <div className="space-y-3">
+            <SegmentToggle value={view} options={[...VIEW_OPTIONS]} onChange={setView} />
+            <div className="flex flex-wrap gap-2">
+              <ProjectOnboardingPriorityPill priority="required">
+                {snapshot.onboarding.completedSteps}/{snapshot.onboarding.totalSteps} ready
+              </ProjectOnboardingPriorityPill>
+              <ProjectOnboardingPriorityPill
+                priority={snapshot.readiness.ops.openIncidents > 0 ? "recommended" : "complete"}
+              >
+                {snapshot.readiness.ops.openIncidents > 0
+                  ? `${snapshot.readiness.ops.openIncidents} incident${snapshot.readiness.ops.openIncidents === 1 ? "" : "s"}`
+                  : "No incidents"}
+              </ProjectOnboardingPriorityPill>
+              <OpsStatusPill tone="default">
+                {snapshot.readiness.tier.replaceAll("_", " ")}
+              </OpsStatusPill>
             </div>
-          </OpsPanel>
-
-          <OpsPanel
-            eyebrow="Workspace focus"
-            title="Choose the launch reading mode"
-            description="Setup mode keeps the sequence visible. Launch mode keeps blockers and readiness pressure in view for go-live decisions."
-          >
-            <div className="space-y-3">
-              <SegmentToggle value={view} options={[...VIEW_OPTIONS]} onChange={setView} />
-              <div className="flex flex-wrap gap-2">
-                <OpsStatusPill tone="default">{snapshot.onboarding.completedSteps}/{snapshot.onboarding.totalSteps} setup steps complete</OpsStatusPill>
-                <OpsStatusPill
-                  tone={snapshot.readiness.ops.openIncidents > 0 ? "warning" : "success"}
-                >
-                  {snapshot.readiness.ops.openIncidents > 0
-                    ? `${snapshot.readiness.ops.openIncidents} open incident${snapshot.readiness.ops.openIncidents === 1 ? "" : "s"}`
-                    : "No open incidents"}
-                </OpsStatusPill>
-              </div>
-            </div>
-          </OpsPanel>
-        </div>
+          </div>
+        </ProjectOnboardingHero>
 
         <div className="grid gap-3 xl:grid-cols-[260px,minmax(0,1fr)] xl:items-start">
           <ProjectLaunchRail

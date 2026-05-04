@@ -27,9 +27,9 @@ export default function ProjectNextActions({
   return (
     <div className="space-y-3">
       <OpsPanel
-        eyebrow="Next best plays"
+        eyebrow="Next step"
         title="What the project team should do next"
-        description="These are the clearest moves to close readiness gaps without bouncing through the portal."
+        description="Start with the first card. Each action opens the right studio with project context already attached."
       >
         <div className="space-y-2.5">
           {actions.map((action, index) => (
@@ -60,9 +60,9 @@ export default function ProjectNextActions({
       </OpsPanel>
 
       <OpsPanel
-        eyebrow="Support rails"
+        eyebrow="More setup options"
         title="Open the right workspace fast"
-        description="Jump into the exact project rail that closes the current launch gap."
+        description="Use these when the next step needs a specific builder, community setup or reward surface."
       >
         <div className="grid gap-2.5">
           {supportLinks.map((link) => (
