@@ -686,6 +686,23 @@ function CommunityCommandDeck({
       tone: recommendationCount > 0 ? "warning" : "default",
     },
   };
+  const recommendedSurface: CommunitySurface =
+    automationPressure > 0 || dueAutomationCount > 0
+      ? "automations"
+      : !commandLayerReady
+        ? "commands"
+        : captainPriorityCount + captainUnassignedCount > 0
+          ? "captains"
+          : raidCount > 0
+            ? "raid-ops"
+            : memberCount > 0
+              ? "members"
+              : recommendationCount > 0
+                ? "outcomes"
+                : "overview";
+  const recommendedDetails = COMMUNITY_SURFACE_DETAILS[recommendedSurface];
+  const RecommendedIcon = recommendedDetails.icon;
+  const recommendedMetric = routeMetrics[recommendedSurface];
 
   return (
     <section className="relative overflow-hidden rounded-[22px] border border-white/[0.024] bg-[radial-gradient(circle_at_8%_0%,rgba(199,255,0,0.08),transparent_28%),radial-gradient(circle_at_92%_3%,rgba(77,214,255,0.05),transparent_24%),linear-gradient(180deg,rgba(12,16,23,0.985),rgba(7,9,14,0.965))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
@@ -759,6 +776,36 @@ function CommunityCommandDeck({
               onChange={onViewModeChange}
             />
           </div>
+
+          <button
+            type="button"
+            onClick={() => onSurfaceChange(recommendedSurface)}
+            className="group mt-3 w-full rounded-[16px] border border-primary/[0.13] bg-[linear-gradient(135deg,rgba(199,255,0,0.065),rgba(255,255,255,0.018)_48%,rgba(77,214,255,0.035))] p-3 text-left transition hover:border-primary/[0.24] hover:bg-primary/[0.06]"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[13px] border border-primary/[0.18] bg-primary/[0.075] text-primary">
+                <RecommendedIcon size={16} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+                  Suggested route
+                </p>
+                <p className="mt-1 truncate text-[12px] font-semibold text-text">
+                  {recommendedDetails.label}
+                </p>
+                <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-sub">
+                  {recommendedDetails.currentRead}
+                </p>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <OpsStatusPill tone={recommendedMetric.tone}>{recommendedMetric.value}</OpsStatusPill>
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-primary">
+                    Open
+                    <ArrowRight size={12} className="transition group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -767,6 +814,7 @@ function CommunityCommandDeck({
           const details = COMMUNITY_SURFACE_DETAILS[surface.value];
           const Icon = details.icon;
           const active = surface.value === surfaceMode;
+          const recommended = surface.value === recommendedSurface;
           const metric = routeMetrics[surface.value];
 
           return (
@@ -777,7 +825,9 @@ function CommunityCommandDeck({
               className={`group min-w-0 rounded-[16px] border p-3 text-left transition ${
                 active
                   ? "border-primary/[0.2] bg-primary/[0.065] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                  : "border-white/[0.022] bg-black/20 hover:border-white/[0.06] hover:bg-white/[0.024]"
+                  : recommended
+                    ? "border-primary/[0.12] bg-primary/[0.035] hover:border-primary/[0.2] hover:bg-primary/[0.052]"
+                    : "border-white/[0.022] bg-black/20 hover:border-white/[0.06] hover:bg-white/[0.024]"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -790,7 +840,9 @@ function CommunityCommandDeck({
                 >
                   <Icon size={15} />
                 </span>
-                <OpsStatusPill tone={metric.tone}>{metric.value}</OpsStatusPill>
+                <OpsStatusPill tone={metric.tone}>
+                  {recommended && !active ? "Best" : metric.value}
+                </OpsStatusPill>
               </div>
               <p className="mt-3 truncate text-[12px] font-semibold text-text">{surface.label}</p>
               <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-sub">
@@ -809,12 +861,13 @@ function CommunityCommandDeck({
         })}
       </div>
 
-      <div className="relative mt-3 grid gap-2.5 xl:grid-cols-[1.08fr_0.92fr_0.78fr]">
+      <div className="relative mt-3 grid gap-2.5 xl:grid-cols-[1.02fr_0.95fr_0.95fr_0.78fr]">
         <OpsSnapshotRow label="Current read" value={activeSurface.currentRead} />
         <OpsSnapshotRow
           label="Next move"
           value={topRecommendationTitle || "No urgent owner recommendation is active right now."}
         />
+        <OpsSnapshotRow label="Suggested route" value={recommendedDetails.currentRead} />
         <div className="rounded-[14px] border border-white/[0.022] bg-white/[0.012] px-3 py-2.5">
           <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-sub">Posture</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
