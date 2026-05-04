@@ -47,46 +47,48 @@ export default function AccountBootstrapCard() {
   }
 
   return (
-    <OpsPanel
-      eyebrow="Workspace bootstrap"
-      title="Create the first workspace account"
-      description="This portal session is authenticated, but it still needs the account layer that sits above projects. Create that once and the next move becomes first-project setup."
-      tone="accent"
-    >
-      <div className="space-y-4">
-        <label className="block text-[11px] font-bold uppercase tracking-[0.18em] text-sub">
-          Workspace name
-        </label>
-        <input
-          value={workspaceName}
-          onChange={(event) => setWorkspaceName(event.target.value)}
-          className="w-full rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
-          placeholder="Founders workspace"
-        />
-
-        {error ? (
-          <div className="rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
-            {error}
+    <div id="workspace-bootstrap">
+      <OpsPanel
+        eyebrow="Workspace bootstrap"
+        title="Name the workspace account"
+        description="Create the account layer once. The first project and launch cockpit unlock directly after this."
+        tone="accent"
+      >
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div className="min-w-0">
+            <label className="block text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
+              Workspace name
+            </label>
+            <input
+              value={workspaceName}
+              onChange={(event) => setWorkspaceName(event.target.value)}
+              className="mt-2 w-full rounded-[16px] border border-white/[0.026] bg-white/[0.014] px-4 py-3 text-sm text-text outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+              placeholder="Founders workspace"
+            />
           </div>
-        ) : null}
 
-        <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => void handleSubmit()}
             disabled={loading || !canSubmit}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-black text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <PlusCircle size={16} />
-            {loading ? "Creating workspace..." : "Create workspace"}
+            {loading ? "Creating..." : "Create workspace"}
           </button>
+        </div>
 
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.026] bg-white/[0.014] px-4 py-2.5 text-sm font-semibold text-sub">
-            <Building2 size={16} />
+        {error ? (
+          <div className="mt-3 rounded-[18px] border border-rose-400/20 bg-rose-500/[0.055] px-4 py-3 text-sm text-rose-200">
+            {error}
+          </div>
+        ) : (
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/[0.026] bg-white/[0.014] px-3.5 py-2 text-[12px] font-semibold text-sub">
+            <Building2 size={15} />
             Creates owner membership and onboarding state
           </div>
-        </div>
-      </div>
-    </OpsPanel>
+        )}
+      </OpsPanel>
+    </div>
   );
 }
