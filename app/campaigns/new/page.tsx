@@ -1116,20 +1116,26 @@ function NewCampaignPageContent() {
             </div>
           </div>
         );
-      case "quest_lane":
+      case "quest_lane": {
+        const questDrafts = templatePlan?.questDrafts ?? [];
+        const readyQuestDrafts = questDrafts.filter(
+          (quest) => quest.missingProjectFields.length === 0
+        ).length;
+
         return (
-          <div className="space-y-5">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Generated quest lane
-              </p>
-              <p className="mt-2 text-sm leading-7 text-sub">
-                Keep, skip or refine the generated quest drafts that should make up the first
-                member journey in this campaign.
-              </p>
-            </div>
-            <div className="space-y-3">
-              {templatePlan?.questDrafts.map((quest, index) => (
+          <div className="space-y-3">
+            <TemplateDraftLaneHeader
+              eyebrow="First-wave quest lane"
+              title="Shape the route members complete first"
+              description="Keep the active path tight: include the strongest drafts, edit the exact action, and leave weak steps out before launch."
+              metrics={[
+                { label: "Included", value: `${includedQuestDrafts.length}/${questDrafts.length}` },
+                { label: "Ready", value: readyQuestDrafts },
+                { label: "Edited", value: editedQuestCount },
+              ]}
+            />
+            <div className="grid gap-2.5">
+              {questDrafts.map((quest, index) => (
                 <TemplateQuestCard
                   key={quest.key}
                   item={{
@@ -1162,19 +1168,24 @@ function NewCampaignPageContent() {
             </div>
           </div>
         );
-      case "reward_outcome":
+      }
+      case "reward_outcome": {
+        const rewardDrafts = templatePlan?.rewardDrafts ?? [];
+
         return (
-          <div className="space-y-5">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Generated reward outcome
-              </p>
-              <p className="mt-2 text-sm leading-7 text-sub">
-                Tighten the payoff layer here so the campaign ends with a clear reason to care.
-              </p>
-            </div>
-            <div className="space-y-3">
-              {templatePlan?.rewardDrafts.map((reward) => (
+          <div className="space-y-3">
+            <TemplateDraftLaneHeader
+              eyebrow="Reward outcome"
+              title="Lock the payoff before generation"
+              description="Keep the reward layer obvious: include the outcome that explains why the campaign matters and tune the cost before launch."
+              metrics={[
+                { label: "Included", value: `${includedRewardDrafts.length}/${rewardDrafts.length}` },
+                { label: "Ready", value: rewardDrafts.length },
+                { label: "Edited", value: editedRewardCount },
+              ]}
+            />
+            <div className="grid gap-2.5">
+              {rewardDrafts.map((reward, index) => (
                 <TemplateRewardCard
                   key={reward.key}
                   item={{
@@ -1185,6 +1196,7 @@ function NewCampaignPageContent() {
                     },
                   }}
                   included={selectedRewardKeys.includes(reward.key)}
+                  index={index}
                   expanded={expandedRewardKeys.includes(reward.key)}
                   onToggle={() =>
                     setSelectedRewardKeys((current) =>
@@ -1206,6 +1218,7 @@ function NewCampaignPageContent() {
             </div>
           </div>
         );
+      }
       case "raid_pressure":
         return (
           <div className="space-y-5">
@@ -2067,6 +2080,51 @@ function CampaignStepNavigator({
   );
 }
 
+function TemplateDraftLaneHeader({
+  eyebrow,
+  title,
+  description,
+  metrics,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  metrics: Array<{ label: string; value: string | number }>;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[20px] border border-white/[0.026] bg-[radial-gradient(circle_at_4%_0%,rgba(199,255,0,0.07),transparent_30%),linear-gradient(180deg,rgba(13,16,23,0.98),rgba(8,10,15,0.96))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 max-w-3xl">
+          <p className="inline-flex items-center gap-2 rounded-full border border-primary/14 bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+            <Route size={12} />
+            {eyebrow}
+          </p>
+          <h3 className="mt-3 text-[1.05rem] font-semibold tracking-[-0.03em] text-text md:text-[1.18rem]">
+            {title}
+          </h3>
+          <p className="mt-2 max-w-3xl text-[12px] leading-5 text-sub">{description}</p>
+        </div>
+
+        <div className="grid w-full gap-2 sm:w-auto sm:min-w-[280px] sm:grid-cols-3">
+          {metrics.map((metric) => (
+            <div
+              key={metric.label}
+              className="rounded-[14px] border border-white/[0.026] bg-black/25 px-3 py-2.5"
+            >
+              <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">
+                {metric.label}
+              </p>
+              <p className="mt-1 text-[0.95rem] font-semibold tracking-[-0.02em] text-text">
+                {metric.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TemplateQuestCard({
   item,
   index,
@@ -2088,138 +2146,174 @@ function TemplateQuestCard({
     value: string | number
   ) => void;
 }) {
+  const hasMissingContext = item.missingProjectFields.length > 0;
+  const readinessLabel = !included
+    ? "Skipped"
+    : hasMissingContext
+      ? "Needs context"
+      : "Ready";
+  const readinessClass = !included
+    ? "bg-white/[0.055] text-sub"
+    : hasMissingContext
+      ? "bg-amber-500/[0.09] text-amber-300"
+      : "bg-primary/[0.08] text-primary";
+  const quickRead = hasMissingContext
+    ? `Needs ${item.missingProjectFields
+        .map((field) => formatProjectFieldLabel(field))
+        .join(", ")} before launch.`
+    : "Ready to generate with the current campaign setup.";
+
   return (
-    <div className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_rgba(0,0,0,0.22)]">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-bold text-text">
-            {index + 1}. {item.draft.title}
+    <div
+      className={`overflow-hidden rounded-[18px] border px-3.5 py-3.5 shadow-[0_14px_32px_rgba(0,0,0,0.16)] transition duration-200 hover:-translate-y-0.5 ${
+        included
+          ? "border-white/[0.035] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))]"
+          : "border-white/[0.02] bg-black/20 opacity-75"
+      }`}
+    >
+      <div className="grid gap-3 lg:grid-cols-[42px_minmax(0,1fr)_auto] lg:items-start">
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-full border text-[11px] font-black ${
+            included
+              ? "border-primary/24 bg-primary/[0.07] text-primary shadow-[0_0_18px_rgba(199,255,0,0.18)]"
+              : "border-white/[0.04] bg-white/[0.025] text-sub"
+          }`}
+        >
+          {index + 1}
+        </div>
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-primary/[0.075] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.13em] text-primary">
+              {item.draft.questType}
+            </span>
+            <span className={`rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.13em] ${readinessClass}`}>
+              {readinessLabel}
+            </span>
+          </div>
+          <p className="mt-2 break-words text-[0.96rem] font-semibold leading-5 text-text [overflow-wrap:anywhere]">
+            {item.draft.title}
           </p>
-          <p className="mt-2 text-sm leading-6 text-sub">
+          <p className="mt-1.5 line-clamp-2 text-[12px] leading-5 text-sub">
             {item.draft.description}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+
+        <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
           <button
             type="button"
             onClick={onToggleExpand}
-            className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text"
+            className="inline-flex items-center gap-2 rounded-full border border-white/[0.032] bg-white/[0.035] px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-text transition hover:bg-white/[0.07]"
           >
+            <ListChecks size={12} />
             {expanded ? "Collapse" : "Edit"}
           </button>
           <button
             type="button"
             onClick={onToggle}
-            className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition ${
               included
-                ? "bg-primary/[0.075] text-primary"
-                : "bg-white/5 text-sub"
+                ? "bg-primary/[0.08] text-primary hover:bg-primary/[0.13]"
+                : "bg-white/[0.055] text-sub hover:bg-white/[0.09] hover:text-text"
             }`}
           >
+            {included ? <BadgeCheck size={12} /> : <ArrowRight size={12} />}
             {included ? "Included" : "Skipped"}
           </button>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
-        <span className="rounded-full bg-primary/[0.075] px-3 py-1 text-primary">
-          {item.draft.questType}
-        </span>
-        <span className="rounded-full bg-white/5 px-3 py-1 text-text">
-          {item.draft.xp} xp
-        </span>
-        <span
-          className={`rounded-full px-3 py-1 ${
-            item.missingProjectFields.length > 0
-              ? "bg-amber-500/[0.075] text-amber-300"
-              : "bg-emerald-500/15 text-emerald-300"
-          }`}
-        >
-          {item.missingProjectFields.length > 0 ? "Needs context" : "Ready"}
-        </span>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <DraftLaneStat label="Reward" value={`${item.draft.xp} XP`} />
+        <DraftLaneStat label="Action" value={item.draft.actionLabel || "Open route"} />
+        <DraftLaneStat
+          label="Context"
+          value={hasMissingContext ? `${item.missingProjectFields.length} missing` : "Clear"}
+        />
       </div>
 
       {expanded ? (
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
-        <label className="block">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
-            Quest title
-          </span>
-          <input
-            value={item.draft.title}
-            onChange={(event) => onEdit(item.key, "title", event.target.value)}
-            className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-          />
-        </label>
+        <div className="mt-3 rounded-[16px] border border-white/[0.026] bg-black/25 p-3">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                Quest title
+              </span>
+              <input
+                value={item.draft.title}
+                onChange={(event) => onEdit(item.key, "title", event.target.value)}
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm outline-none transition focus:border-primary/25"
+              />
+            </label>
 
-        <label className="block">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
-            XP
-          </span>
-          <input
-            type="number"
-            min={0}
-            value={item.draft.xp}
-            onChange={(event) =>
-              onEdit(item.key, "xp", Number(event.target.value || 0))
-            }
-            className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-          />
-        </label>
+            <label className="block">
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                XP
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={item.draft.xp}
+                onChange={(event) =>
+                  onEdit(item.key, "xp", Number(event.target.value || 0))
+                }
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm outline-none transition focus:border-primary/25"
+              />
+            </label>
 
-        <label className="block md:col-span-2">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
-            Description
-          </span>
-          <textarea
-            value={item.draft.description}
-            onChange={(event) =>
-              onEdit(item.key, "description", event.target.value)
-            }
-            rows={3}
-            className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-          />
-        </label>
+            <label className="block md:col-span-2">
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                Description
+              </span>
+              <textarea
+                value={item.draft.description}
+                onChange={(event) =>
+                  onEdit(item.key, "description", event.target.value)
+                }
+                rows={3}
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm outline-none transition focus:border-primary/25"
+              />
+            </label>
 
-        <label className="block">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
-            Action label
-          </span>
-          <input
-            value={item.draft.actionLabel}
-            onChange={(event) =>
-              onEdit(item.key, "actionLabel", event.target.value)
-            }
-            className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-          />
-        </label>
+            <label className="block">
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                Action label
+              </span>
+              <input
+                value={item.draft.actionLabel}
+                onChange={(event) =>
+                  onEdit(item.key, "actionLabel", event.target.value)
+                }
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm outline-none transition focus:border-primary/25"
+              />
+            </label>
 
-        <label className="block">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
-            Action URL
-          </span>
-          <input
-            value={item.draft.actionUrl ?? ""}
-            onChange={(event) =>
-              onEdit(item.key, "actionUrl", event.target.value)
-            }
-            className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-            placeholder="https://..."
-          />
-        </label>
-      </div>
+            <label className="block">
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                Action URL
+              </span>
+              <input
+                value={item.draft.actionUrl ?? ""}
+                onChange={(event) =>
+                  onEdit(item.key, "actionUrl", event.target.value)
+                }
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm outline-none transition focus:border-primary/25"
+                placeholder="https://..."
+              />
+            </label>
+          </div>
+        </div>
       ) : (
-        <div className="mt-4 rounded-[20px] border border-white/[0.026] bg-black/20 px-4 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-            Quick read
-          </p>
-          <p className="mt-2 text-sm leading-6 text-text">
-            {item.missingProjectFields.length > 0
-              ? `Needs ${item.missingProjectFields
-                  .map((field) => formatProjectFieldLabel(field))
-                  .join(", ")} before it is fully ready.`
-              : "Ready to generate with the current campaign setup."}
-          </p>
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-[16px] border border-white/[0.022] bg-black/20 px-3.5 py-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            {hasMissingContext ? (
+              <FileWarning size={14} className="shrink-0 text-amber-300" />
+            ) : (
+              <CheckCircle2 size={14} className="shrink-0 text-primary" />
+            )}
+            <p className="truncate text-[12px] font-semibold text-text">{quickRead}</p>
+          </div>
+          <ArrowRight size={13} className="shrink-0 text-sub" />
         </div>
       )}
     </div>
@@ -2228,6 +2322,7 @@ function TemplateQuestCard({
 
 function TemplateRewardCard({
   item,
+  index,
   included,
   expanded,
   onToggle,
@@ -2235,6 +2330,7 @@ function TemplateRewardCard({
   onEdit,
 }: {
   item: ResolvedRewardDraft;
+  index: number;
   included: boolean;
   expanded: boolean;
   onToggle: () => void;
@@ -2246,101 +2342,146 @@ function TemplateRewardCard({
   ) => void;
 }) {
   return (
-    <div className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4 shadow-[0_16px_36px_rgba(0,0,0,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_rgba(0,0,0,0.22)]">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-bold text-text">{item.draft.title}</p>
-          <p className="mt-2 text-sm leading-6 text-sub">
+    <div
+      className={`overflow-hidden rounded-[18px] border px-3.5 py-3.5 shadow-[0_14px_32px_rgba(0,0,0,0.16)] transition duration-200 hover:-translate-y-0.5 ${
+        included
+          ? "border-white/[0.035] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))]"
+          : "border-white/[0.02] bg-black/20 opacity-75"
+      }`}
+    >
+      <div className="grid gap-3 lg:grid-cols-[42px_minmax(0,1fr)_auto] lg:items-start">
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-full border text-[11px] font-black ${
+            included
+              ? "border-primary/24 bg-primary/[0.07] text-primary shadow-[0_0_18px_rgba(199,255,0,0.18)]"
+              : "border-white/[0.04] bg-white/[0.025] text-sub"
+          }`}
+        >
+          {index + 1}
+        </div>
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-white/[0.055] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.13em] text-text">
+              {item.draft.rewardType}
+            </span>
+            <span
+              className={`rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.13em] ${
+                included ? "bg-primary/[0.08] text-primary" : "bg-white/[0.055] text-sub"
+              }`}
+            >
+              {included ? "Included" : "Skipped"}
+            </span>
+          </div>
+          <p className="mt-2 break-words text-[0.96rem] font-semibold leading-5 text-text [overflow-wrap:anywhere]">
+            {item.draft.title}
+          </p>
+          <p className="mt-1.5 line-clamp-2 text-[12px] leading-5 text-sub">
             {item.draft.description}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+
+        <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
           <button
             type="button"
             onClick={onToggleExpand}
-            className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-text"
+            className="inline-flex items-center gap-2 rounded-full border border-white/[0.032] bg-white/[0.035] px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-text transition hover:bg-white/[0.07]"
           >
+            <ListChecks size={12} />
             {expanded ? "Collapse" : "Edit"}
           </button>
           <button
             type="button"
             onClick={onToggle}
-            className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition ${
               included
-                ? "bg-primary/[0.075] text-primary"
-                : "bg-white/5 text-sub"
+                ? "bg-primary/[0.08] text-primary hover:bg-primary/[0.13]"
+                : "bg-white/[0.055] text-sub hover:bg-white/[0.09] hover:text-text"
             }`}
           >
+            {included ? <BadgeCheck size={12} /> : <ArrowRight size={12} />}
             {included ? "Included" : "Skipped"}
           </button>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em]">
-        <span className="rounded-full bg-white/5 px-3 py-1 text-text">
-          {item.draft.rewardType}
-        </span>
-        <span className="rounded-full bg-primary/[0.075] px-3 py-1 text-primary">
-          {item.draft.cost} xp
-        </span>
-        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-emerald-300">
-          Ready
-        </span>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <DraftLaneStat label="Cost" value={`${item.draft.cost} XP`} />
+        <DraftLaneStat label="Rarity" value={item.draft.rarity} />
+        <DraftLaneStat label="State" value={included ? "Ready" : "Skipped"} />
       </div>
 
       {expanded ? (
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
-        <label className="block">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
-            Reward title
-          </span>
-          <input
-            value={item.draft.title}
-            onChange={(event) => onEdit(item.key, "title", event.target.value)}
-            className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-          />
-        </label>
+        <div className="mt-3 rounded-[16px] border border-white/[0.026] bg-black/25 p-3">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                Reward title
+              </span>
+              <input
+                value={item.draft.title}
+                onChange={(event) => onEdit(item.key, "title", event.target.value)}
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm outline-none transition focus:border-primary/25"
+              />
+            </label>
 
-        <label className="block">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
-            Cost
-          </span>
-          <input
-            type="number"
-            min={0}
-            value={item.draft.cost}
-            onChange={(event) =>
-              onEdit(item.key, "cost", Number(event.target.value || 0))
-            }
-            className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-          />
-        </label>
+            <label className="block">
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                Cost
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={item.draft.cost}
+                onChange={(event) =>
+                  onEdit(item.key, "cost", Number(event.target.value || 0))
+                }
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm outline-none transition focus:border-primary/25"
+              />
+            </label>
 
-        <label className="block md:col-span-2">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-sub">
-            Description
-          </span>
-          <textarea
-            value={item.draft.description}
-            onChange={(event) =>
-              onEdit(item.key, "description", event.target.value)
-            }
-            rows={3}
-            className="w-full rounded-2xl border border-white/[0.026] bg-black/20 px-4 py-3 outline-none"
-          />
-        </label>
-      </div>
+            <label className="block md:col-span-2">
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
+                Description
+              </span>
+              <textarea
+                value={item.draft.description}
+                onChange={(event) =>
+                  onEdit(item.key, "description", event.target.value)
+                }
+                rows={3}
+                className="w-full rounded-[14px] border border-white/[0.026] bg-black/25 px-3.5 py-3 text-sm outline-none transition focus:border-primary/25"
+              />
+            </label>
+          </div>
+        </div>
       ) : (
-        <div className="mt-4 rounded-[20px] border border-white/[0.026] bg-black/20 px-4 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-sub">
-            Quick read
-          </p>
-          <p className="mt-2 text-sm leading-6 text-text">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-[16px] border border-white/[0.022] bg-black/20 px-3.5 py-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <CheckCircle2 size={14} className="shrink-0 text-primary" />
+            <p className="truncate text-[12px] font-semibold text-text">
             This reward will ship as a {item.draft.rarity} {item.draft.rewardType} reward
             worth {item.draft.cost} XP.
-          </p>
+            </p>
+          </div>
+          <ArrowRight size={13} className="shrink-0 text-sub" />
         </div>
       )}
+    </div>
+  );
+}
+
+function DraftLaneStat({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="min-w-0 rounded-[14px] border border-white/[0.022] bg-black/20 px-3 py-2.5">
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 truncate text-[12px] font-semibold text-text">{value}</p>
     </div>
   );
 }
