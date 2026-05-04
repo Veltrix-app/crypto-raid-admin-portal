@@ -16,6 +16,7 @@ import {
   type ProjectOnboardingPriority,
 } from "@/components/projects/onboarding/ProjectOnboardingPrimitives";
 import {
+  ArrowRight,
   CheckCircle2,
   CircleAlert,
   Link2,
@@ -32,6 +33,7 @@ type Props = {
   onSubmit: (values: Omit<AdminProject, "id">) => void;
   submitLabel?: string;
   layout?: "default" | "horizontal";
+  mode?: "create" | "settings";
 };
 
 type StepId =
@@ -41,6 +43,15 @@ type StepId =
   | "context"
   | "public-profile"
   | "review";
+
+type ProjectReadinessItem = {
+  label: string;
+  value: string;
+  complete: boolean;
+  priority: ProjectOnboardingPriority;
+  step: StepId;
+  action: string;
+};
 
 const defaultValues: Omit<AdminProject, "id"> = {
   name: "",
@@ -114,15 +125,19 @@ export default function ProjectForm({
   onSubmit,
   submitLabel = "Save Project",
   layout = "default",
+  mode = "create",
 }: Props) {
   const [values, setValues] = useState<Omit<AdminProject, "id">>(initialValues || defaultValues);
   const [slugTouched, setSlugTouched] = useState(Boolean(initialValues?.slug));
   const [currentStep, setCurrentStep] = useState<StepId>("identity");
+  const [autoFocusedStep, setAutoFocusedStep] = useState(false);
   const isHorizontalLayout = layout === "horizontal";
+  const isSettingsMode = mode === "settings";
 
   useEffect(() => {
     setValues(initialValues || defaultValues);
     setSlugTouched(Boolean(initialValues?.slug));
+    setAutoFocusedStep(false);
   }, [initialValues]);
 
   useEffect(() => {
@@ -174,29 +189,30 @@ export default function ProjectForm({
     ]
   );
 
-  const brandingReadiness: Array<{
-    label: string;
-    value: string;
-    complete: boolean;
-    priority: ProjectOnboardingPriority;
-  }> = [
+  const brandingReadiness: ProjectReadinessItem[] = [
     {
       label: "Project basics",
       value: values.logo && values.name ? "Name and logo are ready" : "Add a project name and logo",
       complete: Boolean(values.logo && values.name),
       priority: "required",
+      step: values.name && values.slug && values.chain ? "brand" : "identity",
+      action: values.name && values.slug && values.chain ? "Add logo or brand mark" : "Complete basics",
     },
     {
       label: "Public copy",
       value: values.description ? "Short description is ready" : "Add a short public description",
       complete: Boolean(values.description),
       priority: "required",
+      step: "public-profile",
+      action: "Write public copy",
     },
     {
       label: "Community links",
       value: connectedLinks > 0 ? `${connectedLinks} channels connected` : "Connect at least one channel",
       complete: connectedLinks > 0,
       priority: "required",
+      step: "links",
+      action: "Connect a channel",
     },
     {
       label: "Launch context",
@@ -206,12 +222,16 @@ export default function ProjectForm({
           : "Add docs, waitlist or launch links when available",
       complete: Boolean(values.launchPostUrl || values.docsUrl || values.waitlistUrl),
       priority: "recommended",
+      step: "context",
+      action: "Add launch context",
     },
     {
       label: "Visibility",
       value: values.isPublic ? "Project can appear publicly" : "Project remains private",
       complete: true,
       priority: "later",
+      step: "public-profile",
+      action: "Review visibility",
     },
   ];
 
@@ -229,6 +249,12 @@ export default function ProjectForm({
   const previousStep = steps[currentStepIndex - 1];
   const nextStep = steps[currentStepIndex + 1];
   const readinessCount = brandingReadiness.filter((item) => item.complete).length;
+  const nextReadinessGap =
+    brandingReadiness.find((item) => !item.complete && item.priority === "required") ??
+    brandingReadiness.find((item) => !item.complete) ??
+    null;
+  const nextFocusStep = nextReadinessGap?.step ?? "review";
+  const nextFocusMeta = steps.find((step) => step.id === nextFocusStep) ?? steps[steps.length - 1];
   const progressPercent = Math.round(((currentStepIndex + 1) / steps.length) * 100);
   const connectedModules = [
     { label: "Website", value: values.website },
@@ -275,6 +301,13 @@ export default function ProjectForm({
   ) => {
     setValues((current) => ({ ...current, [key]: value }));
   };
+
+  useEffect(() => {
+    if (!isHorizontalLayout || !isSettingsMode || autoFocusedStep) return;
+    setCurrentStep(nextFocusStep);
+    setAutoFocusedStep(true);
+  }, [autoFocusedStep, isHorizontalLayout, isSettingsMode, nextFocusStep]);
+
   const stepItems = steps.map((step, index) => ({
     ...step,
     eyebrow: `Step ${index + 1}`,
@@ -328,6 +361,7 @@ export default function ProjectForm({
         readiness={brandingReadiness}
         connectedModules={connectedModules}
         capabilitySignals={capabilitySignals}
+        onSelectStep={setCurrentStep}
       />
     ) : (
       <BuilderSidebarStack
@@ -408,6 +442,10 @@ export default function ProjectForm({
           connectedLinks={connectedLinks}
           templateContextCount={templateContextCount}
           currentStep={currentStepMeta.label}
+          mode={mode}
+          nextActionLabel={nextReadinessGap?.action ?? "Review workspace"}
+          nextActionStep={nextFocusMeta.label}
+          onNextAction={() => setCurrentStep(nextFocusStep)}
         />
       ) : (
         <BuilderHero
@@ -956,6 +994,10 @@ function ProjectFormCommandHeader({
   connectedLinks,
   templateContextCount,
   currentStep,
+  mode,
+  nextActionLabel,
+  nextActionStep,
+  onNextAction,
 }: {
   progressPercent: number;
   readinessCount: number;
@@ -963,7 +1005,12 @@ function ProjectFormCommandHeader({
   connectedLinks: number;
   templateContextCount: number;
   currentStep: string;
+  mode: "create" | "settings";
+  nextActionLabel: string;
+  nextActionStep: string;
+  onNextAction: () => void;
 }) {
+  const isSettingsMode = mode === "settings";
   const metrics = [
     ["Current", currentStep],
     ["Basics", `${readinessCount}/${readinessTotal}`],
@@ -974,16 +1021,20 @@ function ProjectFormCommandHeader({
   return (
     <section className="relative overflow-hidden rounded-[18px] border border-white/[0.024] bg-[linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]" />
-      <div className="relative grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)] lg:items-center">
+      <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.56fr)_minmax(220px,0.42fr)] xl:items-center">
         <div className="min-w-0">
           <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
-            Active setup
+            {isSettingsMode ? "Live workspace edit" : "Active setup"}
           </p>
           <h2 className="mt-1.5 text-[1.06rem] font-semibold tracking-[-0.02em] text-text md:text-[1.18rem]">
-            Create the workspace one decision at a time
+            {isSettingsMode
+              ? "Tune the project without losing launch clarity"
+              : "Create the workspace one decision at a time"}
           </h2>
           <p className="mt-1.5 max-w-3xl text-[12px] leading-5 text-sub">
-            Start with the fields required to create a recognizable workspace. Launch, community and reward context can grow with the project.
+            {isSettingsMode
+              ? "Make profile, links and launch-context edits from one focused builder. The next missing input stays one click away."
+              : "Start with the fields required to create a recognizable workspace. Launch, community and reward context can grow with the project."}
           </p>
         </div>
 
@@ -1003,6 +1054,21 @@ function ProjectFormCommandHeader({
             />
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={onNextAction}
+          className="group min-w-0 rounded-[15px] border border-primary/[0.14] bg-primary/[0.055] p-3 text-left transition hover:border-primary/[0.26] hover:bg-primary/[0.085]"
+        >
+          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+            Next field
+          </p>
+          <p className="mt-1 truncate text-[12px] font-semibold text-text">{nextActionLabel}</p>
+          <span className="mt-2 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.12em] text-primary">
+            Open {nextActionStep}
+            <ArrowRight size={12} className="transition group-hover:translate-x-0.5" />
+          </span>
+        </button>
       </div>
     </section>
   );
@@ -1013,16 +1079,13 @@ function ProjectWorkspaceIntelligenceDock({
   readiness,
   connectedModules,
   capabilitySignals,
+  onSelectStep,
 }: {
   values: Omit<AdminProject, "id">;
-  readiness: Array<{
-    label: string;
-    value: string;
-    complete: boolean;
-    priority: ProjectOnboardingPriority;
-  }>;
+  readiness: ProjectReadinessItem[];
   connectedModules: Array<{ label: string; value?: string }>;
   capabilitySignals: Array<{ label: string; ready: boolean; hint: string }>;
+  onSelectStep: (step: StepId) => void;
 }) {
   const requiredItems = readiness.filter((item) => item.priority === "required");
   const requiredReady = requiredItems.filter((item) => item.complete).length;
@@ -1040,10 +1103,10 @@ function ProjectWorkspaceIntelligenceDock({
   const communityReady = Boolean(readiness.find((item) => item.label === "Community links")?.complete);
   const launchReady = Boolean(readiness.find((item) => item.label === "Launch context")?.complete);
   const routeSteps = [
-    { label: "Identity", body: "Name, logo and slug", ready: identityReady },
-    { label: "Story", body: "Short public copy", ready: storyReady },
-    { label: "Channels", body: "At least one route", ready: communityReady },
-    { label: "Launch", body: "Docs, waitlist or post", ready: launchReady },
+    { label: "Identity", body: "Name, logo and slug", ready: identityReady, step: "identity" as const },
+    { label: "Story", body: "Short public copy", ready: storyReady, step: "public-profile" as const },
+    { label: "Channels", body: "At least one route", ready: communityReady, step: "links" as const },
+    { label: "Launch", body: "Docs, waitlist or post", ready: launchReady, step: "context" as const },
   ];
 
   return (
@@ -1145,9 +1208,11 @@ function ProjectWorkspaceIntelligenceDock({
             </div>
             <div className="mt-3 grid gap-2">
               {routeSteps.map((item, index) => (
-                <div
+                <button
                   key={item.label}
-                  className="grid grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-2 rounded-[13px] bg-black/[0.18] px-3 py-2"
+                  type="button"
+                  onClick={() => onSelectStep(item.step)}
+                  className="grid grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-2 rounded-[13px] bg-black/[0.18] px-3 py-2 text-left transition hover:bg-white/[0.026]"
                 >
                   <span
                     className={cn(
@@ -1168,7 +1233,7 @@ function ProjectWorkspaceIntelligenceDock({
                   ) : (
                     <CircleAlert size={15} className="text-sub" />
                   )}
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -1209,6 +1274,14 @@ function ProjectWorkspaceIntelligenceDock({
                 : "Ready"}
             </ProjectOnboardingPriorityPill>
           </div>
+          <button
+            type="button"
+            onClick={() => onSelectStep(nextGap?.step ?? "review")}
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-3.5 py-2 text-[11px] font-black text-black transition hover:brightness-105"
+          >
+            {nextGap ? nextGap.action : "Review workspace"}
+            <ArrowRight size={13} />
+          </button>
 
           <div className="mt-4 grid gap-2">
             {readiness.map((item, index) => (
@@ -1239,7 +1312,21 @@ function ProjectWorkspaceIntelligenceDock({
                   <p className="text-[12px] font-semibold text-text">{item.label}</p>
                   <p className="mt-0.5 truncate text-[11px] text-sub">{item.value}</p>
                 </div>
-                <ProjectOnboardingPriorityPill priority={item.complete ? "complete" : item.priority} />
+                <button
+                  type="button"
+                  onClick={() => onSelectStep(item.step)}
+                  className={cn(
+                    "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] transition",
+                    item.complete
+                      ? "bg-emerald-300/[0.075] text-emerald-200 hover:bg-emerald-300/[0.11]"
+                      : item.priority === "required"
+                        ? "bg-primary/[0.09] text-primary hover:bg-primary/[0.13]"
+                        : "bg-white/[0.055] text-sub hover:bg-white/[0.08]"
+                  )}
+                >
+                  <span className="max-w-[128px] truncate">{item.complete ? "Review" : item.action}</span>
+                  <ArrowRight size={11} />
+                </button>
               </div>
             ))}
           </div>
