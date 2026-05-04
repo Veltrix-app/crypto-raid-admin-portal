@@ -1,7 +1,16 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  ArrowRight,
+  BadgeCheck,
+  CheckCircle2,
+  FileWarning,
+  ListChecks,
+  Route,
+  Sparkles,
+} from "lucide-react";
 import {
   BuilderBottomNav,
   BuilderMetricCard,
@@ -15,11 +24,9 @@ import CampaignStoryboardCanvas from "@/components/forms/campaign/CampaignStoryb
 import CampaignStoryboardInspector from "@/components/forms/campaign/CampaignStoryboardInspector";
 import StudioEntryCommandDeck from "@/components/forms/studio/StudioEntryCommandDeck";
 import StudioModeToggle from "@/components/forms/studio/StudioModeToggle";
-import StudioPreviewCard from "@/components/forms/studio/StudioPreviewCard";
 import StudioShell from "@/components/forms/studio/StudioShell";
 import StudioStepRail from "@/components/forms/studio/StudioStepRail";
 import StudioTopFrame from "@/components/forms/studio/StudioTopFrame";
-import StudioWarningRail from "@/components/forms/studio/StudioWarningRail";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
@@ -36,6 +43,7 @@ import {
 import {
   CampaignStudioAudienceId,
   CampaignStudioIntentId,
+  type CampaignMissionMapItem,
   getCampaignLaunchPreview,
   getCampaignMissionMap,
   getCampaignStudioCompactReadiness,
@@ -116,6 +124,226 @@ const baseBuilderSteps: Array<{
     description: "Save this setup as a reusable template variant and generate the campaign when it feels right.",
   },
 ];
+
+type CampaignStudioWatchItem = {
+  label: string;
+  description: string;
+  tone?: "default" | "warning" | "success";
+};
+
+function CampaignStudioSideDock({
+  currentStepLabel,
+  progressPercent,
+  actionLabel,
+  onAction,
+  projectName,
+  templateLabel,
+  templateFit,
+  questCount,
+  rewardCount,
+  missingContextCount,
+  editedDraftCount,
+  audienceLabel,
+  missionItems,
+  watchItems,
+}: {
+  currentStepLabel: string;
+  progressPercent: number;
+  actionLabel: string;
+  onAction?: () => void;
+  projectName: string;
+  templateLabel: string;
+  templateFit: string;
+  questCount: string;
+  rewardCount: string;
+  missingContextCount: number;
+  editedDraftCount: number;
+  audienceLabel: string;
+  missionItems: CampaignMissionMapItem[];
+  watchItems: CampaignStudioWatchItem[];
+}) {
+  const visibleWatchItems = watchItems.slice(0, 3);
+  const visibleMissionItems = missionItems.slice(0, 4);
+  const warningCount = watchItems.filter((item) => item.tone === "warning").length;
+
+  return (
+    <div className="space-y-3">
+      <section className="relative overflow-hidden rounded-[18px] border border-primary/[0.12] bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.08),transparent_34%),linear-gradient(180deg,rgba(16,21,27,0.98),rgba(8,10,15,0.96))] p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.18)]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent)]" />
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Ready to build
+          </p>
+          <BadgeCheck size={15} className="text-primary" />
+        </div>
+        <p className="mt-3 text-[0.98rem] font-semibold tracking-[-0.02em] text-text">
+          {currentStepLabel}
+        </p>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/35">
+          <div
+            className="h-full rounded-full bg-primary shadow-[0_0_18px_rgba(199,255,0,0.32)]"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+        <div className="mt-3 grid gap-2">
+          <CampaignDockSignal icon={<Sparkles size={13} />} label="Project" value={projectName} />
+          <CampaignDockSignal icon={<Route size={13} />} label="Playbook" value={templateLabel} />
+          <CampaignDockSignal icon={<CheckCircle2 size={13} />} label="Fit" value={templateFit} />
+        </div>
+        <button
+          type="button"
+          onClick={onAction}
+          disabled={!onAction}
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[14px] bg-primary px-3 py-2.5 text-[10px] font-black uppercase tracking-[0.13em] text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-55"
+        >
+          {actionLabel}
+          <ArrowRight size={13} />
+        </button>
+      </section>
+
+      <section className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,17,24,0.97),rgba(8,10,15,0.95))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+        <div className="flex items-center gap-3">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Campaign recipe
+          </p>
+          <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.13),transparent)]" />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <CampaignDockMetric label="Quests" value={questCount} />
+          <CampaignDockMetric label="Rewards" value={rewardCount} />
+          <CampaignDockMetric label="Missing" value={missingContextCount} />
+          <CampaignDockMetric label="Edits" value={editedDraftCount} />
+        </div>
+        <CampaignDockSignal
+          className="mt-2"
+          icon={<ListChecks size={13} />}
+          label="Audience"
+          value={audienceLabel}
+        />
+      </section>
+
+      <section className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,17,24,0.97),rgba(8,10,15,0.95))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Mission map
+          </p>
+          <span className="rounded-full border border-white/[0.026] bg-black/20 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.13em] text-sub">
+            {missionItems.length} blocks
+          </span>
+        </div>
+        <div className="mt-3 space-y-2">
+          {visibleMissionItems.length > 0 ? (
+            visibleMissionItems.map((item, index) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-[28px_minmax(0,1fr)] gap-2 rounded-[14px] border border-white/[0.022] bg-white/[0.014] p-2.5"
+              >
+                <span
+                  className={`flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-black ${
+                    item.status === "ready"
+                      ? "border-primary/20 bg-primary/[0.055] text-primary"
+                      : item.status === "needs_context"
+                        ? "border-amber-400/20 bg-amber-500/[0.08] text-amber-300"
+                        : "border-white/[0.032] bg-black/20 text-sub"
+                  }`}
+                >
+                  {index + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-[11px] font-bold text-text">{item.title}</p>
+                  <p className="mt-1 truncate text-[9px] font-bold uppercase tracking-[0.12em] text-sub">
+                    {item.kind.replace(/_/g, " ")} · {item.status.replace(/_/g, " ")}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-[14px] border border-white/[0.022] bg-white/[0.014] p-3 text-[11px] leading-5 text-sub">
+              Pick a playbook to unlock a compact mission route.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,17,24,0.97),rgba(8,10,15,0.95))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Watchlist
+          </p>
+          <span className="rounded-full border border-white/[0.026] bg-black/20 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.13em] text-sub">
+            {warningCount > 0 ? `${warningCount} watch` : "stable"}
+          </span>
+        </div>
+        <div className="mt-3 space-y-2">
+          {visibleWatchItems.length > 0 ? (
+            visibleWatchItems.map((item) => (
+              <div
+                key={item.label}
+                className={`rounded-[14px] border p-2.5 ${
+                  item.tone === "warning"
+                    ? "border-amber-400/16 bg-amber-500/[0.055]"
+                    : item.tone === "success"
+                      ? "border-primary/14 bg-primary/[0.045]"
+                      : "border-white/[0.022] bg-white/[0.014]"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <FileWarning
+                    size={12}
+                    className={item.tone === "warning" ? "text-amber-300" : "text-primary"}
+                  />
+                  <p className="truncate text-[11px] font-bold text-text">{item.label}</p>
+                </div>
+                <p className="mt-1.5 line-clamp-2 text-[10px] leading-4 text-sub">
+                  {item.description}
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-[14px] border border-primary/14 bg-primary/[0.045] p-3 text-[11px] leading-5 text-primary">
+              No blockers on this step. Continue when the campaign shape feels right.
+            </p>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function CampaignDockSignal({
+  icon,
+  label,
+  value,
+  className = "",
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`flex min-w-0 items-center gap-2 rounded-[14px] border border-white/[0.022] bg-white/[0.014] px-3 py-2.5 ${className}`.trim()}
+    >
+      <span className="shrink-0 text-primary">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+        <p className="mt-1 truncate text-[11px] font-semibold text-text">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function CampaignDockMetric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-[14px] border border-white/[0.022] bg-white/[0.014] px-3 py-2.5">
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 text-[0.96rem] font-semibold tracking-[-0.02em] text-text">
+        {value}
+      </p>
+    </div>
+  );
+}
 
 function NewCampaignPageContent() {
   const router = useRouter();
@@ -1405,6 +1633,27 @@ function NewCampaignPageContent() {
     );
   }
 
+  const sideDockWatchItems = stepError
+    ? [
+        {
+          label: "Current blocker",
+          description: stepError,
+          tone: "warning" as const,
+        },
+        ...storyboardWarnings,
+      ]
+    : storyboardWarnings;
+  const continueFromSideDock = nextStep
+    ? () => {
+        const error = validateCurrentStep(currentStep);
+        if (error) {
+          setStepError(error);
+          return;
+        }
+        attemptStepNavigation(nextStep.id);
+      }
+    : undefined;
+
   return (
     <AdminShell>
       <div className="space-y-4">
@@ -1507,86 +1756,26 @@ function NewCampaignPageContent() {
             />
           }
           rightRail={
-            <>
-              <StudioPreviewCard
-                eyebrow={studioLens === "strategy" ? "Member view" : "Launch readout"}
-                title={
-                  currentStep === "launch"
-                    ? "Launch snapshot"
-                    : currentStep === "flow"
-                      ? "Storyboard preview"
-                      : "Campaign preview"
-                }
-                description="Keep the public campaign shape in view while you tune the underlying system."
-              >
-                {selectedTemplate && templatePlan ? (
-                  <div className="space-y-5">
-                    <CampaignPreviewSurface
-                      templateLabel={
-                        selectedTemplate.id === "blank_campaign_canvas"
-                          ? "Custom Playbook"
-                          : selectedTemplate.label
-                      }
-                      title={
-                        campaignTitleDraft ||
-                        customPlaybookSummary ||
-                        templatePlan.campaignDraft.title
-                      }
-                      summary={customPlaybookSummary || templatePlan.campaignDraft.shortDescription}
-                      fitLabel={selectedTemplate.fitLabel}
-                      fitScore={selectedTemplate.fitScore}
-                      questCount={`${includedQuestDrafts.length}/${templatePlan.questDrafts.length}`}
-                      rewardCount={`${includedRewardDrafts.length}/${templatePlan.rewardDrafts.length}`}
-                      missingContext={currentMissingContextFields.length}
-                    />
-
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <PreviewStat
-                        label="Edited drafts"
-                        value={editedQuestCount + editedRewardCount}
-                      />
-                      <PreviewStat
-                        label="Audience"
-                        value={selectedAudience.replace(/_/g, " ")}
-                      />
-                    </div>
-
-                    {studioLens === "launch" || currentStep === "launch" ? (
-                      <CampaignLaunchPreview preview={launchPreview} />
-                    ) : (
-                      <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.018] p-4">
-                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                          Mission map
-                        </p>
-                        <div className="mt-4">
-                          <CampaignMissionMap items={missionMap} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm leading-6 text-sub">
-                    Pick a playbook to unlock the storyboard, preview and launch posture.
-                  </p>
-                )}
-              </StudioPreviewCard>
-
-              <StudioWarningRail
-                title="Launch watchlist"
-                items={
-                  stepError
-                    ? [
-                        {
-                          label: "Current blocker",
-                          description: stepError,
-                          tone: "warning" as const,
-                        },
-                        ...storyboardWarnings,
-                      ]
-                    : storyboardWarnings
-                }
-              />
-            </>
+            <CampaignStudioSideDock
+              currentStepLabel={currentStepMeta.label}
+              progressPercent={progressPercent}
+              actionLabel={nextStep ? `Continue to ${nextStep.label}` : "Generate below"}
+              onAction={continueFromSideDock}
+              projectName={selectedProject?.name || "No project"}
+              templateLabel={selectedTemplate?.label || "Choose playbook"}
+              templateFit={
+                selectedTemplate
+                  ? `${selectedTemplate.fitLabel} (${selectedTemplate.fitScore}/100)`
+                  : "Not selected"
+              }
+              questCount={`${includedQuestDrafts.length}/${templatePlan?.questDrafts.length ?? 0}`}
+              rewardCount={`${includedRewardDrafts.length}/${templatePlan?.rewardDrafts.length ?? 0}`}
+              missingContextCount={currentMissingContextFields.length}
+              editedDraftCount={editedQuestCount + editedRewardCount}
+              audienceLabel={selectedAudience.replace(/_/g, " ")}
+              missionItems={missionMap}
+              watchItems={sideDockWatchItems}
+            />
           }
           canvasClassName="space-y-4"
         >
@@ -1793,77 +1982,6 @@ function TemplateOptionCard({
         </div>
       </div>
     </button>
-  );
-}
-
-function CampaignPreviewSurface({
-  templateLabel,
-  title,
-  summary,
-  fitLabel,
-  fitScore,
-  questCount,
-  rewardCount,
-  missingContext,
-}: {
-  templateLabel: string;
-  title: string;
-  summary: string;
-  fitLabel: string;
-  fitScore: number;
-  questCount: string;
-  rewardCount: string;
-  missingContext: number;
-}) {
-  return (
-    <div className="overflow-hidden rounded-[16px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(199,255,0,0.14),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-4">
-      <div className="rounded-[18px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(6,8,12,0.82))] p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="max-w-xl">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-              {templateLabel}
-            </p>
-            <h3 className="mt-3 text-[1.45rem] font-extrabold tracking-[-0.03em] text-text">
-              {title}
-            </h3>
-            <p className="mt-3 text-sm leading-7 text-sub">{summary}</p>
-          </div>
-          <div className="rounded-[20px] border border-white/[0.026] bg-black/20 px-4 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
-              Template fit
-            </p>
-            <p className="mt-2 text-lg font-extrabold text-text">
-              {fitLabel} <span className="text-sub">({fitScore}/100)</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-          <div className="rounded-[16px] border border-white/[0.026] bg-black/20 px-4 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
-              Member moment
-            </p>
-            <p className="mt-2 text-base font-semibold text-text">
-              Contributors enter a guided launch lane with quests, rewards and a clear reason to act now.
-            </p>
-          </div>
-          <div className="rounded-[16px] border border-white/[0.026] bg-black/20 px-4 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sub">
-              Context pressure
-            </p>
-            <p className="mt-2 text-base font-semibold text-text">
-              {missingContext === 0 ? "Fully routed" : `${missingContext} gaps to patch`}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
-          <PreviewStat label="Quest flow" value={questCount} />
-          <PreviewStat label="Reward flow" value={rewardCount} />
-          <PreviewStat label="Missing context" value={missingContext} />
-        </div>
-      </div>
-    </div>
   );
 }
 
