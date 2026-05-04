@@ -62,6 +62,7 @@ export default function ProjectLaunchChecklist({
   hardBlockers,
   softBlockers,
   groups,
+  onSelectStep,
 }: {
   view: LaunchWorkspaceView;
   steps: LaunchStep[];
@@ -69,23 +70,35 @@ export default function ProjectLaunchChecklist({
   hardBlockers: ReadinessIssue[];
   softBlockers: ReadinessIssue[];
   groups: ReadinessGroup[];
+  onSelectStep: (stepId: string) => void;
 }) {
   if (view === "setup") {
     const selectedStep = steps.find((step) => step.id === activeStepId) ?? steps[0];
+    const selectedStepIndex = selectedStep
+      ? steps.findIndex((step) => step.id === selectedStep.id)
+      : -1;
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {selectedStep ? (
-          <div className="rounded-[16px] bg-[linear-gradient(180deg,rgba(186,255,59,0.045),rgba(11,16,24,0.98))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.12)]">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="max-w-2xl">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                  Next setup step
-                </p>
-                <h3 className="mt-2 text-[1.05rem] font-bold text-text">
+          <div className="relative overflow-hidden rounded-[18px] border border-primary/[0.12] bg-[radial-gradient(circle_at_8%_0%,rgba(199,255,0,0.075),transparent_30%),linear-gradient(180deg,rgba(186,255,59,0.04),rgba(11,16,24,0.98))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.12)]">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(199,255,0,0.34),transparent)]" />
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="max-w-2xl min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-primary/[0.16] bg-primary/[0.06] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                    Step {selectedStepIndex + 1} of {steps.length}
+                  </span>
+                  <ProjectOnboardingPriorityPill priority={priorityForStepStatus(selectedStep.status)}>
+                    {labelForStepStatus(selectedStep.status)}
+                  </ProjectOnboardingPriorityPill>
+                </div>
+                <h3 className="mt-2.5 text-[1.02rem] font-bold tracking-[-0.02em] text-text">
                   {selectedStep.title}
                 </h3>
-                <p className="mt-2 text-[12px] leading-5 text-sub">{selectedStep.summary}</p>
+                <p className="mt-2 max-w-3xl text-[12px] leading-5 text-sub">
+                  {selectedStep.summary}
+                </p>
               </div>
               <ProjectOnboardingPriorityPill priority={priorityForStepStatus(selectedStep.status)}>
                 {selectedStep.metric}
@@ -93,25 +106,25 @@ export default function ProjectLaunchChecklist({
             </div>
 
             {selectedStep.blockers.length > 0 ? (
-              <div className="mt-4 grid gap-2.5">
+              <div className="mt-3 grid gap-2">
                 {selectedStep.blockers.map((blocker) => (
                   <div
                     key={blocker}
-                    className="rounded-[13px] bg-black/20 px-3.5 py-3 text-[12px] leading-5 text-sub"
+                    className="rounded-[13px] border border-white/[0.02] bg-black/24 px-3.5 py-2.5 text-[12px] leading-5 text-sub"
                   >
                     {blocker}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="mt-4 rounded-[14px] border border-emerald-400/20 bg-emerald-500/10 px-3.5 py-3 text-[12px] text-emerald-200">
+              <div className="mt-3 rounded-[14px] border border-emerald-400/20 bg-emerald-500/10 px-3.5 py-2.5 text-[12px] text-emerald-200">
                 This step is already in good shape. You can still open its rail to refine the details.
               </div>
             )}
 
             <Link
               href={selectedStep.href}
-              className="mt-4 inline-flex items-center gap-2 rounded-[14px] bg-primary/[0.065] px-3.5 py-2.5 text-[13px] font-bold text-primary transition hover:bg-primary/18"
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-3.5 py-2 text-[12px] font-black text-black transition hover:brightness-105"
             >
               Open this step
               <ArrowRight size={16} />
@@ -119,27 +132,37 @@ export default function ProjectLaunchChecklist({
           </div>
         ) : null}
 
-        <div className="grid gap-3">
-          {steps.map((step) => (
-            <div
+        <div className="grid gap-2 md:grid-cols-2">
+          {steps.map((step, index) => (
+            <button
               key={step.id}
+              type="button"
+              onClick={() => onSelectStep(step.id)}
+              aria-pressed={step.id === activeStepId}
               className={cn(
-                "rounded-[14px] px-3.5 py-3 transition-colors duration-200",
+                "rounded-[14px] border px-3 py-2.5 text-left transition-colors duration-200",
                 step.id === activeStepId
-                  ? "bg-primary/[0.08]"
-                  : "bg-white/[0.014] hover:bg-white/[0.028]"
+                  ? "border-primary/[0.18] bg-primary/[0.06]"
+                  : "border-transparent bg-white/[0.014] hover:border-white/[0.024] hover:bg-white/[0.028]"
               )}
             >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-[13px] font-bold text-text">{step.title}</p>
-                  <p className="mt-1.5 text-[12px] leading-5 text-sub">{step.summary}</p>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.018] text-[10px] font-black text-sub">
+                      {index + 1}
+                    </span>
+                    <p className="truncate text-[12px] font-bold text-text">{step.title}</p>
+                  </div>
+                  <p className="mt-2 truncate text-[10px] font-bold uppercase tracking-[0.12em] text-sub">
+                    {step.metric}
+                  </p>
                 </div>
                 <ProjectOnboardingPriorityPill priority={priorityForStepStatus(step.status)}>
                   {labelForStepStatus(step.status)}
                 </ProjectOnboardingPriorityPill>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>

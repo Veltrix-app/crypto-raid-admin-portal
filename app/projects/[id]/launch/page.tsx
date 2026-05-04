@@ -468,7 +468,7 @@ function ProjectLaunchContent() {
           primaryAction={nextActions[0] ?? null}
         />
 
-        <div className="grid gap-3 xl:grid-cols-[260px,minmax(0,1fr)] xl:items-start">
+        <div className="grid gap-3 xl:grid-cols-[232px,minmax(0,1fr)] xl:items-start">
           <ProjectLaunchRail
             steps={snapshot.onboarding.steps}
             activeStepId={activeStepId}
@@ -477,7 +477,7 @@ function ProjectLaunchContent() {
           />
 
           <div className="space-y-3">
-            <div className="grid gap-3 2xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] 2xl:items-start">
+            <div className="grid gap-3 2xl:grid-cols-[minmax(0,1fr)_340px] 2xl:items-start">
               <OpsPanel
                 eyebrow={view === "setup" ? "Setup checklist" : "Launch checklist"}
                 title={
@@ -498,6 +498,7 @@ function ProjectLaunchContent() {
                   hardBlockers={snapshot.readiness.hardBlockers}
                   softBlockers={snapshot.readiness.softBlockers}
                   groups={snapshot.readiness.groups}
+                  onSelectStep={setActiveStepId}
                 />
               </OpsPanel>
 
