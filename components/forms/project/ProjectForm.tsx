@@ -479,10 +479,18 @@ export default function ProjectForm({
             onSelect={setCurrentStep}
           />
           {isSettingsMode ? (
-            <>
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_330px] xl:items-start">
               {editorSurface}
-              {supportCards}
-            </>
+              <ProjectSettingsCommandDock
+                values={values}
+                readiness={brandingReadiness}
+                connectedModules={connectedModules}
+                capabilitySignals={capabilitySignals}
+                currentStep={currentStepMeta.label}
+                progressPercent={progressPercent}
+                onSelectStep={setCurrentStep}
+              />
+            </div>
           ) : (
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
               {editorSurface}
@@ -1250,6 +1258,140 @@ function ProjectCreationCommandDock({
               </div>
               <ArrowRight size={12} className="shrink-0 text-primary" />
             </button>
+          ))}
+        </div>
+      </section>
+    </aside>
+  );
+}
+
+function ProjectSettingsCommandDock({
+  values,
+  readiness,
+  connectedModules,
+  capabilitySignals,
+  currentStep,
+  progressPercent,
+  onSelectStep,
+}: {
+  values: Omit<AdminProject, "id">;
+  readiness: ProjectReadinessItem[];
+  connectedModules: Array<{ label: string; value?: string }>;
+  capabilitySignals: Array<{ label: string; ready: boolean; hint: string }>;
+  currentStep: string;
+  progressPercent: number;
+  onSelectStep: (step: StepId) => void;
+}) {
+  const requiredItems = readiness.filter((item) => item.priority === "required");
+  const requiredReady = requiredItems.filter((item) => item.complete).length;
+  const readyCount = readiness.filter((item) => item.complete).length;
+  const connectedCount = connectedModules.filter((item) => Boolean(item.value)).length;
+  const unlockedCount = capabilitySignals.filter((item) => item.ready).length;
+  const nextGap =
+    readiness.find((item) => !item.complete && item.priority === "required") ??
+    readiness.find((item) => !item.complete) ??
+    null;
+
+  return (
+    <aside className="space-y-3 xl:sticky xl:top-4">
+      <section className="relative overflow-hidden rounded-[20px] border border-primary/[0.12] bg-[radial-gradient(circle_at_14%_0%,rgba(199,255,0,0.075),transparent_30%),linear-gradient(180deg,rgba(13,17,24,0.98),rgba(8,10,15,0.96))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.15)]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(199,255,0,0.24),transparent)]" />
+        <div className="relative flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+              Settings command
+            </p>
+            <h3 className="mt-2 text-[1rem] font-semibold tracking-[-0.025em] text-text">
+              {nextGap ? nextGap.label : "Profile is launch-ready"}
+            </h3>
+            <p className="mt-1.5 text-[12px] leading-5 text-sub">
+              {nextGap
+                ? nextGap.value
+                : "Required profile, community and launch-context signals are in a good place."}
+            </p>
+          </div>
+          <ProjectOnboardingPriorityPill priority={nextGap ? nextGap.priority : "complete"}>
+            {nextGap ? "Next" : "Ready"}
+          </ProjectOnboardingPriorityPill>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onSelectStep(nextGap?.step ?? "review")}
+          className="relative mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[14px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.13em] text-black transition hover:brightness-105"
+        >
+          {nextGap ? nextGap.action : "Review workspace"}
+          <ArrowRight size={13} />
+        </button>
+
+        <div className="relative mt-3 grid grid-cols-2 gap-2">
+          <ProjectDockMetric label="Current" value={currentStep} quiet />
+          <ProjectDockMetric label="Progress" value={`${progressPercent}%`} quiet />
+          <ProjectDockMetric label="Required" value={`${requiredReady}/${requiredItems.length}`} />
+          <ProjectDockMetric label="Ready" value={`${readyCount}/${readiness.length}`} />
+        </div>
+      </section>
+
+      <ProjectPreviewSurface values={values} compact />
+
+      <section className="rounded-[20px] border border-white/[0.024] bg-[linear-gradient(180deg,rgba(12,15,22,0.96),rgba(8,10,15,0.94))] p-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sub">
+              Live modules
+            </p>
+            <p className="mt-1 text-[12px] font-semibold text-text">
+              {connectedCount} connected route{connectedCount === 1 ? "" : "s"}
+            </p>
+          </div>
+          <Radio size={16} className="shrink-0 text-primary" />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {connectedModules.map((item) => (
+            <SignalChip key={item.label} label={item.label} ready={Boolean(item.value)} />
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-[20px] border border-white/[0.024] bg-black/20 p-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sub">
+              Smart unlocks
+            </p>
+            <p className="mt-1 text-[12px] font-semibold text-text">
+              {unlockedCount}/{capabilitySignals.length} ready
+            </p>
+          </div>
+          <Sparkles size={16} className="shrink-0 text-primary" />
+        </div>
+        <div className="mt-3 grid gap-2">
+          {capabilitySignals.slice(0, 4).map((item) => (
+            <div
+              key={item.label}
+              className="grid grid-cols-[22px_minmax(0,1fr)_auto] items-center gap-2 rounded-[13px] bg-white/[0.012] px-3 py-2"
+            >
+              <span
+                className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-full",
+                  item.ready ? "bg-primary/[0.08] text-primary" : "bg-white/[0.045] text-sub"
+                )}
+              >
+                {item.ready ? <Sparkles size={13} /> : <LockKeyhole size={13} />}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[12px] font-semibold text-text">{item.label}</p>
+                <p className="mt-0.5 line-clamp-1 text-[10px] text-sub">{item.hint}</p>
+              </div>
+              <span
+                className={cn(
+                  "shrink-0 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em]",
+                  item.ready ? "bg-primary/[0.075] text-primary" : "bg-white/[0.05] text-sub"
+                )}
+              >
+                {item.ready ? "Live" : "Later"}
+              </span>
+            </div>
           ))}
         </div>
       </section>
