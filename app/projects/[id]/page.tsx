@@ -1759,7 +1759,7 @@ export default function ProjectDetailPage() {
             operatorIncidentCount={operatorIncidentCount}
           />
 
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_330px] xl:items-start">
             <div className="min-w-0 space-y-3">
               <ProjectOverviewSummary
                 title={`${project.logo} ${project.name}`}
@@ -3579,11 +3579,11 @@ function ProjectHomeCommandCenter({
   const secondaryRoutes = routes.filter((route) => route.key !== primaryRoute.key);
 
   return (
-    <section className="relative overflow-hidden rounded-[22px] border border-white/[0.024] bg-[radial-gradient(circle_at_8%_0%,rgba(199,255,0,0.09),transparent_26%),radial-gradient(circle_at_88%_10%,rgba(0,255,163,0.055),transparent_24%),linear-gradient(180deg,rgba(11,14,20,0.985),rgba(7,9,14,0.965))] p-4 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
+    <section className="relative overflow-hidden rounded-[22px] border border-white/[0.024] bg-[radial-gradient(circle_at_8%_0%,rgba(199,255,0,0.09),transparent_26%),radial-gradient(circle_at_88%_10%,rgba(0,255,163,0.055),transparent_24%),linear-gradient(180deg,rgba(11,14,20,0.985),rgba(7,9,14,0.965))] p-3.5 shadow-[0_18px_44px_rgba(0,0,0,0.18)] md:p-4">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.09),transparent)]" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.016)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[length:64px_64px] opacity-[0.32]" />
 
-      <div className="relative grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.36fr)] xl:items-start">
+      <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(310px,0.34fr)] xl:items-start">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <OpsStatusPill tone={projectStatus === "active" ? "success" : "warning"}>
@@ -3598,10 +3598,10 @@ function ProjectHomeCommandCenter({
             Run {projectName} from one command center
           </h1>
           <p className="mt-2 max-w-4xl text-[12px] leading-5 text-sub">
-            Start with the recommended route, then move into launch, showcase, community, rewards or safety without hunting through setup panels.
+            Start with the recommended route. Every other studio stays one click away, but the project has one clear next move.
           </p>
 
-          <div className="mt-4 grid gap-2.5 md:grid-cols-3">
+          <div className="mt-3 grid gap-2 md:grid-cols-3">
             <ProjectCommandMetric
               label="Launchpad"
               value={`${completedLaunchpadSteps}/4`}
@@ -3622,7 +3622,7 @@ function ProjectHomeCommandCenter({
 
         <Link
           href={primaryRoute.href}
-          className="group rounded-[18px] border border-primary/[0.14] bg-[linear-gradient(135deg,rgba(199,255,0,0.075),rgba(255,255,255,0.018)_42%,rgba(0,255,163,0.04))] p-3.5 transition hover:border-primary/[0.26] hover:bg-primary/[0.075]"
+          className="group rounded-[18px] border border-primary/[0.16] bg-[radial-gradient(circle_at_0%_0%,rgba(199,255,0,0.1),transparent_32%),linear-gradient(135deg,rgba(199,255,0,0.075),rgba(255,255,255,0.018)_42%,rgba(0,255,163,0.04))] p-3.5 transition hover:border-primary/[0.28] hover:bg-primary/[0.075]"
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -3640,21 +3640,24 @@ function ProjectHomeCommandCenter({
           <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-sub">
             {primaryRoute.description}
           </p>
-          <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-3.5 py-2 text-[11px] font-black text-black transition group-hover:brightness-105">
-            {primaryRoute.cta}
-            <ArrowRight size={13} />
-          </span>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <OpsStatusPill tone={primaryRoute.tone}>{primaryRoute.status}</OpsStatusPill>
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary px-3.5 py-2 text-[11px] font-black text-black transition group-hover:brightness-105">
+              {primaryRoute.cta}
+              <ArrowRight size={13} />
+            </span>
+          </div>
         </Link>
       </div>
 
-      <div className="relative mt-4 grid gap-2.5 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="relative mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {secondaryRoutes.map((route) => (
           <Link
             key={route.key}
             href={route.href}
-            className="group min-w-0 rounded-[16px] border border-white/[0.024] bg-white/[0.014] p-3 transition hover:border-primary/[0.16] hover:bg-white/[0.026]"
+            className="group min-w-0 rounded-[15px] border border-white/[0.022] bg-white/[0.012] p-2.5 transition hover:border-primary/[0.16] hover:bg-white/[0.026]"
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[8px] font-black uppercase tracking-[0.16em] text-sub">
                   {route.eyebrow}
@@ -3667,14 +3670,13 @@ function ProjectHomeCommandCenter({
                 {route.icon}
               </span>
             </div>
-            <p className="mt-2 line-clamp-2 text-[11px] leading-5 text-sub">
+            <p className="mt-2 line-clamp-1 text-[11px] leading-5 text-sub">
               {route.description}
             </p>
-            <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="mt-2.5 flex items-center justify-between gap-2">
               <OpsStatusPill tone={route.tone}>{route.status}</OpsStatusPill>
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-primary">
-                {route.cta}
-                <ArrowUpRight size={12} className="transition group-hover:translate-x-0.5" />
+              <span className="inline-flex items-center gap-1.5 text-primary">
+                <ArrowUpRight size={13} className="transition group-hover:translate-x-0.5" />
               </span>
             </div>
           </Link>
