@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  CheckCircle2,
+  FileWarning,
+  Layers3,
+  RadioTower,
+  Sparkles,
+} from "lucide-react";
 import StudioModeToggle from "@/components/forms/studio/StudioModeToggle";
 import StudioReadinessCard from "@/components/forms/studio/StudioReadinessCard";
 import type { CampaignStoryboardBlockId } from "@/lib/studio/campaign-storyboard";
@@ -415,10 +424,11 @@ export default function CampaignForm({
       complete: (values.rewardPoolAmount ?? 0) > 0 || (values.xpBudget ?? 0) > 0,
     },
   ];
+  const visibleSectionCount = Object.values(visibleSections).filter(Boolean).length;
 
   return (
     <form
-              className="space-y-6"
+      className="space-y-4"
       onSubmit={async (e) => {
         e.preventDefault();
         const nextErrors = validate(values);
@@ -445,27 +455,18 @@ export default function CampaignForm({
         </div>
       ) : null}
 
-        {isStoryboardLayout ? (
-          <div className="rounded-[18px] border border-white/[0.032] bg-white/[0.018] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-                Focused launch controls
-              </p>
-              <p className="mt-2 text-sm leading-6 text-sub">
-                This launch editor only shows the campaign controls that belong to the currently
-                selected storyboard block. Switch blocks in the storyboard when you want to tune
-                a different part of the journey.
-              </p>
-            </div>
-            <span className="rounded-full border border-white/[0.032] bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-text">
-              {focusBlockId?.replace(/_/g, " ") ?? "full editor"}
-            </span>
-            </div>
-          </div>
-        ) : null}
+      {isStoryboardLayout ? (
+        <CampaignFocusedControlDeck
+          focusBlockId={focusBlockId}
+          entrySourceLabel={entrySourceLabel}
+          builderMode={builderMode}
+          onBuilderModeChange={setBuilderMode}
+          readinessItems={readinessItems}
+          visibleSectionCount={visibleSectionCount}
+        />
+      ) : null}
 
-        {entrySourceLabel ? (
+      {!isStoryboardLayout && entrySourceLabel ? (
           <div className="rounded-[18px] border border-primary/20 bg-primary/[0.055] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -481,25 +482,27 @@ export default function CampaignForm({
               </span>
             </div>
           </div>
-        ) : null}
+      ) : null}
 
-      <StudioModeToggle
-        label="Builder mode"
-        value={builderMode}
-        onChange={setBuilderMode}
-        options={[
-          {
-            value: "basic",
-            label: "Basic",
-            eyebrow: "Launch-safe path",
-          },
-          {
-            value: "advanced",
-            label: "Advanced",
-            eyebrow: "Operator controls",
-          },
-        ]}
-      />
+      {!isStoryboardLayout ? (
+        <StudioModeToggle
+          label="Builder mode"
+          value={builderMode}
+          onChange={setBuilderMode}
+          options={[
+            {
+              value: "basic",
+              label: "Basic",
+              eyebrow: "Launch-safe path",
+            },
+            {
+              value: "advanced",
+              label: "Advanced",
+              eyebrow: "Operator controls",
+            },
+          ]}
+        />
+      ) : null}
 
       {!isStoryboardLayout ? (
         <StudioReadinessCard title="Campaign readiness" items={readinessItems} />
@@ -807,12 +810,12 @@ export default function CampaignForm({
       ) : null}
 
       {visibleSections.timing ? (
-      <div className="space-y-3">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-          Timing And Launch
-        </p>
-
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <CampaignFormSection
+        eyebrow="Timing and launch"
+        title="Set the campaign window"
+        description="Use this block to decide when the campaign becomes visible and whether it should be promoted as a featured launch."
+      >
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <Field label="Starts At" error={errors.dateRange}>
             <input
               type="datetime-local"
@@ -840,17 +843,17 @@ export default function CampaignForm({
             />
           </div>
         </div>
-      </div>
+      </CampaignFormSection>
       ) : null}
 
       {builderMode === "advanced" && visibleSections.media ? (
         <>
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-              Media
-            </p>
-
-            <div className="grid gap-5 md:grid-cols-2">
+          <CampaignFormSection
+            eyebrow="Launch media"
+            title="Attach the campaign visuals"
+            description="Keep media URLs ready for the campaign surface without crowding the launch-safe basic path."
+          >
+            <div className="grid gap-3 md:grid-cols-2">
               <Field label="Banner URL">
                 <input
                   value={values.bannerUrl || ""}
@@ -869,15 +872,15 @@ export default function CampaignForm({
                 />
               </Field>
             </div>
-          </div>
+          </CampaignFormSection>
 
           {visibleSections.signals ? (
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-              Advanced Signals
-            </p>
-
-            <div className="grid gap-5 md:grid-cols-2">
+          <CampaignFormSection
+            eyebrow="Advanced signals"
+            title="Tune launch telemetry"
+            description="Use these only when you want the campaign to start with operator-level signal targets."
+          >
+            <div className="grid gap-3 md:grid-cols-2">
               <Field label="Participants">
                 <input
                   type="number"
@@ -899,18 +902,210 @@ export default function CampaignForm({
                 />
               </Field>
             </div>
-          </div>
+          </CampaignFormSection>
           ) : null}
         </>
       ) : null}
 
-      <button
-        disabled={submitting}
-        className="rounded-2xl bg-primary px-5 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {submitting ? "Saving..." : submitLabel}
-      </button>
+      <CampaignSubmitBar
+        submitting={submitting}
+        submitLabel={submitLabel}
+        focusBlockId={focusBlockId}
+        isStoryboardLayout={isStoryboardLayout}
+      />
     </form>
+  );
+}
+
+function CampaignFocusedControlDeck({
+  focusBlockId,
+  entrySourceLabel,
+  builderMode,
+  onBuilderModeChange,
+  readinessItems,
+  visibleSectionCount,
+}: {
+  focusBlockId: CampaignStoryboardBlockId | null;
+  entrySourceLabel?: string;
+  builderMode: "basic" | "advanced";
+  onBuilderModeChange: (value: "basic" | "advanced") => void;
+  readinessItems: Array<{ label: string; value: string; complete: boolean }>;
+  visibleSectionCount: number;
+}) {
+  const readyCount = readinessItems.filter((item) => item.complete).length;
+  const focusLabel = focusBlockId?.replace(/_/g, " ") ?? "full editor";
+  const hasWarnings = readyCount < readinessItems.length;
+
+  return (
+    <section className="relative overflow-hidden rounded-[20px] border border-white/[0.026] bg-[radial-gradient(circle_at_4%_0%,rgba(199,255,0,0.07),transparent_30%),radial-gradient(circle_at_90%_8%,rgba(88,146,255,0.045),transparent_25%),linear-gradient(180deg,rgba(13,16,23,0.985),rgba(8,10,15,0.965))] p-3.5 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)]" />
+      <div className="relative grid gap-3 xl:grid-cols-[minmax(0,1fr)_310px]">
+        <div className="min-w-0 rounded-[18px] border border-white/[0.026] bg-black/20 p-3.5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 max-w-3xl">
+              <p className="inline-flex items-center gap-2 rounded-full border border-primary/14 bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                <RadioTower size={12} />
+                Focused launch controls
+              </p>
+              <h3 className="mt-3 text-[1.05rem] font-semibold tracking-[-0.03em] text-text md:text-[1.2rem]">
+                Only the controls for this storyboard block
+              </h3>
+              <p className="mt-2 max-w-3xl text-[12px] leading-5 text-sub">
+                The editor follows the selected storyboard block, so project teams see the next launch decision without hunting through the full campaign form.
+              </p>
+            </div>
+            <span
+              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.14em] ${
+                hasWarnings ? "bg-amber-500/[0.09] text-amber-300" : "bg-primary/[0.08] text-primary"
+              }`}
+            >
+              {hasWarnings ? <FileWarning size={13} /> : <BadgeCheck size={13} />}
+              {focusLabel}
+            </span>
+          </div>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <FocusedControlMetric label="Focus" value={focusLabel} />
+            <FocusedControlMetric label="Source" value={entrySourceLabel || "Direct"} />
+            <FocusedControlMetric label="Sections" value={visibleSectionCount} />
+            <FocusedControlMetric label="Readiness" value={`${readyCount}/${readinessItems.length}`} />
+          </div>
+        </div>
+
+        <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-3.5">
+          <div className="flex items-center gap-3">
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+              Control depth
+            </p>
+            <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(199,255,0,0.13),transparent)]" />
+          </div>
+          <div className="mt-3">
+            <StudioModeToggle
+              label="Builder mode"
+              value={builderMode}
+              onChange={onBuilderModeChange}
+              options={[
+                {
+                  value: "basic",
+                  label: "Basic",
+                  eyebrow: "Launch-safe path",
+                },
+                {
+                  value: "advanced",
+                  label: "Advanced",
+                  eyebrow: "Operator controls",
+                },
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="relative mt-3 grid gap-2 md:grid-cols-3">
+        {readinessItems.map((item) => (
+          <div
+            key={item.label}
+            className={`rounded-[16px] border px-3.5 py-3 ${
+              item.complete
+                ? "border-primary/12 bg-primary/[0.04]"
+                : "border-amber-400/14 bg-amber-500/[0.05]"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              {item.complete ? (
+                <CheckCircle2 size={14} className="shrink-0 text-primary" />
+              ) : (
+                <FileWarning size={14} className="shrink-0 text-amber-300" />
+              )}
+              <p className="text-[12px] font-semibold text-text">{item.label}</p>
+            </div>
+            <p className="mt-2 line-clamp-2 text-[11px] leading-5 text-sub">{item.value}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FocusedControlMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="min-w-0 rounded-[14px] border border-white/[0.022] bg-black/25 px-3 py-2.5">
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 truncate text-[12px] font-semibold text-text">{value}</p>
+    </div>
+  );
+}
+
+function CampaignFormSection({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-[20px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(13,16,23,0.96),rgba(8,10,15,0.94))] p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 max-w-2xl">
+          <p className="inline-flex items-center gap-2 rounded-full border border-primary/14 bg-primary/[0.055] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+            <Layers3 size={12} />
+            {eyebrow}
+          </p>
+          <h3 className="mt-3 text-[1rem] font-semibold tracking-[-0.03em] text-text">
+            {title}
+          </h3>
+          <p className="mt-1.5 text-[12px] leading-5 text-sub">{description}</p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function CampaignSubmitBar({
+  submitting,
+  submitLabel,
+  focusBlockId,
+  isStoryboardLayout,
+}: {
+  submitting: boolean;
+  submitLabel: string;
+  focusBlockId: CampaignStoryboardBlockId | null;
+  isStoryboardLayout: boolean;
+}) {
+  return (
+    <div className="rounded-[18px] border border-primary/14 bg-[linear-gradient(135deg,rgba(199,255,0,0.085),rgba(255,255,255,0.025))] p-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+            <Sparkles size={12} />
+            Generation gate
+          </p>
+          <p className="mt-1.5 text-[12px] leading-5 text-sub">
+            {isStoryboardLayout
+              ? `Submitting uses the ${focusBlockId?.replace(/_/g, " ") ?? "current"} launch controls.`
+              : "Submitting saves the campaign with the full editor values."}
+          </p>
+        </div>
+        <button
+          disabled={submitting}
+          className="inline-flex items-center justify-center gap-2 rounded-[14px] bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.13em] text-black transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? "Saving..." : submitLabel}
+          <ArrowRight size={14} />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -926,22 +1121,22 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-semibold text-text">
+    <label className="block min-w-0">
+      <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.12em] text-sub">
         {label}
         {required ? <span className="ml-1 text-rose-300">*</span> : null}
       </span>
       {children}
-      {error ? <span className="mt-2 block text-sm text-rose-200">{error}</span> : null}
+      {error ? <span className="mt-2 block text-[12px] font-semibold text-rose-200">{error}</span> : null}
     </label>
   );
 }
 
 function getInputClassName(hasError: boolean) {
-  return `w-full rounded-2xl border px-4 py-3 outline-none ${
+  return `w-full rounded-[14px] border px-3.5 py-3 text-sm outline-none transition focus:border-primary/25 ${
     hasError
       ? "border-rose-400/60 bg-rose-500/[0.055] text-text"
-      : "border-white/[0.028] bg-white/[0.014]"
+      : "border-white/[0.028] bg-black/25 text-text"
   }`;
 }
 
@@ -955,8 +1150,8 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between rounded-2xl border border-white/[0.028] bg-white/[0.014] px-4 py-4">
-      <span className="pr-4 text-sm font-semibold text-text">{label}</span>
+    <label className="flex items-center justify-between rounded-[14px] border border-white/[0.028] bg-black/25 px-3.5 py-3">
+      <span className="pr-4 text-[12px] font-semibold text-text">{label}</span>
       <input
         type="checkbox"
         checked={checked}
