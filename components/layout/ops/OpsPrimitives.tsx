@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { XpValue, isXpDisplay } from "@/components/ui/XpBadge";
 
 function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -99,6 +100,8 @@ export function OpsMetricCard({
   sub?: string;
   emphasis?: "default" | "primary" | "warning";
 }) {
+  const hasXpBadge = isXpDisplay(label, value, sub);
+
   return (
     <div
       className={cx(
@@ -122,7 +125,13 @@ export function OpsMetricCard({
       />
       <div className="relative z-10">
         <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
-        <p className="mt-1.5 text-[0.96rem] font-semibold tracking-[-0.02em] text-text">{value}</p>
+        <div className="mt-1.5">
+          {hasXpBadge ? (
+            <XpValue size="md">{value}</XpValue>
+          ) : (
+            <p className="text-[0.96rem] font-semibold tracking-[-0.02em] text-text">{value}</p>
+          )}
+        </div>
         {sub ? <p className="mt-1 text-[11px] leading-5 text-sub">{sub}</p> : null}
       </div>
     </div>
@@ -130,10 +139,18 @@ export function OpsMetricCard({
 }
 
 export function OpsSnapshotRow({ label, value }: { label: string; value: string }) {
+  const hasXpBadge = isXpDisplay(label, value);
+
   return (
     <div className="rounded-[14px] border border-white/[0.016] bg-white/[0.01] px-3 py-2.5">
       <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
-      <p className="mt-1.5 break-words text-[12px] font-semibold leading-5 text-text [overflow-wrap:anywhere]">{value}</p>
+      <div className="mt-1.5">
+        {hasXpBadge ? (
+          <XpValue size="sm">{value}</XpValue>
+        ) : (
+          <p className="break-words text-[12px] font-semibold leading-5 text-text [overflow-wrap:anywhere]">{value}</p>
+        )}
+      </div>
     </div>
   );
 }

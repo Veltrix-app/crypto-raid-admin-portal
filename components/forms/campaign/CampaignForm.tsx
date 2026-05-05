@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import StudioModeToggle from "@/components/forms/studio/StudioModeToggle";
 import StudioReadinessCard from "@/components/forms/studio/StudioReadinessCard";
+import { XpValue } from "@/components/ui/XpBadge";
 import type { CampaignStoryboardBlockId } from "@/lib/studio/campaign-storyboard";
 import { AdminCampaign } from "@/types/entities/campaign";
 import { AdminProject } from "@/types/entities/project";
@@ -553,7 +554,7 @@ export default function CampaignForm({
                 {activePreset.visibility}
               </span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-text">
-                {activePreset.xpBudget} xp
+                <XpValue size="xs">{activePreset.xpBudget} XP</XpValue>
               </span>
             </div>
           </div>

@@ -3,6 +3,7 @@
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ActivityChart from "@/components/charts/activity/ActivityChart";
 import { ContributionTierBadge, formatContributionTier } from "@/components/ui/ContributionTierBadge";
+import { XpValue } from "@/components/ui/XpBadge";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function AnalyticsUsersPage() {
@@ -75,7 +76,9 @@ export default function AnalyticsUsersPage() {
             <div className="grid grid-cols-6 border-b border-white/[0.026] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-sub">
               <div>User</div>
               <div>Tier</div>
-              <div>XP</div>
+                  <div className="inline-flex items-center gap-1.5">
+                    <XpValue size="xs">XP</XpValue>
+                  </div>
               <div>Trust</div>
               <div>Sybil</div>
               <div>Completed</div>
@@ -94,7 +97,9 @@ export default function AnalyticsUsersPage() {
                   <div>
                     <ContributionTierBadge tier={user.contributionTier} size="sm" />
                   </div>
-                  <div>{user.xp}</div>
+                  <div>
+                    <XpValue size="sm">{user.xp}</XpValue>
+                  </div>
                   <div>{user.trustScore}</div>
                   <div>{user.sybilScore}</div>
                   <div>{user.questsCompleted + user.raidsCompleted}</div>

@@ -2,6 +2,7 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { XpValue } from "@/components/ui/XpBadge";
 import type { DiscordCommunityBotSettings } from "@/components/community/community-config";
 
 type CaptainRole = "community_captain" | "raid_lead" | "growth_lead";
@@ -206,10 +207,12 @@ export function CommunityCaptainsPanel({
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-bold text-text">{captain.username}</p>
-                        <p className="mt-2 text-sm text-sub">
+                        <p className="mt-2 flex flex-wrap items-center gap-1.5 text-sm text-sub">
                           {roleLabel(captain.role)}
-                          {captain.label ? ` · ${captain.label}` : ""} · {captain.xp} XP · Trust{" "}
-                          {captain.trust}
+                          {captain.label ? <span>· {captain.label}</span> : null}
+                          <span>·</span>
+                          <XpValue size="xs">{captain.xp} XP</XpValue>
+                          <span>· Trust {captain.trust}</span>
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -368,9 +371,10 @@ export function CommunityCaptainsPanel({
                         {selectedCandidate ? (
                           <>
                             <p className="font-semibold text-text">{selectedCandidate.username}</p>
-                            <p className="mt-2 leading-6">
-                              {selectedCandidate.roleHint} · {selectedCandidate.xp} XP · Trust{" "}
-                              {selectedCandidate.trust}
+                            <p className="mt-2 flex flex-wrap items-center gap-1.5 leading-6">
+                              <span>{selectedCandidate.roleHint} ·</span>
+                              <XpValue size="xs">{selectedCandidate.xp} XP</XpValue>
+                              <span>· Trust {selectedCandidate.trust}</span>
                             </p>
                             <p className="mt-2 leading-6">
                               {selectedCandidate.walletVerified ? "Wallet ready" : "Wallet missing"} ·{" "}

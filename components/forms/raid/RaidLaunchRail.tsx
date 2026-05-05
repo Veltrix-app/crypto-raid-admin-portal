@@ -1,6 +1,7 @@
 "use client";
 
 import type { RaidLaunchWarning } from "@/lib/studio/raid-studio";
+import { XpValue, isXpDisplay } from "@/components/ui/XpBadge";
 
 export default function RaidLaunchRail({
   rewardXp,
@@ -65,10 +66,14 @@ function LaunchStat({
   label: string;
   value: string;
 }) {
+  const hasXpBadge = isXpDisplay(label, value);
+
   return (
     <div className="rounded-[20px] border border-white/[0.032] bg-white/[0.018] px-4 py-4">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-2 text-sm font-semibold uppercase tracking-[0.08em] text-text">{value}</p>
+      <div className="mt-2">
+        {hasXpBadge ? <XpValue size="sm">{value}</XpValue> : <p className="text-sm font-semibold uppercase tracking-[0.08em] text-text">{value}</p>}
+      </div>
     </div>
   );
 }

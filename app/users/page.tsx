@@ -15,6 +15,7 @@ import {
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
 import { ContributionTierBadge } from "@/components/ui/ContributionTierBadge";
+import { XpValue, isXpDisplay } from "@/components/ui/XpBadge";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -237,7 +238,7 @@ export default function UsersPage() {
                         </div>
 
                         <p className="mt-2.5 text-[12px] text-sub">
-                          XP: {user.xp.toLocaleString()} / Level: {user.level} / Streak: {user.streak}
+                          <XpValue size="xs">{user.xp.toLocaleString()} XP</XpValue> / Level: {user.level} / Streak: {user.streak}
                         </p>
 
                         <div className="mt-3 grid gap-2.5 md:grid-cols-4">
@@ -312,7 +313,8 @@ export default function UsersPage() {
                             <ContributionTierBadge tier={user.contributionTier} size="sm" />
                           </div>
                           <p className="mt-2.5 text-[12px] leading-5 text-sub">
-                            Trust {user.trustScore} / Sybil {user.sybilScore} / XP {user.xp.toLocaleString()}
+                            Trust {user.trustScore} / Sybil {user.sybilScore} /{" "}
+                            <XpValue size="xs">{user.xp.toLocaleString()} XP</XpValue>
                           </p>
                           <div className="mt-3 grid gap-2.5 md:grid-cols-3">
                             <Metric label="Quests" value={user.questsCompleted} />
@@ -378,10 +380,14 @@ function SignalRow({ label, value }: { label: string; value: string }) {
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {
+  const hasXpBadge = isXpDisplay(label, value);
+
   return (
     <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.018] px-3 py-2.5">
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-1.5 text-[12px] font-semibold text-text">{value}</p>
+      <div className="mt-1.5">
+        {hasXpBadge ? <XpValue size="sm">{value}</XpValue> : <p className="text-[12px] font-semibold text-text">{value}</p>}
+      </div>
     </div>
   );
 }

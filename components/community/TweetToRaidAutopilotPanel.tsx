@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { XpValue } from "@/components/ui/XpBadge";
 import type {
   GeneratedTweetRaidRow,
   TweetToRaidAutopilotState,
@@ -714,7 +715,7 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
                         <OpsStatusPill tone={getCandidateTone(candidate)}>{candidate.status}</OpsStatusPill>
                       </div>
                       <div className="mt-3 grid gap-2 text-[11px] text-sub sm:grid-cols-2">
-                        <span>XP: +{candidate.reward_xp}</span>
+                        <XpValue size="xs">+{candidate.reward_xp} XP</XpValue>
                         <span>Ends: {formatDate(candidate.ends_at)}</span>
                       </div>
                       {candidate.tweet_url ? (
@@ -781,8 +782,9 @@ export function TweetToRaidAutopilotPanel({ projectId, projectName, campaigns }:
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="break-words text-[12px] font-bold text-text">{raid.title}</p>
-                        <p className="mt-1 text-[11px] text-sub">
-                          +{raid.reward_xp ?? 0} XP · {raid.status} · ends {formatDate(raid.ends_at)}
+                        <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-sub">
+                          <XpValue size="xs">+{raid.reward_xp ?? 0} XP</XpValue>
+                          <span>· {raid.status} · ends {formatDate(raid.ends_at)}</span>
                         </p>
                       </div>
                       <a

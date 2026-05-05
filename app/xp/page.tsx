@@ -11,6 +11,7 @@ import {
   OpsSelect,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
+import { XpValue, isXpDisplay } from "@/components/ui/XpBadge";
 import type { DefiXpReviewRead, DefiXpReviewRow } from "@/lib/xp/defi-xp-review";
 
 type DecisionFilter = "all" | "clear" | "review" | "blocked";
@@ -223,7 +224,7 @@ export default function XpReviewPage() {
                       className="flex items-center justify-between gap-3 rounded-[12px] border border-white/[0.035] bg-black/10 px-3 py-2"
                     >
                       <span className="text-[12px] text-sub">{event.sourceLabel}</span>
-                      <span className="text-[12px] font-semibold text-text">{event.xp} XP</span>
+                      <XpValue size="sm">{event.xp} XP</XpValue>
                     </div>
                   ))}
                 </div>
@@ -248,7 +249,7 @@ function XpEventCard({ row }: { row: DefiXpReviewRow }) {
           <p className="mt-2 text-[12px] leading-5 text-sub">{row.reason}</p>
         </div>
         <div className="text-right">
-          <p className="text-[1rem] font-semibold text-text">{row.xp} XP</p>
+          <XpValue size="md">{row.xp} XP</XpValue>
           <p className="mt-1 text-[11px] text-sub">{formatDate(row.createdAt)}</p>
         </div>
       </div>
@@ -278,12 +279,18 @@ function CompactReviewRow({ row }: { row: DefiXpReviewRow }) {
 }
 
 function MiniMetric({ label, value }: { label: string; value: string | number }) {
+  const hasXpBadge = isXpDisplay(label, value);
+
   return (
     <div className="rounded-[12px] border border-white/[0.035] bg-black/10 px-3 py-2">
       <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-1.5 break-words text-[12px] font-semibold text-text [overflow-wrap:anywhere]">
-        {value}
-      </p>
+      <div className="mt-1.5">
+        {hasXpBadge ? (
+          <XpValue size="sm">{value}</XpValue>
+        ) : (
+          <p className="break-words text-[12px] font-semibold text-text [overflow-wrap:anywhere]">{value}</p>
+        )}
+      </div>
     </div>
   );
 }

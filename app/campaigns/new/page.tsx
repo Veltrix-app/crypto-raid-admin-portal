@@ -30,6 +30,7 @@ import StudioStepRail from "@/components/forms/studio/StudioStepRail";
 import StudioTopFrame from "@/components/forms/studio/StudioTopFrame";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import CampaignForm from "@/components/forms/campaign/CampaignForm";
+import { XpValue, isXpDisplay } from "@/components/ui/XpBadge";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import {
@@ -2409,10 +2410,14 @@ function TemplateOptionMetric({
   label: string;
   value: string | number;
 }) {
+  const hasXpBadge = isXpDisplay(label, value);
+
   return (
     <div className="min-w-0 rounded-[14px] border border-white/[0.022] bg-black/20 px-3 py-2.5">
       <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
-      <p className="mt-1 truncate text-[12px] font-semibold text-text">{value}</p>
+      <div className="mt-1">
+        {hasXpBadge ? <XpValue size="sm">{value}</XpValue> : <p className="truncate text-[12px] font-semibold text-text">{value}</p>}
+      </div>
     </div>
   );
 }

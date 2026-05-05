@@ -18,6 +18,7 @@ import {
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ProjectWorkspaceFrame from "@/components/layout/shell/ProjectWorkspaceFrame";
 import { OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { XpValue, isXpDisplay } from "@/components/ui/XpBadge";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
 import ProjectTemplateLibrary from "@/components/projects/templates/ProjectTemplateLibrary";
@@ -246,6 +247,9 @@ function CampaignBoardSignal({
   value: string | number;
   sub: string;
 }) {
+  const hasXpValue = isXpDisplay(label, value);
+  const hasXpSub = isXpDisplay(sub);
+
   return (
     <div className="min-w-0 rounded-[14px] border border-white/[0.022] bg-white/[0.012] px-3 py-2.5">
       <div className="flex items-center justify-between gap-2">
@@ -255,10 +259,18 @@ function CampaignBoardSignal({
         <span className="shrink-0 text-primary">{icon}</span>
       </div>
       <div className="mt-1.5 flex items-end justify-between gap-2">
-        <p className="truncate text-[0.98rem] font-semibold tracking-[-0.02em] text-text">
-          {value}
-        </p>
-        <p className="truncate text-[10px] font-semibold text-sub">{sub}</p>
+        {hasXpValue ? (
+          <XpValue size="sm">{value}</XpValue>
+        ) : (
+          <p className="truncate text-[0.98rem] font-semibold tracking-[-0.02em] text-text">
+            {value}
+          </p>
+        )}
+        {hasXpSub ? (
+          <XpValue size="xs">{sub}</XpValue>
+        ) : (
+          <p className="truncate text-[10px] font-semibold text-sub">{sub}</p>
+        )}
       </div>
     </div>
   );
@@ -428,7 +440,7 @@ export default function ProjectCampaignsPage() {
                         XP budget
                       </p>
                       <p className="mt-1 text-[12px] font-semibold text-text">
-                        {campaign.xpBudget.toLocaleString()}
+                        <XpValue size="sm">{campaign.xpBudget.toLocaleString()} XP</XpValue>
                       </p>
                     </div>
                   </div>

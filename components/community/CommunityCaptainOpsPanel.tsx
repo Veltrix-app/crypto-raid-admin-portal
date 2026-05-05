@@ -10,6 +10,7 @@ import {
   type CommunityCaptainSeatScope,
 } from "@/components/community/community-config";
 import { OpsMetricCard, OpsPanel, OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
+import { XpValue } from "@/components/ui/XpBadge";
 
 type CaptainCard = {
   authUserId: string;
@@ -145,10 +146,12 @@ export function CommunityCaptainOpsPanel({
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-bold text-text">{captain.username}</p>
-                        <p className="mt-2 text-sm text-sub">
+                        <p className="mt-2 flex flex-wrap items-center gap-1.5 text-sm text-sub">
                           {roleLabel(captain.role)}
-                          {captain.label ? ` · ${captain.label}` : ""} · {captain.xp} XP · Trust{" "}
-                          {captain.trust}
+                          {captain.label ? <span>· {captain.label}</span> : null}
+                          <span>·</span>
+                          <XpValue size="xs">{captain.xp} XP</XpValue>
+                          <span>· Trust {captain.trust}</span>
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">

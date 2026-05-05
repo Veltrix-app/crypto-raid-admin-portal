@@ -3,6 +3,7 @@
 import { ArrowRight } from "lucide-react";
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
+import { XpValue, isXpDisplay } from "@/components/ui/XpBadge";
 
 export function DetailHero({
   eyebrow,
@@ -56,10 +57,18 @@ export function DetailMetricCard({
   value: string | number;
   hint?: string;
 }) {
+  const hasXpBadge = isXpDisplay(label, value, hint);
+
   return (
     <div className="rounded-[15px] border border-white/[0.016] bg-[linear-gradient(180deg,rgba(16,20,28,0.8),rgba(9,12,18,0.82))] px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.08)]">
       <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
-      <p className="mt-1.5 text-[0.84rem] font-semibold tracking-[-0.02em] text-text">{value}</p>
+      <div className="mt-1.5">
+        {hasXpBadge ? (
+          <XpValue size="md">{value}</XpValue>
+        ) : (
+          <p className="text-[0.84rem] font-semibold tracking-[-0.02em] text-text">{value}</p>
+        )}
+      </div>
       {hint ? <p className="mt-1 text-[10px] leading-5 text-sub">{hint}</p> : null}
     </div>
   );
@@ -127,10 +136,18 @@ export function DetailMetaRow({
   label: string;
   value: string | number;
 }) {
+  const hasXpBadge = isXpDisplay(label, value);
+
   return (
     <div className="min-w-0 rounded-[14px] border border-white/[0.016] bg-white/[0.01] px-3 py-2.5">
       <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
-      <p className="mt-1 break-words text-[11px] font-semibold text-text [overflow-wrap:anywhere]">{value}</p>
+      <div className="mt-1">
+        {hasXpBadge ? (
+          <XpValue size="sm">{value}</XpValue>
+        ) : (
+          <p className="break-words text-[11px] font-semibold text-text [overflow-wrap:anywhere]">{value}</p>
+        )}
+      </div>
     </div>
   );
 }

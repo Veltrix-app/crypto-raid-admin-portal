@@ -19,6 +19,7 @@ import {
   setRewardTreasuryConfig,
   type RewardTreasuryConfig,
 } from "@/lib/rewards/reward-treasury";
+import { XpValue } from "@/components/ui/XpBadge";
 import { AdminReward } from "@/types/entities/reward";
 import { AdminProject } from "@/types/entities/project";
 import { AdminCampaign } from "@/types/entities/campaign";
@@ -1029,8 +1030,8 @@ function RewardPreviewSurface({
           </h3>
           <p className="mt-2 text-[12px] leading-5 text-sub">{description}</p>
         </div>
-        <span className="rounded-[14px] border border-white/[0.026] bg-black/20 px-3 py-2 text-[12px] font-bold text-text">
-          {cost} XP
+        <span className="inline-flex rounded-[14px] border border-white/[0.026] bg-black/20 px-3 py-2">
+          <XpValue size="sm">{cost} XP</XpValue>
         </span>
       </div>
 

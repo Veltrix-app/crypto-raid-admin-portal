@@ -13,6 +13,7 @@ import {
 } from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
+import { XpValue, isXpDisplay } from "@/components/ui/XpBadge";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function QuestsPage() {
@@ -365,6 +366,8 @@ function QuestSignal({
   value: string;
   tone?: "default" | "warning";
 }) {
+  const hasXpBadge = isXpDisplay(label, value);
+
   return (
     <div
       className={`rounded-[18px] border px-3.5 py-3 ${
@@ -374,7 +377,9 @@ function QuestSignal({
       }`}
     >
       <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">{label}</p>
-      <p className="mt-1.5 text-[13px] font-semibold text-text">{value}</p>
+      <div className="mt-1.5">
+        {hasXpBadge ? <XpValue size="sm">{value}</XpValue> : <p className="text-[13px] font-semibold text-text">{value}</p>}
+      </div>
     </div>
   );
 }
@@ -428,7 +433,13 @@ function QuestSurfaceCard({
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sub">
                   {stat.label}
                 </p>
-                <p className="mt-1 text-[12px] font-semibold text-text">{stat.value}</p>
+                <div className="mt-1">
+                  {isXpDisplay(stat.label, stat.value) ? (
+                    <XpValue size="sm">{stat.value}</XpValue>
+                  ) : (
+                    <p className="text-[12px] font-semibold text-text">{stat.value}</p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
