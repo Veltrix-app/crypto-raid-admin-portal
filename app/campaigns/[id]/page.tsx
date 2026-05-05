@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Gem, PauseCircle, PlayCircle } from "lucide-react";
 import { PortalBillingBlockNotice } from "@/components/billing/PortalBillingBlockNotice";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import AdminShell from "@/components/layout/shell/AdminShell";
@@ -34,6 +35,7 @@ import {
 import { useProjectOps } from "@/hooks/useProjectOps";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
+import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
 import { DbAuditLog, DbVerificationResult } from "@/types/database";
 
 export default function CampaignDetailPage() {
@@ -51,6 +53,10 @@ export default function CampaignDetailPage() {
   const rewards = useAdminPortalStore((s) => s.rewards);
   const submissions = useAdminPortalStore((s) => s.submissions);
   const reviewFlags = useAdminPortalStore((s) => s.reviewFlags);
+  const featuredShardPools = useAdminPortalStore((s) => s.featuredShardPools);
+  const updateFeaturedShardPoolStatus = useAdminPortalStore(
+    (s) => s.updateFeaturedShardPoolStatus
+  );
   const [snapshot, setSnapshot] = useState<{
     submissions: number;
     approved: number;
@@ -75,6 +81,11 @@ export default function CampaignDetailPage() {
   } | null>(null);
   const [runningAction, setRunningAction] = useState<ProjectContentAction | null>(null);
   const [actionMessage, setActionMessage] = useState<{
+    tone: "error" | "success";
+    text: string;
+  } | null>(null);
+  const [boostActionId, setBoostActionId] = useState<string | null>(null);
+  const [boostMessage, setBoostMessage] = useState<{
     tone: "error" | "success";
     text: string;
   } | null>(null);
@@ -104,6 +115,9 @@ export default function CampaignDetailPage() {
   const relatedRaids = raids.filter((r) => r.campaignId === currentCampaignId);
   const relatedQuests = quests.filter((q) => q.campaignId === currentCampaignId);
   const relatedRewards = rewards.filter((reward) => reward.campaignId === currentCampaignId);
+  const campaignShardPools = featuredShardPools.filter(
+    (pool) => pool.campaignId === currentCampaignId && !pool.questId && !pool.raidId
+  );
   const campaignBlueprintSummary = getCampaignBlueprintSummary(
     currentCampaign?.campaignType ?? "hybrid"
   );
@@ -390,6 +404,33 @@ export default function CampaignDetailPage() {
     }
   }
 
+  async function handleShardPoolStatus(pool: AdminFeaturedShardPool) {
+    const nextStatus = pool.status === "active" ? "paused" : "active";
+    setBoostMessage(null);
+    setBoostActionId(pool.id);
+
+    try {
+      await updateFeaturedShardPoolStatus(pool.id, nextStatus);
+      setBoostMessage({
+        tone: "success",
+        text:
+          nextStatus === "active"
+            ? "Shard boost resumed."
+            : "Shard boost paused.",
+      });
+    } catch (error) {
+      setBoostMessage({
+        tone: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to update the shard boost.",
+      });
+    } finally {
+      setBoostActionId(null);
+    }
+  }
+
   return (
     <AdminShell>
       <div className="space-y-4">
@@ -488,6 +529,36 @@ export default function CampaignDetailPage() {
           >
             {actionMessage.text}
           </div>
+        ) : null}
+
+        {campaignShardPools.length > 0 ? (
+          <DetailSurface
+            eyebrow="Shard boost"
+            title="Campaign hunt pressure"
+            description="Finite shard pools create extra urgency around featured quest and raid completions without changing the campaign backend flow."
+          >
+            {boostMessage ? (
+              <div
+                className={`mb-3 rounded-[16px] border px-3.5 py-2.5 text-[12px] font-semibold ${
+                  boostMessage.tone === "success"
+                    ? "border-primary/25 bg-primary/[0.055] text-primary"
+                    : "border-rose-500/30 bg-rose-500/[0.055] text-rose-200"
+                }`}
+              >
+                {boostMessage.text}
+              </div>
+            ) : null}
+            <div className="grid gap-3 xl:grid-cols-2">
+              {campaignShardPools.map((pool) => (
+                <CampaignShardPoolCard
+                  key={pool.id}
+                  pool={pool}
+                  busy={boostActionId === pool.id}
+                  onToggle={() => void handleShardPoolStatus(pool)}
+                />
+              ))}
+            </div>
+          </DetailSurface>
         ) : null}
 
         <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.016] p-4">
@@ -884,6 +955,78 @@ function getCampaignBlueprintSummary(campaignType: string) {
     default:
       return `This campaign is currently configured as ${label}. Use the builder below to tighten its hook, mechanics and reward loop before scaling traffic into it.`;
   }
+}
+
+function CampaignShardPoolCard({
+  pool,
+  busy,
+  onToggle,
+}: {
+  pool: AdminFeaturedShardPool;
+  busy: boolean;
+  onToggle: () => void;
+}) {
+  const usedShards = Math.max(0, pool.poolSize - pool.remainingShards);
+  const remainingPercent =
+    pool.poolSize > 0
+      ? Math.max(0, Math.min(100, Math.round((pool.remainingShards / pool.poolSize) * 100)))
+      : 0;
+  const canResume = pool.status === "paused" || pool.status === "scheduled" || pool.status === "draft";
+  const isActive = pool.status === "active";
+
+  return (
+    <div className="relative overflow-hidden rounded-[18px] border border-white/[0.032] bg-[radial-gradient(circle_at_0%_0%,rgba(199,255,0,0.07),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-3.5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+            <Gem size={13} />
+            {pool.status}
+          </p>
+          <h3 className="mt-2 truncate text-[0.98rem] font-semibold tracking-[-0.02em] text-text">
+            {pool.label}
+          </h3>
+          <p className="mt-1.5 text-[11px] leading-5 text-sub">
+            +{pool.bonusMin}-{pool.bonusMax} bonus shards per verified action.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          disabled={busy || (!isActive && !canResume)}
+          className={`inline-flex items-center gap-2 rounded-[14px] px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-55 ${
+            isActive
+              ? "border border-amber-500/25 bg-amber-500/[0.07] text-amber-200 hover:bg-amber-500/[0.11]"
+              : "border border-primary/25 bg-primary/[0.07] text-primary hover:bg-primary/[0.11]"
+          }`}
+        >
+          {isActive ? <PauseCircle size={13} /> : <PlayCircle size={13} />}
+          {busy ? "Updating..." : isActive ? "Pause boost" : "Resume boost"}
+        </button>
+      </div>
+
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/35">
+        <div
+          className="h-full rounded-full bg-[linear-gradient(90deg,#c7ff00,#34d399)] shadow-[0_0_18px_rgba(199,255,0,0.24)]"
+          style={{ width: `${remainingPercent}%` }}
+        />
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <ShardPoolStat label="Remaining" value={pool.remainingShards.toLocaleString("en-US")} />
+        <ShardPoolStat label="Issued" value={usedShards.toLocaleString("en-US")} />
+        <ShardPoolStat label="Pool" value={pool.poolSize.toLocaleString("en-US")} />
+      </div>
+    </div>
+  );
+}
+
+function ShardPoolStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-[14px] border border-white/[0.026] bg-black/20 px-3 py-2.5">
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 truncate text-[12px] font-semibold text-text">{value}</p>
+    </div>
+  );
 }
 
 function AnalyticsStat({

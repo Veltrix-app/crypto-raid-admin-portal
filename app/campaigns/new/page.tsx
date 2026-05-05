@@ -23,6 +23,7 @@ import CampaignLaunchPreview from "@/components/forms/campaign/CampaignLaunchPre
 import CampaignMissionMap from "@/components/forms/campaign/CampaignMissionMap";
 import CampaignStoryboardCanvas from "@/components/forms/campaign/CampaignStoryboardCanvas";
 import CampaignStoryboardInspector from "@/components/forms/campaign/CampaignStoryboardInspector";
+import CampaignShardBoostModule from "@/components/forms/campaign/CampaignShardBoostModule";
 import StudioEntryCommandDeck from "@/components/forms/studio/StudioEntryCommandDeck";
 import StudioModeToggle from "@/components/forms/studio/StudioModeToggle";
 import StudioShell from "@/components/forms/studio/StudioShell";
@@ -42,6 +43,10 @@ import {
   ResolvedQuestDraft,
   ResolvedRewardDraft,
 } from "@/lib/campaign-templates";
+import {
+  buildFeaturedShardPoolDraft,
+  type FeaturedShardPoolPresetId,
+} from "@/lib/lootboxes/featured-shard-pool-presets";
 import {
   CampaignStudioAudienceId,
   CampaignStudioIntentId,
@@ -623,8 +628,10 @@ function NewCampaignPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeProjectId = useAdminAuthStore((s) => s.activeProjectId);
+  const authUserId = useAdminAuthStore((s) => s.authUserId);
   const setActiveProjectId = useAdminAuthStore((s) => s.setActiveProjectId);
   const createCampaign = useAdminPortalStore((s) => s.createCampaign);
+  const createFeaturedShardPool = useAdminPortalStore((s) => s.createFeaturedShardPool);
   const createQuest = useAdminPortalStore((s) => s.createQuest);
   const createReward = useAdminPortalStore((s) => s.createReward);
   const createProjectCampaignTemplate = useAdminPortalStore(
@@ -667,6 +674,8 @@ function NewCampaignPageContent() {
   const [currentStep, setCurrentStep] = useState<BuilderStepId>("template");
   const [visitedSteps, setVisitedSteps] = useState<BuilderStepId[]>(["template"]);
   const [campaignTitleDraft, setCampaignTitleDraft] = useState("");
+  const [shardBoostPreset, setShardBoostPreset] =
+    useState<FeaturedShardPoolPresetId>("base_featured");
   const [stepError, setStepError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationMessage, setGenerationMessage] = useState<string | null>(null);
@@ -1949,6 +1958,10 @@ function NewCampaignPageContent() {
               savedTemplateMessage={savedTemplateMessage}
               generationMessage={generationMessage}
             />
+            <CampaignShardBoostModule
+              value={shardBoostPreset}
+              onChange={setShardBoostPreset}
+            />
             <CampaignForm
               projects={projects}
               defaultProjectId={selectedProject?.id}
@@ -1980,6 +1993,19 @@ function NewCampaignPageContent() {
 
                 try {
                   const campaignId = await createCampaign(values);
+                  const shardPoolDraft = buildFeaturedShardPoolDraft({
+                    presetId: shardBoostPreset,
+                    projectId: values.projectId,
+                    campaignId,
+                    createdByAuthUserId: authUserId,
+                    startsAt: values.startsAt || null,
+                    endsAt: values.endsAt || null,
+                    status: values.status === "active" ? "active" : "scheduled",
+                  });
+
+                  if (shardPoolDraft) {
+                    await createFeaturedShardPool(shardPoolDraft);
+                  }
 
                   if (templatePlan) {
                     for (const quest of includedQuestDrafts) {
