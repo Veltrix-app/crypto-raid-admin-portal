@@ -203,6 +203,23 @@ export async function bootstrapPortalWorkspaceProject(params: {
   chain: string;
   category: string;
   description: string;
+  longDescription?: string;
+  logo?: string;
+  bannerUrl?: string;
+  website?: string;
+  xUrl?: string;
+  telegramUrl?: string;
+  discordUrl?: string;
+  docsUrl?: string;
+  waitlistUrl?: string;
+  launchPostUrl?: string;
+  tokenContractAddress?: string;
+  nftContractAddress?: string;
+  primaryWallet?: string;
+  brandAccent?: string;
+  brandMood?: string;
+  contactEmail?: string;
+  isPublic?: boolean;
 }) {
   const response = await fetch(`/api/accounts/${params.accountId}/projects/bootstrap`, {
     method: "POST",
@@ -214,6 +231,23 @@ export async function bootstrapPortalWorkspaceProject(params: {
       chain: params.chain,
       category: params.category,
       description: params.description,
+      longDescription: params.longDescription,
+      logo: params.logo,
+      bannerUrl: params.bannerUrl,
+      website: params.website,
+      xUrl: params.xUrl,
+      telegramUrl: params.telegramUrl,
+      discordUrl: params.discordUrl,
+      docsUrl: params.docsUrl,
+      waitlistUrl: params.waitlistUrl,
+      launchPostUrl: params.launchPostUrl,
+      tokenContractAddress: params.tokenContractAddress,
+      nftContractAddress: params.nftContractAddress,
+      primaryWallet: params.primaryWallet,
+      brandAccent: params.brandAccent,
+      brandMood: params.brandMood,
+      contactEmail: params.contactEmail,
+      isPublic: params.isPublic,
     }),
     cache: "no-store",
   });

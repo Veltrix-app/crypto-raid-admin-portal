@@ -13,8 +13,10 @@ import {
   OpsSnapshotRow,
   OpsStatusPill,
 } from "@/components/layout/ops/OpsPrimitives";
+import { fetchPortalCustomerBillingWorkspace } from "@/lib/billing/portal-billing";
 import { fetchCurrentPortalAccountActivation } from "@/lib/success/account-activation";
 import { fetchCurrentPortalSecurityAccount } from "@/lib/security/security-actions";
+import type { PortalCustomerBillingWorkspace } from "@/lib/billing/account-billing";
 import type { AdminCustomerGrowthSummary } from "@/types/entities/growth-analytics";
 import type { AdminSuccessAccountSummary } from "@/types/entities/success";
 import type { PortalSecurityCurrentAccount } from "@/types/entities/security";
@@ -43,6 +45,8 @@ function AccountOverviewContent() {
   const [activationSummary, setActivationSummary] = useState<AdminSuccessAccountSummary | null>(null);
   const [growthSummary, setGrowthSummary] = useState<AdminCustomerGrowthSummary | null>(null);
   const [securitySummary, setSecuritySummary] = useState<PortalSecurityCurrentAccount | null>(null);
+  const [billingWorkspace, setBillingWorkspace] =
+    useState<PortalCustomerBillingWorkspace | null>(null);
   const nextHref =
     primaryAccount?.firstProjectId && primaryAccount.currentStep === "open_launch_workspace"
       ? `/projects/${primaryAccount.firstProjectId}/launch`
@@ -139,6 +143,38 @@ function AccountOverviewContent() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadBillingWorkspace() {
+      if (!primaryAccount?.id) {
+        setBillingWorkspace(null);
+        return;
+      }
+
+      try {
+        const workspace = await fetchPortalCustomerBillingWorkspace(primaryAccount.id);
+        if (!active) {
+          return;
+        }
+
+        setBillingWorkspace(workspace);
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setBillingWorkspace(null);
+      }
+    }
+
+    void loadBillingWorkspace();
+
+    return () => {
+      active = false;
+    };
+  }, [primaryAccount?.id]);
+
   if (!primaryAccount) {
     return null;
   }
@@ -176,16 +212,21 @@ function AccountOverviewContent() {
             </Link>
           </div>
 
-          <div className="mt-3 grid gap-2.5 md:grid-cols-4">
+          <div className="mt-3 grid gap-2.5 md:grid-cols-5">
             <AccountStateTile
               label="Workspace"
               value={primaryAccount.name}
               detail="Primary account context."
             />
             <AccountStateTile
-              label="Status"
+              label="Workspace status"
               value={primaryAccount.status}
               detail="Account operating state."
+            />
+            <AccountStateTile
+              label="Current plan"
+              value={billingWorkspace?.currentPlan?.name ?? "Free"}
+              detail="Billing capacity tier."
             />
             <AccountStateTile
               label="Role"

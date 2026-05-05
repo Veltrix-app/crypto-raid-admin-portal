@@ -21,6 +21,11 @@ function appendCompletedStep(current: string[] | null | undefined, nextStep: str
   return existing.includes(nextStep) ? existing : [...existing, nextStep];
 }
 
+function readOptionalString(body: Record<string, unknown> | null, key: string) {
+  const value = body?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 function createBootstrapErrorResponse(error: unknown, fallbackMessage: string) {
   if (isBillingLimitError(error)) {
     return NextResponse.json(
@@ -60,7 +65,8 @@ export async function POST(
   }
 
   const body = await request.json().catch(() => null);
-  const projectName = typeof body?.name === "string" ? body.name.trim() : "";
+  const bodyRecord = body && typeof body === "object" ? (body as Record<string, unknown>) : null;
+  const projectName = readOptionalString(bodyRecord, "name") ?? "";
   const chain = typeof body?.chain === "string" && body.chain.trim() ? body.chain.trim() : "Base";
   const category =
     typeof body?.category === "string" && body.category.trim() ? body.category.trim() : "community";
@@ -68,6 +74,7 @@ export async function POST(
     typeof body?.description === "string" && body.description.trim()
       ? body.description.trim()
       : `${projectName || "This project"} is preparing launch setup in Veltrix.`;
+  const isPublic = typeof bodyRecord?.isPublic === "boolean" ? bodyRecord.isPublic : true;
 
   if (!projectName) {
     return NextResponse.json({ ok: false, error: "Project name is required." }, { status: 400 });
@@ -161,26 +168,30 @@ export async function POST(
       status: "draft",
       onboarding_status: "draft",
       description,
-      long_description: "",
+      long_description: readOptionalString(bodyRecord, "longDescription") ?? "",
       members: 1,
       campaigns: 0,
-      logo: "🚀",
-      banner_url: null,
-      website: null,
-      x_url: null,
-      telegram_url: null,
-      discord_url: null,
-      docs_url: null,
-      waitlist_url: null,
-      launch_post_url: null,
-      token_contract_address: null,
-      nft_contract_address: null,
-      primary_wallet: null,
-      brand_accent: null,
-      brand_mood: null,
-      contact_email: accountResponse.data.contact_email ?? user.email ?? null,
+      logo: readOptionalString(bodyRecord, "logo") ?? "\uD83D\uDE80",
+      banner_url: readOptionalString(bodyRecord, "bannerUrl"),
+      website: readOptionalString(bodyRecord, "website"),
+      x_url: readOptionalString(bodyRecord, "xUrl"),
+      telegram_url: readOptionalString(bodyRecord, "telegramUrl"),
+      discord_url: readOptionalString(bodyRecord, "discordUrl"),
+      docs_url: readOptionalString(bodyRecord, "docsUrl"),
+      waitlist_url: readOptionalString(bodyRecord, "waitlistUrl"),
+      launch_post_url: readOptionalString(bodyRecord, "launchPostUrl"),
+      token_contract_address: readOptionalString(bodyRecord, "tokenContractAddress"),
+      nft_contract_address: readOptionalString(bodyRecord, "nftContractAddress"),
+      primary_wallet: readOptionalString(bodyRecord, "primaryWallet"),
+      brand_accent: readOptionalString(bodyRecord, "brandAccent"),
+      brand_mood: readOptionalString(bodyRecord, "brandMood"),
+      contact_email:
+        readOptionalString(bodyRecord, "contactEmail") ??
+        accountResponse.data.contact_email ??
+        user.email ??
+        null,
       is_featured: false,
-      is_public: true,
+      is_public: isPublic,
     })
     .select("id, name")
     .single();

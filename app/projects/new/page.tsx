@@ -3,87 +3,152 @@
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Rocket, ShieldCheck, Sparkles } from "lucide-react";
+import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import ProjectForm from "@/components/forms/project/ProjectForm";
 import { OpsStatusPill } from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
+import { bootstrapPortalWorkspaceProject } from "@/lib/accounts/account-onboarding";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function NewProjectPage() {
+  return (
+    <AdminShell>
+      <NewProjectContent />
+    </AdminShell>
+  );
+}
+
+function NewProjectContent() {
   const router = useRouter();
   const createProject = useAdminPortalStore((s) => s.createProject);
   const createOnboardingRequest = useAdminPortalStore((s) => s.createOnboardingRequest);
   const projects = useAdminPortalStore((s) => s.projects);
   const role = useAdminAuthStore((s) => s.role);
+  const refreshMemberships = useAdminAuthStore((s) => s.refreshMemberships);
+  const { accessState, refresh } = useAccountEntryGuard();
   const isSuperAdmin = role === "super_admin";
+  const primaryAccount = accessState?.primaryAccount ?? null;
+  const isFirstProjectBootstrapMode =
+    !isSuperAdmin &&
+    primaryAccount?.currentStep === "create_project" &&
+    primaryAccount.projectCount === 0;
+  const projectCount = primaryAccount?.projectCount ?? projects.length;
+  const creationModeLabel = isSuperAdmin
+    ? "Create now"
+    : isFirstProjectBootstrapMode
+      ? "Create first project"
+      : "Submit for review";
+  const creationStatusLabel = isSuperAdmin
+    ? "Opens instantly"
+    : isFirstProjectBootstrapMode
+      ? "Opens launch"
+      : "Approval needed";
 
   return (
-    <AdminShell>
-      <PortalPageFrame
-        eyebrow="Project onboarding"
-        title="Create Project Workspace"
-        description="Create the project with a focused payload, then move directly into launch readiness."
-        actions={
-          <div className="flex min-w-[190px] items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sub">
-                Creation mode
-              </p>
-              <p className="mt-1 text-[0.92rem] font-semibold text-text">
-                {isSuperAdmin ? "Create now" : "Submit for review"}
-              </p>
-            </div>
-            <OpsStatusPill tone={isSuperAdmin ? "success" : "warning"}>
-              {isSuperAdmin ? "Opens instantly" : "Approval needed"}
-            </OpsStatusPill>
+    <PortalPageFrame
+      eyebrow="Project onboarding"
+      title="Create Project Workspace"
+      description="Create the project with a focused payload, then move directly into launch readiness."
+      actions={
+        <div className="flex min-w-[190px] items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sub">
+              Creation mode
+            </p>
+            <p className="mt-1 text-[0.92rem] font-semibold text-text">
+              {creationModeLabel}
+            </p>
           </div>
-        }
-        statusBand={
-          <ProjectCreationStatusBand
-            isSuperAdmin={isSuperAdmin}
-            projectCount={projects.length}
-          />
-        }
-      >
-        <ProjectForm
-          layout="horizontal"
-          submitLabel={isSuperAdmin ? "Create project" : "Submit request"}
-          onSubmit={async (values) => {
-            if (isSuperAdmin) {
-              const id = await createProject(values);
-              router.push(`/projects/${id}/launch?source=project_create`);
-              return;
-            }
-
-            await createOnboardingRequest({
-              projectName: values.name,
-              chain: values.chain,
-              category: values.category || "",
-              website: values.website || "",
-              contactEmail: values.contactEmail || "",
-              shortDescription: values.description,
-              longDescription: values.longDescription || "",
-              logo: values.logo,
-              bannerUrl: values.bannerUrl || "",
-              xUrl: values.xUrl || "",
-              telegramUrl: values.telegramUrl || "",
-              discordUrl: values.discordUrl || "",
-              requestedPlanId: "",
-            });
-            router.push("/projects");
-          }}
+          <OpsStatusPill tone={isSuperAdmin || isFirstProjectBootstrapMode ? "success" : "warning"}>
+            {creationStatusLabel}
+          </OpsStatusPill>
+        </div>
+      }
+      statusBand={
+        <ProjectCreationStatusBand
+          isSuperAdmin={isSuperAdmin}
+          isFirstProjectBootstrapMode={isFirstProjectBootstrapMode}
+          projectCount={projectCount}
         />
-      </PortalPageFrame>
-    </AdminShell>
+      }
+    >
+      <ProjectForm
+        layout="horizontal"
+        submitLabel={
+          isSuperAdmin || isFirstProjectBootstrapMode ? "Create project" : "Submit request"
+        }
+        onSubmit={async (values) => {
+          if (isSuperAdmin) {
+            const id = await createProject(values);
+            router.push(`/projects/${id}/launch?source=project_create`);
+            return;
+          }
+
+          if (isFirstProjectBootstrapMode && primaryAccount) {
+            const project = await bootstrapPortalWorkspaceProject({
+              accountId: primaryAccount.id,
+              name: values.name,
+              chain: values.chain,
+              category: values.category || "community",
+              description:
+                values.description ||
+                `${values.name || "This project"} is preparing launch setup in VYNTRO.`,
+              longDescription: values.longDescription,
+              logo: values.logo,
+              bannerUrl: values.bannerUrl,
+              website: values.website,
+              xUrl: values.xUrl,
+              telegramUrl: values.telegramUrl,
+              discordUrl: values.discordUrl,
+              docsUrl: values.docsUrl,
+              waitlistUrl: values.waitlistUrl,
+              launchPostUrl: values.launchPostUrl,
+              tokenContractAddress: values.tokenContractAddress,
+              nftContractAddress: values.nftContractAddress,
+              primaryWallet: values.primaryWallet,
+              brandAccent: values.brandAccent,
+              brandMood: values.brandMood,
+              contactEmail: values.contactEmail,
+              isPublic: values.isPublic,
+            });
+
+            await refreshMemberships();
+            router.push(`/projects/${project.projectId}/launch?source=workspace_bootstrap`);
+            void refresh();
+            return;
+          }
+
+          await createOnboardingRequest({
+            projectName: values.name,
+            chain: values.chain,
+            category: values.category || "",
+            website: values.website || "",
+            contactEmail: values.contactEmail || "",
+            shortDescription: values.description,
+            longDescription: values.longDescription || "",
+            logo: values.logo,
+            bannerUrl: values.bannerUrl || "",
+            xUrl: values.xUrl || "",
+            telegramUrl: values.telegramUrl || "",
+            discordUrl: values.discordUrl || "",
+            requestedPlanId: "",
+          });
+          router.push("/projects");
+        }}
+      />
+    </PortalPageFrame>
   );
 }
 
 function ProjectCreationStatusBand({
   isSuperAdmin,
+  isFirstProjectBootstrapMode,
   projectCount,
 }: {
   isSuperAdmin: boolean;
+  isFirstProjectBootstrapMode: boolean;
   projectCount: number;
 }) {
   return (
@@ -107,12 +172,22 @@ function ProjectCreationStatusBand({
           <ProjectCreationSignal
             icon={<ShieldCheck size={13} />}
             label="Mode"
-            value={isSuperAdmin ? "Create instantly" : "Submit for review"}
+            value={
+              isSuperAdmin
+                ? "Create instantly"
+                : isFirstProjectBootstrapMode
+                  ? "First project bootstrap"
+                  : "Submit for review"
+            }
           />
           <ProjectCreationSignal
             icon={<ArrowRight size={13} />}
             label="After submit"
-            value={isSuperAdmin ? "Open Launch setup" : "Return to project board"}
+            value={
+              isSuperAdmin || isFirstProjectBootstrapMode
+                ? "Open Launch setup"
+                : "Return to project board"
+            }
           />
           <ProjectCreationSignal
             icon={<Sparkles size={13} />}
