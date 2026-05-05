@@ -11,6 +11,10 @@ import { AdminReward } from "@/types/entities/reward";
 import { AdminSubmission } from "@/types/entities/submission";
 import { AdminTeamMember } from "@/types/entities/team-member";
 import { AdminBillingPlan } from "@/types/entities/billing-plan";
+import {
+  type AdminFeaturedShardPool,
+  type AdminFeaturedShardPoolDraft,
+} from "@/types/entities/featured-shard-pool";
 import { AdminClaim } from "@/types/entities/claim";
 import { AdminOnboardingRequest } from "@/types/entities/onboarding-request";
 import { AdminProjectBuilderTemplate } from "@/types/entities/project-builder-template";
@@ -37,6 +41,7 @@ import {
   DbBillingPlan,
   DbCampaign,
   DbClaim,
+  DbFeaturedShardPool,
   DbOnboardingRequest,
   DbProjectBuilderTemplate,
   DbProjectCampaignTemplate,
@@ -71,6 +76,7 @@ type AdminPortalState = {
   billingPlans: AdminBillingPlan[];
   projectBuilderTemplates: AdminProjectBuilderTemplate[];
   projectCampaignTemplates: AdminProjectCampaignTemplate[];
+  featuredShardPools: AdminFeaturedShardPool[];
 
   loadAll: () => Promise<void>;
 
@@ -83,6 +89,12 @@ type AdminPortalState = {
   updateCampaign: (id: string, input: Omit<AdminCampaign, "id">) => Promise<void>;
   deleteCampaign: (id: string) => Promise<void>;
   getCampaignById: (id: string) => AdminCampaign | undefined;
+
+  createFeaturedShardPool: (input: AdminFeaturedShardPoolDraft) => Promise<string>;
+  updateFeaturedShardPoolStatus: (
+    id: string,
+    status: AdminFeaturedShardPool["status"]
+  ) => Promise<void>;
 
   createRaid: (input: Omit<AdminRaid, "id">) => Promise<string>;
   updateRaid: (id: string, input: Omit<AdminRaid, "id">) => Promise<void>;
@@ -215,6 +227,14 @@ function isRewardDispatchEligible(reward: Pick<AdminReward, "status" | "visible"
   return reward.status === "active" && reward.visible;
 }
 
+function isMissingFeaturedShardPoolTable(error: { message?: string } | null | undefined) {
+  const message = error?.message?.toLowerCase() ?? "";
+  return (
+    message.includes("featured_shard_pools") ||
+    message.includes("could not find the table")
+  );
+}
+
 function assertRewardFundingReadyForLaunch(reward: Omit<AdminReward, "id">) {
   if (reward.status !== "active") return;
 
@@ -309,6 +329,41 @@ function mapCampaign(row: DbCampaign): AdminCampaign {
     endsAt: row.ends_at ?? "",
 
     status: row.status as AdminCampaign["status"],
+  };
+}
+
+function mapFeaturedShardPool(row: DbFeaturedShardPool): AdminFeaturedShardPool {
+  const status =
+    row.status === "draft" ||
+    row.status === "scheduled" ||
+    row.status === "active" ||
+    row.status === "paused" ||
+    row.status === "ended"
+      ? row.status
+      : "draft";
+
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    campaignId: row.campaign_id,
+    questId: row.quest_id,
+    raidId: row.raid_id,
+    label: row.label ?? "Shard Boost",
+    poolSize: row.pool_size ?? 0,
+    remainingShards: row.remaining_shards ?? 0,
+    bonusMin: row.bonus_min ?? 0,
+    bonusMax: row.bonus_max ?? 0,
+    perUserCap: row.per_user_cap,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    status,
+    createdByAuthUserId: row.created_by_auth_user_id,
+    metadata:
+      row.metadata && typeof row.metadata === "object"
+        ? row.metadata
+        : {},
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -798,6 +853,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
   billingPlans: [],
   projectBuilderTemplates: [],
   projectCampaignTemplates: [],
+  featuredShardPools: [],
 
   loadAll: async () => {
     const supabase = createClient();
@@ -811,6 +867,10 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     const questsQuery = supabase.from("quests").select("*").order("created_at", { ascending: false });
     const rewardsQuery = supabase.from("rewards").select("*").order("created_at", { ascending: false });
     const teamQuery = supabase.from("team_members").select("*").order("created_at", { ascending: false });
+    const featuredShardPoolsQuery = supabase
+      .from("featured_shard_pools")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     const scopedProjectsQuery =
       !isSuperAdmin && activeProjectId ? projectsQuery.eq("id", activeProjectId) : projectsQuery;
@@ -824,6 +884,10 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       !isSuperAdmin && activeProjectId ? rewardsQuery.eq("project_id", activeProjectId) : rewardsQuery;
     const scopedTeamQuery =
       !isSuperAdmin && activeProjectId ? teamQuery.eq("project_id", activeProjectId) : teamQuery;
+    const scopedFeaturedShardPoolsQuery =
+      !isSuperAdmin && activeProjectId
+        ? featuredShardPoolsQuery.eq("project_id", activeProjectId)
+        : featuredShardPoolsQuery;
     const scopedReviewFlagsQuery =
       !isSuperAdmin && activeProjectId
         ? supabase
@@ -879,6 +943,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       reviewFlagsRes,
       projectBuilderTemplatesRes,
       projectTemplatesRes,
+      featuredShardPoolsRes,
     ] = await Promise.all([
       scopedProjectsQuery,
       scopedCampaignsQuery,
@@ -896,6 +961,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       scopedReviewFlagsQuery,
       scopedProjectBuilderTemplatesQuery,
       scopedProjectTemplatesQuery,
+      scopedFeaturedShardPoolsQuery,
     ]);
 
     const campaignRows = (campaignsRes.data ?? []) as DbCampaign[];
@@ -907,6 +973,9 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     const projectReputationRows = projectReputationRes?.error
       ? []
       : ((projectReputationRes?.data ?? []) as DbUserProjectReputation[]);
+    const featuredShardPoolRows = isMissingFeaturedShardPoolTable(featuredShardPoolsRes.error)
+      ? []
+      : ((featuredShardPoolsRes.data ?? []) as DbFeaturedShardPool[]);
 
     const questsById = new Map(questRows.map((row) => [row.id, row]));
     const campaignsById = new Map(campaignRows.map((row) => [row.id, row]));
@@ -1011,6 +1080,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       projectBuilderTemplates: allBuilderTemplates,
       projectCampaignTemplates:
         builderCampaignTemplates.length > 0 ? builderCampaignTemplates : legacyCampaignTemplates,
+      featuredShardPools: featuredShardPoolRows.map(mapFeaturedShardPool),
     });
   },
 
@@ -1177,6 +1247,7 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
     set((state) => ({
       projects: state.projects.filter((item) => item.id !== id),
       campaigns: state.campaigns.filter((item) => item.projectId !== id),
+      featuredShardPools: state.featuredShardPools.filter((item) => item.projectId !== id),
     }));
   },
 
@@ -1295,10 +1366,108 @@ export const useAdminPortalStore = create<AdminPortalState>((set, get) => ({
       raids: state.raids.filter((item) => item.campaignId !== id),
       quests: state.quests.filter((item) => item.campaignId !== id),
       submissions: state.submissions.filter((item) => item.campaignId !== id),
+      featuredShardPools: state.featuredShardPools.filter((item) => item.campaignId !== id),
     }));
   },
 
   getCampaignById: (id) => get().campaigns.find((item) => item.id === id),
+
+  createFeaturedShardPool: async (input) => {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("featured_shard_pools")
+      .insert({
+        project_id: input.projectId,
+        campaign_id: input.campaignId,
+        quest_id: input.questId,
+        raid_id: input.raidId,
+        label: input.label,
+        pool_size: input.poolSize,
+        remaining_shards: input.remainingShards,
+        bonus_min: input.bonusMin,
+        bonus_max: input.bonusMax,
+        per_user_cap: input.perUserCap ?? null,
+        starts_at: input.startsAt || null,
+        ends_at: input.endsAt || null,
+        status: input.status,
+        created_by_auth_user_id: input.createdByAuthUserId ?? null,
+        metadata: input.metadata ?? {},
+      })
+      .select()
+      .single();
+
+    if (error) {
+      if (isMissingFeaturedShardPoolTable(error)) {
+        throw new Error("Featured shard pool migration has not been run in Supabase yet.");
+      }
+      throw error;
+    }
+
+    const mapped = mapFeaturedShardPool(data as DbFeaturedShardPool);
+    set((state) => ({
+      featuredShardPools: [mapped, ...state.featuredShardPools],
+    }));
+
+    await writeAuditLog({
+      sourceTable: "featured_shard_pools",
+      sourceId: mapped.id,
+      projectId: mapped.projectId,
+      action: "created",
+      summary: `Created ${mapped.label} for ${mapped.poolSize} shards.`,
+      metadata: {
+        campaignId: mapped.campaignId,
+        bonusMin: mapped.bonusMin,
+        bonusMax: mapped.bonusMax,
+        status: mapped.status,
+      },
+    });
+
+    return mapped.id;
+  },
+
+  updateFeaturedShardPoolStatus: async (id, status) => {
+    const supabase = createClient();
+    const previous = get().featuredShardPools.find((item) => item.id === id);
+    const timestamp = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from("featured_shard_pools")
+      .update({
+        status,
+        updated_at: timestamp,
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      if (isMissingFeaturedShardPoolTable(error)) {
+        throw new Error("Featured shard pool migration has not been run in Supabase yet.");
+      }
+      throw error;
+    }
+
+    const mapped = mapFeaturedShardPool(data as DbFeaturedShardPool);
+    set((state) => ({
+      featuredShardPools: state.featuredShardPools.map((item) =>
+        item.id === id ? mapped : item
+      ),
+    }));
+
+    await writeAuditLog({
+      sourceTable: "featured_shard_pools",
+      sourceId: id,
+      projectId: mapped.projectId,
+      action: `pool_${status}`,
+      summary: `Changed shard boost pool from ${previous?.status ?? "unknown"} to ${status}.`,
+      metadata: {
+        campaignId: mapped.campaignId,
+        previousStatus: previous?.status ?? null,
+        nextStatus: status,
+      },
+    });
+  },
 
   createRaid: async (input) => {
     const supabase = createClient();

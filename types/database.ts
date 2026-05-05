@@ -1555,6 +1555,27 @@ export type DbRewardDistribution = {
   updated_at: string;
 };
 
+export type DbFeaturedShardPool = {
+  id: string;
+  project_id: string;
+  campaign_id: string | null;
+  quest_id: string | null;
+  raid_id: string | null;
+  label: string | null;
+  pool_size: number | null;
+  remaining_shards: number | null;
+  bonus_min: number | null;
+  bonus_max: number | null;
+  per_user_cap: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  status: string | null;
+  created_by_auth_user_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type DbTrustSnapshot = {
   id: string;
   auth_user_id: string;
