@@ -13,6 +13,7 @@ import {
   DetailSurface,
 } from "@/components/layout/detail/DetailPrimitives";
 import { NotFoundState } from "@/components/layout/state/StatePrimitives";
+import { ContributionTierBadge } from "@/components/ui/ContributionTierBadge";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { DbOnchainEvent, DbRewardDistribution, DbTrustSnapshot } from "@/types/database";
@@ -172,7 +173,7 @@ export default function UserDetailPage() {
               <DetailBadge tone={currentUser.status === "flagged" ? "danger" : currentUser.status === "active" ? "primary" : "warning"}>
                 {currentUser.status}
               </DetailBadge>
-              <DetailBadge>{currentUser.contributionTier}</DetailBadge>
+              <ContributionTierBadge tier={currentUser.contributionTier} size="sm" />
               <DetailBadge tone={currentUser.sybilScore >= 70 ? "danger" : "default"}>Sybil {currentUser.sybilScore}</DetailBadge>
               <DetailBadge tone={currentUser.trustScore >= 70 ? "primary" : "warning"}>Trust {currentUser.trustScore}</DetailBadge>
             </>
@@ -302,7 +303,7 @@ export default function UserDetailPage() {
           <div className="space-y-4">
             <DetailSidebarSurface title="Reputation Markers">
               <div className="space-y-4">
-                <DetailMetaRow label="Contribution Tier" value={currentUser.contributionTier} />
+                <ContributionTierMetaRow tier={currentUser.contributionTier} />
                 <DetailMetaRow label="Status" value={currentUser.status} />
                 <DetailMetaRow label="Trust score" value={currentUser.trustScore} />
                 <DetailMetaRow label="Sybil score" value={currentUser.sybilScore} />
@@ -375,5 +376,16 @@ export default function UserDetailPage() {
         </div>
       </div>
     </AdminShell>
+  );
+}
+
+function ContributionTierMetaRow({ tier }: { tier: string }) {
+  return (
+    <div className="min-w-0 rounded-[14px] border border-white/[0.016] bg-white/[0.01] px-3 py-2.5">
+      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sub">Contribution Tier</p>
+      <div className="mt-1">
+        <ContributionTierBadge tier={tier} size="md" />
+      </div>
+    </div>
   );
 }

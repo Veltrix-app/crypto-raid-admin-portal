@@ -14,6 +14,7 @@ import {
 } from "@/components/layout/ops/OpsPrimitives";
 import AdminShell from "@/components/layout/shell/AdminShell";
 import PortalPageFrame from "@/components/layout/shell/PortalPageFrame";
+import { ContributionTierBadge } from "@/components/ui/ContributionTierBadge";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
@@ -231,7 +232,7 @@ export default function UsersPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-3">
                           <h2 className="text-[0.98rem] font-semibold text-text">{user.username}</h2>
-                          <OpsStatusPill tone="default">{user.contributionTier}</OpsStatusPill>
+                          <ContributionTierBadge tier={user.contributionTier} size="sm" />
                           {user.title ? <OpsStatusPill tone="success">{user.title}</OpsStatusPill> : null}
                         </div>
 
@@ -308,7 +309,7 @@ export default function UsersPage() {
                           <div className="flex flex-wrap items-center gap-3">
                             <p className="text-[0.98rem] font-semibold text-text">{user.username}</p>
                             <OpsStatusPill tone="danger">{user.status}</OpsStatusPill>
-                            <OpsStatusPill tone="warning">{user.contributionTier}</OpsStatusPill>
+                            <ContributionTierBadge tier={user.contributionTier} size="sm" />
                           </div>
                           <p className="mt-2.5 text-[12px] leading-5 text-sub">
                             Trust {user.trustScore} / Sybil {user.sybilScore} / XP {user.xp.toLocaleString()}

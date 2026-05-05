@@ -2,6 +2,7 @@
 
 import AdminShell from "@/components/layout/shell/AdminShell";
 import ActivityChart from "@/components/charts/activity/ActivityChart";
+import { ContributionTierBadge, formatContributionTier } from "@/components/ui/ContributionTierBadge";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 
 export default function AnalyticsUsersPage() {
@@ -52,7 +53,18 @@ export default function AnalyticsUsersPage() {
           <div className="rounded-[18px] border border-white/[0.026] bg-white/[0.014] p-5">
             <h2 className="text-[1.08rem] font-extrabold text-text">Contribution Tiers</h2>
             <div className="mt-5">
-              <ActivityChart items={topTiers.map((item) => ({ label: item.label, value: item.value }))} />
+              <ActivityChart items={topTiers.map((item) => ({ label: formatContributionTier(item.label), value: item.value }))} />
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {topTiers.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between gap-3 rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2"
+                >
+                  <ContributionTierBadge tier={item.label} size="sm" />
+                  <span className="text-[12px] font-semibold text-text">{item.value}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -79,7 +91,9 @@ export default function AnalyticsUsersPage() {
                   className="grid grid-cols-6 items-center border-b border-white/[0.035] px-4 py-3 text-[12px] text-text last:border-b-0"
                 >
                   <div className="font-semibold">{user.username}</div>
-                  <div className="capitalize">{user.contributionTier}</div>
+                  <div>
+                    <ContributionTierBadge tier={user.contributionTier} size="sm" />
+                  </div>
                   <div>{user.xp}</div>
                   <div>{user.trustScore}</div>
                   <div>{user.sybilScore}</div>
