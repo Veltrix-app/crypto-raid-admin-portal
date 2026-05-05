@@ -306,3 +306,7 @@ These assets should be copied into the webapp public asset tree during implement
 - Default rewards are VYNTRO cosmetics and perks.
 - Sponsored rewards and USDC are later layers with explicit budgets and audit.
 - Phase 1 starts earned-only, without direct shard sales.
+
+## Phase 1 Implementation Notes
+
+Phase 1 shipped the earned shard ledger, static tier catalog, default VYNTRO reward pool, server-side lootbox open endpoint, webapp shop, and first earning hooks from approved quests and confirmed raids. Sponsored pool manager, full Lootbox Studio, user passes, and USDC pools remain outside Phase 1 scope.
