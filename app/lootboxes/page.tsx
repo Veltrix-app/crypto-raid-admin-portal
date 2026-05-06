@@ -6,6 +6,9 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
+  Crown,
+  Gift,
+  History,
   PackageOpen,
   PauseCircle,
   RadioTower,
@@ -43,6 +46,7 @@ import {
   type LootboxPoolDraftRow,
   type LootboxPoolDraftSummary,
 } from "@/lib/lootboxes/lootbox-pool-draft";
+import type { LootboxActivityRead } from "@/lib/lootboxes/lootbox-activity";
 import type { LootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
@@ -63,6 +67,8 @@ export default function LootboxesPage() {
   const [poolSaveMessage, setPoolSaveMessage] = useState<PoolSaveMessage>(null);
   const [stockSafety, setStockSafety] = useState<LootboxStockSafetyRead | null>(null);
   const [stockSafetyLoading, setStockSafetyLoading] = useState(true);
+  const [lootboxActivity, setLootboxActivity] = useState<LootboxActivityRead | null>(null);
+  const [lootboxActivityLoading, setLootboxActivityLoading] = useState(true);
 
   const readiness = useMemo(() => buildLootboxStudioReadiness(), []);
   const selectedReadiness =
@@ -119,6 +125,38 @@ export default function LootboxesPage() {
     }
 
     loadStockSafety();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLootboxActivity() {
+      setLootboxActivityLoading(true);
+
+      try {
+        const response = await fetch("/api/lootboxes/activity", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; activity?: LootboxActivityRead }
+          | null;
+
+        if (!cancelled && response.ok && payload?.ok && payload.activity) {
+          setLootboxActivity(payload.activity);
+        }
+      } finally {
+        if (!cancelled) {
+          setLootboxActivityLoading(false);
+        }
+      }
+    }
+
+    loadLootboxActivity();
 
     return () => {
       cancelled = true;
@@ -346,6 +384,11 @@ export default function LootboxesPage() {
                 )}
               </div>
             </OpsPanel>
+
+            <LootboxActivityPanel
+              activity={lootboxActivity}
+              loading={lootboxActivityLoading}
+            />
 
             <OpsPanel
               eyebrow="Next operator read"
@@ -807,6 +850,156 @@ function BuilderStat({ label, value }: { label: string; value: string | number }
   );
 }
 
+function LootboxActivityPanel({
+  activity,
+  loading,
+}: {
+  activity: LootboxActivityRead | null;
+  loading: boolean;
+}) {
+  const summary = activity?.summary;
+
+  return (
+    <OpsPanel
+      eyebrow="Phase 2C"
+      title="Open history and inventory"
+      description="Read-only operator view for the last lootbox opens and reward inventory state."
+      action={
+        <OpsStatusPill tone={summary && summary.pendingReviewInventory > 0 ? "warning" : "success"}>
+          {loading ? "loading" : `${summary?.totalOpens ?? 0} opens`}
+        </OpsStatusPill>
+      }
+    >
+      <div className="grid gap-2.5">
+        <div className="grid grid-cols-2 gap-2">
+          <MiniRead label="Members" value={`${summary?.uniqueMembers ?? 0}`} />
+          <MiniRead label="Shards spent" value={`${summary?.totalShardSpend ?? 0}`} />
+          <MiniRead label="High rarity" value={`${summary?.highRarityWins ?? 0}`} />
+          <MiniRead label="Review" value={`${summary?.pendingReviewInventory ?? 0}`} />
+        </div>
+
+        <div className="rounded-[16px] border border-white/[0.018] bg-white/[0.012] p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <History size={14} className="text-primary" />
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+                Recent opens
+              </p>
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-[0.14em] text-sub">
+              Last 12
+            </span>
+          </div>
+          <div className="mt-3 space-y-2">
+            {loading ? (
+              <ActivitySkeleton />
+            ) : activity?.recentOpens.length ? (
+              activity.recentOpens.slice(0, 4).map((item) => (
+                <LootboxOpenActivityRow key={item.id} item={item} />
+              ))
+            ) : (
+              <p className="text-[11px] leading-5 text-sub">
+                No lootbox opens have been recorded yet.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-[16px] border border-white/[0.018] bg-white/[0.012] p-3">
+          <div className="flex items-center gap-2">
+            <Gift size={14} className="text-primary" />
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+              Inventory queue
+            </p>
+          </div>
+          <div className="mt-3 space-y-2">
+            {loading ? (
+              <ActivitySkeleton />
+            ) : activity?.inventoryQueue.length ? (
+              activity.inventoryQueue.slice(0, 4).map((item) => (
+                <LootboxInventoryActivityRow key={item.id} item={item} />
+              ))
+            ) : (
+              <p className="text-[11px] leading-5 text-sub">
+                Inventory rewards will appear here after the first opens.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </OpsPanel>
+  );
+}
+
+function LootboxOpenActivityRow({
+  item,
+}: {
+  item: LootboxActivityRead["recentOpens"][number];
+}) {
+  return (
+    <div className="rounded-[13px] border border-white/[0.016] bg-black/15 px-2.5 py-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] ${getLootboxRarityTone(item.rarity as LootboxStudioRarity)}`}
+            >
+              {item.rarity}
+            </span>
+            <span className="text-[9px] font-black uppercase tracking-[0.14em] text-sub">
+              {item.tierId}
+            </span>
+          </div>
+          <p className="mt-2 truncate text-[11px] font-semibold text-text">
+            {item.rewardLabel}
+          </p>
+          <p className="mt-1 text-[10px] text-sub">{item.memberLabel}</p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[11px] font-semibold text-primary">{item.shardSpend}</p>
+          <p className="mt-1 text-[9px] text-sub">{formatActivityDate(item.openedAt)}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LootboxInventoryActivityRow({
+  item,
+}: {
+  item: LootboxActivityRead["inventoryQueue"][number];
+}) {
+  return (
+    <div className="rounded-[13px] border border-white/[0.016] bg-black/15 px-2.5 py-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <Crown size={13} className="text-primary" />
+            <span className="text-[9px] font-black uppercase tracking-[0.14em] text-sub">
+              {item.itemType.replace(/_/g, " ")}
+            </span>
+          </div>
+          <p className="mt-2 truncate text-[11px] font-semibold text-text">{item.label}</p>
+          <p className="mt-1 text-[10px] text-sub">{item.memberLabel}</p>
+        </div>
+        <div className="shrink-0 text-right">
+          <OpsStatusPill tone={item.statusTone}>{item.status}</OpsStatusPill>
+          <p className="mt-1 text-[9px] text-sub">{formatActivityDate(item.createdAt)}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActivitySkeleton() {
+  return (
+    <div className="space-y-2">
+      <div className="h-14 rounded-[13px] border border-white/[0.012] bg-white/[0.018]" />
+      <div className="h-14 rounded-[13px] border border-white/[0.012] bg-white/[0.012]" />
+    </div>
+  );
+}
+
 function PoolPressureCard({
   pool,
   campaignTitle,
@@ -864,4 +1057,18 @@ function MiniRead({ label, value }: { label: string; value: string }) {
       <p className="mt-1 truncate text-[11px] font-semibold text-text">{value}</p>
     </div>
   );
+}
+
+function formatActivityDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "unknown";
+  }
+
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
