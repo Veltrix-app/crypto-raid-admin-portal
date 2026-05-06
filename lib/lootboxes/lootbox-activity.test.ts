@@ -107,6 +107,19 @@ test("buildLootboxActivityRead builds inventory command table rows", () => {
     ],
     auditRows: [
       {
+        id: "audit-note",
+        auth_user_id: "admin-33333333",
+        source_table: "user_inventory",
+        source_id: "item-review",
+        action: "lootbox_inventory_note_added",
+        summary: "Added fulfillment note for Season Pass Discount.",
+        metadata: {
+          note: "Manual delivery queued after holder verification.",
+          reference: "DISCORD-ROLE-77",
+        },
+        created_at: "2026-05-06T10:24:00.000Z",
+      },
+      {
         id: "audit-newer",
         auth_user_id: "admin-22222222",
         source_table: "user_inventory",
@@ -147,11 +160,16 @@ test("buildLootboxActivityRead builds inventory command table rows", () => {
     read.inventoryTable?.[0]?.fulfillment.nextStep,
     "Validate payload, member eligibility and reward budget before marking this reward claimed."
   );
-  assert.equal(read.inventoryTable?.[0]?.auditCount, 2);
-  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.id, "audit-newer");
-  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.actorLabel, "admin-22...2222");
-  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.previousStatus, "pending_review");
-  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.nextStatus, "claimed");
+  assert.equal(read.inventoryTable?.[0]?.auditCount, 3);
+  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.id, "audit-note");
+  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.actorLabel, "admin-33...3333");
+  assert.equal(
+    read.inventoryTable?.[0]?.auditTrail[0]?.note,
+    "Manual delivery queued after holder verification."
+  );
+  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.reference, "DISCORD-ROLE-77");
+  assert.equal(read.inventoryTable?.[0]?.auditTrail[1]?.previousStatus, "pending_review");
+  assert.equal(read.inventoryTable?.[0]?.auditTrail[1]?.nextStatus, "claimed");
   assert.equal(read.inventoryTable?.[1]?.auditCount, 0);
   assert.deepEqual(read.inventoryTable?.[0]?.actionStatuses, [
     "pending_review",

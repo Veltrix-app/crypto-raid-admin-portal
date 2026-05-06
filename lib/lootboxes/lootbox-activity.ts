@@ -96,6 +96,8 @@ export type LootboxActivityRead = {
       summary: string;
       previousStatus: string;
       nextStatus: string;
+      note: string | null;
+      reference: string | null;
       createdAt: string;
     }>;
     fulfillment: {
@@ -224,6 +226,8 @@ function getAuditTrailForInventoryItem(
       summary: row.summary || "Inventory audit event recorded.",
       previousStatus: formatMetadataString(row.metadata?.previousStatus),
       nextStatus: formatMetadataString(row.metadata?.nextStatus),
+      note: formatOptionalMetadataString(row.metadata?.note),
+      reference: formatOptionalMetadataString(row.metadata?.reference),
       createdAt: row.created_at,
     }));
 }
@@ -271,6 +275,11 @@ export function filterLootboxInventoryCommandRows(
       row.rarity,
       row.itemType,
       row.status,
+      ...row.auditTrail.flatMap((event) => [
+        event.summary,
+        event.note ?? "",
+        event.reference ?? "",
+      ]),
     ].some((value) => value.toLowerCase().includes(query));
   });
 }
@@ -357,6 +366,10 @@ function formatPayloadValue(value: unknown) {
 
 function formatMetadataString(value: unknown) {
   return typeof value === "string" && value.trim() ? value : "unknown";
+}
+
+function formatOptionalMetadataString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : null;
 }
 
 function getFulfillmentGuidance(status: string | null) {

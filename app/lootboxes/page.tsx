@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -97,6 +97,8 @@ export default function LootboxesPage() {
   const [lootboxActivityLoading, setLootboxActivityLoading] = useState(true);
   const [inventoryActionId, setInventoryActionId] = useState<string | null>(null);
   const [inventoryActionMessage, setInventoryActionMessage] = useState<PoolSaveMessage>(null);
+  const [inventoryNoteSavingId, setInventoryNoteSavingId] = useState<string | null>(null);
+  const [inventoryNoteMessage, setInventoryNoteMessage] = useState<PoolSaveMessage>(null);
   const [inventoryFilter, setInventoryFilter] = useState<LootboxInventoryCommandFilter>("all");
   const [inventorySearch, setInventorySearch] = useState("");
 
@@ -271,6 +273,47 @@ export default function LootboxesPage() {
     }
   }
 
+  async function addInventoryNote(id: string, note: string, reference: string) {
+    if (inventoryNoteSavingId) {
+      return false;
+    }
+
+    setInventoryNoteSavingId(id);
+    setInventoryNoteMessage({ tone: "default", text: "Saving fulfillment note..." });
+
+    try {
+      const response = await fetch(`/api/lootboxes/inventory/${id}/notes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ note, reference }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? "Fulfillment note save failed.");
+      }
+
+      setLootboxActivity(await fetchLootboxActivityRead());
+      setInventoryNoteMessage({
+        tone: "success",
+        text: "Fulfillment note saved to the audit trail.",
+      });
+      return true;
+    } catch (error) {
+      setInventoryNoteMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Fulfillment note save failed.",
+      });
+      return false;
+    } finally {
+      setInventoryNoteSavingId(null);
+    }
+  }
+
   async function saveSelectedPoolDraft() {
     if (selectedDraft.summary.readiness !== "ready" || poolSaving) {
       return;
@@ -431,11 +474,14 @@ export default function LootboxesPage() {
               loading={lootboxActivityLoading}
               actionSavingId={inventoryActionId}
               message={inventoryActionMessage}
+              noteSavingId={inventoryNoteSavingId}
+              noteMessage={inventoryNoteMessage}
               filter={inventoryFilter}
               search={inventorySearch}
               onFilterChange={setInventoryFilter}
               onSearchChange={setInventorySearch}
               onInventoryStatusChange={updateInventoryStatus}
+              onInventoryNoteAdd={addInventoryNote}
             />
           </div>
 
@@ -1042,21 +1088,27 @@ function InventoryCommandTable({
   loading,
   actionSavingId,
   message,
+  noteSavingId,
+  noteMessage,
   filter,
   search,
   onFilterChange,
   onSearchChange,
   onInventoryStatusChange,
+  onInventoryNoteAdd,
 }: {
   activity: LootboxActivityRead | null;
   loading: boolean;
   actionSavingId: string | null;
   message: PoolSaveMessage;
+  noteSavingId: string | null;
+  noteMessage: PoolSaveMessage;
   filter: LootboxInventoryCommandFilter;
   search: string;
   onFilterChange: (filter: LootboxInventoryCommandFilter) => void;
   onSearchChange: (search: string) => void;
   onInventoryStatusChange: (id: string, status: LootboxInventoryStatus) => void;
+  onInventoryNoteAdd: (id: string, note: string, reference: string) => Promise<boolean>;
 }) {
   const rows = useMemo(() => activity?.inventoryTable ?? [], [activity?.inventoryTable]);
   const counts = useMemo(() => buildLootboxInventoryCommandCounts(rows), [rows]);
@@ -1182,7 +1234,10 @@ function InventoryCommandTable({
           <InventoryFulfillmentDetail
             row={selectedInventoryRow}
             saving={selectedInventoryRow ? actionSavingId === selectedInventoryRow.id : false}
+            noteSaving={selectedInventoryRow ? noteSavingId === selectedInventoryRow.id : false}
+            noteMessage={noteMessage}
             onStatusChange={onInventoryStatusChange}
+            onNoteAdd={onInventoryNoteAdd}
           />
         </div>
 
@@ -1266,12 +1321,39 @@ function InventoryCommandRow({
 function InventoryFulfillmentDetail({
   row,
   saving,
+  noteSaving,
+  noteMessage,
   onStatusChange,
+  onNoteAdd,
 }: {
   row: LootboxActivityRead["inventoryTable"][number] | null;
   saving: boolean;
+  noteSaving: boolean;
+  noteMessage: PoolSaveMessage;
   onStatusChange: (id: string, status: LootboxInventoryStatus) => void;
+  onNoteAdd: (id: string, note: string, reference: string) => Promise<boolean>;
 }) {
+  const [note, setNote] = useState("");
+  const [reference, setReference] = useState("");
+
+  useEffect(() => {
+    setNote("");
+    setReference("");
+  }, [row?.id]);
+
+  async function submitNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!row || noteSaving || !note.trim()) {
+      return;
+    }
+
+    const saved = await onNoteAdd(row.id, note, reference);
+    if (saved) {
+      setNote("");
+      setReference("");
+    }
+  }
+
   if (!row) {
     return (
       <div className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-4">
@@ -1374,13 +1456,25 @@ function InventoryFulfillmentDetail({
                     {formatActivityDate(event.createdAt)}
                   </span>
                 </div>
+                {event.note ? (
+                  <p className="mt-2 break-words text-[11px] leading-5 text-sub [overflow-wrap:anywhere]">
+                    {event.note}
+                  </p>
+                ) : null}
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="rounded-full border border-white/[0.018] bg-white/[0.012] px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-sub">
                     {event.actorLabel}
                   </span>
-                  <span className="rounded-full border border-white/[0.018] bg-black/20 px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-sub">
-                    {event.previousStatus} to {event.nextStatus}
-                  </span>
+                  {event.previousStatus !== "unknown" || event.nextStatus !== "unknown" ? (
+                    <span className="rounded-full border border-white/[0.018] bg-black/20 px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-sub">
+                      {event.previousStatus} to {event.nextStatus}
+                    </span>
+                  ) : null}
+                  {event.reference ? (
+                    <span className="break-words rounded-full border border-primary/16 bg-primary/[0.045] px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-primary [overflow-wrap:anywhere]">
+                      Ref {event.reference}
+                    </span>
+                  ) : null}
                 </div>
               </div>
             ))
@@ -1392,6 +1486,51 @@ function InventoryFulfillmentDetail({
           )}
         </div>
       </div>
+
+      <form
+        onSubmit={submitNote}
+        className="mt-3 rounded-[16px] border border-white/[0.018] bg-black/15 p-3"
+      >
+        <div className="flex items-center gap-2">
+          <ClipboardCheck size={14} className="text-primary" />
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+            Operator note
+          </p>
+        </div>
+        <textarea
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          maxLength={700}
+          rows={4}
+          placeholder="Add a fulfillment note for this reward"
+          className="mt-3 min-h-[92px] w-full resize-none rounded-[14px] border border-white/[0.018] bg-white/[0.012] px-3 py-2 text-[11px] leading-5 text-text outline-none placeholder:text-sub/55 focus:border-primary/22"
+          aria-label="Fulfillment note"
+        />
+        <input
+          value={reference}
+          onChange={(event) => setReference(event.target.value)}
+          maxLength={140}
+          placeholder="Optional reference"
+          className="mt-2 w-full rounded-full border border-white/[0.018] bg-white/[0.012] px-3 py-2 text-[11px] font-semibold text-text outline-none placeholder:text-sub/55 focus:border-primary/22"
+          aria-label="Fulfillment reference"
+        />
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[9px] text-sub">{note.length}/700</p>
+          <button
+            type="submit"
+            disabled={noteSaving || !note.trim()}
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] transition ${
+              noteSaving || !note.trim()
+                ? "cursor-not-allowed border border-white/[0.018] bg-white/[0.008] text-sub/45"
+                : "border border-primary/24 bg-primary text-black shadow-[0_16px_34px_rgba(186,255,59,0.14)] hover:brightness-110"
+            }`}
+          >
+            <Save size={13} />
+            {noteSaving ? "Saving" : "Save note"}
+          </button>
+        </div>
+        {noteMessage ? <div className="mt-3"><PoolSaveNotice message={noteMessage} /></div> : null}
+      </form>
 
       <div className="mt-3 rounded-[16px] border border-white/[0.018] bg-black/15 p-3">
         <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
