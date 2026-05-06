@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildLootboxActivityRead } from "./lootbox-activity";
+import {
+  buildLootboxActivityRead,
+  buildLootboxInventoryCommandCounts,
+  filterLootboxInventoryCommandRows,
+} from "./lootbox-activity";
 
 test("buildLootboxActivityRead summarizes recent opens and inventory posture", () => {
   const read = buildLootboxActivityRead({
@@ -111,6 +115,80 @@ test("buildLootboxActivityRead builds inventory command table rows", () => {
     "expired",
   ]);
   assert.equal(read.inventoryTable?.[1]?.payloadSummary, "cosmetic: nebula-profile-frame");
+});
+
+test("lootbox inventory command helpers filter rows and count operator states", () => {
+  const read = buildLootboxActivityRead({
+    openRows: [],
+    inventoryRows: [
+      {
+        id: "review-item",
+        auth_user_id: "33333333-3333-4333-8333-333333333333",
+        lootbox_open_id: "open-3",
+        item_type: "profile_cosmetic",
+        rarity: "mythic",
+        label: "Nebula Profile Frame",
+        payload: { cosmetic: "nebula-profile-frame" },
+        status: "pending_review",
+        created_at: "2026-05-06T10:20:00.000Z",
+        updated_at: "2026-05-06T10:20:00.000Z",
+      },
+      {
+        id: "claimed-item",
+        auth_user_id: "44444444-4444-4444-8444-444444444444",
+        lootbox_open_id: "open-4",
+        item_type: "season_pass",
+        rarity: "legendary",
+        label: "Season Pass Discount",
+        payload: { refundPercent: 25 },
+        status: "claimed",
+        created_at: "2026-05-06T10:12:00.000Z",
+        updated_at: "2026-05-06T10:12:00.000Z",
+      },
+      {
+        id: "owned-item",
+        auth_user_id: "55555555-5555-4555-8555-555555555555",
+        lootbox_open_id: "open-5",
+        item_type: "title",
+        rarity: "common",
+        label: "Shard Hunter Title",
+        payload: { title: "Shard Hunter" },
+        status: "owned",
+        created_at: "2026-05-06T10:05:00.000Z",
+        updated_at: "2026-05-06T10:05:00.000Z",
+      },
+    ],
+  });
+
+  const counts = buildLootboxInventoryCommandCounts(read.inventoryTable);
+
+  assert.equal(counts.all, 3);
+  assert.equal(counts.pending_review, 1);
+  assert.equal(counts.owned, 1);
+  assert.equal(counts.claimed, 1);
+  assert.equal(counts.expired, 0);
+  assert.equal(counts.high_rarity, 2);
+  assert.deepEqual(
+    filterLootboxInventoryCommandRows(read.inventoryTable, {
+      filter: "pending_review",
+      query: "nebula",
+    }).map((row) => row.id),
+    ["review-item"]
+  );
+  assert.deepEqual(
+    filterLootboxInventoryCommandRows(read.inventoryTable, {
+      filter: "high_rarity",
+      query: "season",
+    }).map((row) => row.id),
+    ["claimed-item"]
+  );
+  assert.deepEqual(
+    filterLootboxInventoryCommandRows(read.inventoryTable, {
+      filter: "all",
+      query: "5555",
+    }).map((row) => row.id),
+    ["owned-item"]
+  );
 });
 
 test("buildLootboxActivityRead handles empty activity safely", () => {

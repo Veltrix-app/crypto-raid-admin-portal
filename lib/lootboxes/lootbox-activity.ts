@@ -81,6 +81,17 @@ export type LootboxActivityRead = {
   }>;
 };
 
+export type LootboxInventoryCommandFilter =
+  | "all"
+  | "pending_review"
+  | "owned"
+  | "claimed"
+  | "expired"
+  | "high_rarity";
+
+export type LootboxInventoryCommandCounts = Record<LootboxInventoryCommandFilter, number>;
+export type LootboxInventoryCommandRow = LootboxActivityRead["inventoryTable"][number];
+
 export function buildLootboxActivityRead(params: {
   openRows: LootboxOpenRow[];
   inventoryRows: LootboxInventoryRow[];
@@ -111,16 +122,16 @@ export function buildLootboxActivityRead(params: {
     .sort((left, right) => compareInventoryRows(left, right))
     .slice(0, 12);
   const inventoryQueue = sortedInventoryRows.map((row) => ({
-      id: row.id,
-      memberLabel: formatMemberLabel(row.auth_user_id),
-      label: row.label || "Lootbox reward",
-      rarity: row.rarity || "common",
-      itemType: row.item_type || "unknown",
-      status: row.status ?? "owned",
-      statusTone: getInventoryStatusTone(row.status),
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    }));
+    id: row.id,
+    memberLabel: formatMemberLabel(row.auth_user_id),
+    label: row.label || "Lootbox reward",
+    rarity: row.rarity || "common",
+    itemType: row.item_type || "unknown",
+    status: row.status ?? "owned",
+    statusTone: getInventoryStatusTone(row.status),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
   const inventoryTable = sortedInventoryRows.map((row) => ({
     id: row.id,
     memberLabel: formatMemberLabel(row.auth_user_id),
@@ -158,6 +169,53 @@ export function buildLootboxActivityRead(params: {
     inventoryQueue,
     inventoryTable,
   };
+}
+
+export function buildLootboxInventoryCommandCounts(
+  rows: LootboxInventoryCommandRow[]
+): LootboxInventoryCommandCounts {
+  return {
+    all: rows.length,
+    pending_review: rows.filter((row) => row.status === "pending_review").length,
+    owned: rows.filter((row) => row.status === "owned").length,
+    claimed: rows.filter((row) => row.status === "claimed").length,
+    expired: rows.filter((row) => row.status === "expired").length,
+    high_rarity: rows.filter((row) => isHighRarity(row.rarity)).length,
+  };
+}
+
+export function filterLootboxInventoryCommandRows(
+  rows: LootboxInventoryCommandRow[],
+  params: { filter: LootboxInventoryCommandFilter; query: string }
+) {
+  const query = params.query.trim().toLowerCase();
+
+  return rows.filter((row) => {
+    if (params.filter === "high_rarity" && !isHighRarity(row.rarity)) {
+      return false;
+    }
+
+    if (
+      params.filter !== "all" &&
+      params.filter !== "high_rarity" &&
+      row.status !== params.filter
+    ) {
+      return false;
+    }
+
+    if (!query) {
+      return true;
+    }
+
+    return [
+      row.label,
+      row.memberLabel,
+      row.payloadSummary,
+      row.rarity,
+      row.itemType,
+      row.status,
+    ].some((value) => value.toLowerCase().includes(query));
+  });
 }
 
 function normalizeResultSnapshot(snapshot: Record<string, unknown> | null) {
@@ -227,6 +285,10 @@ function formatPayloadValue(value: unknown) {
   }
 
   return "available";
+}
+
+function isHighRarity(rarity: string) {
+  return ["legendary", "mythic"].includes(rarity.toLowerCase());
 }
 
 function compareInventoryRows(left: LootboxInventoryRow, right: LootboxInventoryRow) {

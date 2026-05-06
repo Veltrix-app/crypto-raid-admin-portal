@@ -14,12 +14,14 @@ import {
   RadioTower,
   RotateCcw,
   Save,
+  Search,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
   Target,
   ToggleLeft,
   ToggleRight,
+  X,
 } from "lucide-react";
 import {
   OpsMetricCard,
@@ -46,7 +48,12 @@ import {
   type LootboxPoolDraftRow,
   type LootboxPoolDraftSummary,
 } from "@/lib/lootboxes/lootbox-pool-draft";
-import type { LootboxActivityRead } from "@/lib/lootboxes/lootbox-activity";
+import {
+  buildLootboxInventoryCommandCounts,
+  filterLootboxInventoryCommandRows,
+  type LootboxActivityRead,
+  type LootboxInventoryCommandFilter,
+} from "@/lib/lootboxes/lootbox-activity";
 import {
   getLootboxInventoryStatusActionLabel,
   type LootboxInventoryStatus,
@@ -60,6 +67,14 @@ const inventoryCommandStatuses: LootboxInventoryStatus[] = [
   "pending_review",
   "claimed",
   "expired",
+];
+const inventoryFilterOptions: Array<{ id: LootboxInventoryCommandFilter; label: string }> = [
+  { id: "all", label: "All" },
+  { id: "pending_review", label: "Review" },
+  { id: "owned", label: "Owned" },
+  { id: "claimed", label: "Claimed" },
+  { id: "expired", label: "Expired" },
+  { id: "high_rarity", label: "High rarity" },
 ];
 type PoolSaveMessage = { tone: "success" | "error" | "default"; text: string } | null;
 
@@ -80,6 +95,8 @@ export default function LootboxesPage() {
   const [lootboxActivityLoading, setLootboxActivityLoading] = useState(true);
   const [inventoryActionId, setInventoryActionId] = useState<string | null>(null);
   const [inventoryActionMessage, setInventoryActionMessage] = useState<PoolSaveMessage>(null);
+  const [inventoryFilter, setInventoryFilter] = useState<LootboxInventoryCommandFilter>("all");
+  const [inventorySearch, setInventorySearch] = useState("");
 
   const readiness = useMemo(() => buildLootboxStudioReadiness(), []);
   const selectedReadiness =
@@ -412,6 +429,10 @@ export default function LootboxesPage() {
               loading={lootboxActivityLoading}
               actionSavingId={inventoryActionId}
               message={inventoryActionMessage}
+              filter={inventoryFilter}
+              search={inventorySearch}
+              onFilterChange={setInventoryFilter}
+              onSearchChange={setInventorySearch}
               onInventoryStatusChange={updateInventoryStatus}
             />
           </div>
@@ -1019,15 +1040,28 @@ function InventoryCommandTable({
   loading,
   actionSavingId,
   message,
+  filter,
+  search,
+  onFilterChange,
+  onSearchChange,
   onInventoryStatusChange,
 }: {
   activity: LootboxActivityRead | null;
   loading: boolean;
   actionSavingId: string | null;
   message: PoolSaveMessage;
+  filter: LootboxInventoryCommandFilter;
+  search: string;
+  onFilterChange: (filter: LootboxInventoryCommandFilter) => void;
+  onSearchChange: (search: string) => void;
   onInventoryStatusChange: (id: string, status: LootboxInventoryStatus) => void;
 }) {
-  const rows = activity?.inventoryTable ?? [];
+  const rows = useMemo(() => activity?.inventoryTable ?? [], [activity?.inventoryTable]);
+  const counts = useMemo(() => buildLootboxInventoryCommandCounts(rows), [rows]);
+  const filteredRows = useMemo(
+    () => filterLootboxInventoryCommandRows(rows, { filter, query: search }),
+    [filter, rows, search]
+  );
   const summary = activity?.summary;
 
   return (
@@ -1037,7 +1071,7 @@ function InventoryCommandTable({
       description="A wider operator surface for reviewing lootbox rewards, member ownership and reward payloads before fulfillment."
       action={
         <OpsStatusPill tone={summary && summary.pendingReviewInventory > 0 ? "warning" : "success"}>
-          {loading ? "loading" : `${summary?.pendingReviewInventory ?? 0} review`}
+          {loading ? "loading" : `${filteredRows.length}/${rows.length} shown`}
         </OpsStatusPill>
       }
     >
@@ -1046,7 +1080,54 @@ function InventoryCommandTable({
           <MiniRead label="Open inventory" value={`${summary?.openInventory ?? 0}`} />
           <MiniRead label="Pending review" value={`${summary?.pendingReviewInventory ?? 0}`} />
           <MiniRead label="High rarity" value={`${summary?.highRarityWins ?? 0}`} />
-          <MiniRead label="Rows loaded" value={`${rows.length}`} />
+          <MiniRead label="Filtered rows" value={`${filteredRows.length}/${rows.length}`} />
+        </div>
+
+        <div className="grid gap-2 rounded-[18px] border border-white/[0.018] bg-black/15 p-2.5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
+          <div className="flex flex-wrap gap-1.5">
+            {inventoryFilterOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => onFilterChange(option.id)}
+                className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] transition ${
+                  filter === option.id
+                    ? "border-primary/28 bg-primary text-black shadow-[0_12px_26px_rgba(186,255,59,0.12)]"
+                    : "border-white/[0.02] bg-white/[0.012] text-sub hover:border-white/[0.08] hover:text-text"
+                }`}
+              >
+                {option.label}
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[8px] ${
+                    filter === option.id ? "bg-black/15 text-black" : "bg-white/[0.035] text-sub"
+                  }`}
+                >
+                  {counts[option.id]}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <label className="flex min-w-0 items-center gap-2 rounded-full border border-white/[0.024] bg-white/[0.018] px-3 py-2">
+            <Search size={14} className="shrink-0 text-sub" />
+            <input
+              value={search}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="Search reward, member, payload"
+              className="min-w-0 flex-1 bg-transparent text-[11px] font-semibold text-text outline-none placeholder:text-sub/55"
+              aria-label="Search inventory rewards"
+            />
+            {search ? (
+              <button
+                type="button"
+                onClick={() => onSearchChange("")}
+                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white/[0.02] bg-black/20 text-sub transition hover:text-text"
+                aria-label="Clear inventory search"
+              >
+                <X size={11} />
+              </button>
+            ) : null}
+          </label>
         </div>
 
         <div className="overflow-hidden rounded-[18px] border border-white/[0.018] bg-white/[0.012]">
@@ -1061,8 +1142,8 @@ function InventoryCommandTable({
           <div className="divide-y divide-white/[0.018]">
             {loading ? (
               <InventoryTableSkeleton />
-            ) : rows.length ? (
-              rows.map((row) => (
+            ) : filteredRows.length ? (
+              filteredRows.map((row) => (
                 <InventoryCommandRow
                   key={row.id}
                   row={row}
@@ -1072,7 +1153,9 @@ function InventoryCommandTable({
               ))
             ) : (
               <div className="p-4 text-[12px] leading-5 text-sub">
-                Inventory rewards will appear here once members start opening lootboxes.
+                {rows.length
+                  ? "No inventory rewards match the current filter."
+                  : "Inventory rewards will appear here once members start opening lootboxes."}
               </div>
             )}
           </div>
