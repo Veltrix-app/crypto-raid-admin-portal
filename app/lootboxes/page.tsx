@@ -56,6 +56,11 @@ import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
 
 const rarityOrder: LootboxStudioRarity[] = ["common", "rare", "epic", "legendary", "mythic"];
+const inventoryCommandStatuses: LootboxInventoryStatus[] = [
+  "pending_review",
+  "claimed",
+  "expired",
+];
 type PoolSaveMessage = { tone: "success" | "error" | "default"; text: string } | null;
 
 export default function LootboxesPage() {
@@ -401,6 +406,14 @@ export default function LootboxesPage() {
                 onSave={saveSelectedPoolDraft}
               />
             </div>
+
+            <InventoryCommandTable
+              activity={lootboxActivity}
+              loading={lootboxActivityLoading}
+              actionSavingId={inventoryActionId}
+              message={inventoryActionMessage}
+              onInventoryStatusChange={updateInventoryStatus}
+            />
           </div>
 
           <aside className="space-y-3">
@@ -1001,6 +1014,138 @@ function LootboxActivityPanel({
   );
 }
 
+function InventoryCommandTable({
+  activity,
+  loading,
+  actionSavingId,
+  message,
+  onInventoryStatusChange,
+}: {
+  activity: LootboxActivityRead | null;
+  loading: boolean;
+  actionSavingId: string | null;
+  message: PoolSaveMessage;
+  onInventoryStatusChange: (id: string, status: LootboxInventoryStatus) => void;
+}) {
+  const rows = activity?.inventoryTable ?? [];
+  const summary = activity?.summary;
+
+  return (
+    <OpsPanel
+      eyebrow="Inventory ops"
+      title="Reward command table"
+      description="A wider operator surface for reviewing lootbox rewards, member ownership and reward payloads before fulfillment."
+      action={
+        <OpsStatusPill tone={summary && summary.pendingReviewInventory > 0 ? "warning" : "success"}>
+          {loading ? "loading" : `${summary?.pendingReviewInventory ?? 0} review`}
+        </OpsStatusPill>
+      }
+    >
+      <div className="grid gap-3">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <MiniRead label="Open inventory" value={`${summary?.openInventory ?? 0}`} />
+          <MiniRead label="Pending review" value={`${summary?.pendingReviewInventory ?? 0}`} />
+          <MiniRead label="High rarity" value={`${summary?.highRarityWins ?? 0}`} />
+          <MiniRead label="Rows loaded" value={`${rows.length}`} />
+        </div>
+
+        <div className="overflow-hidden rounded-[18px] border border-white/[0.018] bg-white/[0.012]">
+          <div className="hidden border-b border-white/[0.018] bg-black/20 px-3 py-2 text-[8px] font-black uppercase tracking-[0.16em] text-sub xl:grid xl:grid-cols-[minmax(0,1.35fr)_128px_minmax(0,0.9fr)_118px_200px] xl:gap-3">
+            <span>Reward</span>
+            <span>Member</span>
+            <span>Payload</span>
+            <span>Status</span>
+            <span>Actions</span>
+          </div>
+
+          <div className="divide-y divide-white/[0.018]">
+            {loading ? (
+              <InventoryTableSkeleton />
+            ) : rows.length ? (
+              rows.map((row) => (
+                <InventoryCommandRow
+                  key={row.id}
+                  row={row}
+                  saving={actionSavingId === row.id}
+                  onStatusChange={onInventoryStatusChange}
+                />
+              ))
+            ) : (
+              <div className="p-4 text-[12px] leading-5 text-sub">
+                Inventory rewards will appear here once members start opening lootboxes.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {message ? <PoolSaveNotice message={message} /> : null}
+      </div>
+    </OpsPanel>
+  );
+}
+
+function InventoryCommandRow({
+  row,
+  saving,
+  onStatusChange,
+}: {
+  row: LootboxActivityRead["inventoryTable"][number];
+  saving: boolean;
+  onStatusChange: (id: string, status: LootboxInventoryStatus) => void;
+}) {
+  return (
+    <div className="grid gap-3 p-3 xl:grid-cols-[minmax(0,1.35fr)_128px_minmax(0,0.9fr)_118px_200px] xl:items-center">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] ${getLootboxRarityTone(row.rarity as LootboxStudioRarity)}`}
+          >
+            {row.rarity}
+          </span>
+          <span className="rounded-full border border-white/[0.018] bg-white/[0.012] px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-sub">
+            {row.itemType.replace(/_/g, " ")}
+          </span>
+        </div>
+        <p className="mt-2 break-words text-[12px] font-semibold text-text [overflow-wrap:anywhere]">
+          {row.label}
+        </p>
+      </div>
+
+      <InventoryTableCell label="Member" value={row.memberLabel} />
+      <InventoryTableCell label="Payload" value={row.payloadSummary} />
+
+      <div className="min-w-0">
+        <p className="mb-1 text-[8px] font-black uppercase tracking-[0.16em] text-sub xl:hidden">
+          Status
+        </p>
+        <OpsStatusPill tone={row.statusTone}>{row.status}</OpsStatusPill>
+        <p className="mt-2 text-[9px] text-sub">{formatActivityDate(row.updatedAt ?? row.createdAt)}</p>
+      </div>
+
+      <InventoryStatusButtons
+        id={row.id}
+        currentStatus={row.status}
+        statuses={row.actionStatuses}
+        saving={saving}
+        onStatusChange={onStatusChange}
+      />
+    </div>
+  );
+}
+
+function InventoryTableCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-[13px] border border-white/[0.014] bg-black/10 px-3 py-2 xl:border-transparent xl:bg-transparent xl:p-0">
+      <p className="mb-1 text-[8px] font-black uppercase tracking-[0.16em] text-sub xl:hidden">
+        {label}
+      </p>
+      <p className="break-words text-[11px] font-semibold text-text [overflow-wrap:anywhere]">
+        {value}
+      </p>
+    </div>
+  );
+}
+
 function LootboxOpenActivityRow({
   item,
 }: {
@@ -1043,8 +1188,6 @@ function LootboxInventoryActivityRow({
   saving: boolean;
   onStatusChange: (id: string, status: LootboxInventoryStatus) => void;
 }) {
-  const actions: LootboxInventoryStatus[] = ["pending_review", "claimed", "expired"];
-
   return (
     <div className="rounded-[13px] border border-white/[0.016] bg-black/15 px-2.5 py-2">
       <div className="flex items-start justify-between gap-3">
@@ -1063,23 +1206,50 @@ function LootboxInventoryActivityRow({
           <p className="mt-1 text-[9px] text-sub">{formatActivityDate(item.createdAt)}</p>
         </div>
       </div>
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {actions.map((status) => (
-          <button
-            key={status}
-            type="button"
-            disabled={saving || item.status === status}
-            onClick={() => onStatusChange(item.id, status)}
-            className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] transition ${
-              saving || item.status === status
-                ? "cursor-not-allowed border-white/[0.012] bg-white/[0.008] text-sub/40"
-                : "border-primary/16 bg-primary/[0.045] text-primary hover:border-primary/32 hover:bg-primary/[0.08]"
-            }`}
-          >
-            {saving ? "Saving" : getShortInventoryActionLabel(status)}
-          </button>
-        ))}
-      </div>
+      <InventoryStatusButtons
+        id={item.id}
+        currentStatus={item.status}
+        statuses={inventoryCommandStatuses}
+        saving={saving}
+        onStatusChange={onStatusChange}
+        compact
+      />
+    </div>
+  );
+}
+
+function InventoryStatusButtons({
+  id,
+  currentStatus,
+  statuses,
+  saving,
+  onStatusChange,
+  compact = false,
+}: {
+  id: string;
+  currentStatus: string;
+  statuses: LootboxInventoryStatus[];
+  saving: boolean;
+  onStatusChange: (id: string, status: LootboxInventoryStatus) => void;
+  compact?: boolean;
+}) {
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-2" : ""}`}>
+      {statuses.map((status) => (
+        <button
+          key={status}
+          type="button"
+          disabled={saving || currentStatus === status}
+          onClick={() => onStatusChange(id, status)}
+          className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] transition ${
+            saving || currentStatus === status
+              ? "cursor-not-allowed border-white/[0.012] bg-white/[0.008] text-sub/40"
+              : "border-primary/16 bg-primary/[0.045] text-primary hover:border-primary/32 hover:bg-primary/[0.08]"
+          }`}
+        >
+          {saving ? "Saving" : getShortInventoryActionLabel(status)}
+        </button>
+      ))}
     </div>
   );
 }
@@ -1089,6 +1259,27 @@ function ActivitySkeleton() {
     <div className="space-y-2">
       <div className="h-14 rounded-[13px] border border-white/[0.012] bg-white/[0.018]" />
       <div className="h-14 rounded-[13px] border border-white/[0.012] bg-white/[0.012]" />
+    </div>
+  );
+}
+
+function InventoryTableSkeleton() {
+  return (
+    <div className="space-y-0">
+      <div className="grid gap-3 p-3 xl:grid-cols-[minmax(0,1.35fr)_128px_minmax(0,0.9fr)_118px_200px]">
+        <div className="h-16 rounded-[13px] bg-white/[0.018]" />
+        <div className="h-16 rounded-[13px] bg-white/[0.012]" />
+        <div className="h-16 rounded-[13px] bg-white/[0.012]" />
+        <div className="h-16 rounded-[13px] bg-white/[0.012]" />
+        <div className="h-16 rounded-[13px] bg-white/[0.012]" />
+      </div>
+      <div className="grid gap-3 p-3 xl:grid-cols-[minmax(0,1.35fr)_128px_minmax(0,0.9fr)_118px_200px]">
+        <div className="h-16 rounded-[13px] bg-white/[0.012]" />
+        <div className="h-16 rounded-[13px] bg-white/[0.01]" />
+        <div className="h-16 rounded-[13px] bg-white/[0.01]" />
+        <div className="h-16 rounded-[13px] bg-white/[0.01]" />
+        <div className="h-16 rounded-[13px] bg-white/[0.01]" />
+      </div>
     </div>
   );
 }

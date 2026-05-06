@@ -72,6 +72,47 @@ test("buildLootboxActivityRead summarizes recent opens and inventory posture", (
   assert.equal(read.inventoryQueue[0]?.statusTone, "warning");
 });
 
+test("buildLootboxActivityRead builds inventory command table rows", () => {
+  const read = buildLootboxActivityRead({
+    openRows: [],
+    inventoryRows: [
+      {
+        id: "item-new",
+        auth_user_id: "33333333-3333-4333-8333-333333333333",
+        lootbox_open_id: "open-3",
+        item_type: "profile_cosmetic",
+        rarity: "mythic",
+        label: "Nebula Profile Frame",
+        payload: { cosmetic: "nebula-profile-frame" },
+        status: "owned",
+        created_at: "2026-05-06T10:20:00.000Z",
+        updated_at: "2026-05-06T10:20:00.000Z",
+      },
+      {
+        id: "item-review",
+        auth_user_id: "44444444-4444-4444-8444-444444444444",
+        lootbox_open_id: "open-4",
+        item_type: "season_pass",
+        rarity: "legendary",
+        label: "Season Pass Discount",
+        payload: { refundPercent: 25 },
+        status: "pending_review",
+        created_at: "2026-05-06T10:12:00.000Z",
+        updated_at: "2026-05-06T10:12:00.000Z",
+      },
+    ],
+  });
+
+  assert.equal(read.inventoryTable?.[0]?.id, "item-review");
+  assert.equal(read.inventoryTable?.[0]?.payloadSummary, "refund: 25%");
+  assert.deepEqual(read.inventoryTable?.[0]?.actionStatuses, [
+    "pending_review",
+    "claimed",
+    "expired",
+  ]);
+  assert.equal(read.inventoryTable?.[1]?.payloadSummary, "cosmetic: nebula-profile-frame");
+});
+
 test("buildLootboxActivityRead handles empty activity safely", () => {
   const read = buildLootboxActivityRead({ openRows: [], inventoryRows: [] });
 
@@ -79,4 +120,5 @@ test("buildLootboxActivityRead handles empty activity safely", () => {
   assert.equal(read.summary.totalShardSpend, 0);
   assert.deepEqual(read.recentOpens, []);
   assert.deepEqual(read.inventoryQueue, []);
+  assert.deepEqual(read.inventoryTable, []);
 });

@@ -1,3 +1,16 @@
+import type { LootboxInventoryStatus } from "./lootbox-inventory-actions";
+
+type LootboxInventoryCommandStatus = Extract<
+  LootboxInventoryStatus,
+  "pending_review" | "claimed" | "expired"
+>;
+
+const INVENTORY_COMMAND_STATUSES = [
+  "pending_review",
+  "claimed",
+  "expired",
+] as const satisfies readonly LootboxInventoryCommandStatus[];
+
 export type LootboxOpenRow = {
   id: string;
   auth_user_id: string;
@@ -53,6 +66,19 @@ export type LootboxActivityRead = {
     createdAt: string;
     updatedAt: string | null;
   }>;
+  inventoryTable: Array<{
+    id: string;
+    memberLabel: string;
+    label: string;
+    rarity: string;
+    itemType: string;
+    payloadSummary: string;
+    status: string;
+    statusTone: "success" | "warning" | "danger" | "default";
+    createdAt: string;
+    updatedAt: string | null;
+    actionStatuses: LootboxInventoryCommandStatus[];
+  }>;
 };
 
 export function buildLootboxActivityRead(params: {
@@ -81,10 +107,10 @@ export function buildLootboxActivityRead(params: {
         openedAt: row.created_at,
       };
     });
-  const inventoryQueue = [...params.inventoryRows]
+  const sortedInventoryRows = [...params.inventoryRows]
     .sort((left, right) => compareInventoryRows(left, right))
-    .slice(0, 12)
-    .map((row) => ({
+    .slice(0, 12);
+  const inventoryQueue = sortedInventoryRows.map((row) => ({
       id: row.id,
       memberLabel: formatMemberLabel(row.auth_user_id),
       label: row.label || "Lootbox reward",
@@ -95,6 +121,19 @@ export function buildLootboxActivityRead(params: {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }));
+  const inventoryTable = sortedInventoryRows.map((row) => ({
+    id: row.id,
+    memberLabel: formatMemberLabel(row.auth_user_id),
+    label: row.label || "Lootbox reward",
+    rarity: row.rarity || "common",
+    itemType: row.item_type || "unknown",
+    payloadSummary: summarizePayload(row.payload),
+    status: row.status ?? "owned",
+    statusTone: getInventoryStatusTone(row.status),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    actionStatuses: [...INVENTORY_COMMAND_STATUSES],
+  }));
   const highRarityInventory = params.inventoryRows.filter((row) =>
     ["legendary", "mythic"].includes((row.rarity ?? "").toLowerCase())
   );
@@ -117,6 +156,7 @@ export function buildLootboxActivityRead(params: {
     },
     recentOpens,
     inventoryQueue,
+    inventoryTable,
   };
 }
 
@@ -142,6 +182,51 @@ function getInventoryStatusTone(
     default:
       return "default";
   }
+}
+
+function summarizePayload(payload: Record<string, unknown> | null) {
+  if (!payload || Object.keys(payload).length === 0) {
+    return "No payload";
+  }
+
+  if (typeof payload.title === "string") {
+    return `title: ${payload.title}`;
+  }
+
+  if (typeof payload.cosmetic === "string") {
+    return `cosmetic: ${payload.cosmetic}`;
+  }
+
+  if (typeof payload.refundPercent === "number" || typeof payload.refundPercent === "string") {
+    return `refund: ${payload.refundPercent}%`;
+  }
+
+  if (typeof payload.uses === "number" || typeof payload.uses === "string") {
+    return `uses: ${payload.uses}`;
+  }
+
+  if (typeof payload.window === "string") {
+    return `window: ${payload.window}`;
+  }
+
+  const [key, value] = Object.entries(payload)[0] ?? ["payload", "available"];
+  return `${key}: ${formatPayloadValue(value)}`;
+}
+
+function formatPayloadValue(value: unknown) {
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return `${value.length} items`;
+  }
+
+  if (value && typeof value === "object") {
+    return "configured";
+  }
+
+  return "available";
 }
 
 function compareInventoryRows(left: LootboxInventoryRow, right: LootboxInventoryRow) {
