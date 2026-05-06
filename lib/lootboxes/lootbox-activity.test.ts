@@ -105,6 +105,35 @@ test("buildLootboxActivityRead builds inventory command table rows", () => {
         updated_at: "2026-05-06T10:12:00.000Z",
       },
     ],
+    auditRows: [
+      {
+        id: "audit-newer",
+        auth_user_id: "admin-22222222",
+        source_table: "user_inventory",
+        source_id: "item-review",
+        action: "lootbox_inventory_status_changed",
+        summary: "Mark claimed for Season Pass Discount.",
+        metadata: {
+          previousStatus: "pending_review",
+          nextStatus: "claimed",
+          targetAuthUserId: "44444444-4444-4444-8444-444444444444",
+        },
+        created_at: "2026-05-06T10:22:00.000Z",
+      },
+      {
+        id: "audit-older",
+        auth_user_id: "admin-11111111",
+        source_table: "user_inventory",
+        source_id: "item-review",
+        action: "lootbox_inventory_status_changed",
+        summary: "Send to review for Season Pass Discount.",
+        metadata: {
+          previousStatus: "owned",
+          nextStatus: "pending_review",
+        },
+        created_at: "2026-05-06T10:14:00.000Z",
+      },
+    ],
   });
 
   assert.equal(read.inventoryTable?.[0]?.id, "item-review");
@@ -118,6 +147,12 @@ test("buildLootboxActivityRead builds inventory command table rows", () => {
     read.inventoryTable?.[0]?.fulfillment.nextStep,
     "Validate payload, member eligibility and reward budget before marking this reward claimed."
   );
+  assert.equal(read.inventoryTable?.[0]?.auditCount, 2);
+  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.id, "audit-newer");
+  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.actorLabel, "admin-22...2222");
+  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.previousStatus, "pending_review");
+  assert.equal(read.inventoryTable?.[0]?.auditTrail[0]?.nextStatus, "claimed");
+  assert.equal(read.inventoryTable?.[1]?.auditCount, 0);
   assert.deepEqual(read.inventoryTable?.[0]?.actionStatuses, [
     "pending_review",
     "claimed",

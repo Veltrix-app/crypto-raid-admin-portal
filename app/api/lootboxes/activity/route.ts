@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceSupabaseClient } from "@/lib/community/project-community-ops";
 import {
   buildLootboxActivityRead,
+  type LootboxInventoryAuditRow,
   type LootboxInventoryRow,
   type LootboxOpenRow,
 } from "@/lib/lootboxes/lootbox-activity";
@@ -75,9 +76,30 @@ export async function GET() {
       );
     }
 
+    const inventoryRows = (inventoryResponse.data ?? []) as LootboxInventoryRow[];
+    const inventoryIds = inventoryRows.map((row) => row.id).filter(Boolean);
+    let auditRows: LootboxInventoryAuditRow[] = [];
+
+    if (inventoryIds.length > 0) {
+      const auditResponse = await serviceSupabase
+        .from("admin_audit_logs")
+        .select("id, auth_user_id, source_table, source_id, action, summary, metadata, created_at")
+        .eq("source_table", "user_inventory")
+        .in("source_id", inventoryIds)
+        .order("created_at", { ascending: false })
+        .limit(150);
+
+      if (auditResponse.error) {
+        console.error("Lootbox inventory audit read skipped:", auditResponse.error.message);
+      } else {
+        auditRows = (auditResponse.data ?? []) as LootboxInventoryAuditRow[];
+      }
+    }
+
     const activity = buildLootboxActivityRead({
       openRows: (opensResponse.data ?? []) as LootboxOpenRow[],
-      inventoryRows: (inventoryResponse.data ?? []) as LootboxInventoryRow[],
+      inventoryRows,
+      auditRows,
     });
 
     return NextResponse.json({ ok: true, activity });

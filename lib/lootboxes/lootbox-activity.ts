@@ -35,6 +35,17 @@ export type LootboxInventoryRow = {
   updated_at: string | null;
 };
 
+export type LootboxInventoryAuditRow = {
+  id: string;
+  auth_user_id: string | null;
+  source_table: string;
+  source_id: string;
+  action: string;
+  summary: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
+
 export type LootboxActivityRead = {
   summary: {
     totalOpens: number;
@@ -77,6 +88,16 @@ export type LootboxActivityRead = {
     payloadEntries: Array<{ label: string; value: string }>;
     status: string;
     statusTone: "success" | "warning" | "danger" | "default";
+    auditCount: number;
+    auditTrail: Array<{
+      id: string;
+      actorLabel: string;
+      action: string;
+      summary: string;
+      previousStatus: string;
+      nextStatus: string;
+      createdAt: string;
+    }>;
     fulfillment: {
       label: string;
       nextStep: string;
@@ -102,6 +123,7 @@ export type LootboxInventoryCommandRow = LootboxActivityRead["inventoryTable"][n
 export function buildLootboxActivityRead(params: {
   openRows: LootboxOpenRow[];
   inventoryRows: LootboxInventoryRow[];
+  auditRows?: LootboxInventoryAuditRow[];
 }): LootboxActivityRead {
   const memberIds = new Set([
     ...params.openRows.map((row) => row.auth_user_id).filter(Boolean),
@@ -139,22 +161,28 @@ export function buildLootboxActivityRead(params: {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));
-  const inventoryTable = sortedInventoryRows.map((row) => ({
-    id: row.id,
-    lootboxOpenId: row.lootbox_open_id,
-    memberLabel: formatMemberLabel(row.auth_user_id),
-    label: row.label || "Lootbox reward",
-    rarity: row.rarity || "common",
-    itemType: row.item_type || "unknown",
-    payloadSummary: summarizePayload(row.payload),
-    payloadEntries: formatPayloadEntries(row.payload),
-    status: row.status ?? "owned",
-    statusTone: getInventoryStatusTone(row.status),
-    fulfillment: getFulfillmentGuidance(row.status),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    actionStatuses: [...INVENTORY_COMMAND_STATUSES],
-  }));
+  const inventoryTable = sortedInventoryRows.map((row) => {
+    const auditTrail = getAuditTrailForInventoryItem(params.auditRows ?? [], row.id);
+
+    return {
+      id: row.id,
+      lootboxOpenId: row.lootbox_open_id,
+      memberLabel: formatMemberLabel(row.auth_user_id),
+      label: row.label || "Lootbox reward",
+      rarity: row.rarity || "common",
+      itemType: row.item_type || "unknown",
+      payloadSummary: summarizePayload(row.payload),
+      payloadEntries: formatPayloadEntries(row.payload),
+      status: row.status ?? "owned",
+      statusTone: getInventoryStatusTone(row.status),
+      auditCount: auditTrail.length,
+      auditTrail,
+      fulfillment: getFulfillmentGuidance(row.status),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      actionStatuses: [...INVENTORY_COMMAND_STATUSES],
+    };
+  });
   const highRarityInventory = params.inventoryRows.filter((row) =>
     ["legendary", "mythic"].includes((row.rarity ?? "").toLowerCase())
   );
@@ -179,6 +207,25 @@ export function buildLootboxActivityRead(params: {
     inventoryQueue,
     inventoryTable,
   };
+}
+
+function getAuditTrailForInventoryItem(
+  auditRows: LootboxInventoryAuditRow[],
+  inventoryItemId: string
+) {
+  return auditRows
+    .filter((row) => row.source_table === "user_inventory" && row.source_id === inventoryItemId)
+    .sort((left, right) => compareIsoDesc(left.created_at, right.created_at))
+    .slice(0, 6)
+    .map((row) => ({
+      id: row.id,
+      actorLabel: formatMemberLabel(row.auth_user_id ?? ""),
+      action: row.action || "audit_event",
+      summary: row.summary || "Inventory audit event recorded.",
+      previousStatus: formatMetadataString(row.metadata?.previousStatus),
+      nextStatus: formatMetadataString(row.metadata?.nextStatus),
+      createdAt: row.created_at,
+    }));
 }
 
 export function buildLootboxInventoryCommandCounts(
@@ -306,6 +353,10 @@ function formatPayloadValue(value: unknown) {
   }
 
   return "available";
+}
+
+function formatMetadataString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : "unknown";
 }
 
 function getFulfillmentGuidance(status: string | null) {

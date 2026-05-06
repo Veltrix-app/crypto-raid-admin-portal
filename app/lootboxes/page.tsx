@@ -1305,6 +1305,8 @@ function InventoryFulfillmentDetail({
         <MiniRead label="Member" value={row.memberLabel} />
         <MiniRead label="Open" value={row.lootboxOpenId ?? "No link"} />
         <MiniRead label="Type" value={row.itemType.replace(/_/g, " ")} />
+        <MiniRead label="Audit events" value={`${row.auditCount}`} />
+        <MiniRead label="Created" value={formatActivityDate(row.createdAt)} />
         <MiniRead label="Updated" value={formatActivityDate(row.updatedAt ?? row.createdAt)} />
       </div>
 
@@ -1342,6 +1344,52 @@ function InventoryFulfillmentDetail({
               </p>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-[16px] border border-white/[0.018] bg-black/15 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <History size={14} className="text-primary" />
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+              Audit trail
+            </p>
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-[0.14em] text-sub">
+            {row.auditCount} events
+          </span>
+        </div>
+        <div className="mt-3 space-y-2">
+          {row.auditTrail.length ? (
+            row.auditTrail.map((event) => (
+              <div
+                key={event.id}
+                className="rounded-[13px] border border-white/[0.014] bg-white/[0.01] px-3 py-2"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="break-words text-[11px] font-semibold text-text [overflow-wrap:anywhere]">
+                    {event.summary}
+                  </p>
+                  <span className="text-[9px] text-sub">
+                    {formatActivityDate(event.createdAt)}
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-white/[0.018] bg-white/[0.012] px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-sub">
+                    {event.actorLabel}
+                  </span>
+                  <span className="rounded-full border border-white/[0.018] bg-black/20 px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-sub">
+                    {event.previousStatus} to {event.nextStatus}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-[11px] leading-5 text-sub">
+              No audit events recorded for this reward yet. The next status action will create
+              the first visible audit entry.
+            </p>
+          )}
         </div>
       </div>
 
