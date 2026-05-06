@@ -9,8 +9,14 @@ import {
   PackageOpen,
   PauseCircle,
   RadioTower,
+  RotateCcw,
+  Save,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
+  Target,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import {
   OpsMetricCard,
@@ -31,6 +37,12 @@ import {
   type LootboxStudioTierId,
   type LootboxTierReadiness,
 } from "@/lib/lootboxes/lootbox-studio-catalog";
+import {
+  buildLootboxPoolDraft,
+  type LootboxPoolDraftOverride,
+  type LootboxPoolDraftRow,
+  type LootboxPoolDraftSummary,
+} from "@/lib/lootboxes/lootbox-pool-draft";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
 
@@ -41,11 +53,24 @@ export default function LootboxesPage() {
   const projects = useAdminPortalStore((s) => s.projects);
   const featuredShardPools = useAdminPortalStore((s) => s.featuredShardPools);
   const [selectedTierId, setSelectedTierId] = useState<LootboxStudioTierId>("common");
+  const [poolDraftOverrides, setPoolDraftOverrides] = useState<
+    Partial<Record<LootboxStudioTierId, LootboxPoolDraftOverride[]>>
+  >({});
+  const [stagedTierId, setStagedTierId] = useState<LootboxStudioTierId | null>(null);
 
   const readiness = useMemo(() => buildLootboxStudioReadiness(), []);
   const selectedReadiness =
     readiness.find((item) => item.tier.id === selectedTierId) ?? readiness[0]!;
-  const selectedOutcomes = getLootboxPoolItemsForTier(selectedReadiness.tier.id);
+  const selectedOutcomes = useMemo(
+    () => getLootboxPoolItemsForTier(selectedReadiness.tier.id),
+    [selectedReadiness.tier.id]
+  );
+  const selectedDraft = useMemo(
+    () => buildLootboxPoolDraft(selectedOutcomes, poolDraftOverrides[selectedTierId] ?? []),
+    [poolDraftOverrides, selectedOutcomes, selectedTierId]
+  );
+  const selectedDraftIsStaged =
+    stagedTierId === selectedTierId && selectedDraft.summary.readiness === "ready";
   const activePools = featuredShardPools.filter((pool) => pool.status === "active");
   const pausedPools = featuredShardPools.filter((pool) => pool.status === "paused");
   const totalPoolSize = featuredShardPools.reduce((sum, pool) => sum + pool.poolSize, 0);
@@ -61,6 +86,40 @@ export default function LootboxesPage() {
       .map((pool) => pool.campaignId)
       .filter((campaignId): campaignId is string => Boolean(campaignId))
   ).size;
+
+  function updatePoolDraftOverride(
+    key: string,
+    patch: Omit<LootboxPoolDraftOverride, "key">
+  ) {
+    setPoolDraftOverrides((current) => {
+      const tierOverrides = current[selectedTierId] ?? [];
+      const existing = tierOverrides.find((override) => override.key === key);
+      const nextOverride = { ...existing, key, ...patch };
+
+      return {
+        ...current,
+        [selectedTierId]: [
+          ...tierOverrides.filter((override) => override.key !== key),
+          nextOverride,
+        ],
+      };
+    });
+    setStagedTierId(null);
+  }
+
+  function resetSelectedPoolDraft() {
+    setPoolDraftOverrides((current) => ({
+      ...current,
+      [selectedTierId]: [],
+    }));
+    setStagedTierId(null);
+  }
+
+  function stageSelectedPoolDraft() {
+    if (selectedDraft.summary.readiness === "ready") {
+      setStagedTierId(selectedTierId);
+    }
+  }
 
   return (
     <AdminShell>
@@ -157,26 +216,17 @@ export default function LootboxesPage() {
               </div>
             </OpsPanel>
 
-            <div className="grid gap-3 2xl:grid-cols-[0.95fr_1.05fr]">
+            <div className="grid gap-3 2xl:grid-cols-[0.78fr_1.22fr]">
               <TierInspector readiness={selectedReadiness} />
-              <OpsPanel
-                eyebrow="Outcome matrix"
-                title={`${selectedReadiness.tier.label} reward pool`}
-                description="This is the currently seeded outcome mix for the selected tier."
-              >
-                <div className="grid gap-2">
-                  {selectedOutcomes.map((item) => (
-                    <OutcomeRow
-                      key={`${item.tierId}-${item.label}-${item.itemType}`}
-                      rarity={item.rarity}
-                      label={item.label}
-                      itemType={item.itemType}
-                      weight={item.weight}
-                      payloadLabel={item.payloadLabel}
-                    />
-                  ))}
-                </div>
-              </OpsPanel>
+              <PoolBuilder
+                readiness={selectedReadiness}
+                draftRows={selectedDraft.rows}
+                draftSummary={selectedDraft.summary}
+                staged={selectedDraftIsStaged}
+                onRowChange={updatePoolDraftOverride}
+                onReset={resetSelectedPoolDraft}
+                onStage={stageSelectedPoolDraft}
+              />
             </div>
           </div>
 
@@ -386,37 +436,215 @@ function OddsRail({ rarity, value }: { rarity: LootboxStudioRarity; value: numbe
   );
 }
 
-function OutcomeRow({
-  rarity,
-  label,
-  itemType,
-  weight,
-  payloadLabel,
+function PoolBuilder({
+  readiness,
+  draftRows,
+  draftSummary,
+  staged,
+  onRowChange,
+  onReset,
+  onStage,
 }: {
-  rarity: LootboxStudioRarity;
-  label: string;
-  itemType: string;
-  weight: number;
-  payloadLabel: string;
+  readiness: LootboxTierReadiness;
+  draftRows: LootboxPoolDraftRow[];
+  draftSummary: LootboxPoolDraftSummary;
+  staged: boolean;
+  onRowChange: (key: string, patch: Omit<LootboxPoolDraftOverride, "key">) => void;
+  onReset: () => void;
+  onStage: () => void;
+}) {
+  const stageDisabled = draftSummary.readiness !== "ready";
+
+  return (
+    <OpsPanel
+      eyebrow="Pool builder"
+      title={`${readiness.tier.label} reward controls`}
+      description="Adjust weights, stock posture and active outcomes in a local operator draft before we wire persistent mutation controls into the backend."
+      action={
+        <OpsStatusPill
+          tone={staged ? "success" : draftSummary.readiness === "ready" ? "warning" : "danger"}
+        >
+          {staged ? "staged locally" : draftSummary.readiness === "ready" ? "draft ready" : "fix draft"}
+        </OpsStatusPill>
+      }
+      tone="accent"
+    >
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_230px]">
+        <div className="space-y-2.5">
+          {draftRows.map((row) => (
+            <PoolDraftOutcomeRow key={row.key} row={row} onChange={onRowChange} />
+          ))}
+        </div>
+
+        <div className="space-y-2.5">
+          <div className="rounded-[16px] border border-primary/12 bg-primary/[0.035] p-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                Draft read
+              </p>
+              <SlidersHorizontal size={14} className="text-primary" />
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <BuilderStat label="Weight" value={draftSummary.totalWeight.toLocaleString("en-US")} />
+              <BuilderStat label="Enabled" value={draftSummary.enabledCount} />
+              <BuilderStat label="Finite" value={draftSummary.finiteStockCount} />
+              <BuilderStat
+                label="Top odds"
+                value={
+                  draftSummary.strongestOutcome
+                    ? formatOdds(draftSummary.strongestOutcome.oddsPercent)
+                    : "0%"
+                }
+              />
+            </div>
+          </div>
+
+          <div className="rounded-[16px] border border-white/[0.018] bg-white/[0.012] p-3">
+            <div className="flex items-center gap-2">
+              <Target size={14} className="text-primary" />
+              <p className="text-[10px] font-semibold text-text">
+                {draftSummary.strongestOutcome?.label ?? "No dominant outcome yet"}
+              </p>
+            </div>
+            <p className="mt-2 text-[11px] leading-5 text-sub">
+              {draftSummary.warnings[0] ??
+                "The pool has a valid staged mix and can move to persistent controls next."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={onReset}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.026] bg-white/[0.012] px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-sub transition hover:border-white/10 hover:text-text"
+            >
+              <RotateCcw size={13} />
+              Reset
+            </button>
+            <button
+              type="button"
+              onClick={onStage}
+              disabled={stageDisabled}
+              className={`inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition ${
+                stageDisabled
+                  ? "cursor-not-allowed border border-white/[0.018] bg-white/[0.008] text-sub/45"
+                  : "border border-primary/24 bg-primary px-3 text-black shadow-[0_16px_34px_rgba(186,255,59,0.16)] hover:brightness-110"
+              }`}
+            >
+              <Save size={13} />
+              {staged ? "Staged" : "Stage"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </OpsPanel>
+  );
+}
+
+function PoolDraftOutcomeRow({
+  row,
+  onChange,
+}: {
+  row: LootboxPoolDraftRow;
+  onChange: (key: string, patch: Omit<LootboxPoolDraftOverride, "key">) => void;
 }) {
   return (
-    <div className="grid gap-3 rounded-[15px] border border-white/[0.018] bg-white/[0.012] p-3 md:grid-cols-[1fr_160px] md:items-center">
+    <div
+      className={`grid gap-3 rounded-[15px] border p-3 transition md:grid-cols-[minmax(0,1fr)_128px_142px_112px] md:items-center ${
+        row.enabled
+          ? "border-white/[0.022] bg-[linear-gradient(180deg,rgba(14,17,24,0.9),rgba(8,10,15,0.9))]"
+          : "border-white/[0.012] bg-white/[0.006] opacity-70"
+      }`}
+    >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] ${getLootboxRarityTone(rarity)}`}>
-            {rarity}
+          <span
+            className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] ${getLootboxRarityTone(row.rarity)}`}
+          >
+            {row.rarity}
           </span>
           <span className="rounded-full border border-white/[0.026] bg-white/[0.018] px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-sub">
-            {itemType.replace(/_/g, " ")}
+            {row.itemType.replace(/_/g, " ")}
           </span>
         </div>
-        <p className="mt-2 text-[12px] font-semibold text-text">{label}</p>
-        <p className="mt-1 text-[11px] leading-5 text-sub">{payloadLabel}</p>
+        <p className="mt-2 break-words text-[12px] font-semibold text-text [overflow-wrap:anywhere]">
+          {row.label}
+        </p>
+        <p className="mt-1 break-words text-[11px] leading-5 text-sub [overflow-wrap:anywhere]">
+          {row.payloadLabel}
+        </p>
       </div>
+
+      <label className="rounded-[13px] border border-white/[0.018] bg-black/15 px-3 py-2">
+        <span className="text-[8px] font-black uppercase tracking-[0.16em] text-sub">
+          Weight
+        </span>
+        <input
+          type="number"
+          min="0"
+          step="0.1"
+          value={row.draftWeight}
+          disabled={!row.enabled}
+          onChange={(event) => onChange(row.key, { weight: Number(event.target.value) })}
+          className="mt-1 w-full bg-transparent text-[13px] font-semibold text-text outline-none disabled:text-sub/45"
+          aria-label={`${row.label} weight`}
+        />
+      </label>
+
       <div className="rounded-[13px] border border-white/[0.018] bg-black/15 px-3 py-2">
-        <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-sub">Weight</p>
-        <p className="mt-1 text-[13px] font-semibold text-text">{weight}</p>
+        <button
+          type="button"
+          onClick={() => onChange(row.key, { stockLimit: row.stockLimit === null ? 100 : null })}
+          className="inline-flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.16em] text-sub transition hover:text-text"
+        >
+          {row.stockLimit === null ? <ToggleLeft size={14} /> : <ToggleRight size={14} />}
+          {row.stockLimit === null ? "Unlimited" : "Finite stock"}
+        </button>
+        <input
+          type="number"
+          min="1"
+          step="1"
+          value={row.stockLimit ?? ""}
+          disabled={row.stockLimit === null}
+          placeholder="No cap"
+          onChange={(event) =>
+            onChange(row.key, {
+              stockLimit: event.target.value.trim() ? Number(event.target.value) : null,
+            })
+          }
+          className="mt-1 w-full bg-transparent text-[13px] font-semibold text-text outline-none placeholder:text-sub/50 disabled:text-sub/40"
+          aria-label={`${row.label} stock limit`}
+        />
       </div>
+
+      <div className="rounded-[13px] border border-white/[0.018] bg-black/15 px-3 py-2">
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => onChange(row.key, { enabled: !row.enabled })}
+            className="inline-flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.16em] text-sub transition hover:text-text"
+          >
+            {row.enabled ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+            {row.enabled ? "Live" : "Off"}
+          </button>
+          <span className="text-[12px] font-semibold text-text">{formatOdds(row.oddsPercent)}</span>
+        </div>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.035]">
+          <div
+            className="h-full rounded-full bg-primary shadow-[0_0_18px_rgba(186,255,59,0.28)]"
+            style={{ width: `${Math.min(100, Math.max(0, row.oddsPercent))}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BuilderStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-[12px] border border-white/[0.018] bg-black/15 px-2.5 py-2">
+      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">{label}</p>
+      <p className="mt-1 truncate text-[12px] font-semibold text-text">{value}</p>
     </div>
   );
 }
