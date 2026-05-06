@@ -47,6 +47,7 @@ import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
 
 const rarityOrder: LootboxStudioRarity[] = ["common", "rare", "epic", "legendary", "mythic"];
+type PoolSaveMessage = { tone: "success" | "error" | "default"; text: string } | null;
 
 export default function LootboxesPage() {
   const campaigns = useAdminPortalStore((s) => s.campaigns);
@@ -57,6 +58,8 @@ export default function LootboxesPage() {
     Partial<Record<LootboxStudioTierId, LootboxPoolDraftOverride[]>>
   >({});
   const [stagedTierId, setStagedTierId] = useState<LootboxStudioTierId | null>(null);
+  const [poolSaving, setPoolSaving] = useState(false);
+  const [poolSaveMessage, setPoolSaveMessage] = useState<PoolSaveMessage>(null);
 
   const readiness = useMemo(() => buildLootboxStudioReadiness(), []);
   const selectedReadiness =
@@ -105,6 +108,7 @@ export default function LootboxesPage() {
       };
     });
     setStagedTierId(null);
+    setPoolSaveMessage(null);
   }
 
   function resetSelectedPoolDraft() {
@@ -113,11 +117,49 @@ export default function LootboxesPage() {
       [selectedTierId]: [],
     }));
     setStagedTierId(null);
+    setPoolSaveMessage(null);
   }
 
-  function stageSelectedPoolDraft() {
-    if (selectedDraft.summary.readiness === "ready") {
+  async function saveSelectedPoolDraft() {
+    if (selectedDraft.summary.readiness !== "ready" || poolSaving) {
+      return;
+    }
+
+    setPoolSaving(true);
+    setPoolSaveMessage({ tone: "default", text: "Saving pool controls..." });
+
+    try {
+      const response = await fetch("/api/lootboxes/pool-draft", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tierId: selectedTierId,
+          rows: selectedDraft.rows,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; updatedRows?: number }
+        | null;
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? "Lootbox pool save failed.");
+      }
+
       setStagedTierId(selectedTierId);
+      setPoolSaveMessage({
+        tone: "success",
+        text: `${payload.updatedRows ?? selectedDraft.rows.length} reward outcomes saved to Supabase.`,
+      });
+    } catch (error) {
+      setStagedTierId(null);
+      setPoolSaveMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Lootbox pool save failed.",
+      });
+    } finally {
+      setPoolSaving(false);
     }
   }
 
@@ -223,9 +265,11 @@ export default function LootboxesPage() {
                 draftRows={selectedDraft.rows}
                 draftSummary={selectedDraft.summary}
                 staged={selectedDraftIsStaged}
+                saving={poolSaving}
+                message={poolSaveMessage}
                 onRowChange={updatePoolDraftOverride}
                 onReset={resetSelectedPoolDraft}
-                onStage={stageSelectedPoolDraft}
+                onSave={saveSelectedPoolDraft}
               />
             </div>
           </div>
@@ -441,19 +485,23 @@ function PoolBuilder({
   draftRows,
   draftSummary,
   staged,
+  saving,
+  message,
   onRowChange,
   onReset,
-  onStage,
+  onSave,
 }: {
   readiness: LootboxTierReadiness;
   draftRows: LootboxPoolDraftRow[];
   draftSummary: LootboxPoolDraftSummary;
   staged: boolean;
+  saving: boolean;
+  message: PoolSaveMessage;
   onRowChange: (key: string, patch: Omit<LootboxPoolDraftOverride, "key">) => void;
   onReset: () => void;
-  onStage: () => void;
+  onSave: () => void;
 }) {
-  const stageDisabled = draftSummary.readiness !== "ready";
+  const saveDisabled = draftSummary.readiness !== "ready" || saving;
 
   return (
     <OpsPanel
@@ -464,7 +512,7 @@ function PoolBuilder({
         <OpsStatusPill
           tone={staged ? "success" : draftSummary.readiness === "ready" ? "warning" : "danger"}
         >
-          {staged ? "staged locally" : draftSummary.readiness === "ready" ? "draft ready" : "fix draft"}
+          {staged ? "saved" : draftSummary.readiness === "ready" ? "draft ready" : "fix draft"}
         </OpsStatusPill>
       }
       tone="accent"
@@ -508,9 +556,11 @@ function PoolBuilder({
             </div>
             <p className="mt-2 text-[11px] leading-5 text-sub">
               {draftSummary.warnings[0] ??
-                "The pool has a valid staged mix and can move to persistent controls next."}
+                "The pool has a valid mix and can be saved into the live Supabase reward pool."}
             </p>
           </div>
+
+          {message ? <PoolSaveNotice message={message} /> : null}
 
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -523,21 +573,37 @@ function PoolBuilder({
             </button>
             <button
               type="button"
-              onClick={onStage}
-              disabled={stageDisabled}
+              onClick={onSave}
+              disabled={saveDisabled}
               className={`inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] transition ${
-                stageDisabled
+                saveDisabled
                   ? "cursor-not-allowed border border-white/[0.018] bg-white/[0.008] text-sub/45"
                   : "border border-primary/24 bg-primary px-3 text-black shadow-[0_16px_34px_rgba(186,255,59,0.16)] hover:brightness-110"
               }`}
             >
               <Save size={13} />
-              {staged ? "Staged" : "Stage"}
+              {saving ? "Saving" : staged ? "Saved" : "Save"}
             </button>
           </div>
         </div>
       </div>
     </OpsPanel>
+  );
+}
+
+function PoolSaveNotice({ message }: { message: NonNullable<PoolSaveMessage> }) {
+  return (
+    <div
+      className={`rounded-[16px] border p-3 text-[11px] leading-5 ${
+        message.tone === "success"
+          ? "border-emerald-300/20 bg-emerald-300/[0.07] text-emerald-100"
+          : message.tone === "error"
+            ? "border-rose-300/20 bg-rose-500/[0.07] text-rose-100"
+            : "border-white/[0.024] bg-white/[0.012] text-sub"
+      }`}
+    >
+      {message.text}
+    </div>
   );
 }
 
