@@ -13,6 +13,7 @@ import {
   Landmark,
   LifeBuoy,
   Megaphone,
+  PackageOpen,
   Settings,
   Shield,
   Sparkles,
@@ -105,6 +106,13 @@ export const GLOBAL_NAV_ITEMS: readonly GlobalNavItem[] = [
     label: "Rewards",
     description: "Reward catalog, stock pressure, claim surfaces and incentive readiness.",
     icon: Gift,
+    group: "primary",
+  },
+  {
+    href: "/lootboxes",
+    label: "Lootboxes",
+    description: "Shard economy, lootbox tiers, active boosts and reward-pool readiness.",
+    icon: PackageOpen,
     group: "primary",
   },
   {
