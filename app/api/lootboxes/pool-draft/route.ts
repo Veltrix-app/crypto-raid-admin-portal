@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabaseClient } from "@/lib/community/project-community-ops";
 import { buildLootboxPoolPersistencePayload } from "@/lib/lootboxes/lootbox-pool-persistence";
+import { buildLootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
 import {
   LOOTBOX_STUDIO_TIERS,
   type LootboxStudioTierId,
@@ -15,6 +16,12 @@ type ExistingPoolRow = {
   id: string;
   label: string;
   item_type: string;
+};
+
+type PoolStockRow = {
+  active: boolean | null;
+  unlimited_stock: boolean | null;
+  stock: number | null;
 };
 
 function isLootboxStudioTierId(value: unknown): value is LootboxStudioTierId {
@@ -32,6 +39,74 @@ function isMissingLootboxSchema(error: { message?: string } | null | undefined) 
 
 function getPoolRowKey(row: Pick<ExistingPoolRow, "label" | "item_type">) {
   return `${row.label}::${row.item_type}`;
+}
+
+export async function GET() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ ok: false, error: "You must be signed in." }, { status: 401 });
+    }
+
+    const serviceSupabase = getServiceSupabaseClient();
+    const { data: adminUser, error: adminError } = await serviceSupabase
+      .from("admin_users")
+      .select("role, status")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+
+    if (adminError) {
+      return NextResponse.json({ ok: false, error: adminError.message }, { status: 500 });
+    }
+
+    if (!adminUser || adminUser.status !== "active" || adminUser.role !== "super_admin") {
+      return NextResponse.json(
+        { ok: false, error: "Lootbox pool controls are limited to Veltrix super admins." },
+        { status: 403 }
+      );
+    }
+
+    const poolRowsResponse = await serviceSupabase
+      .from("lootbox_pool_items")
+      .select("active, unlimited_stock, stock");
+
+    if (poolRowsResponse.error) {
+      const status = isMissingLootboxSchema(poolRowsResponse.error) ? 409 : 500;
+      return NextResponse.json({ ok: false, error: poolRowsResponse.error.message }, { status });
+    }
+
+    const [reserveRpcReady, restoreRpcReady] = await Promise.all([
+      checkPoolStockRpc(serviceSupabase, "reserve_lootbox_pool_item_stock"),
+      checkPoolStockRpc(serviceSupabase, "restore_lootbox_pool_item_stock"),
+    ]);
+    const rows = (poolRowsResponse.data ?? []) as PoolStockRow[];
+    const finiteRows = rows.filter(
+      (row) => row.unlimited_stock === false && row.stock !== null
+    );
+    const stockSafety = buildLootboxStockSafetyRead({
+      reserveRpcReady,
+      restoreRpcReady,
+      totalOutcomes: rows.length,
+      activeOutcomes: rows.filter((row) => row.active === true).length,
+      finiteStockOutcomes: finiteRows.length,
+      finiteActiveOutcomes: finiteRows.filter((row) => row.active === true).length,
+    });
+
+    return NextResponse.json({ ok: true, stockSafety });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Lootbox stock safety read failed.",
+      },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -192,4 +267,15 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+async function checkPoolStockRpc(
+  serviceSupabase: ReturnType<typeof getServiceSupabaseClient>,
+  rpcName: "reserve_lootbox_pool_item_stock" | "restore_lootbox_pool_item_stock"
+) {
+  const { error } = await serviceSupabase.rpc(rpcName, {
+    p_pool_item_id: crypto.randomUUID(),
+  });
+
+  return !error;
 }

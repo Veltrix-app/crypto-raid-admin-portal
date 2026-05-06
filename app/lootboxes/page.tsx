@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -43,6 +43,7 @@ import {
   type LootboxPoolDraftRow,
   type LootboxPoolDraftSummary,
 } from "@/lib/lootboxes/lootbox-pool-draft";
+import type { LootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
 
@@ -60,6 +61,8 @@ export default function LootboxesPage() {
   const [stagedTierId, setStagedTierId] = useState<LootboxStudioTierId | null>(null);
   const [poolSaving, setPoolSaving] = useState(false);
   const [poolSaveMessage, setPoolSaveMessage] = useState<PoolSaveMessage>(null);
+  const [stockSafety, setStockSafety] = useState<LootboxStockSafetyRead | null>(null);
+  const [stockSafetyLoading, setStockSafetyLoading] = useState(true);
 
   const readiness = useMemo(() => buildLootboxStudioReadiness(), []);
   const selectedReadiness =
@@ -89,6 +92,38 @@ export default function LootboxesPage() {
       .map((pool) => pool.campaignId)
       .filter((campaignId): campaignId is string => Boolean(campaignId))
   ).size;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStockSafety() {
+      setStockSafetyLoading(true);
+
+      try {
+        const response = await fetch("/api/lootboxes/pool-draft", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; stockSafety?: LootboxStockSafetyRead }
+          | null;
+
+        if (!cancelled && response.ok && payload?.ok && payload.stockSafety) {
+          setStockSafety(payload.stockSafety);
+        }
+      } finally {
+        if (!cancelled) {
+          setStockSafetyLoading(false);
+        }
+      }
+    }
+
+    loadStockSafety();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function updatePoolDraftOverride(
     key: string,
@@ -267,6 +302,8 @@ export default function LootboxesPage() {
                 staged={selectedDraftIsStaged}
                 saving={poolSaving}
                 message={poolSaveMessage}
+                stockSafety={stockSafety}
+                stockSafetyLoading={stockSafetyLoading}
                 onRowChange={updatePoolDraftOverride}
                 onReset={resetSelectedPoolDraft}
                 onSave={saveSelectedPoolDraft}
@@ -487,6 +524,8 @@ function PoolBuilder({
   staged,
   saving,
   message,
+  stockSafety,
+  stockSafetyLoading,
   onRowChange,
   onReset,
   onSave,
@@ -497,6 +536,8 @@ function PoolBuilder({
   staged: boolean;
   saving: boolean;
   message: PoolSaveMessage;
+  stockSafety: LootboxStockSafetyRead | null;
+  stockSafetyLoading: boolean;
   onRowChange: (key: string, patch: Omit<LootboxPoolDraftOverride, "key">) => void;
   onReset: () => void;
   onSave: () => void;
@@ -560,6 +601,12 @@ function PoolBuilder({
             </p>
           </div>
 
+          <StockSafetyCard
+            safety={stockSafety}
+            loading={stockSafetyLoading}
+            draftSummary={draftSummary}
+          />
+
           {message ? <PoolSaveNotice message={message} /> : null}
 
           <div className="grid grid-cols-2 gap-2">
@@ -588,6 +635,51 @@ function PoolBuilder({
         </div>
       </div>
     </OpsPanel>
+  );
+}
+
+function StockSafetyCard({
+  safety,
+  loading,
+  draftSummary,
+}: {
+  safety: LootboxStockSafetyRead | null;
+  loading: boolean;
+  draftSummary: LootboxPoolDraftSummary;
+}) {
+  const ready = safety?.status === "ready";
+  const label = loading ? "Checking stock RPC" : safety?.label ?? "Stock read unavailable";
+  const summary = loading
+    ? "Checking whether limited outcomes are protected before shard spend."
+    : safety?.summary ?? "Could not read stock safety yet; keep finite-stock edits conservative.";
+
+  return (
+    <div
+      className={`rounded-[16px] border p-3 ${
+        ready
+          ? "border-emerald-300/18 bg-emerald-300/[0.055]"
+          : "border-amber-300/18 bg-amber-300/[0.05]"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+            Stock safety
+          </p>
+          <p className="mt-1 truncate text-[12px] font-semibold text-text">{label}</p>
+        </div>
+        <OpsStatusPill tone={ready ? "success" : "warning"}>
+          {loading ? "checking" : ready ? "guarded" : "watch"}
+        </OpsStatusPill>
+      </div>
+      <p className="mt-2 text-[11px] leading-5 text-sub">{summary}</p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <BuilderStat label="Draft finite" value={draftSummary.finiteStockCount} />
+        <BuilderStat label="Live finite" value={safety?.finiteActiveOutcomes ?? "-"} />
+        <BuilderStat label="RPC pair" value={ready ? "Ready" : loading ? "..." : "Check"} />
+        <BuilderStat label="Guard" value={ready ? "Before spend" : "Pending"} />
+      </div>
+    </div>
   );
 }
 
