@@ -47,6 +47,10 @@ import {
   type LootboxPoolDraftSummary,
 } from "@/lib/lootboxes/lootbox-pool-draft";
 import type { LootboxActivityRead } from "@/lib/lootboxes/lootbox-activity";
+import {
+  getLootboxInventoryStatusActionLabel,
+  type LootboxInventoryStatus,
+} from "@/lib/lootboxes/lootbox-inventory-actions";
 import type { LootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
@@ -69,6 +73,8 @@ export default function LootboxesPage() {
   const [stockSafetyLoading, setStockSafetyLoading] = useState(true);
   const [lootboxActivity, setLootboxActivity] = useState<LootboxActivityRead | null>(null);
   const [lootboxActivityLoading, setLootboxActivityLoading] = useState(true);
+  const [inventoryActionId, setInventoryActionId] = useState<string | null>(null);
+  const [inventoryActionMessage, setInventoryActionMessage] = useState<PoolSaveMessage>(null);
 
   const readiness = useMemo(() => buildLootboxStudioReadiness(), []);
   const selectedReadiness =
@@ -138,16 +144,9 @@ export default function LootboxesPage() {
       setLootboxActivityLoading(true);
 
       try {
-        const response = await fetch("/api/lootboxes/activity", {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
-        const payload = (await response.json().catch(() => null)) as
-          | { ok?: boolean; activity?: LootboxActivityRead }
-          | null;
-
-        if (!cancelled && response.ok && payload?.ok && payload.activity) {
-          setLootboxActivity(payload.activity);
+        const activity = await fetchLootboxActivityRead();
+        if (!cancelled) {
+          setLootboxActivity(activity);
         }
       } finally {
         if (!cancelled) {
@@ -191,6 +190,61 @@ export default function LootboxesPage() {
     }));
     setStagedTierId(null);
     setPoolSaveMessage(null);
+  }
+
+  async function fetchLootboxActivityRead() {
+    const response = await fetch("/api/lootboxes/activity", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; activity?: LootboxActivityRead }
+      | null;
+
+    if (!response.ok || !payload?.ok || !payload.activity) {
+      throw new Error("Lootbox activity read failed.");
+    }
+
+    return payload.activity;
+  }
+
+  async function updateInventoryStatus(id: string, status: LootboxInventoryStatus) {
+    if (inventoryActionId) {
+      return;
+    }
+
+    setInventoryActionId(id);
+    setInventoryActionMessage({ tone: "default", text: "Updating inventory status..." });
+
+    try {
+      const response = await fetch(`/api/lootboxes/inventory/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? "Inventory status update failed.");
+      }
+
+      setLootboxActivity(await fetchLootboxActivityRead());
+      setInventoryActionMessage({
+        tone: "success",
+        text: `${getLootboxInventoryStatusActionLabel(status)} applied.`,
+      });
+    } catch (error) {
+      setInventoryActionMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Inventory status update failed.",
+      });
+    } finally {
+      setInventoryActionId(null);
+    }
   }
 
   async function saveSelectedPoolDraft() {
@@ -388,6 +442,9 @@ export default function LootboxesPage() {
             <LootboxActivityPanel
               activity={lootboxActivity}
               loading={lootboxActivityLoading}
+              actionSavingId={inventoryActionId}
+              message={inventoryActionMessage}
+              onInventoryStatusChange={updateInventoryStatus}
             />
 
             <OpsPanel
@@ -853,9 +910,15 @@ function BuilderStat({ label, value }: { label: string; value: string | number }
 function LootboxActivityPanel({
   activity,
   loading,
+  actionSavingId,
+  message,
+  onInventoryStatusChange,
 }: {
   activity: LootboxActivityRead | null;
   loading: boolean;
+  actionSavingId: string | null;
+  message: PoolSaveMessage;
+  onInventoryStatusChange: (id: string, status: LootboxInventoryStatus) => void;
 }) {
   const summary = activity?.summary;
 
@@ -917,7 +980,12 @@ function LootboxActivityPanel({
               <ActivitySkeleton />
             ) : activity?.inventoryQueue.length ? (
               activity.inventoryQueue.slice(0, 4).map((item) => (
-                <LootboxInventoryActivityRow key={item.id} item={item} />
+                <LootboxInventoryActivityRow
+                  key={item.id}
+                  item={item}
+                  saving={actionSavingId === item.id}
+                  onStatusChange={onInventoryStatusChange}
+                />
               ))
             ) : (
               <p className="text-[11px] leading-5 text-sub">
@@ -926,6 +994,8 @@ function LootboxActivityPanel({
             )}
           </div>
         </div>
+
+        {message ? <PoolSaveNotice message={message} /> : null}
       </div>
     </OpsPanel>
   );
@@ -966,9 +1036,15 @@ function LootboxOpenActivityRow({
 
 function LootboxInventoryActivityRow({
   item,
+  saving,
+  onStatusChange,
 }: {
   item: LootboxActivityRead["inventoryQueue"][number];
+  saving: boolean;
+  onStatusChange: (id: string, status: LootboxInventoryStatus) => void;
 }) {
+  const actions: LootboxInventoryStatus[] = ["pending_review", "claimed", "expired"];
+
   return (
     <div className="rounded-[13px] border border-white/[0.016] bg-black/15 px-2.5 py-2">
       <div className="flex items-start justify-between gap-3">
@@ -986,6 +1062,23 @@ function LootboxInventoryActivityRow({
           <OpsStatusPill tone={item.statusTone}>{item.status}</OpsStatusPill>
           <p className="mt-1 text-[9px] text-sub">{formatActivityDate(item.createdAt)}</p>
         </div>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {actions.map((status) => (
+          <button
+            key={status}
+            type="button"
+            disabled={saving || item.status === status}
+            onClick={() => onStatusChange(item.id, status)}
+            className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] transition ${
+              saving || item.status === status
+                ? "cursor-not-allowed border-white/[0.012] bg-white/[0.008] text-sub/40"
+                : "border-primary/16 bg-primary/[0.045] text-primary hover:border-primary/32 hover:bg-primary/[0.08]"
+            }`}
+          >
+            {saving ? "Saving" : getShortInventoryActionLabel(status)}
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -1071,4 +1164,18 @@ function formatActivityDate(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function getShortInventoryActionLabel(status: LootboxInventoryStatus) {
+  switch (status) {
+    case "pending_review":
+      return "Review";
+    case "claimed":
+      return "Claimed";
+    case "expired":
+      return "Expire";
+    case "owned":
+    default:
+      return "Owned";
+  }
 }
