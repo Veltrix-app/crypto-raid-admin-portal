@@ -108,7 +108,16 @@ test("buildLootboxActivityRead builds inventory command table rows", () => {
   });
 
   assert.equal(read.inventoryTable?.[0]?.id, "item-review");
+  assert.equal(read.inventoryTable?.[0]?.lootboxOpenId, "open-4");
   assert.equal(read.inventoryTable?.[0]?.payloadSummary, "refund: 25%");
+  assert.deepEqual(read.inventoryTable?.[0]?.payloadEntries, [
+    { label: "refundPercent", value: "25" },
+  ]);
+  assert.equal(read.inventoryTable?.[0]?.fulfillment.label, "Manual review required");
+  assert.equal(
+    read.inventoryTable?.[0]?.fulfillment.nextStep,
+    "Validate payload, member eligibility and reward budget before marking this reward claimed."
+  );
   assert.deepEqual(read.inventoryTable?.[0]?.actionStatuses, [
     "pending_review",
     "claimed",

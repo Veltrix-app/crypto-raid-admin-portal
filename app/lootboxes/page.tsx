@@ -6,7 +6,9 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
+  ClipboardCheck,
   Crown,
+  FileText,
   Gift,
   History,
   PackageOpen,
@@ -1062,7 +1064,20 @@ function InventoryCommandTable({
     () => filterLootboxInventoryCommandRows(rows, { filter, query: search }),
     [filter, rows, search]
   );
+  const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(null);
+  const selectedInventoryRow = useMemo(
+    () => filteredRows.find((row) => row.id === selectedInventoryId) ?? filteredRows[0] ?? null,
+    [filteredRows, selectedInventoryId]
+  );
   const summary = activity?.summary;
+
+  useEffect(() => {
+    if (filteredRows.some((row) => row.id === selectedInventoryId)) {
+      return;
+    }
+
+    setSelectedInventoryId(filteredRows[0]?.id ?? null);
+  }, [filteredRows, selectedInventoryId]);
 
   return (
     <OpsPanel
@@ -1130,35 +1145,45 @@ function InventoryCommandTable({
           </label>
         </div>
 
-        <div className="overflow-hidden rounded-[18px] border border-white/[0.018] bg-white/[0.012]">
-          <div className="hidden border-b border-white/[0.018] bg-black/20 px-3 py-2 text-[8px] font-black uppercase tracking-[0.16em] text-sub xl:grid xl:grid-cols-[minmax(0,1.35fr)_128px_minmax(0,0.9fr)_118px_200px] xl:gap-3">
-            <span>Reward</span>
-            <span>Member</span>
-            <span>Payload</span>
-            <span>Status</span>
-            <span>Actions</span>
+        <div className="grid gap-3 2xl:grid-cols-[minmax(0,1fr)_340px] 2xl:items-start">
+          <div className="overflow-hidden rounded-[18px] border border-white/[0.018] bg-white/[0.012]">
+            <div className="hidden border-b border-white/[0.018] bg-black/20 px-3 py-2 text-[8px] font-black uppercase tracking-[0.16em] text-sub xl:grid xl:grid-cols-[minmax(0,1.25fr)_126px_minmax(0,0.86fr)_112px_238px] xl:gap-3">
+              <span>Reward</span>
+              <span>Member</span>
+              <span>Payload</span>
+              <span>Status</span>
+              <span>Actions</span>
+            </div>
+
+            <div className="divide-y divide-white/[0.018]">
+              {loading ? (
+                <InventoryTableSkeleton />
+              ) : filteredRows.length ? (
+                filteredRows.map((row) => (
+                  <InventoryCommandRow
+                    key={row.id}
+                    row={row}
+                    selected={selectedInventoryRow?.id === row.id}
+                    saving={actionSavingId === row.id}
+                    onSelect={() => setSelectedInventoryId(row.id)}
+                    onStatusChange={onInventoryStatusChange}
+                  />
+                ))
+              ) : (
+                <div className="p-4 text-[12px] leading-5 text-sub">
+                  {rows.length
+                    ? "No inventory rewards match the current filter."
+                    : "Inventory rewards will appear here once members start opening lootboxes."}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="divide-y divide-white/[0.018]">
-            {loading ? (
-              <InventoryTableSkeleton />
-            ) : filteredRows.length ? (
-              filteredRows.map((row) => (
-                <InventoryCommandRow
-                  key={row.id}
-                  row={row}
-                  saving={actionSavingId === row.id}
-                  onStatusChange={onInventoryStatusChange}
-                />
-              ))
-            ) : (
-              <div className="p-4 text-[12px] leading-5 text-sub">
-                {rows.length
-                  ? "No inventory rewards match the current filter."
-                  : "Inventory rewards will appear here once members start opening lootboxes."}
-              </div>
-            )}
-          </div>
+          <InventoryFulfillmentDetail
+            row={selectedInventoryRow}
+            saving={selectedInventoryRow ? actionSavingId === selectedInventoryRow.id : false}
+            onStatusChange={onInventoryStatusChange}
+          />
         </div>
 
         {message ? <PoolSaveNotice message={message} /> : null}
@@ -1169,15 +1194,23 @@ function InventoryCommandTable({
 
 function InventoryCommandRow({
   row,
+  selected,
   saving,
+  onSelect,
   onStatusChange,
 }: {
   row: LootboxActivityRead["inventoryTable"][number];
+  selected: boolean;
   saving: boolean;
+  onSelect: () => void;
   onStatusChange: (id: string, status: LootboxInventoryStatus) => void;
 }) {
   return (
-    <div className="grid gap-3 p-3 xl:grid-cols-[minmax(0,1.35fr)_128px_minmax(0,0.9fr)_118px_200px] xl:items-center">
+    <div
+      className={`grid gap-3 p-3 transition xl:grid-cols-[minmax(0,1.25fr)_126px_minmax(0,0.86fr)_112px_238px] xl:items-center ${
+        selected ? "bg-primary/[0.035]" : "hover:bg-white/[0.01]"
+      }`}
+    >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span
@@ -1205,13 +1238,125 @@ function InventoryCommandRow({
         <p className="mt-2 text-[9px] text-sub">{formatActivityDate(row.updatedAt ?? row.createdAt)}</p>
       </div>
 
-      <InventoryStatusButtons
-        id={row.id}
-        currentStatus={row.status}
-        statuses={row.actionStatuses}
-        saving={saving}
-        onStatusChange={onStatusChange}
-      />
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          type="button"
+          onClick={onSelect}
+          aria-pressed={selected}
+          className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] transition ${
+            selected
+              ? "border-primary/28 bg-primary text-black"
+              : "border-white/[0.026] bg-white/[0.012] text-sub hover:border-white/10 hover:text-text"
+          }`}
+        >
+          Details
+        </button>
+        <InventoryStatusButtons
+          id={row.id}
+          currentStatus={row.status}
+          statuses={row.actionStatuses}
+          saving={saving}
+          onStatusChange={onStatusChange}
+        />
+      </div>
+    </div>
+  );
+}
+
+function InventoryFulfillmentDetail({
+  row,
+  saving,
+  onStatusChange,
+}: {
+  row: LootboxActivityRead["inventoryTable"][number] | null;
+  saving: boolean;
+  onStatusChange: (id: string, status: LootboxInventoryStatus) => void;
+}) {
+  if (!row) {
+    return (
+      <div className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.024] bg-black/20 text-sub">
+          <FileText size={16} />
+        </div>
+        <p className="mt-3 text-[12px] font-semibold text-text">No reward selected</p>
+        <p className="mt-2 text-[11px] leading-5 text-sub">
+          Select a visible inventory reward to inspect fulfillment context and manual status
+          actions.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[18px] border border-primary/14 bg-[linear-gradient(180deg,rgba(186,255,59,0.055),rgba(8,10,15,0.94))] p-4 shadow-[0_18px_54px_rgba(0,0,0,0.22)]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Fulfillment detail
+          </p>
+          <h3 className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+            {row.label}
+          </h3>
+        </div>
+        <OpsStatusPill tone={row.statusTone}>{row.status}</OpsStatusPill>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <MiniRead label="Member" value={row.memberLabel} />
+        <MiniRead label="Open" value={row.lootboxOpenId ?? "No link"} />
+        <MiniRead label="Type" value={row.itemType.replace(/_/g, " ")} />
+        <MiniRead label="Updated" value={formatActivityDate(row.updatedAt ?? row.createdAt)} />
+      </div>
+
+      <div className="mt-3 rounded-[16px] border border-primary/14 bg-primary/[0.045] p-3">
+        <div className="flex items-start gap-2">
+          <ClipboardCheck size={15} className="mt-0.5 shrink-0 text-primary" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-black text-text">{row.fulfillment.label}</p>
+            <p className="mt-2 text-[11px] leading-5 text-sub">{row.fulfillment.nextStep}</p>
+            <p className="mt-2 text-[10px] leading-4 text-primary/78">
+              {row.fulfillment.auditHint}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-[16px] border border-white/[0.018] bg-black/15 p-3">
+        <div className="flex items-center gap-2">
+          <FileText size={14} className="text-primary" />
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+            Payload
+          </p>
+        </div>
+        <div className="mt-3 space-y-2">
+          {row.payloadEntries.map((entry) => (
+            <div
+              key={entry.label}
+              className="grid gap-1 rounded-[12px] border border-white/[0.014] bg-white/[0.01] px-3 py-2"
+            >
+              <p className="break-words text-[8px] font-black uppercase tracking-[0.14em] text-sub [overflow-wrap:anywhere]">
+                {entry.label}
+              </p>
+              <p className="break-words text-[11px] font-semibold text-text [overflow-wrap:anywhere]">
+                {entry.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-[16px] border border-white/[0.018] bg-black/15 p-3">
+        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+          Status actions
+        </p>
+        <InventoryStatusButtons
+          id={row.id}
+          currentStatus={row.status}
+          statuses={row.actionStatuses}
+          saving={saving}
+          onStatusChange={onStatusChange}
+        />
+      </div>
     </div>
   );
 }

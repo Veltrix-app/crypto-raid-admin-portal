@@ -68,13 +68,20 @@ export type LootboxActivityRead = {
   }>;
   inventoryTable: Array<{
     id: string;
+    lootboxOpenId: string | null;
     memberLabel: string;
     label: string;
     rarity: string;
     itemType: string;
     payloadSummary: string;
+    payloadEntries: Array<{ label: string; value: string }>;
     status: string;
     statusTone: "success" | "warning" | "danger" | "default";
+    fulfillment: {
+      label: string;
+      nextStep: string;
+      auditHint: string;
+    };
     createdAt: string;
     updatedAt: string | null;
     actionStatuses: LootboxInventoryCommandStatus[];
@@ -134,13 +141,16 @@ export function buildLootboxActivityRead(params: {
   }));
   const inventoryTable = sortedInventoryRows.map((row) => ({
     id: row.id,
+    lootboxOpenId: row.lootbox_open_id,
     memberLabel: formatMemberLabel(row.auth_user_id),
     label: row.label || "Lootbox reward",
     rarity: row.rarity || "common",
     itemType: row.item_type || "unknown",
     payloadSummary: summarizePayload(row.payload),
+    payloadEntries: formatPayloadEntries(row.payload),
     status: row.status ?? "owned",
     statusTone: getInventoryStatusTone(row.status),
+    fulfillment: getFulfillmentGuidance(row.status),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     actionStatuses: [...INVENTORY_COMMAND_STATUSES],
@@ -271,6 +281,17 @@ function summarizePayload(payload: Record<string, unknown> | null) {
   return `${key}: ${formatPayloadValue(value)}`;
 }
 
+function formatPayloadEntries(payload: Record<string, unknown> | null) {
+  if (!payload || Object.keys(payload).length === 0) {
+    return [{ label: "payload", value: "No payload" }];
+  }
+
+  return Object.entries(payload).map(([label, value]) => ({
+    label,
+    value: formatPayloadValue(value),
+  }));
+}
+
 function formatPayloadValue(value: unknown) {
   if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
     return String(value);
@@ -285,6 +306,37 @@ function formatPayloadValue(value: unknown) {
   }
 
   return "available";
+}
+
+function getFulfillmentGuidance(status: string | null) {
+  switch (status) {
+    case "pending_review":
+      return {
+        label: "Manual review required",
+        nextStep:
+          "Validate payload, member eligibility and reward budget before marking this reward claimed.",
+        auditHint: "Use the status action only after the manual check is complete.",
+      };
+    case "claimed":
+      return {
+        label: "Fulfilled",
+        nextStep: "Reward is marked claimed. Keep this record as the fulfillment reference.",
+        auditHint: "Future changes should be exceptional and visible in audit logs.",
+      };
+    case "expired":
+      return {
+        label: "Closed",
+        nextStep: "Reward is expired. Send it back to review only when there is a clear reason.",
+        auditHint: "Expired rewards should not be delivered without a new review pass.",
+      };
+    case "owned":
+    default:
+      return {
+        label: "Ready for fulfillment",
+        nextStep: "Confirm the reward route, then mark claimed after manual delivery is complete.",
+        auditHint: "Claiming this reward writes the status change to the admin audit log.",
+      };
+  }
 }
 
 function isHighRarity(rarity: string) {
