@@ -91,6 +91,7 @@ export type LootboxSponsorActivationRunHistoryItem = {
   nextOperatorMove: string | null;
   guardrailCount: number;
   steps: LootboxSponsorActivationRunStep[];
+  signoff: LootboxSponsorActivationRunSignoff | null;
 };
 
 export type LootboxSponsorPackageCrmChecklistItem = {
@@ -166,6 +167,22 @@ export type LootboxSponsorActivationRunStepUpdate = {
   updatedByAuthUserId: string;
   runId: string;
   note: string | null;
+};
+
+export type LootboxSponsorActivationRunSignoffOutcome =
+  | "completed"
+  | "needs_follow_up"
+  | "paused";
+
+export type LootboxSponsorActivationRunSignoff = {
+  runId: string;
+  outcome: LootboxSponsorActivationRunSignoffOutcome;
+  label: string;
+  signedOffAt: string;
+  signedOffByAuthUserId: string;
+  note: string;
+  followUpAt: string | null;
+  noteId?: string | null;
 };
 
 export type LootboxSponsorPerformanceState =
@@ -255,6 +272,32 @@ const sponsorActivationRunSteps = [
 ] satisfies Array<{
   id: LootboxSponsorActivationExecutionStepId;
   label: string;
+  detail: string;
+}>;
+
+const sponsorActivationRunSignoffOutcomes = [
+  {
+    id: "completed",
+    label: "Completed",
+    activationRunState: "completed",
+    detail: "The manual activation run was delivered and is ready for performance review.",
+  },
+  {
+    id: "needs_follow_up",
+    label: "Needs follow-up",
+    activationRunState: "needs_follow_up",
+    detail: "The run created a follow-up action before renewal or closure.",
+  },
+  {
+    id: "paused",
+    label: "Paused",
+    activationRunState: "paused",
+    detail: "The run was paused before completion and needs operator review.",
+  },
+] satisfies Array<{
+  id: LootboxSponsorActivationRunSignoffOutcome;
+  label: string;
+  activationRunState: string;
   detail: string;
 }>;
 
@@ -664,6 +707,127 @@ export function buildLootboxSponsorActivationRunStepMetadataPatch(params: {
         noteId: params.noteId,
         ...(params.step.note ? { note: params.step.note } : {}),
       },
+    },
+  };
+}
+
+export function buildLootboxSponsorActivationRunSignoffRequest(params: {
+  packageRow: LootboxSponsorPackageDetailPackageRow;
+  outcome: LootboxSponsorActivationRunSignoffOutcome | string;
+  note: string | null | undefined;
+  followUpAt?: string | null;
+  adminAuthUserId: string;
+  now?: string | Date;
+}):
+  | {
+      ok: true;
+      signoff: LootboxSponsorActivationRunSignoff;
+      notePayload: LootboxSponsorPackageNotePayload;
+      audit: {
+        action: "lootbox_sponsor_activation_run_signed_off";
+        summary: string;
+        metadata: Record<string, unknown>;
+      };
+    }
+  | { ok: false; error: string } {
+  const lastRun = readObject(params.packageRow.metadata?.lastActivationRun);
+  const runId = readNonEmptyString(lastRun?.runId);
+  if (!runId) {
+    return {
+      ok: false,
+      error: "Stage an activation run before signing off the manual outcome.",
+    };
+  }
+
+  const outcome = sponsorActivationRunSignoffOutcomes.find(
+    (item) => item.id === params.outcome
+  );
+  if (!outcome) {
+    return { ok: false, error: "Unsupported activation run signoff outcome." };
+  }
+
+  const note = normalizeSignoffNote(params.note);
+  if (!note) {
+    return {
+      ok: false,
+      error: "Add a short outcome note before signing off the activation run.",
+    };
+  }
+
+  const followUpAt = normalizeOptionalIsoDate(params.followUpAt);
+  if (followUpAt === "invalid") {
+    return { ok: false, error: "Follow-up date is invalid." };
+  }
+
+  const signedOffAt = toReferenceDate(params.now).toISOString();
+  const signoff: LootboxSponsorActivationRunSignoff = {
+    runId,
+    outcome: outcome.id,
+    label: outcome.label,
+    signedOffAt,
+    signedOffByAuthUserId: params.adminAuthUserId,
+    note,
+    followUpAt,
+  };
+  const guardrail =
+    "Manual-only guardrail: this signs off operator outcome only; no billing, payout, reward inventory or public launch was triggered.";
+  const metadata = {
+    source: "lootbox_sponsor_activation_run_signoff",
+    runId,
+    sponsorPackageId: params.packageRow.id,
+    campaignId: params.packageRow.campaign_id,
+    projectId: params.packageRow.project_id,
+    routeHref: readNonEmptyString(lastRun?.routeHref),
+    outcome: signoff.outcome,
+    outcomeLabel: signoff.label,
+    signedOffAt,
+    note,
+    followUpAt,
+    noBillingAction: true,
+    noPayoutAction: true,
+    noRewardInventoryAction: true,
+    noPublicLaunchAction: true,
+  };
+
+  return {
+    ok: true,
+    signoff,
+    notePayload: {
+      noteType: "decision",
+      note: [`Activation run signoff: ${signoff.label}.`, note, guardrail].join("\n"),
+      followUpAt,
+      metadata,
+    },
+    audit: {
+      action: "lootbox_sponsor_activation_run_signed_off",
+      summary: `Signed off activation run as ${signoff.outcome}.`,
+      metadata,
+    },
+  };
+}
+
+export function buildLootboxSponsorActivationRunSignoffMetadataPatch(params: {
+  existingMetadata: Record<string, unknown> | null;
+  signoff: LootboxSponsorActivationRunSignoff;
+  noteId: string;
+}): Record<string, unknown> & { lastActivationRunSignoff: Record<string, unknown> } {
+  const existing =
+    params.existingMetadata && typeof params.existingMetadata === "object"
+      ? params.existingMetadata
+      : {};
+
+  return {
+    ...existing,
+    activationRunState: params.signoff.outcome,
+    lastActivationRunSignoff: {
+      runId: params.signoff.runId,
+      outcome: params.signoff.outcome,
+      label: params.signoff.label,
+      signedOffAt: params.signoff.signedOffAt,
+      signedOffByAuthUserId: params.signoff.signedOffByAuthUserId,
+      noteId: params.noteId,
+      note: params.signoff.note,
+      followUpAt: params.signoff.followUpAt,
     },
   };
 }
@@ -1708,7 +1872,10 @@ function buildSponsorActivationRunHistory(params: {
   notes: LootboxSponsorPackageDetailNoteRow[];
   auditEvents: LootboxSponsorPackageDetailAuditRow[];
 }): LootboxSponsorActivationRunHistoryItem[] {
-  type ActivationRunHistoryDraft = Omit<LootboxSponsorActivationRunHistoryItem, "steps">;
+  type ActivationRunHistoryDraft = Omit<
+    LootboxSponsorActivationRunHistoryItem,
+    "steps" | "signoff"
+  >;
   const byRunId = new Map<string, ActivationRunHistoryDraft>();
 
   const upsert = (
@@ -1790,6 +1957,7 @@ function buildSponsorActivationRunHistory(params: {
     .map((item) => ({
       ...item,
       steps: buildSponsorActivationRunSteps(params.packageRow.metadata, item.runId),
+      signoff: buildSponsorActivationRunSignoff(params.packageRow.metadata, item.runId),
     }))
     .sort((left, right) => getTimelineTime(right.stagedAt) - getTimelineTime(left.stagedAt));
 }
@@ -1824,6 +1992,41 @@ function buildSponsorActivationRunSteps(
       note: belongsToRun ? readNonEmptyString(raw?.note) : null,
     };
   });
+}
+
+function buildSponsorActivationRunSignoff(
+  metadata: Record<string, unknown> | null,
+  runId: string
+): LootboxSponsorActivationRunSignoff | null {
+  const raw = readObject(metadata?.lastActivationRunSignoff);
+  const signoffRunId = readNonEmptyString(raw?.runId);
+  const outcome = raw?.outcome;
+  const signedOffAt = readNonEmptyString(raw?.signedOffAt);
+  const signedOffByAuthUserId = readNonEmptyString(raw?.signedOffByAuthUserId);
+  const note = readNonEmptyString(raw?.note);
+
+  if (
+    signoffRunId !== runId ||
+    !isSponsorActivationRunSignoffOutcome(outcome) ||
+    !signedOffAt ||
+    !signedOffByAuthUserId ||
+    !note
+  ) {
+    return null;
+  }
+
+  return {
+    runId,
+    outcome,
+    label:
+      readNonEmptyString(raw?.label) ??
+      getSponsorActivationRunSignoffOutcomeLabel(outcome),
+    signedOffAt,
+    signedOffByAuthUserId,
+    note,
+    followUpAt: readNonEmptyString(raw?.followUpAt),
+    noteId: readNonEmptyString(raw?.noteId),
+  };
 }
 
 function compareTimelineItems(
@@ -2080,6 +2283,39 @@ function normalizeText(value: string | null) {
 function normalizeStepNote(value: string | null | undefined) {
   const text = typeof value === "string" ? value.trim() : "";
   return text ? text.slice(0, 1000) : null;
+}
+
+function normalizeSignoffNote(value: string | null | undefined) {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text ? text.slice(0, 1200) : null;
+}
+
+function normalizeOptionalIsoDate(value: string | null | undefined) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "invalid" as const;
+  }
+
+  return parsed.toISOString();
+}
+
+function isSponsorActivationRunSignoffOutcome(
+  value: unknown
+): value is LootboxSponsorActivationRunSignoffOutcome {
+  return sponsorActivationRunSignoffOutcomes.some((outcome) => outcome.id === value);
+}
+
+function getSponsorActivationRunSignoffOutcomeLabel(
+  value: LootboxSponsorActivationRunSignoffOutcome
+) {
+  return (
+    sponsorActivationRunSignoffOutcomes.find((outcome) => outcome.id === value)?.label ??
+    value.replace(/_/g, " ")
+  );
 }
 
 function readObject(value: unknown) {

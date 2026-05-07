@@ -4,6 +4,8 @@ import {
   buildLootboxSponsorActivationHandoffRead,
   buildLootboxSponsorActivationRunMetadataPatch,
   buildLootboxSponsorActivationRunRequest,
+  buildLootboxSponsorActivationRunSignoffMetadataPatch,
+  buildLootboxSponsorActivationRunSignoffRequest,
   buildLootboxSponsorActivationRunStepMetadataPatch,
   buildLootboxSponsorActivationRunStepRequest,
   buildLootboxSponsorPackageCreateRequest,
@@ -1401,4 +1403,143 @@ test("buildLootboxSponsorActivationRunStepMetadataPatch stores step state withou
     },
   });
   assert.equal(metadata.source, "existing");
+});
+
+test("buildLootboxSponsorActivationRunSignoffRequest creates safe final run outcomes", () => {
+  const packageRow = {
+    id: "package-ready",
+    project_id: "11111111-1111-4111-8111-111111111111",
+    campaign_id: basePack.campaignId,
+    package_tier: "premium",
+    status: "won",
+    sponsor_name: "Atlas Labs",
+    sponsor_contact: "atlas@labs.test",
+    sponsor_budget: 2500,
+    currency: "USD",
+    owner_auth_user_id: "admin-auth-1",
+    follow_up_at: "2026-05-09T12:00:00.000Z",
+    last_contacted_at: "2026-05-07T12:00:00.000Z",
+    package_snapshot: {},
+    metadata: {
+      lastActivationRun: {
+        runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+        title: "Atlas Labs activation run",
+        stagedAt: "2026-05-10T12:00:00.000Z",
+        sponsorPackageId: "package-ready",
+        campaignId: basePack.campaignId,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        routeHref: `/campaigns/${basePack.campaignId}`,
+        noteId: "note-1",
+        stagedByAuthUserId: "admin-auth-1",
+        guardrailCount: 5,
+      },
+    },
+    created_by_auth_user_id: "admin-auth-1",
+    created_at: "2026-05-07T10:00:00.000Z",
+    updated_at: "2026-05-07T11:00:00.000Z",
+  };
+
+  const request = buildLootboxSponsorActivationRunSignoffRequest({
+    packageRow,
+    outcome: "completed",
+    note: "Launch completed and shard pressure stayed healthy.",
+    followUpAt: "2026-05-12T09:00:00.000Z",
+    adminAuthUserId: "admin-auth-1",
+    now: "2026-05-10T13:00:00.000Z",
+  });
+  const missingRun = buildLootboxSponsorActivationRunSignoffRequest({
+    packageRow: { ...packageRow, metadata: {} },
+    outcome: "completed",
+    note: "Launch completed.",
+    followUpAt: null,
+    adminAuthUserId: "admin-auth-1",
+    now: "2026-05-10T13:00:00.000Z",
+  });
+  const missingNote = buildLootboxSponsorActivationRunSignoffRequest({
+    packageRow,
+    outcome: "completed",
+    note: " ",
+    followUpAt: null,
+    adminAuthUserId: "admin-auth-1",
+    now: "2026-05-10T13:00:00.000Z",
+  });
+
+  assert.equal(request.ok, true);
+  if (request.ok) {
+    assert.equal(request.signoff.outcome, "completed");
+    assert.equal(request.signoff.label, "Completed");
+    assert.equal(request.signoff.signedOffAt, "2026-05-10T13:00:00.000Z");
+    assert.equal(request.notePayload.noteType, "decision");
+    assert.match(request.notePayload.note, /Activation run signoff: Completed/);
+    assert.equal(request.notePayload.metadata.source, "lootbox_sponsor_activation_run_signoff");
+    assert.equal(request.notePayload.metadata.noBillingAction, true);
+    assert.equal(request.notePayload.metadata.noPayoutAction, true);
+    assert.equal(request.notePayload.metadata.noRewardInventoryAction, true);
+    assert.equal(request.notePayload.metadata.noPublicLaunchAction, true);
+    assert.equal(request.audit.summary, "Signed off activation run as completed.");
+  }
+
+  assert.deepEqual(missingRun, {
+    ok: false,
+    error: "Stage an activation run before signing off the manual outcome.",
+  });
+  assert.deepEqual(missingNote, {
+    ok: false,
+    error: "Add a short outcome note before signing off the activation run.",
+  });
+});
+
+test("buildLootboxSponsorActivationRunSignoffMetadataPatch preserves metadata and stores the outcome", () => {
+  const metadata = buildLootboxSponsorActivationRunSignoffMetadataPatch({
+    existingMetadata: {
+      source: "existing",
+      lastActivationRun: {
+        runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+        title: "Atlas Labs activation run",
+      },
+      activationRunStepStates: {
+        monitor_launch: {
+          runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+          state: "done",
+          label: "Monitor launch window",
+          updatedAt: "2026-05-10T12:45:00.000Z",
+          updatedByAuthUserId: "admin-auth-1",
+          noteId: "note-step",
+        },
+      },
+    },
+    signoff: {
+      runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+      outcome: "needs_follow_up",
+      label: "Needs follow-up",
+      signedOffAt: "2026-05-10T13:00:00.000Z",
+      signedOffByAuthUserId: "admin-auth-2",
+      note: "Sponsor wants a second push tomorrow.",
+      followUpAt: "2026-05-11T09:00:00.000Z",
+    },
+    noteId: "note-signoff",
+  });
+
+  assert.equal(metadata.source, "existing");
+  assert.equal(metadata.activationRunState, "needs_follow_up");
+  assert.deepEqual(metadata.lastActivationRunSignoff, {
+    runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+    outcome: "needs_follow_up",
+    label: "Needs follow-up",
+    signedOffAt: "2026-05-10T13:00:00.000Z",
+    signedOffByAuthUserId: "admin-auth-2",
+    noteId: "note-signoff",
+    note: "Sponsor wants a second push tomorrow.",
+    followUpAt: "2026-05-11T09:00:00.000Z",
+  });
+  assert.deepEqual(metadata.activationRunStepStates, {
+    monitor_launch: {
+      runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+      state: "done",
+      label: "Monitor launch window",
+      updatedAt: "2026-05-10T12:45:00.000Z",
+      updatedByAuthUserId: "admin-auth-1",
+      noteId: "note-step",
+    },
+  });
 });
