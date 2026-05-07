@@ -440,6 +440,7 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
       handoffs.find((handoff) => handoff.activationState === "setup_needed") ??
       handoffs[0] ??
       null,
+    businessCockpit: buildSponsorBusinessCockpit(handoffs),
     guardrails: [
       "Activation handoff does not create billing, payouts or reward inventory.",
       "Operators still own sponsor follow-up, pool setup and fulfillment decisions.",
@@ -1046,6 +1047,7 @@ function buildSponsorActivationHandoff(params: {
     campaignTitle,
     sponsorName,
     budgetLabel: formatCrmBudget(row.sponsor_budget, row.currency),
+    dealValue: Math.max(0, Number(row.sponsor_budget ?? 0)),
     nextAction: getSponsorActivationNextAction(activationState, checklist),
     routeHref: row.campaign_id ? `/campaigns/${row.campaign_id}` : "/campaigns",
     metrics: {
@@ -1077,6 +1079,144 @@ function buildSponsorActivationHandoff(params: {
       }),
     },
   };
+}
+
+function buildSponsorBusinessCockpit(
+  handoffs: ReturnType<typeof buildSponsorActivationHandoff>[]
+) {
+  const items = handoffs.map(toSponsorBusinessCockpitItem).sort(compareBusinessItems);
+  const followUpItems = items.filter((item) =>
+    item.followUpUrgency === "overdue" || item.followUpUrgency === "due_soon"
+  );
+  const renewalItems = items.filter((item) =>
+    item.renewalState === "ready" || item.renewalState === "watch"
+  );
+  const focus =
+    items.find((item) => item.priority === "high") ??
+    renewalItems[0] ??
+    followUpItems[0] ??
+    items[0] ??
+    null;
+
+  return {
+    summary: {
+      totalValue: items.reduce((sum, item) => sum + item.dealValue, 0),
+      highPriority: items.filter((item) => item.priority === "high").length,
+      overdueFollowUps: items.filter((item) => item.followUpUrgency === "overdue").length,
+      renewalReady: renewalItems.filter((item) => item.renewalState === "ready").length,
+      signedOffRuns: items.filter((item) => item.signedOff).length,
+      topNextAction: focus?.nextAction ?? "Save a sponsor package to open the business cockpit.",
+    },
+    focus,
+    lanes: [
+      {
+        id: "revenue" as const,
+        label: "Revenue priority",
+        detail: "Highest-value packages, signed-off runs and urgent sponsor paths.",
+        count: items.length,
+        items: items.slice(0, 5),
+      },
+      {
+        id: "follow_up" as const,
+        label: "Follow-up pressure",
+        detail: "Sponsor touches that are overdue or due soon.",
+        count: followUpItems.length,
+        items: followUpItems.slice(0, 5),
+      },
+      {
+        id: "renewal" as const,
+        label: "Renewal queue",
+        detail: "Signed-off or strong-performance packages ready for renewal motion.",
+        count: renewalItems.length,
+        items: renewalItems.slice(0, 5),
+      },
+    ],
+  };
+}
+
+function toSponsorBusinessCockpitItem(
+  handoff: ReturnType<typeof buildSponsorActivationHandoff>
+) {
+  const signedOff = Boolean(handoff.activationRun.signoff);
+  const renewalReady = handoff.renewal.state === "ready";
+  const followUpUrgent =
+    handoff.renewal.followUpUrgency === "overdue" ||
+    handoff.renewal.followUpUrgency === "due_soon";
+  const score =
+    Math.round(handoff.dealValue / 100) +
+    (renewalReady ? 70 : handoff.renewal.state === "watch" ? 35 : 0) +
+    (signedOff ? 25 : 0) +
+    (handoff.renewal.followUpUrgency === "overdue"
+      ? 30
+      : handoff.renewal.followUpUrgency === "due_soon"
+        ? 15
+        : 0) +
+    (handoff.activationState === "setup_needed" ? 12 : 0);
+  const priority =
+    renewalReady ||
+    (handoff.renewal.followUpUrgency === "overdue" && handoff.dealValue >= 1000) ||
+    score >= 85
+      ? ("high" as const)
+      : followUpUrgent ||
+          handoff.activationState === "setup_needed" ||
+          handoff.dealValue > 0
+        ? ("medium" as const)
+        : ("watch" as const);
+
+  return {
+    packageId: handoff.packageId,
+    sponsorName: handoff.sponsorName,
+    campaignTitle: handoff.campaignTitle,
+    packageTier: handoff.packageTier,
+    routeHref: handoff.routeHref,
+    dealValue: handoff.dealValue,
+    valueLabel: handoff.budgetLabel,
+    priority,
+    score,
+    signedOff,
+    activationState: handoff.activationState,
+    activationLabel: handoff.activationRun.label,
+    renewalState: handoff.renewal.state,
+    renewalLabel: handoff.renewal.label,
+    followUpUrgency: handoff.renewal.followUpUrgency,
+    nextAction: getSponsorBusinessNextAction(handoff),
+  };
+}
+
+function getSponsorBusinessNextAction(
+  handoff: ReturnType<typeof buildSponsorActivationHandoff>
+) {
+  if (handoff.renewal.state === "ready") {
+    return handoff.renewal.nextAction;
+  }
+
+  if (
+    handoff.renewal.followUpUrgency === "overdue" ||
+    handoff.renewal.followUpUrgency === "due_soon"
+  ) {
+    return "Follow up with sponsor before the deal cools down.";
+  }
+
+  if (handoff.activationRun.signoff) {
+    return handoff.performance.signoff.nextSponsorMove;
+  }
+
+  if (handoff.activationState === "setup_needed") {
+    return handoff.nextAction;
+  }
+
+  return handoff.renewal.nextAction;
+}
+
+function compareBusinessItems(
+  left: ReturnType<typeof toSponsorBusinessCockpitItem>,
+  right: ReturnType<typeof toSponsorBusinessCockpitItem>
+) {
+  if (right.score !== left.score) {
+    return right.score - left.score;
+  }
+
+  return right.dealValue - left.dealValue;
 }
 
 function getSponsorActivationState(params: {

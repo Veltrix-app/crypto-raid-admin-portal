@@ -1300,6 +1300,169 @@ test("buildLootboxSponsorActivationHandoffRead routes completed signoff into per
   assert.match(handoff?.renewal.renewalCopy.body ?? "", /Signed-off outcome: Completed/);
 });
 
+test("buildLootboxSponsorActivationHandoffRead builds a sponsor business cockpit", () => {
+  const read = buildLootboxSponsorActivationHandoffRead({
+    now: "2026-05-10T14:00:00.000Z",
+    packages: [
+      {
+        id: "package-renewal",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: basePack.campaignId,
+        package_tier: "premium",
+        status: "won",
+        sponsor_name: "Atlas Labs",
+        sponsor_contact: "atlas@labs.test",
+        sponsor_budget: 2500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-1",
+        follow_up_at: "2026-05-10T10:00:00.000Z",
+        last_contacted_at: "2026-05-07T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Holder Activation Sprint",
+        },
+        metadata: {
+          lastActivationRun: {
+            runId: "sponsor-activation:package-renewal:2026-05-10T12:00:00.000Z",
+            title: "Atlas Labs activation run",
+            stagedAt: "2026-05-10T12:00:00.000Z",
+            sponsorPackageId: "package-renewal",
+            campaignId: basePack.campaignId,
+            projectId: "11111111-1111-4111-8111-111111111111",
+            routeHref: `/campaigns/${basePack.campaignId}`,
+            noteId: "note-1",
+            stagedByAuthUserId: "admin-auth-1",
+            guardrailCount: 5,
+          },
+          lastActivationRunSignoff: {
+            runId: "sponsor-activation:package-renewal:2026-05-10T12:00:00.000Z",
+            outcome: "completed",
+            label: "Completed",
+            signedOffAt: "2026-05-10T13:00:00.000Z",
+            signedOffByAuthUserId: "admin-auth-1",
+            noteId: "note-signoff",
+            note: "Launch completed and shard pressure stayed healthy.",
+            followUpAt: "2026-05-11T12:00:00.000Z",
+          },
+        },
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-follow-up",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: "33333333-3333-4333-8333-333333333333",
+        package_tier: "standard",
+        status: "negotiating",
+        sponsor_name: "Beta Guild",
+        sponsor_contact: "beta@guild.test",
+        sponsor_budget: 1800,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-2",
+        follow_up_at: "2026-05-09T10:00:00.000Z",
+        last_contacted_at: "2026-05-07T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Beta Push",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-2",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-setup",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: "44444444-4444-4444-8444-444444444444",
+        package_tier: "starter",
+        status: "won",
+        sponsor_name: "Gamma Crew",
+        sponsor_contact: "gamma@test.local",
+        sponsor_budget: 600,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-3",
+        follow_up_at: null,
+        last_contacted_at: null,
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Gamma Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-3",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+    ],
+    campaigns: [
+      {
+        id: basePack.campaignId,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "Holder Activation Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 500,
+        participants: 128,
+        completionRate: 42,
+      },
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "Beta Push",
+        status: "scheduled",
+        visibility: "public",
+        rewardPoolAmount: 300,
+        participants: 25,
+        completionRate: 18,
+      },
+      {
+        id: "44444444-4444-4444-8444-444444444444",
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "Gamma Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 0,
+        participants: 0,
+        completionRate: 0,
+      },
+    ],
+    projects: [
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "VYNTRO",
+        slug: "vyntro",
+      },
+    ],
+    shardPools: [
+      {
+        id: "pool-1",
+        campaignId: basePack.campaignId,
+        status: "active",
+        poolSize: 10_000,
+        remainingShards: 6_400,
+      },
+    ],
+  });
+
+  assert.deepEqual(read.businessCockpit.summary, {
+    totalValue: 4900,
+    highPriority: 2,
+    overdueFollowUps: 2,
+    renewalReady: 1,
+    signedOffRuns: 1,
+    topNextAction: "Send signed-off renewal follow-up with the performance snapshot.",
+  });
+  assert.equal(read.businessCockpit.focus?.packageId, "package-renewal");
+  assert.deepEqual(
+    read.businessCockpit.lanes.map((lane) => `${lane.id}:${lane.count}`),
+    ["revenue:3", "follow_up:2", "renewal:1"]
+  );
+  assert.deepEqual(
+    read.businessCockpit.lanes[0]?.items.map((item) => `${item.packageId}:${item.priority}`),
+    ["package-renewal:high", "package-follow-up:high", "package-setup:medium"]
+  );
+});
+
 test("buildLootboxSponsorActivationRunMetadataPatch preserves metadata and stores run visibility", () => {
   const read = buildLootboxSponsorActivationHandoffRead({
     packages: [

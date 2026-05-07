@@ -3331,6 +3331,8 @@ function SponsorPackageTimelineItemRow({ item }: { item: LootboxSponsorPackageTi
 
 type SponsorActivationHandoffRead = ReturnType<typeof buildLootboxSponsorActivationHandoffRead>;
 type SponsorActivationHandoff = SponsorActivationHandoffRead["handoffs"][number];
+type SponsorBusinessCockpit = SponsorActivationHandoffRead["businessCockpit"];
+type SponsorBusinessCockpitItem = SponsorBusinessCockpit["lanes"][number]["items"][number];
 
 function SponsorActivationHandoffPanel({
   read,
@@ -3368,6 +3370,8 @@ function SponsorActivationHandoffPanel({
           <MiniRead label="Mode" value={read.summary.manualOnly ? "Manual" : "Auto"} />
         </div>
 
+        <SponsorBusinessCockpitPanel cockpit={read.businessCockpit} />
+
         {read.focus ? <SponsorActivationFocusCard handoff={read.focus} /> : null}
 
         {read.handoffs.length ? (
@@ -3403,6 +3407,134 @@ function SponsorActivationHandoffPanel({
         </div>
       </div>
     </OpsPanel>
+  );
+}
+
+function SponsorBusinessCockpitPanel({ cockpit }: { cockpit: SponsorBusinessCockpit }) {
+  const focus = cockpit.focus;
+
+  return (
+    <div className="relative overflow-hidden rounded-[18px] border border-primary/14 bg-[radial-gradient(circle_at_12%_0%,rgba(186,255,59,0.11),transparent_28%),radial-gradient(circle_at_92%_8%,rgba(74,217,255,0.07),transparent_24%),linear-gradient(180deg,rgba(15,20,18,0.94),rgba(7,9,14,0.94))] p-3.5">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/28 to-transparent" />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 max-w-3xl">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Business cockpit
+          </p>
+          <h3 className="mt-2 break-words text-[16px] font-black text-text [overflow-wrap:anywhere]">
+            Sponsor revenue queue
+          </h3>
+          <p className="mt-1.5 break-words text-[11px] leading-5 text-sub [overflow-wrap:anywhere]">
+            {cockpit.summary.topNextAction}
+          </p>
+        </div>
+        <OpsStatusPill tone={cockpit.summary.highPriority > 0 ? "warning" : "success"}>
+          {cockpit.summary.highPriority} priority
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-5">
+        <MiniRead label="Pipeline" value={formatSponsorBusinessValue(cockpit.summary.totalValue)} />
+        <MiniRead label="Priority" value={`${cockpit.summary.highPriority}`} />
+        <MiniRead label="Overdue" value={`${cockpit.summary.overdueFollowUps}`} />
+        <MiniRead label="Renewal" value={`${cockpit.summary.renewalReady}`} />
+        <MiniRead label="Signed off" value={`${cockpit.summary.signedOffRuns}`} />
+      </div>
+
+      {focus ? (
+        <Link
+          href={focus.routeHref}
+          className="group mt-3 block rounded-[16px] border border-primary/18 bg-[linear-gradient(180deg,rgba(186,255,59,0.065),rgba(255,255,255,0.012))] p-3 transition hover:border-primary/34 hover:bg-primary/[0.08]"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <OpsStatusPill tone={getSponsorBusinessPriorityTone(focus.priority)}>
+                  {focus.priority}
+                </OpsStatusPill>
+                <OpsStatusPill tone={getSponsorRenewalTone(focus.renewalState)}>
+                  {focus.renewalLabel}
+                </OpsStatusPill>
+                {focus.signedOff ? <OpsStatusPill tone="success">signed off</OpsStatusPill> : null}
+              </div>
+              <p className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+                {focus.sponsorName}
+              </p>
+              <p className="mt-1 break-words text-[10px] leading-4 text-sub [overflow-wrap:anywhere]">
+                {focus.nextAction}
+              </p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.022] bg-black/24 px-2.5 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary">
+              Open
+              <ArrowRight size={12} className="transition group-hover:translate-x-0.5" />
+            </span>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-4">
+            <MiniRead label="Value" value={focus.valueLabel} />
+            <MiniRead label="Tier" value={focus.packageTier} />
+            <MiniRead label="Follow-up" value={focus.followUpUrgency.replace(/_/g, " ")} />
+            <MiniRead label="Score" value={`${focus.score}`} />
+          </div>
+        </Link>
+      ) : null}
+
+      <div className="mt-3 grid gap-2 lg:grid-cols-3">
+        {cockpit.lanes.map((lane) => (
+          <div
+            key={lane.id}
+            className="rounded-[16px] border border-white/[0.018] bg-black/22 p-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+                  {lane.label}
+                </p>
+                <p className="mt-1 text-[10px] leading-4 text-sub">{lane.detail}</p>
+              </div>
+              <span className="rounded-full border border-white/[0.02] bg-white/[0.012] px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-text">
+                {lane.count}
+              </span>
+            </div>
+
+            <div className="mt-3 grid gap-1.5">
+              {lane.items.slice(0, 3).map((item) => (
+                <Link
+                  key={`${lane.id}-${item.packageId}`}
+                  href={item.routeHref}
+                  className={`group block rounded-[13px] border px-2.5 py-2 transition hover:border-primary/28 ${getSponsorBusinessPriorityClass(item.priority)}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] font-black text-text">
+                        {item.sponsorName}
+                      </p>
+                      <p className="mt-0.5 line-clamp-1 text-[9px] text-sub">
+                        {item.campaignTitle}
+                      </p>
+                    </div>
+                    <OpsStatusPill tone={getSponsorBusinessPriorityTone(item.priority)}>
+                      {item.priority}
+                    </OpsStatusPill>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[8px] font-black uppercase tracking-[0.12em]">
+                    <span className="text-primary">{item.valueLabel}</span>
+                    <span className="text-sub">{item.followUpUrgency.replace(/_/g, " ")}</span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-[9px] leading-4 text-sub">
+                    {item.nextAction}
+                  </p>
+                </Link>
+              ))}
+              {lane.items.length === 0 ? (
+                <p className="rounded-[13px] border border-white/[0.014] bg-white/[0.01] px-2.5 py-2 text-[10px] leading-4 text-sub">
+                  No packages in this lane.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -5752,6 +5884,34 @@ function getSponsorRenewalTone(state: SponsorActivationHandoff["renewal"]["state
     default:
       return "default" as const;
   }
+}
+
+function getSponsorBusinessPriorityTone(priority: SponsorBusinessCockpitItem["priority"]) {
+  switch (priority) {
+    case "high":
+      return "warning" as const;
+    case "medium":
+      return "success" as const;
+    case "watch":
+    default:
+      return "default" as const;
+  }
+}
+
+function getSponsorBusinessPriorityClass(priority: SponsorBusinessCockpitItem["priority"]) {
+  switch (priority) {
+    case "high":
+      return "border-primary/18 bg-primary/[0.055] text-primary";
+    case "medium":
+      return "border-emerald-300/14 bg-emerald-300/[0.045] text-emerald-100";
+    case "watch":
+    default:
+      return "border-white/[0.016] bg-white/[0.012] text-sub";
+  }
+}
+
+function formatSponsorBusinessValue(value: number) {
+  return `USD ${Math.max(0, value).toLocaleString("en-US")}`;
 }
 
 function getSponsorRenewalShellClass(state: SponsorActivationHandoff["renewal"]["state"]) {
