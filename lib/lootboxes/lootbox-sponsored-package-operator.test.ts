@@ -4,6 +4,8 @@ import {
   buildLootboxSponsorActivationHandoffRead,
   buildLootboxSponsorActivationRunMetadataPatch,
   buildLootboxSponsorActivationRunRequest,
+  buildLootboxSponsorActivationRunStepMetadataPatch,
+  buildLootboxSponsorActivationRunStepRequest,
   buildLootboxSponsorPackageCreateRequest,
   buildLootboxSponsorPackageCrmRead,
   buildLootboxSponsorPackageDetailRead,
@@ -383,7 +385,22 @@ test("buildLootboxSponsorPackageDetailRead extracts activation run history", () 
   assert.equal(detail.summary.activationRuns, 1);
   assert.equal(detail.summary.latestActivationRunAt, "2026-05-10T12:00:00.000Z");
   assert.equal(detail.summary.nextActivationRunMove, "Copy the activation brief into the internal launch thread.");
-  assert.deepEqual(detail.activationRuns, [
+  const [run] = detail.activationRuns;
+  assert.deepEqual(
+    run
+      ? {
+          runId: run.runId,
+          title: run.title,
+          state: run.state,
+          stagedAt: run.stagedAt,
+          stagedByAuthUserId: run.stagedByAuthUserId,
+          noteId: run.noteId,
+          auditId: run.auditId,
+          routeHref: run.routeHref,
+          nextOperatorMove: run.nextOperatorMove,
+          guardrailCount: run.guardrailCount,
+        }
+      : null,
     {
       runId: "sponsor-activation:package-1:2026-05-10T12:00:00.000Z",
       title: "Atlas Labs activation run",
@@ -395,8 +412,20 @@ test("buildLootboxSponsorPackageDetailRead extracts activation run history", () 
       routeHref: `/campaigns/${basePack.campaignId}`,
       nextOperatorMove: "Copy the activation brief into the internal launch thread.",
       guardrailCount: 2,
-    },
-  ]);
+    }
+  );
+  assert.equal(run?.steps.length, 6);
+  assert.deepEqual(
+    run?.steps.map((step) => `${step.id}:${step.state}`),
+    [
+      "stage_activation_brief:pending",
+      "confirm_campaign_route:pending",
+      "verify_shard_pool:pending",
+      "lock_reward_budget:pending",
+      "assign_owner:pending",
+      "monitor_launch:pending",
+    ]
+  );
 });
 
 test("buildLootboxSponsorPackageCrmRead turns package fields into an operator deal cockpit", () => {
@@ -1244,4 +1273,132 @@ test("buildLootboxSponsorActivationRunMetadataPatch preserves metadata and store
       },
     });
   }
+});
+
+test("buildLootboxSponsorActivationRunStepRequest creates safe manual step updates", () => {
+  const packageRow = {
+    id: "package-ready",
+    project_id: "11111111-1111-4111-8111-111111111111",
+    campaign_id: basePack.campaignId,
+    package_tier: "premium",
+    status: "won",
+    sponsor_name: "Atlas Labs",
+    sponsor_contact: "atlas@labs.test",
+    sponsor_budget: 2500,
+    currency: "USD",
+    owner_auth_user_id: "admin-auth-1",
+    follow_up_at: "2026-05-09T12:00:00.000Z",
+    last_contacted_at: "2026-05-07T12:00:00.000Z",
+    package_snapshot: {},
+    metadata: {
+      lastActivationRun: {
+        runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+        title: "Atlas Labs activation run",
+        stagedAt: "2026-05-10T12:00:00.000Z",
+        sponsorPackageId: "package-ready",
+        campaignId: basePack.campaignId,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        routeHref: `/campaigns/${basePack.campaignId}`,
+        noteId: "note-1",
+        stagedByAuthUserId: "admin-auth-1",
+        guardrailCount: 5,
+      },
+    },
+    created_by_auth_user_id: "admin-auth-1",
+    created_at: "2026-05-07T10:00:00.000Z",
+    updated_at: "2026-05-07T11:00:00.000Z",
+  };
+
+  const request = buildLootboxSponsorActivationRunStepRequest({
+    packageRow,
+    stepId: "confirm_campaign_route",
+    state: "done",
+    note: "Campaign route checked.",
+    adminAuthUserId: "admin-auth-1",
+    now: "2026-05-10T12:15:00.000Z",
+  });
+  const blocked = buildLootboxSponsorActivationRunStepRequest({
+    packageRow: { ...packageRow, metadata: {} },
+    stepId: "confirm_campaign_route",
+    state: "done",
+    note: "",
+    adminAuthUserId: "admin-auth-1",
+    now: "2026-05-10T12:15:00.000Z",
+  });
+
+  assert.equal(request.ok, true);
+  if (request.ok) {
+    assert.equal(request.step.id, "confirm_campaign_route");
+    assert.equal(request.step.state, "done");
+    assert.equal(request.step.label, "Confirm campaign route");
+    assert.equal(request.notePayload.noteType, "status_change");
+    assert.match(request.notePayload.note, /Activation run step done: Confirm campaign route/);
+    assert.equal(request.notePayload.metadata.source, "lootbox_sponsor_activation_run_step");
+    assert.equal(request.notePayload.metadata.noBillingAction, true);
+    assert.equal(request.notePayload.metadata.noPayoutAction, true);
+    assert.equal(request.notePayload.metadata.noRewardInventoryAction, true);
+    assert.equal(request.notePayload.metadata.noPublicLaunchAction, true);
+    assert.equal(
+      request.audit.summary,
+      "Marked activation run step Confirm campaign route as done."
+    );
+  }
+
+  assert.deepEqual(blocked, {
+    ok: false,
+    error: "Stage an activation run before updating manual execution steps.",
+  });
+});
+
+test("buildLootboxSponsorActivationRunStepMetadataPatch stores step state without replacing metadata", () => {
+  const metadata = buildLootboxSponsorActivationRunStepMetadataPatch({
+    existingMetadata: {
+      source: "existing",
+      lastActivationRun: {
+        runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+        title: "Atlas Labs activation run",
+      },
+      activationRunStepStates: {
+        stage_activation_brief: {
+          runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+          state: "done",
+          label: "Stage activation brief",
+          updatedAt: "2026-05-10T12:05:00.000Z",
+          updatedByAuthUserId: "admin-auth-1",
+          noteId: "note-1",
+        },
+      },
+    },
+    step: {
+      id: "confirm_campaign_route",
+      label: "Confirm campaign route",
+      state: "blocked",
+      updatedAt: "2026-05-10T12:15:00.000Z",
+      updatedByAuthUserId: "admin-auth-2",
+      runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+      note: "Waiting on campaign schedule.",
+    },
+    noteId: "note-2",
+  });
+
+  assert.deepEqual(metadata.activationRunStepStates, {
+    stage_activation_brief: {
+      runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+      state: "done",
+      label: "Stage activation brief",
+      updatedAt: "2026-05-10T12:05:00.000Z",
+      updatedByAuthUserId: "admin-auth-1",
+      noteId: "note-1",
+    },
+    confirm_campaign_route: {
+      runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+      state: "blocked",
+      label: "Confirm campaign route",
+      updatedAt: "2026-05-10T12:15:00.000Z",
+      updatedByAuthUserId: "admin-auth-2",
+      noteId: "note-2",
+      note: "Waiting on campaign schedule.",
+    },
+  });
+  assert.equal(metadata.source, "existing");
 });

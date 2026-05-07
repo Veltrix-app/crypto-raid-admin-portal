@@ -90,6 +90,7 @@ export type LootboxSponsorActivationRunHistoryItem = {
   routeHref: string | null;
   nextOperatorMove: string | null;
   guardrailCount: number;
+  steps: LootboxSponsorActivationRunStep[];
 };
 
 export type LootboxSponsorPackageCrmChecklistItem = {
@@ -141,6 +142,30 @@ export type LootboxSponsorActivationExecutionStep = {
   label: string;
   state: "ready" | "action_needed" | "blocked";
   detail: string;
+};
+
+export type LootboxSponsorActivationRunStepState = "pending" | "done" | "blocked";
+
+export type LootboxSponsorActivationRunStep = {
+  id: LootboxSponsorActivationExecutionStepId;
+  label: string;
+  state: LootboxSponsorActivationRunStepState;
+  detail: string;
+  runId: string | null;
+  noteId: string | null;
+  updatedAt: string | null;
+  updatedByAuthUserId: string | null;
+  note: string | null;
+};
+
+export type LootboxSponsorActivationRunStepUpdate = {
+  id: LootboxSponsorActivationExecutionStepId;
+  label: string;
+  state: Exclude<LootboxSponsorActivationRunStepState, "pending">;
+  updatedAt: string;
+  updatedByAuthUserId: string;
+  runId: string;
+  note: string | null;
 };
 
 export type LootboxSponsorPerformanceState =
@@ -195,6 +220,43 @@ const sponsorCrmStages = [
     detail: "Sponsor package is ready for fulfillment planning.",
   },
 ] as const;
+
+const sponsorActivationRunSteps = [
+  {
+    id: "stage_activation_brief",
+    label: "Stage activation brief",
+    detail: "Copy the sponsor activation brief into the internal launch thread.",
+  },
+  {
+    id: "confirm_campaign_route",
+    label: "Confirm campaign route",
+    detail: "Verify the campaign is public and active or scheduled before launch.",
+  },
+  {
+    id: "verify_shard_pool",
+    label: "Verify shard pool",
+    detail: "Confirm the sponsored shard pool is active, finite and has remaining shards.",
+  },
+  {
+    id: "lock_reward_budget",
+    label: "Lock reward budget",
+    detail: "Confirm visible reward budget and fulfillment posture before public pressure.",
+  },
+  {
+    id: "assign_owner",
+    label: "Assign operator owner",
+    detail: "Keep one internal owner accountable for sponsor launch and follow-up.",
+  },
+  {
+    id: "monitor_launch",
+    label: "Monitor launch window",
+    detail: "Watch first-hour shard depletion, member activity and support pressure.",
+  },
+] satisfies Array<{
+  id: LootboxSponsorActivationExecutionStepId;
+  label: string;
+  detail: string;
+}>;
 
 export function buildLootboxSponsorPackageCreateRequest(params: {
   pack: LootboxSponsoredPackageActionPack;
@@ -484,6 +546,124 @@ export function buildLootboxSponsorActivationRunMetadataPatch(params: {
       noteId: params.noteId,
       stagedByAuthUserId: params.stagedByAuthUserId,
       guardrailCount: params.activationRun.guardrails.length,
+    },
+  };
+}
+
+export function buildLootboxSponsorActivationRunStepRequest(params: {
+  packageRow: LootboxSponsorPackageDetailPackageRow;
+  stepId: LootboxSponsorActivationExecutionStepId | string;
+  state: Exclude<LootboxSponsorActivationRunStepState, "pending"> | string;
+  note?: string | null;
+  adminAuthUserId: string;
+  now?: string | Date;
+}):
+  | {
+      ok: true;
+      step: LootboxSponsorActivationRunStepUpdate;
+      notePayload: LootboxSponsorPackageNotePayload;
+      audit: {
+        action: "lootbox_sponsor_activation_run_step_updated";
+        summary: string;
+        metadata: Record<string, unknown>;
+      };
+    }
+  | { ok: false; error: string } {
+  const lastRun = readObject(params.packageRow.metadata?.lastActivationRun);
+  const runId = readNonEmptyString(lastRun?.runId);
+  if (!runId) {
+    return {
+      ok: false,
+      error: "Stage an activation run before updating manual execution steps.",
+    };
+  }
+
+  const stepDefinition = sponsorActivationRunSteps.find((step) => step.id === params.stepId);
+  if (!stepDefinition) {
+    return { ok: false, error: "Unsupported activation run step." };
+  }
+
+  if (params.state !== "done" && params.state !== "blocked") {
+    return { ok: false, error: "Unsupported activation run step state." };
+  }
+
+  const note = normalizeStepNote(params.note);
+  const updatedAt = toReferenceDate(params.now).toISOString();
+  const step: LootboxSponsorActivationRunStepUpdate = {
+    id: stepDefinition.id,
+    label: stepDefinition.label,
+    state: params.state,
+    updatedAt,
+    updatedByAuthUserId: params.adminAuthUserId,
+    runId,
+    note,
+  };
+  const guardrail =
+    "Manual-only guardrail: this updates operator execution state only; no billing, payout, reward inventory or public launch was triggered.";
+  const noteLines = [
+    `Activation run step ${step.state}: ${step.label}.`,
+    note,
+    guardrail,
+  ].filter((line): line is string => Boolean(line));
+  const metadata = {
+    source: "lootbox_sponsor_activation_run_step",
+    runId,
+    sponsorPackageId: params.packageRow.id,
+    campaignId: params.packageRow.campaign_id,
+    projectId: params.packageRow.project_id,
+    routeHref: readNonEmptyString(lastRun?.routeHref),
+    stepId: step.id,
+    stepLabel: step.label,
+    stepState: step.state,
+    updatedAt,
+    note,
+    noBillingAction: true,
+    noPayoutAction: true,
+    noRewardInventoryAction: true,
+    noPublicLaunchAction: true,
+  };
+
+  return {
+    ok: true,
+    step,
+    notePayload: {
+      noteType: "status_change",
+      note: noteLines.join("\n"),
+      followUpAt: null,
+      metadata,
+    },
+    audit: {
+      action: "lootbox_sponsor_activation_run_step_updated",
+      summary: `Marked activation run step ${step.label} as ${step.state}.`,
+      metadata,
+    },
+  };
+}
+
+export function buildLootboxSponsorActivationRunStepMetadataPatch(params: {
+  existingMetadata: Record<string, unknown> | null;
+  step: LootboxSponsorActivationRunStepUpdate;
+  noteId: string;
+}): Record<string, unknown> & { activationRunStepStates: Record<string, unknown> } {
+  const existing =
+    params.existingMetadata && typeof params.existingMetadata === "object"
+      ? params.existingMetadata
+      : {};
+  const previousStepStates = readObject(existing.activationRunStepStates) ?? {};
+
+  return {
+    ...existing,
+    activationRunStepStates: {
+      ...previousStepStates,
+      [params.step.id]: {
+        runId: params.step.runId,
+        state: params.step.state,
+        label: params.step.label,
+        updatedAt: params.step.updatedAt,
+        updatedByAuthUserId: params.step.updatedByAuthUserId,
+        noteId: params.noteId,
+        ...(params.step.note ? { note: params.step.note } : {}),
+      },
     },
   };
 }
@@ -1528,11 +1708,12 @@ function buildSponsorActivationRunHistory(params: {
   notes: LootboxSponsorPackageDetailNoteRow[];
   auditEvents: LootboxSponsorPackageDetailAuditRow[];
 }): LootboxSponsorActivationRunHistoryItem[] {
-  const byRunId = new Map<string, LootboxSponsorActivationRunHistoryItem>();
+  type ActivationRunHistoryDraft = Omit<LootboxSponsorActivationRunHistoryItem, "steps">;
+  const byRunId = new Map<string, ActivationRunHistoryDraft>();
 
   const upsert = (
     runId: string | null,
-    item: Partial<LootboxSponsorActivationRunHistoryItem>
+    item: Partial<ActivationRunHistoryDraft>
   ) => {
     if (!runId) {
       return;
@@ -1606,7 +1787,43 @@ function buildSponsorActivationRunHistory(params: {
 
   return [...byRunId.values()]
     .filter((item) => item.stagedAt)
+    .map((item) => ({
+      ...item,
+      steps: buildSponsorActivationRunSteps(params.packageRow.metadata, item.runId),
+    }))
     .sort((left, right) => getTimelineTime(right.stagedAt) - getTimelineTime(left.stagedAt));
+}
+
+function buildSponsorActivationRunSteps(
+  metadata: Record<string, unknown> | null,
+  runId: string
+): LootboxSponsorActivationRunStep[] {
+  const stepStates = readObject(metadata?.activationRunStepStates) ?? {};
+
+  return sponsorActivationRunSteps.map((definition) => {
+    const raw = readObject(stepStates[definition.id]);
+    const rawRunId = readNonEmptyString(raw?.runId);
+    const belongsToRun = rawRunId === runId;
+    const rawState = raw?.state;
+    const state =
+      belongsToRun && (rawState === "done" || rawState === "blocked")
+        ? rawState
+        : "pending";
+
+    return {
+      id: definition.id,
+      label: definition.label,
+      detail: definition.detail,
+      state,
+      runId: belongsToRun ? rawRunId : null,
+      noteId: belongsToRun ? readNonEmptyString(raw?.noteId) : null,
+      updatedAt: belongsToRun ? readNonEmptyString(raw?.updatedAt) : null,
+      updatedByAuthUserId: belongsToRun
+        ? readNonEmptyString(raw?.updatedByAuthUserId)
+        : null,
+      note: belongsToRun ? readNonEmptyString(raw?.note) : null,
+    };
+  });
 }
 
 function compareTimelineItems(
@@ -1858,6 +2075,11 @@ function formatBlockingFields(fields: string[]) {
 function normalizeText(value: string | null) {
   const text = typeof value === "string" ? value.trim() : "";
   return text || null;
+}
+
+function normalizeStepNote(value: string | null | undefined) {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text ? text.slice(0, 1000) : null;
 }
 
 function readObject(value: unknown) {

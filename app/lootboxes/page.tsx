@@ -179,6 +179,19 @@ type SponsorActivationRunApiPayload = {
   metadataUpdated?: boolean;
   warning?: string | null;
 };
+type SponsorActivationRunStepState = "done" | "blocked";
+type SponsorActivationRunStepApiPayload = {
+  ok?: boolean;
+  error?: string;
+  step?: {
+    id: string;
+    label: string;
+    state: SponsorActivationRunStepState;
+    noteId?: string;
+  };
+  metadataUpdated?: boolean;
+  warning?: string | null;
+};
 const sponsorPackageStatusControls: LootboxSponsorPackageStatus[] = [
   "ready_to_pitch",
   "pitched",
@@ -250,6 +263,8 @@ export default function LootboxesPage() {
   const [sponsorPackageMutatingId, setSponsorPackageMutatingId] = useState<string | null>(null);
   const [sponsorPackageNoteSavingId, setSponsorPackageNoteSavingId] = useState<string | null>(null);
   const [sponsorActivationRunSavingId, setSponsorActivationRunSavingId] = useState<string | null>(null);
+  const [sponsorActivationRunStepSavingKey, setSponsorActivationRunStepSavingKey] =
+    useState<string | null>(null);
   const [selectedSponsorPackageId, setSelectedSponsorPackageId] = useState<string | null>(null);
   const [sponsorPackageDetail, setSponsorPackageDetail] =
     useState<LootboxSponsorPackageDetailRead | null>(null);
@@ -924,6 +939,60 @@ export default function LootboxesPage() {
     }
   }
 
+  async function updateSponsorActivationRunStep(
+    id: string,
+    stepId: string,
+    state: SponsorActivationRunStepState
+  ) {
+    const savingKey = `${id}:${stepId}:${state}`;
+    if (sponsorActivationRunStepSavingKey) {
+      return;
+    }
+
+    setSponsorActivationRunStepSavingKey(savingKey);
+    setSponsorPackageOpsMessage({
+      tone: "default",
+      text: `Marking activation step ${state}...`,
+    });
+
+    try {
+      const response = await fetch(
+        `/api/lootboxes/sponsor-packages/${id}/activation-run/steps`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ stepId, state }),
+        }
+      );
+      const payload = (await response.json().catch(() => null)) as
+        | SponsorActivationRunStepApiPayload
+        | null;
+
+      if (!response.ok || !payload?.ok || !payload.step) {
+        throw new Error(payload?.error ?? "Sponsor activation run step failed.");
+      }
+
+      await refreshSponsorPackages();
+      await loadSponsorPackageDetail(id);
+      setSponsorPackageOpsMessage({
+        tone: payload.metadataUpdated === false ? "default" : "success",
+        text:
+          payload.warning ??
+          `${payload.step.label} marked ${payload.step.state} for the manual run.`,
+      });
+    } catch (error) {
+      setSponsorPackageOpsMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Sponsor activation run step failed.",
+      });
+    } finally {
+      setSponsorActivationRunStepSavingKey(null);
+    }
+  }
+
   async function saveSelectedPoolDraft() {
     if (selectedDraft.summary.readiness !== "ready" || poolSaving) {
       return;
@@ -1106,6 +1175,7 @@ export default function LootboxesPage() {
               currentAuthUserId={authUserId}
               mutatingId={sponsorPackageMutatingId}
               noteSavingId={sponsorPackageNoteSavingId}
+              activationRunStepSavingKey={sponsorActivationRunStepSavingKey}
               onSelectPackage={loadSponsorPackageDetail}
               onStatusChange={(id, status) =>
                 patchSponsorPackage(id, { status }, "Sponsor package status updated.")
@@ -1115,6 +1185,7 @@ export default function LootboxesPage() {
               onDealSave={updateSponsorPackageDeal}
               onDealProgress={progressSponsorPackageDeal}
               onNoteAdd={addSponsorPackageNote}
+              onActivationRunStepUpdate={updateSponsorActivationRunStep}
             />
             <SponsorActivationHandoffPanel
               read={sponsorActivationHandoff}
@@ -2048,6 +2119,7 @@ function SponsoredPackageOpsPanel({
   currentAuthUserId,
   mutatingId,
   noteSavingId,
+  activationRunStepSavingKey,
   onSelectPackage,
   onStatusChange,
   onOwnerClaim,
@@ -2055,6 +2127,7 @@ function SponsoredPackageOpsPanel({
   onDealSave,
   onDealProgress,
   onNoteAdd,
+  onActivationRunStepUpdate,
 }: {
   packages: SponsorPackageApiRow[];
   loading: boolean;
@@ -2065,6 +2138,7 @@ function SponsoredPackageOpsPanel({
   currentAuthUserId: string | null;
   mutatingId: string | null;
   noteSavingId: string | null;
+  activationRunStepSavingKey: string | null;
   onSelectPackage: (id: string) => void;
   onStatusChange: (id: string, status: LootboxSponsorPackageStatus) => void;
   onOwnerClaim: (id: string) => void;
@@ -2077,6 +2151,11 @@ function SponsoredPackageOpsPanel({
     noteType: LootboxSponsorPackageNoteType,
     followUpAt: string | null
   ) => Promise<boolean>;
+  onActivationRunStepUpdate: (
+    id: string,
+    stepId: string,
+    state: SponsorActivationRunStepState
+  ) => void;
 }) {
   const activePackages = packages.filter(
     (row) => row.status !== "won" && row.status !== "lost" && row.status !== "archived"
@@ -2135,9 +2214,11 @@ function SponsoredPackageOpsPanel({
               loading={detailLoading}
               currentAuthUserId={currentAuthUserId}
               mutating={Boolean(detail?.package.id && mutatingId === detail.package.id)}
+              activationRunStepSavingKey={activationRunStepSavingKey}
               onOwnerClaim={onOwnerClaim}
               onDealSave={onDealSave}
               onDealProgress={onDealProgress}
+              onActivationRunStepUpdate={onActivationRunStepUpdate}
             />
           </div>
         ) : (
@@ -2363,17 +2444,25 @@ function SponsorPackageDetailPanel({
   loading,
   currentAuthUserId,
   mutating,
+  activationRunStepSavingKey,
   onOwnerClaim,
   onDealSave,
   onDealProgress,
+  onActivationRunStepUpdate,
 }: {
   detail: LootboxSponsorPackageDetailRead | null;
   loading: boolean;
   currentAuthUserId: string | null;
   mutating: boolean;
+  activationRunStepSavingKey: string | null;
   onOwnerClaim: (id: string) => void;
   onDealSave: (id: string, patch: SponsorPackagePatchInput) => void;
   onDealProgress: (id: string, status: LootboxSponsorPackageStatus) => void;
+  onActivationRunStepUpdate: (
+    id: string,
+    stepId: string,
+    state: SponsorActivationRunStepState
+  ) => void;
 }) {
   if (loading) {
     return (
@@ -2431,7 +2520,11 @@ function SponsorPackageDetailPanel({
         onDealProgress={onDealProgress}
       />
 
-      <SponsorPackageActivationRunHistory detail={detail} />
+      <SponsorPackageActivationRunHistory
+        detail={detail}
+        savingKey={activationRunStepSavingKey}
+        onStepUpdate={onActivationRunStepUpdate}
+      />
 
       <div className="mt-3 rounded-[14px] border border-white/[0.016] bg-black/18 p-3">
         <div className="flex items-center gap-2">
@@ -2458,8 +2551,12 @@ function SponsorPackageDetailPanel({
 
 function SponsorPackageActivationRunHistory({
   detail,
+  savingKey,
+  onStepUpdate,
 }: {
   detail: LootboxSponsorPackageDetailRead;
+  savingKey: string | null;
+  onStepUpdate: (id: string, stepId: string, state: SponsorActivationRunStepState) => void;
 }) {
   const latest = detail.activationRuns[0] ?? null;
 
@@ -2494,6 +2591,80 @@ function SponsorPackageActivationRunHistory({
         />
         <MiniRead label="Next move" value={detail.summary.nextActivationRunMove ?? "No run"} />
       </div>
+
+      {latest ? (
+        <div className="mt-3 rounded-[14px] border border-white/[0.018] bg-black/20 p-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                Manual checklist
+              </p>
+              <p className="mt-1 text-[10px] leading-4 text-sub">
+                Track execution proof without triggering launch, billing or reward actions.
+              </p>
+            </div>
+            <OpsStatusPill
+              tone={latest.steps.every((step) => step.state === "done") ? "success" : "default"}
+            >
+              {latest.steps.filter((step) => step.state === "done").length}/{latest.steps.length} done
+            </OpsStatusPill>
+          </div>
+
+          <div className="mt-2 grid gap-2">
+            {latest.steps.map((step) => {
+              const doneKey = `${detail.package.id}:${step.id}:done`;
+              const blockedKey = `${detail.package.id}:${step.id}:blocked`;
+
+              return (
+                <div
+                  key={step.id}
+                  className="grid gap-2 rounded-[12px] border border-white/[0.014] bg-white/[0.01] px-2.5 py-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="break-words text-[10px] font-black text-text [overflow-wrap:anywhere]">
+                        {step.label}
+                      </p>
+                      <OpsStatusPill tone={getActivationRunStepTone(step.state)}>
+                        {step.state}
+                      </OpsStatusPill>
+                    </div>
+                    <p className="mt-1 break-words text-[9px] leading-4 text-sub [overflow-wrap:anywhere]">
+                      {step.note ?? step.detail}
+                    </p>
+                    {step.updatedAt ? (
+                      <p className="mt-1 text-[8px] font-black uppercase tracking-[0.12em] text-sub/80">
+                        {formatSponsorPackageDate(step.updatedAt)} by{" "}
+                        {step.updatedByAuthUserId
+                          ? shortAuthUser(step.updatedByAuthUserId)
+                          : "operator"}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
+                    <button
+                      type="button"
+                      disabled={Boolean(savingKey) || step.state === "done"}
+                      onClick={() => onStepUpdate(detail.package.id, step.id, "done")}
+                      className={getActivationRunStepButtonClass(step.state === "done")}
+                    >
+                      {savingKey === doneKey ? "Saving" : "Done"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={Boolean(savingKey) || step.state === "blocked"}
+                      onClick={() => onStepUpdate(detail.package.id, step.id, "blocked")}
+                      className={getActivationRunStepButtonClass(step.state === "blocked", true)}
+                    >
+                      {savingKey === blockedKey ? "Saving" : "Blocked"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {detail.activationRuns.length ? (
         <div className="mt-3 grid gap-2">
@@ -2542,6 +2713,33 @@ function SponsorPackageActivationRunHistory({
       )}
     </div>
   );
+}
+
+function getActivationRunStepTone(state: string) {
+  if (state === "done") {
+    return "success" as const;
+  }
+
+  if (state === "blocked") {
+    return "danger" as const;
+  }
+
+  return "default" as const;
+}
+
+function getActivationRunStepButtonClass(active: boolean, danger = false) {
+  const base =
+    "inline-flex h-8 items-center justify-center rounded-full border px-3 text-[8px] font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-45";
+
+  if (active) {
+    return `${base} ${
+      danger
+        ? "border-rose-300/28 bg-rose-500/16 text-rose-200"
+        : "border-primary/28 bg-primary/14 text-primary"
+    }`;
+  }
+
+  return `${base} border-white/[0.024] bg-white/[0.014] text-sub hover:border-primary/24 hover:text-primary`;
 }
 
 function SponsorPackageDealCockpit({
