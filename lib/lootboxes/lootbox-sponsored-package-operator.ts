@@ -85,6 +85,14 @@ export type LootboxSponsorPackageCrmChecklistItem = {
   detail: string;
 };
 
+export type LootboxSponsorPackageCrmControls = {
+  canProgress: boolean;
+  nextStatus: LootboxSponsorPackageStatus | null;
+  nextActionLabel: string;
+  reason: string;
+  blockingFields: string[];
+};
+
 const sponsorCrmStages = [
   {
     id: "ready_to_pitch",
@@ -276,6 +284,7 @@ export function buildLootboxSponsorPackageCrmRead(
     checklist,
     missingFields,
     primaryAction: getCrmPrimaryAction(status, missingFields),
+    controls: buildCrmControls(status, checklist),
   };
 }
 
@@ -484,6 +493,91 @@ function getCrmPrimaryAction(status: string, missingFields: string[]) {
   }
 
   return "Keep sponsor motion moving";
+}
+
+function buildCrmControls(
+  status: string,
+  checklist: LootboxSponsorPackageCrmChecklistItem[]
+): LootboxSponsorPackageCrmControls {
+  const nextStatus = getNextSponsorPackageStatus(status);
+  const nextActionLabel = nextStatus ? `Mark ${nextStatus.replace(/_/g, " ")}` : "No next stage";
+  if (!nextStatus) {
+    return {
+      canProgress: false,
+      nextStatus: null,
+      nextActionLabel,
+      reason: "Sponsor package is already in a terminal or archived stage.",
+      blockingFields: [],
+    };
+  }
+
+  const blockingFields = checklist
+    .filter((item) => isCrmFieldRequiredForStatus(nextStatus, item.label) && item.state === "missing")
+    .map((item) => item.label);
+
+  if (blockingFields.length) {
+    return {
+      canProgress: false,
+      nextStatus,
+      nextActionLabel,
+      reason: `Add ${formatBlockingFields(blockingFields)} before moving to ${nextStatus.replace(/_/g, " ")}.`,
+      blockingFields,
+    };
+  }
+
+  return {
+    canProgress: true,
+    nextStatus,
+    nextActionLabel,
+    reason: `Sponsor package can safely move to ${nextStatus.replace(/_/g, " ")}.`,
+    blockingFields: [],
+  };
+}
+
+function getNextSponsorPackageStatus(status: string): LootboxSponsorPackageStatus | null {
+  switch (status) {
+    case "draft":
+    case "blocked":
+      return "ready_to_pitch";
+    case "ready_to_pitch":
+      return "pitched";
+    case "pitched":
+      return "negotiating";
+    case "negotiating":
+      return "won";
+    case "won":
+    case "lost":
+    case "archived":
+    default:
+      return null;
+  }
+}
+
+function isCrmFieldRequiredForStatus(
+  nextStatus: LootboxSponsorPackageStatus,
+  label: string
+) {
+  if (nextStatus === "ready_to_pitch") {
+    return ["Sponsor name", "Deal value", "Owner"].includes(label);
+  }
+
+  if (nextStatus === "pitched") {
+    return ["Sponsor contact", "Deal value", "Owner", "Follow-up date"].includes(label);
+  }
+
+  if (nextStatus === "negotiating" || nextStatus === "won") {
+    return ["Sponsor contact", "Deal value", "Owner"].includes(label);
+  }
+
+  return false;
+}
+
+function formatBlockingFields(fields: string[]) {
+  if (fields.length <= 1) {
+    return fields[0] ?? "the missing fields";
+  }
+
+  return `${fields.slice(0, -1).join(", ")} and ${fields[fields.length - 1]}`;
 }
 
 function normalizeText(value: string | null) {

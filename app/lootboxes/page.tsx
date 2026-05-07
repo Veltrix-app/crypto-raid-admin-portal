@@ -2438,23 +2438,45 @@ function SponsorPackageDealCockpit({
       </div>
 
       <div className="mt-3 grid grid-cols-4 gap-1.5">
-        {crm.stage.stages.map((stage) => (
-          <button
-            key={stage.id}
-            type="button"
-            disabled={mutating || row.status === stage.id}
-            onClick={() => onDealProgress(row.id, stage.id as LootboxSponsorPackageStatus)}
-            className={`min-h-16 rounded-[13px] border px-2 py-2 text-left transition ${
-              getSponsorCrmStageClass(stage.state)
-            } disabled:cursor-not-allowed disabled:opacity-70`}
-          >
-            <span className="block text-[8px] font-black uppercase tracking-[0.12em]">
-              {stage.state}
-            </span>
-            <span className="mt-1 block text-[10px] font-black text-text">{stage.label}</span>
-          </button>
-        ))}
+        {crm.stage.stages.map((stage) => {
+          const stageStatus = stage.id as LootboxSponsorPackageStatus;
+          const disabled =
+            mutating ||
+            row.status === stage.id ||
+            !canUseSponsorCrmStageControl({
+              stageStatus,
+              currentStatus: row.status,
+              controls: crm.controls,
+            });
+
+          return (
+            <button
+              key={stage.id}
+              type="button"
+              disabled={disabled}
+              onClick={() => onDealProgress(row.id, stageStatus)}
+              className={`min-h-16 rounded-[13px] border px-2 py-2 text-left transition ${
+                getSponsorCrmStageClass(stage.state)
+              } disabled:cursor-not-allowed disabled:opacity-70`}
+            >
+              <span className="block text-[8px] font-black uppercase tracking-[0.12em]">
+                {stage.state}
+              </span>
+              <span className="mt-1 block text-[10px] font-black text-text">{stage.label}</span>
+            </button>
+          );
+        })}
       </div>
+
+      <SponsorPackageControlPanel
+        controls={crm.controls}
+        mutating={mutating}
+        onProgress={() => {
+          if (crm.controls.nextStatus) {
+            onDealProgress(row.id, crm.controls.nextStatus);
+          }
+        }}
+      />
 
       <form onSubmit={submitDeal} className="mt-3 grid gap-2">
         <div className="grid gap-2 md:grid-cols-2">
@@ -2580,6 +2602,62 @@ function SponsorPackageDealCockpit({
           />
         </div>
       </form>
+    </div>
+  );
+}
+
+function SponsorPackageControlPanel({
+  controls,
+  mutating,
+  onProgress,
+}: {
+  controls: ReturnType<typeof buildLootboxSponsorPackageCrmRead>["controls"];
+  mutating: boolean;
+  onProgress: () => void;
+}) {
+  return (
+    <div
+      className={`mt-3 rounded-[14px] border px-3 py-3 ${
+        controls.canProgress
+          ? "border-emerald-300/16 bg-emerald-300/[0.045]"
+          : "border-amber-300/16 bg-amber-300/[0.045]"
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p
+            className={`text-[8px] font-black uppercase tracking-[0.16em] ${
+              controls.canProgress ? "text-emerald-100" : "text-amber-100"
+            }`}
+          >
+            Next safe control
+          </p>
+          <p className="mt-1 text-[11px] font-semibold leading-5 text-text">
+            {controls.reason}
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={!controls.canProgress || !controls.nextStatus || mutating}
+          onClick={onProgress}
+          className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-primary/20 bg-primary px-3 py-2 text-[8px] font-black uppercase tracking-[0.12em] text-black transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:border-white/[0.02] disabled:bg-white/[0.02] disabled:text-sub/45"
+        >
+          <ArrowRight size={12} />
+          {controls.nextActionLabel}
+        </button>
+      </div>
+      {controls.blockingFields.length ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {controls.blockingFields.map((field) => (
+            <span
+              key={field}
+              className="rounded-full border border-amber-300/18 bg-black/16 px-2 py-1 text-[8px] font-black uppercase tracking-[0.11em] text-amber-100"
+            >
+              {field}
+            </span>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -4505,6 +4583,26 @@ function getSponsorCrmChecklistClass(state: "ready" | "missing") {
     default:
       return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
   }
+}
+
+function canUseSponsorCrmStageControl({
+  stageStatus,
+  currentStatus,
+  controls,
+}: {
+  stageStatus: LootboxSponsorPackageStatus;
+  currentStatus: string | null;
+  controls: ReturnType<typeof buildLootboxSponsorPackageCrmRead>["controls"];
+}) {
+  if (stageStatus === currentStatus) {
+    return false;
+  }
+
+  if (stageStatus === "lost") {
+    return true;
+  }
+
+  return controls.canProgress && controls.nextStatus === stageStatus;
 }
 
 function getPackageActionIcon(action: LootboxSponsoredPackageOperatorAction) {

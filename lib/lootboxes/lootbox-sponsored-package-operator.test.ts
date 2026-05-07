@@ -341,3 +341,48 @@ test("buildLootboxSponsorPackageCrmRead turns package fields into an operator de
   );
   assert.equal(read.primaryAction, "Add sponsor contact before next follow-up");
 });
+
+test("buildLootboxSponsorPackageCrmRead adds safe next controls for sponsor progress", () => {
+  const baseRow = {
+    id: "package-1",
+    project_id: "11111111-1111-4111-8111-111111111111",
+    campaign_id: basePack.campaignId,
+    package_tier: "premium",
+    status: "ready_to_pitch",
+    sponsor_name: "Atlas Labs",
+    sponsor_contact: null,
+    sponsor_budget: 0,
+    currency: "USD",
+    owner_auth_user_id: null,
+    follow_up_at: null,
+    last_contacted_at: null,
+    package_snapshot: {},
+    metadata: {},
+    created_by_auth_user_id: "admin-auth-1",
+    created_at: "2026-05-07T10:00:00.000Z",
+    updated_at: "2026-05-07T11:00:00.000Z",
+  };
+  const blockedRead = buildLootboxSponsorPackageCrmRead(baseRow);
+  const readyRead = buildLootboxSponsorPackageCrmRead({
+    ...baseRow,
+    sponsor_contact: "atlas@labs.test",
+    sponsor_budget: 2500,
+    owner_auth_user_id: "admin-auth-1",
+    follow_up_at: "2026-05-09T12:00:00.000Z",
+  });
+
+  assert.deepEqual(blockedRead.controls, {
+    canProgress: false,
+    nextStatus: "pitched",
+    nextActionLabel: "Mark pitched",
+    reason: "Add Sponsor contact, Deal value, Owner and Follow-up date before moving to pitched.",
+    blockingFields: ["Sponsor contact", "Deal value", "Owner", "Follow-up date"],
+  });
+  assert.deepEqual(readyRead.controls, {
+    canProgress: true,
+    nextStatus: "pitched",
+    nextActionLabel: "Mark pitched",
+    reason: "Sponsor package can safely move to pitched.",
+    blockingFields: [],
+  });
+});
