@@ -1463,6 +1463,224 @@ test("buildLootboxSponsorActivationHandoffRead builds a sponsor business cockpit
   );
 });
 
+test("buildLootboxSponsorActivationHandoffRead builds sponsor billing readiness", () => {
+  const projectId = "11111111-1111-4111-8111-111111111111";
+  const read = buildLootboxSponsorActivationHandoffRead({
+    now: "2026-05-10T14:00:00.000Z",
+    packages: [
+      {
+        id: "package-invoice",
+        project_id: projectId,
+        campaign_id: basePack.campaignId,
+        package_tier: "premium",
+        status: "won",
+        sponsor_name: "Atlas Labs",
+        sponsor_contact: "atlas@labs.test",
+        sponsor_budget: 2500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-1",
+        follow_up_at: "2026-05-11T10:00:00.000Z",
+        last_contacted_at: "2026-05-09T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Holder Activation Sprint",
+        },
+        metadata: {
+          lastActivationRun: {
+            runId: "sponsor-activation:package-invoice:2026-05-10T12:00:00.000Z",
+            title: "Atlas Labs activation run",
+            stagedAt: "2026-05-10T12:00:00.000Z",
+            sponsorPackageId: "package-invoice",
+            campaignId: basePack.campaignId,
+            projectId,
+            routeHref: `/campaigns/${basePack.campaignId}`,
+            noteId: "note-1",
+            stagedByAuthUserId: "admin-auth-1",
+            guardrailCount: 5,
+          },
+          lastActivationRunSignoff: {
+            runId: "sponsor-activation:package-invoice:2026-05-10T12:00:00.000Z",
+            outcome: "completed",
+            label: "Completed",
+            signedOffAt: "2026-05-10T13:00:00.000Z",
+            signedOffByAuthUserId: "admin-auth-1",
+            noteId: "note-signoff",
+            note: "Launch completed and sponsor proof is ready.",
+            followUpAt: "2026-05-11T12:00:00.000Z",
+          },
+        },
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-missing-contact",
+        project_id: projectId,
+        campaign_id: "33333333-3333-4333-8333-333333333333",
+        package_tier: "standard",
+        status: "won",
+        sponsor_name: "Beta Guild",
+        sponsor_contact: null,
+        sponsor_budget: 1200,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-2",
+        follow_up_at: "2026-05-11T10:00:00.000Z",
+        last_contacted_at: "2026-05-08T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Beta Push",
+        },
+        metadata: {
+          lastActivationRun: {
+            runId: "sponsor-activation:package-missing-contact:2026-05-10T12:00:00.000Z",
+            title: "Beta Guild activation run",
+            stagedAt: "2026-05-10T12:00:00.000Z",
+            sponsorPackageId: "package-missing-contact",
+            campaignId: "33333333-3333-4333-8333-333333333333",
+            projectId,
+            routeHref: "/campaigns/33333333-3333-4333-8333-333333333333",
+            noteId: "note-2",
+            stagedByAuthUserId: "admin-auth-2",
+            guardrailCount: 5,
+          },
+          lastActivationRunSignoff: {
+            runId: "sponsor-activation:package-missing-contact:2026-05-10T12:00:00.000Z",
+            outcome: "completed",
+            label: "Completed",
+            signedOffAt: "2026-05-10T13:00:00.000Z",
+            signedOffByAuthUserId: "admin-auth-2",
+            noteId: "note-signoff-2",
+            note: "Delivery proof is ready, but finance contact is missing.",
+            followUpAt: "2026-05-11T12:00:00.000Z",
+          },
+        },
+        created_by_auth_user_id: "admin-auth-2",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-awaiting-signoff",
+        project_id: projectId,
+        campaign_id: "44444444-4444-4444-8444-444444444444",
+        package_tier: "standard",
+        status: "won",
+        sponsor_name: "Gamma Crew",
+        sponsor_contact: "gamma@test.local",
+        sponsor_budget: 1500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-3",
+        follow_up_at: null,
+        last_contacted_at: null,
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Gamma Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-3",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-watch",
+        project_id: projectId,
+        campaign_id: "55555555-5555-4555-8555-555555555555",
+        package_tier: "starter",
+        status: "negotiating",
+        sponsor_name: "Delta DAO",
+        sponsor_contact: "delta@test.local",
+        sponsor_budget: 1800,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-4",
+        follow_up_at: "2026-05-12T10:00:00.000Z",
+        last_contacted_at: "2026-05-08T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Delta Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-4",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+    ],
+    campaigns: [
+      {
+        id: basePack.campaignId,
+        projectId,
+        title: "Holder Activation Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 500,
+        participants: 128,
+        completionRate: 42,
+      },
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        projectId,
+        title: "Beta Push",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 300,
+        participants: 44,
+        completionRate: 35,
+      },
+      {
+        id: "44444444-4444-4444-8444-444444444444",
+        projectId,
+        title: "Gamma Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 200,
+        participants: 12,
+        completionRate: 12,
+      },
+      {
+        id: "55555555-5555-4555-8555-555555555555",
+        projectId,
+        title: "Delta Sprint",
+        status: "scheduled",
+        visibility: "public",
+        rewardPoolAmount: 100,
+        participants: 0,
+        completionRate: 0,
+      },
+    ],
+    projects: [{ id: projectId, name: "VYNTRO", slug: "vyntro" }],
+    shardPools: [
+      {
+        id: "pool-1",
+        campaignId: basePack.campaignId,
+        status: "active",
+        poolSize: 10_000,
+        remainingShards: 6_400,
+      },
+    ],
+  });
+
+  assert.deepEqual(read.billingReadiness.summary, {
+    totalValue: 7000,
+    invoiceReadyValue: 2500,
+    invoiceReady: 1,
+    needsFinanceSetup: 2,
+    paymentWatch: 1,
+    closed: 0,
+    manualOnly: true,
+    topNextAction: "Prepare manual invoice request for Atlas Labs after finance approval.",
+  });
+  assert.equal(read.billingReadiness.focus?.packageId, "package-invoice");
+  assert.deepEqual(
+    read.billingReadiness.lanes.map((lane) => `${lane.id}:${lane.count}`),
+    ["invoice_ready:1", "finance_setup:2", "payment_watch:1"]
+  );
+  assert.deepEqual(
+    read.billingReadiness.lanes[1]?.items.map((item) => `${item.packageId}:${item.blockers.join("|")}`),
+    [
+      "package-missing-contact:Sponsor contact",
+      "package-awaiting-signoff:Delivery signoff",
+    ]
+  );
+});
+
 test("buildLootboxSponsorActivationRunMetadataPatch preserves metadata and stores run visibility", () => {
   const read = buildLootboxSponsorActivationHandoffRead({
     packages: [

@@ -441,6 +441,7 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
       handoffs[0] ??
       null,
     businessCockpit: buildSponsorBusinessCockpit(handoffs),
+    billingReadiness: buildSponsorBillingReadiness(handoffs),
     guardrails: [
       "Activation handoff does not create billing, payouts or reward inventory.",
       "Operators still own sponsor follow-up, pool setup and fulfillment decisions.",
@@ -1046,6 +1047,7 @@ function buildSponsorActivationHandoff(params: {
     projectName,
     campaignTitle,
     sponsorName,
+    sponsorContact: normalizeText(row.sponsor_contact) ?? null,
     budgetLabel: formatCrmBudget(row.sponsor_budget, row.currency),
     dealValue: Math.max(0, Number(row.sponsor_budget ?? 0)),
     nextAction: getSponsorActivationNextAction(activationState, checklist),
@@ -1079,6 +1081,180 @@ function buildSponsorActivationHandoff(params: {
       }),
     },
   };
+}
+
+function buildSponsorBillingReadiness(
+  handoffs: ReturnType<typeof buildSponsorActivationHandoff>[]
+) {
+  const items = handoffs.map(toSponsorBillingReadinessItem).sort(compareBillingItems);
+  const invoiceReadyItems = items.filter((item) => item.readiness === "invoice_ready");
+  const financeSetupItems = items.filter((item) => item.readiness === "needs_setup");
+  const paymentWatchItems = items.filter((item) => item.readiness === "payment_watch");
+  const closedItems = items.filter((item) => item.readiness === "closed");
+  const focus =
+    invoiceReadyItems[0] ??
+    financeSetupItems[0] ??
+    paymentWatchItems[0] ??
+    items[0] ??
+    null;
+
+  return {
+    summary: {
+      totalValue: items.reduce((sum, item) => sum + item.dealValue, 0),
+      invoiceReadyValue: invoiceReadyItems.reduce((sum, item) => sum + item.dealValue, 0),
+      invoiceReady: invoiceReadyItems.length,
+      needsFinanceSetup: financeSetupItems.length,
+      paymentWatch: paymentWatchItems.length,
+      closed: closedItems.length,
+      manualOnly: true as const,
+      topNextAction:
+        focus?.nextAction ?? "Save sponsor packages before preparing manual finance actions.",
+    },
+    focus,
+    lanes: [
+      {
+        id: "invoice_ready" as const,
+        label: "Invoice ready",
+        detail: "Won packages with contact, value and completed delivery signoff.",
+        count: invoiceReadyItems.length,
+        items: invoiceReadyItems.slice(0, 5),
+      },
+      {
+        id: "finance_setup" as const,
+        label: "Finance setup",
+        detail: "Won packages that still need contact, value or delivery proof.",
+        count: financeSetupItems.length,
+        items: financeSetupItems.slice(0, 5),
+      },
+      {
+        id: "payment_watch" as const,
+        label: "Payment watch",
+        detail: "Deals not won yet; keep commercial context warm before invoicing.",
+        count: paymentWatchItems.length,
+        items: paymentWatchItems.slice(0, 5),
+      },
+    ],
+    guardrails: [
+      "Billing readiness is read-only and does not create invoices or payment links.",
+      "Finance approval stays manual before any sponsor charge is requested.",
+      "Delivery signoff must be explicit before a won package becomes invoice-ready.",
+    ],
+  };
+}
+
+function toSponsorBillingReadinessItem(
+  handoff: ReturnType<typeof buildSponsorActivationHandoff>
+) {
+  const closed = ["lost", "blocked", "archived"].includes(handoff.status);
+  const won = handoff.status === "won";
+  const contactReady = Boolean(handoff.sponsorContact);
+  const budgetReady = handoff.dealValue > 0;
+  const deliverySignedOff = handoff.activationRun.signoff?.outcome === "completed";
+  const blockers = won
+    ? [
+        contactReady ? null : "Sponsor contact",
+        budgetReady ? null : "Deal value",
+        deliverySignedOff ? null : "Delivery signoff",
+      ].filter((item): item is string => Boolean(item))
+    : [];
+  const readiness = closed
+    ? ("closed" as const)
+    : won && blockers.length === 0
+      ? ("invoice_ready" as const)
+      : won
+        ? ("needs_setup" as const)
+        : ("payment_watch" as const);
+  const score =
+    Math.round(handoff.dealValue / 100) +
+    (readiness === "invoice_ready" ? 120 : 0) +
+    (blockers.includes("Sponsor contact") ? 45 : 0) +
+    (blockers.includes("Deal value") ? 40 : 0) +
+    (blockers.includes("Delivery signoff") ? 20 : 0) +
+    (readiness === "payment_watch" ? 8 : 0);
+
+  return {
+    packageId: handoff.packageId,
+    sponsorName: handoff.sponsorName,
+    sponsorContact: handoff.sponsorContact ?? "No finance contact",
+    campaignTitle: handoff.campaignTitle,
+    packageTier: handoff.packageTier,
+    routeHref: handoff.routeHref,
+    status: handoff.status,
+    readiness,
+    priority:
+      readiness === "invoice_ready"
+        ? ("high" as const)
+        : readiness === "needs_setup"
+          ? ("medium" as const)
+          : ("watch" as const),
+    blockers,
+    dealValue: handoff.dealValue,
+    valueLabel: handoff.budgetLabel,
+    score,
+    followUpUrgency: handoff.renewal.followUpUrgency,
+    signoffLabel: handoff.activationRun.signoff?.label ?? "No delivery signoff",
+    nextAction: getSponsorBillingNextAction({
+      readiness,
+      sponsorName: handoff.sponsorName,
+      blockers,
+    }),
+  };
+}
+
+function getSponsorBillingNextAction({
+  readiness,
+  sponsorName,
+  blockers,
+}: {
+  readiness: "invoice_ready" | "needs_setup" | "payment_watch" | "closed";
+  sponsorName: string;
+  blockers: string[];
+}) {
+  if (readiness === "invoice_ready") {
+    return `Prepare manual invoice request for ${sponsorName} after finance approval.`;
+  }
+
+  if (readiness === "needs_setup") {
+    if (blockers.includes("Sponsor contact")) {
+      return "Add sponsor finance contact before invoice prep.";
+    }
+
+    if (blockers.includes("Deal value")) {
+      return "Confirm package value before invoice prep.";
+    }
+
+    if (blockers.includes("Delivery signoff")) {
+      return "Complete delivery signoff before invoice prep.";
+    }
+  }
+
+  if (readiness === "closed") {
+    return "Keep closed sponsor package out of billing.";
+  }
+
+  return "Keep deal in CRM until the sponsor package is won.";
+}
+
+function compareBillingItems(
+  left: ReturnType<typeof toSponsorBillingReadinessItem>,
+  right: ReturnType<typeof toSponsorBillingReadinessItem>
+) {
+  const readinessRank = {
+    invoice_ready: 4,
+    needs_setup: 3,
+    payment_watch: 2,
+    closed: 1,
+  };
+  const rankDelta = readinessRank[right.readiness] - readinessRank[left.readiness];
+  if (rankDelta !== 0) {
+    return rankDelta;
+  }
+
+  if (right.score !== left.score) {
+    return right.score - left.score;
+  }
+
+  return right.dealValue - left.dealValue;
 }
 
 function buildSponsorBusinessCockpit(

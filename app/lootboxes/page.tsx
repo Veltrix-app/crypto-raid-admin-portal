@@ -3333,6 +3333,8 @@ type SponsorActivationHandoffRead = ReturnType<typeof buildLootboxSponsorActivat
 type SponsorActivationHandoff = SponsorActivationHandoffRead["handoffs"][number];
 type SponsorBusinessCockpit = SponsorActivationHandoffRead["businessCockpit"];
 type SponsorBusinessCockpitItem = SponsorBusinessCockpit["lanes"][number]["items"][number];
+type SponsorBillingReadiness = SponsorActivationHandoffRead["billingReadiness"];
+type SponsorBillingReadinessItem = SponsorBillingReadiness["lanes"][number]["items"][number];
 
 function SponsorActivationHandoffPanel({
   read,
@@ -3372,6 +3374,8 @@ function SponsorActivationHandoffPanel({
 
         <SponsorBusinessCockpitPanel cockpit={read.businessCockpit} />
 
+        <SponsorBillingReadinessPanel readiness={read.billingReadiness} />
+
         {read.focus ? <SponsorActivationFocusCard handoff={read.focus} /> : null}
 
         {read.handoffs.length ? (
@@ -3407,6 +3411,157 @@ function SponsorActivationHandoffPanel({
         </div>
       </div>
     </OpsPanel>
+  );
+}
+
+function SponsorBillingReadinessPanel({ readiness }: { readiness: SponsorBillingReadiness }) {
+  const focus = readiness.focus;
+
+  return (
+    <div className="relative overflow-hidden rounded-[18px] border border-white/[0.02] bg-[radial-gradient(circle_at_10%_0%,rgba(74,217,255,0.1),transparent_26%),radial-gradient(circle_at_88%_10%,rgba(186,255,59,0.08),transparent_24%),linear-gradient(180deg,rgba(12,16,23,0.94),rgba(7,9,14,0.94))] p-3.5">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/22 to-transparent" />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 max-w-3xl">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-sky-200">
+            Finance readiness
+          </p>
+          <h3 className="mt-2 break-words text-[16px] font-black text-text [overflow-wrap:anywhere]">
+            Manual billing lane
+          </h3>
+          <p className="mt-1.5 break-words text-[11px] leading-5 text-sub [overflow-wrap:anywhere]">
+            {readiness.summary.topNextAction}
+          </p>
+        </div>
+        <OpsStatusPill tone={readiness.summary.invoiceReady > 0 ? "success" : "warning"}>
+          {readiness.summary.manualOnly ? "manual only" : "live"}
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-5">
+        <MiniRead label="Invoice value" value={formatSponsorBusinessValue(readiness.summary.invoiceReadyValue)} />
+        <MiniRead label="Pipeline" value={formatSponsorBusinessValue(readiness.summary.totalValue)} />
+        <MiniRead label="Invoice ready" value={`${readiness.summary.invoiceReady}`} />
+        <MiniRead label="Setup" value={`${readiness.summary.needsFinanceSetup}`} />
+        <MiniRead label="Watch" value={`${readiness.summary.paymentWatch}`} />
+      </div>
+
+      {focus ? (
+        <div className="mt-3 rounded-[16px] border border-sky-300/14 bg-[linear-gradient(180deg,rgba(74,217,255,0.055),rgba(255,255,255,0.012))] p-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <OpsStatusPill tone={getSponsorBillingReadinessTone(focus.readiness)}>
+                  {focus.readiness.replace(/_/g, " ")}
+                </OpsStatusPill>
+                <OpsStatusPill tone={getSponsorBillingPriorityTone(focus.priority)}>
+                  {focus.priority}
+                </OpsStatusPill>
+              </div>
+              <p className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+                {focus.sponsorName}
+              </p>
+              <p className="mt-1 break-words text-[10px] leading-4 text-sub [overflow-wrap:anywhere]">
+                {focus.nextAction}
+              </p>
+            </div>
+            <Link
+              href={focus.routeHref}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.024] bg-black/24 px-2.5 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-sky-100 transition hover:border-sky-300/24 hover:text-primary"
+            >
+              <FileText size={12} />
+              Package
+            </Link>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-4">
+            <MiniRead label="Value" value={focus.valueLabel} />
+            <MiniRead label="Contact" value={focus.sponsorContact} />
+            <MiniRead label="Signoff" value={focus.signoffLabel} />
+            <MiniRead label="Blockers" value={focus.blockers.length ? `${focus.blockers.length}` : "0"} />
+          </div>
+          {focus.blockers.length ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {focus.blockers.map((blocker) => (
+                <span
+                  key={blocker}
+                  className="rounded-full border border-amber-300/14 bg-amber-300/[0.045] px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-amber-100"
+                >
+                  {blocker}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="mt-3 grid gap-2 lg:grid-cols-3">
+        {readiness.lanes.map((lane) => (
+          <div
+            key={lane.id}
+            className="rounded-[16px] border border-white/[0.018] bg-black/22 p-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-sky-200">
+                  {lane.label}
+                </p>
+                <p className="mt-1 text-[10px] leading-4 text-sub">{lane.detail}</p>
+              </div>
+              <span className="rounded-full border border-white/[0.02] bg-white/[0.012] px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-text">
+                {lane.count}
+              </span>
+            </div>
+
+            <div className="mt-3 grid gap-1.5">
+              {lane.items.slice(0, 3).map((item) => (
+                <Link
+                  key={`${lane.id}-${item.packageId}`}
+                  href={item.routeHref}
+                  className={`group block rounded-[13px] border px-2.5 py-2 transition hover:border-sky-300/24 ${getSponsorBillingReadinessClass(item.readiness)}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] font-black text-text">
+                        {item.sponsorName}
+                      </p>
+                      <p className="mt-0.5 line-clamp-1 text-[9px] text-sub">
+                        {item.nextAction}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[8px] font-black uppercase tracking-[0.12em] text-primary">
+                      {item.valueLabel}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <OpsStatusPill tone={getSponsorBillingReadinessTone(item.readiness)}>
+                      {item.readiness.replace(/_/g, " ")}
+                    </OpsStatusPill>
+                    <span className="text-[8px] font-black uppercase tracking-[0.12em] text-sub">
+                      {item.signoffLabel}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+              {lane.items.length === 0 ? (
+                <p className="rounded-[13px] border border-white/[0.014] bg-white/[0.01] px-2.5 py-2 text-[10px] leading-4 text-sub">
+                  No packages in this lane.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
+        {readiness.guardrails.map((guardrail) => (
+          <div
+            key={guardrail}
+            className="rounded-[13px] border border-white/[0.016] bg-white/[0.012] px-2.5 py-2 text-[10px] font-semibold leading-4 text-sub"
+          >
+            {guardrail}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -5912,6 +6067,45 @@ function getSponsorBusinessPriorityClass(priority: SponsorBusinessCockpitItem["p
 
 function formatSponsorBusinessValue(value: number) {
   return `USD ${Math.max(0, value).toLocaleString("en-US")}`;
+}
+
+function getSponsorBillingReadinessTone(readiness: SponsorBillingReadinessItem["readiness"]) {
+  switch (readiness) {
+    case "invoice_ready":
+      return "success" as const;
+    case "needs_setup":
+      return "warning" as const;
+    case "closed":
+    case "payment_watch":
+    default:
+      return "default" as const;
+  }
+}
+
+function getSponsorBillingPriorityTone(priority: SponsorBillingReadinessItem["priority"]) {
+  switch (priority) {
+    case "high":
+      return "success" as const;
+    case "medium":
+      return "warning" as const;
+    case "watch":
+    default:
+      return "default" as const;
+  }
+}
+
+function getSponsorBillingReadinessClass(readiness: SponsorBillingReadinessItem["readiness"]) {
+  switch (readiness) {
+    case "invoice_ready":
+      return "border-emerald-300/16 bg-emerald-300/[0.05] text-emerald-100";
+    case "needs_setup":
+      return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
+    case "closed":
+      return "border-white/[0.014] bg-white/[0.008] text-sub";
+    case "payment_watch":
+    default:
+      return "border-sky-300/12 bg-sky-300/[0.035] text-sky-100";
+  }
 }
 
 function getSponsorRenewalShellClass(state: SponsorActivationHandoff["renewal"]["state"]) {
