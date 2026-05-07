@@ -300,6 +300,105 @@ test("buildLootboxSponsorPackageDetailRead chooses next action from package stat
   assert.equal(won.summary.nextAction, "Record fulfillment plan");
 });
 
+test("buildLootboxSponsorPackageDetailRead extracts activation run history", () => {
+  const detail = buildLootboxSponsorPackageDetailRead({
+    packageRow: {
+      id: "package-1",
+      project_id: "11111111-1111-4111-8111-111111111111",
+      campaign_id: basePack.campaignId,
+      package_tier: "premium",
+      status: "won",
+      sponsor_name: "Atlas Labs",
+      sponsor_contact: "atlas@labs.test",
+      sponsor_budget: 2500,
+      currency: "USD",
+      owner_auth_user_id: "admin-auth-1",
+      follow_up_at: "2026-05-09T12:00:00.000Z",
+      last_contacted_at: null,
+      package_snapshot: {
+        projectName: "VYNTRO",
+        campaignTitle: "Holder Activation Sprint",
+      },
+      metadata: {
+        lastActivationRun: {
+          runId: "sponsor-activation:package-1:2026-05-10T12:00:00.000Z",
+          title: "Atlas Labs activation run",
+          stagedAt: "2026-05-10T12:00:00.000Z",
+          sponsorPackageId: "package-1",
+          campaignId: basePack.campaignId,
+          projectId: "11111111-1111-4111-8111-111111111111",
+          routeHref: `/campaigns/${basePack.campaignId}`,
+          noteId: "note-1",
+          stagedByAuthUserId: "admin-auth-1",
+          guardrailCount: 5,
+        },
+      },
+      created_by_auth_user_id: "admin-auth-1",
+      created_at: "2026-05-07T10:00:00.000Z",
+      updated_at: "2026-05-07T11:00:00.000Z",
+    },
+    notes: [
+      {
+        id: "note-1",
+        sponsor_package_id: "package-1",
+        note_type: "decision",
+        note: "Activation run staged for Atlas Labs / Holder Activation Sprint.",
+        metadata: {
+          source: "lootbox_sponsor_activation_run",
+          runId: "sponsor-activation:package-1:2026-05-10T12:00:00.000Z",
+          stagedAt: "2026-05-10T12:00:00.000Z",
+          routeHref: `/campaigns/${basePack.campaignId}`,
+          nextOperatorMoves: [
+            "Copy the activation brief into the internal launch thread.",
+            "Confirm campaign route, shard pool, reward budget and owner one final time.",
+          ],
+          guardrails: [
+            "Manual-only activation run.",
+            "No billing action was triggered.",
+          ],
+        },
+        follow_up_at: null,
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-10T12:00:00.000Z",
+      },
+    ],
+    auditEvents: [
+      {
+        id: "audit-1",
+        auth_user_id: "admin-auth-1",
+        source_table: "lootbox_sponsor_packages",
+        source_id: "package-1",
+        action: "lootbox_sponsor_activation_run_staged",
+        summary: "Staged manual activation run for Atlas Labs.",
+        metadata: {
+          runId: "sponsor-activation:package-1:2026-05-10T12:00:00.000Z",
+          stagedAt: "2026-05-10T12:00:00.000Z",
+          noteId: "note-1",
+        },
+        created_at: "2026-05-10T12:00:01.000Z",
+      },
+    ],
+  });
+
+  assert.equal(detail.summary.activationRuns, 1);
+  assert.equal(detail.summary.latestActivationRunAt, "2026-05-10T12:00:00.000Z");
+  assert.equal(detail.summary.nextActivationRunMove, "Copy the activation brief into the internal launch thread.");
+  assert.deepEqual(detail.activationRuns, [
+    {
+      runId: "sponsor-activation:package-1:2026-05-10T12:00:00.000Z",
+      title: "Atlas Labs activation run",
+      state: "staged",
+      stagedAt: "2026-05-10T12:00:00.000Z",
+      stagedByAuthUserId: "admin-auth-1",
+      noteId: "note-1",
+      auditId: "audit-1",
+      routeHref: `/campaigns/${basePack.campaignId}`,
+      nextOperatorMove: "Copy the activation brief into the internal launch thread.",
+      guardrailCount: 2,
+    },
+  ]);
+});
+
 test("buildLootboxSponsorPackageCrmRead turns package fields into an operator deal cockpit", () => {
   const read = buildLootboxSponsorPackageCrmRead({
     id: "package-1",

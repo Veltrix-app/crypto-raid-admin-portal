@@ -79,6 +79,19 @@ export type LootboxSponsorPackageTimelineItem = {
   createdAt: string | null;
 };
 
+export type LootboxSponsorActivationRunHistoryItem = {
+  runId: string;
+  title: string;
+  state: "staged";
+  stagedAt: string;
+  stagedByAuthUserId: string | null;
+  noteId: string | null;
+  auditId: string | null;
+  routeHref: string | null;
+  nextOperatorMove: string | null;
+  guardrailCount: number;
+};
+
 export type LootboxSponsorPackageCrmChecklistItem = {
   id: "sponsor_name" | "sponsor_contact" | "deal_budget" | "owner" | "follow_up";
   label: string;
@@ -255,6 +268,7 @@ export function buildLootboxSponsorPackageDetailRead(params: {
   notes: LootboxSponsorPackageDetailNoteRow[];
   auditEvents: LootboxSponsorPackageDetailAuditRow[];
 }) {
+  const activationRuns = buildSponsorActivationRunHistory(params);
   const timeline = [
     ...params.notes.map(toNoteTimelineItem),
     ...params.auditEvents.map(toAuditTimelineItem),
@@ -270,7 +284,11 @@ export function buildLootboxSponsorPackageDetailRead(params: {
       auditEvents: params.auditEvents.length,
       timelineItems: timeline.length,
       nextAction: getDetailNextAction(params.packageRow),
+      activationRuns: activationRuns.length,
+      latestActivationRunAt: activationRuns[0]?.stagedAt ?? null,
+      nextActivationRunMove: activationRuns[0]?.nextOperatorMove ?? null,
     },
+    activationRuns,
   };
 }
 
@@ -402,6 +420,7 @@ export function buildLootboxSponsorActivationRunRequest(params: {
     campaignTitle: params.handoff.campaignTitle,
     executionPrimaryStepId: params.handoff.execution.primaryStepId,
     executionStepIds: params.handoff.execution.steps.map((step) => step.id),
+    nextOperatorMoves,
     metrics,
     guardrails,
     noBillingAction: true,
@@ -1504,6 +1523,92 @@ function toAuditTimelineItem(
   };
 }
 
+function buildSponsorActivationRunHistory(params: {
+  packageRow: LootboxSponsorPackageDetailPackageRow;
+  notes: LootboxSponsorPackageDetailNoteRow[];
+  auditEvents: LootboxSponsorPackageDetailAuditRow[];
+}): LootboxSponsorActivationRunHistoryItem[] {
+  const byRunId = new Map<string, LootboxSponsorActivationRunHistoryItem>();
+
+  const upsert = (
+    runId: string | null,
+    item: Partial<LootboxSponsorActivationRunHistoryItem>
+  ) => {
+    if (!runId) {
+      return;
+    }
+
+    const previous = byRunId.get(runId);
+    byRunId.set(runId, {
+      runId,
+      title: item.title ?? previous?.title ?? "Sponsor activation run",
+      state: "staged",
+      stagedAt: item.stagedAt ?? previous?.stagedAt ?? "",
+      stagedByAuthUserId:
+        item.stagedByAuthUserId !== undefined
+          ? item.stagedByAuthUserId
+          : previous?.stagedByAuthUserId ?? null,
+      noteId: item.noteId !== undefined ? item.noteId : previous?.noteId ?? null,
+      auditId: item.auditId !== undefined ? item.auditId : previous?.auditId ?? null,
+      routeHref: item.routeHref !== undefined ? item.routeHref : previous?.routeHref ?? null,
+      nextOperatorMove:
+        item.nextOperatorMove !== undefined
+          ? item.nextOperatorMove
+          : previous?.nextOperatorMove ?? null,
+      guardrailCount:
+        item.guardrailCount !== undefined ? item.guardrailCount : previous?.guardrailCount ?? 0,
+    });
+  };
+
+  const lastRun = readObject(params.packageRow.metadata?.lastActivationRun);
+  const lastRunId = readNonEmptyString(lastRun?.runId);
+  upsert(lastRunId, {
+    title: readNonEmptyString(lastRun?.title) ?? undefined,
+    stagedAt: readNonEmptyString(lastRun?.stagedAt) ?? undefined,
+    stagedByAuthUserId: readNonEmptyString(lastRun?.stagedByAuthUserId),
+    noteId: readNonEmptyString(lastRun?.noteId),
+    routeHref: readNonEmptyString(lastRun?.routeHref),
+    guardrailCount: readNumber(lastRun?.guardrailCount) ?? undefined,
+  });
+
+  params.notes.forEach((note) => {
+    const metadata = readObject(note.metadata);
+    if (metadata?.source !== "lootbox_sponsor_activation_run") {
+      return;
+    }
+
+    const runId = readNonEmptyString(metadata.runId);
+    upsert(runId, {
+      title: readNonEmptyString(metadata.title) ?? readNonEmptyString(lastRun?.title) ?? undefined,
+      stagedAt: readNonEmptyString(metadata.stagedAt) ?? note.created_at ?? undefined,
+      stagedByAuthUserId: note.created_by_auth_user_id,
+      noteId: note.id,
+      routeHref: readNonEmptyString(metadata.routeHref),
+      nextOperatorMove: readStringArray(metadata.nextOperatorMoves)[0] ?? null,
+      guardrailCount: readStringArray(metadata.guardrails).length,
+    });
+  });
+
+  params.auditEvents.forEach((audit) => {
+    if (audit.action !== "lootbox_sponsor_activation_run_staged") {
+      return;
+    }
+
+    const metadata = readObject(audit.metadata);
+    const runId = readNonEmptyString(metadata?.runId);
+    upsert(runId, {
+      stagedAt: readNonEmptyString(metadata?.stagedAt) ?? audit.created_at ?? undefined,
+      stagedByAuthUserId: audit.auth_user_id,
+      noteId: readNonEmptyString(metadata?.noteId),
+      auditId: audit.id,
+    });
+  });
+
+  return [...byRunId.values()]
+    .filter((item) => item.stagedAt)
+    .sort((left, right) => getTimelineTime(right.stagedAt) - getTimelineTime(left.stagedAt));
+}
+
 function compareTimelineItems(
   left: LootboxSponsorPackageTimelineItem,
   right: LootboxSponsorPackageTimelineItem
@@ -1763,6 +1868,17 @@ function readObject(value: unknown) {
 
 function readNonEmptyString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function readStringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+    : [];
+}
+
+function readNumber(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
 function toReferenceDate(value: string | Date | undefined) {

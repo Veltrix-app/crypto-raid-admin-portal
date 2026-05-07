@@ -2418,7 +2418,7 @@ function SponsorPackageDetailPanel({
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <MiniRead label="Next action" value={detail.summary.nextAction} />
         <MiniRead label="Notes" value={`${detail.summary.notes}`} />
-        <MiniRead label="Audit events" value={`${detail.summary.auditEvents}`} />
+        <MiniRead label="Activation runs" value={`${detail.summary.activationRuns}`} />
       </div>
 
       <SponsorPackageDealCockpit
@@ -2430,6 +2430,8 @@ function SponsorPackageDetailPanel({
         onDealSave={onDealSave}
         onDealProgress={onDealProgress}
       />
+
+      <SponsorPackageActivationRunHistory detail={detail} />
 
       <div className="mt-3 rounded-[14px] border border-white/[0.016] bg-black/18 p-3">
         <div className="flex items-center gap-2">
@@ -2451,6 +2453,94 @@ function SponsorPackageDetailPanel({
         </div>
       </div>
     </section>
+  );
+}
+
+function SponsorPackageActivationRunHistory({
+  detail,
+}: {
+  detail: LootboxSponsorPackageDetailRead;
+}) {
+  const latest = detail.activationRuns[0] ?? null;
+
+  return (
+    <div className="mt-3 rounded-[16px] border border-primary/14 bg-[linear-gradient(180deg,rgba(186,255,59,0.042),rgba(255,255,255,0.01))] p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Activation run history
+          </p>
+          <h4 className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+            {latest ? latest.title : "No run staged yet"}
+          </h4>
+          <p className="mt-1 text-[10px] leading-4 text-sub">
+            {latest?.nextOperatorMove ??
+              "Stage a ready handoff to write the decision note and audit trail first."}
+          </p>
+        </div>
+        <OpsStatusPill tone={latest ? "success" : "warning"}>
+          {latest ? "Run staged" : "Not staged"}
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <MiniRead
+          label="Last staged"
+          value={formatSponsorPackageDate(detail.summary.latestActivationRunAt)}
+        />
+        <MiniRead
+          label="Actor"
+          value={latest?.stagedByAuthUserId ? shortAuthUser(latest.stagedByAuthUserId) : "None"}
+        />
+        <MiniRead label="Next move" value={detail.summary.nextActivationRunMove ?? "No run"} />
+      </div>
+
+      {detail.activationRuns.length ? (
+        <div className="mt-3 grid gap-2">
+          {detail.activationRuns.slice(0, 3).map((run) => (
+            <div
+              key={run.runId}
+              className="rounded-[13px] border border-white/[0.016] bg-black/18 px-2.5 py-2"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="break-words text-[10px] font-black text-text [overflow-wrap:anywhere]">
+                    {run.title}
+                  </p>
+                  <p className="mt-1 text-[9px] leading-4 text-sub">
+                    {formatSponsorPackageDate(run.stagedAt)} by{" "}
+                    {run.stagedByAuthUserId ? shortAuthUser(run.stagedByAuthUserId) : "unknown"}
+                  </p>
+                </div>
+                {run.routeHref ? (
+                  <Link
+                    href={run.routeHref}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.024] bg-white/[0.014] px-2.5 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-text transition hover:border-primary/28 hover:text-primary"
+                  >
+                    <ArrowRight size={11} />
+                    Route
+                  </Link>
+                ) : null}
+              </div>
+              <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
+                <MiniRead label="Decision note" value={run.noteId ? "Saved" : "Missing"} />
+                <MiniRead label="Audit event" value={run.auditId ? "Saved" : "Missing"} />
+                <MiniRead label="Guardrails" value={`${run.guardrailCount}`} />
+              </div>
+              {run.nextOperatorMove ? (
+                <p className="mt-2 rounded-[11px] border border-primary/12 bg-primary/[0.035] px-2.5 py-2 text-[10px] leading-4 text-primary">
+                  Next manual step: {run.nextOperatorMove}
+                </p>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 rounded-[12px] border border-white/[0.014] bg-white/[0.012] px-2.5 py-3 text-[10px] leading-4 text-sub">
+          No activation run has been staged for this package yet.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -4924,6 +5014,14 @@ function formatSponsorPackageDate(value: string | null) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function shortAuthUser(value: string) {
+  if (value.length <= 10) {
+    return value;
+  }
+
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
 }
 
 function toFulfillmentPolicyInput(
