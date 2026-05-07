@@ -54,8 +54,17 @@ import {
   buildLootboxInventoryCommandCounts,
   filterLootboxInventoryCommandRows,
   type LootboxActivityRead,
+  type LootboxInventoryCommandRow,
   type LootboxInventoryCommandFilter,
 } from "@/lib/lootboxes/lootbox-activity";
+import {
+  buildLootboxFulfillmentRunway,
+  getLootboxFulfillmentPolicyForRow,
+  type LootboxFulfillmentLaneId,
+  type LootboxFulfillmentPolicy,
+  type LootboxFulfillmentPolicyInput,
+  type LootboxFulfillmentRisk,
+} from "@/lib/lootboxes/lootbox-fulfillment-policy";
 import {
   getLootboxInventoryStatusActionLabel,
   type LootboxInventoryStatus,
@@ -1246,6 +1255,10 @@ function InventoryCommandTable({
 }) {
   const rows = useMemo(() => activity?.inventoryTable ?? [], [activity?.inventoryTable]);
   const counts = useMemo(() => buildLootboxInventoryCommandCounts(rows), [rows]);
+  const fulfillmentRunway = useMemo(
+    () => buildLootboxFulfillmentRunway(rows.map(toFulfillmentPolicyInput)),
+    [rows]
+  );
   const filteredRows = useMemo(
     () => filterLootboxInventoryCommandRows(rows, { filter, query: search }),
     [filter, rows, search]
@@ -1283,6 +1296,8 @@ function InventoryCommandTable({
           <MiniRead label="High rarity" value={`${summary?.highRarityWins ?? 0}`} />
           <MiniRead label="Filtered rows" value={`${filteredRows.length}/${rows.length}`} />
         </div>
+
+        <FulfillmentRunwayPanel runway={fulfillmentRunway} />
 
         <div className="grid gap-2 rounded-[18px] border border-white/[0.018] bg-black/15 p-2.5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
           <div className="flex flex-wrap gap-1.5">
@@ -1381,6 +1396,87 @@ function InventoryCommandTable({
   );
 }
 
+function FulfillmentRunwayPanel({
+  runway,
+}: {
+  runway: ReturnType<typeof buildLootboxFulfillmentRunway>;
+}) {
+  return (
+    <div className="rounded-[18px] border border-primary/14 bg-[linear-gradient(180deg,rgba(186,255,59,0.045),rgba(8,10,15,0.76))] p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Fulfillment runway
+          </p>
+          <h3 className="mt-1.5 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+            Reward delivery stays gated before money-like outcomes move
+          </h3>
+          <p className="mt-2 max-w-3xl text-[11px] leading-5 text-sub">
+            Operators can separate platform perks, season access, sponsored rewards and treasury
+            rewards before choosing the next manual action.
+          </p>
+        </div>
+        <OpsStatusPill tone={runway.summary.locked > 0 ? "warning" : "success"}>
+          {runway.summary.claimable} claimable
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <MiniRead label="Review queue" value={`${runway.summary.pendingReview}`} />
+        <MiniRead label="Locked" value={`${runway.summary.locked}`} />
+        <MiniRead label="High risk" value={`${runway.summary.highRisk}`} />
+        <MiniRead label="Focus" value={runway.recommendedFocus.shortLabel} />
+      </div>
+
+      <div className="mt-3 grid gap-2 lg:grid-cols-4">
+        {runway.lanes.map((lane) => (
+          <FulfillmentLaneCard
+            key={lane.id}
+            lane={lane}
+            focused={lane.id === runway.recommendedFocus.id}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FulfillmentLaneCard({
+  lane,
+  focused,
+}: {
+  lane: ReturnType<typeof buildLootboxFulfillmentRunway>["lanes"][number];
+  focused: boolean;
+}) {
+  return (
+    <article
+      className={`rounded-[15px] border p-3 ${
+        focused
+          ? "border-primary/18 bg-primary/[0.055]"
+          : "border-white/[0.018] bg-black/15"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/[0.026] bg-black/20 text-primary">
+          {getFulfillmentLaneIcon(lane.id)}
+        </span>
+        <OpsStatusPill tone={getFulfillmentRiskTone(lane.risk)}>
+          {lane.risk} risk
+        </OpsStatusPill>
+      </div>
+      <h3 className="mt-3 break-words text-[12px] font-black text-text [overflow-wrap:anywhere]">
+        {lane.label}
+      </h3>
+      <p className="mt-1.5 text-[10px] leading-4 text-sub">{lane.gateLabel}</p>
+      <div className="mt-3 grid grid-cols-3 gap-1.5">
+        <MiniRead label="Items" value={`${lane.count}`} />
+        <MiniRead label="Review" value={`${lane.pendingReview}`} />
+        <MiniRead label="Locked" value={`${lane.locked}`} />
+      </div>
+    </article>
+  );
+}
+
 function InventoryCommandRow({
   row,
   selected,
@@ -1394,6 +1490,8 @@ function InventoryCommandRow({
   onSelect: () => void;
   onStatusChange: (id: string, status: LootboxInventoryStatus) => void;
 }) {
+  const policy = getLootboxFulfillmentPolicyForRow(toFulfillmentPolicyInput(row));
+
   return (
     <div
       className={`grid gap-3 p-3 transition xl:grid-cols-[minmax(0,1.25fr)_126px_minmax(0,0.86fr)_112px_238px] xl:items-center ${
@@ -1409,6 +1507,11 @@ function InventoryCommandRow({
           </span>
           <span className="rounded-full border border-white/[0.018] bg-white/[0.012] px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-sub">
             {row.itemType.replace(/_/g, " ")}
+          </span>
+          <span
+            className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] ${getFulfillmentPolicyPillClass(policy)}`}
+          >
+            {policy.shortLabel}
           </span>
         </div>
         <p className="mt-2 break-words text-[12px] font-semibold text-text [overflow-wrap:anywhere]">
@@ -1446,6 +1549,7 @@ function InventoryCommandRow({
           statuses={row.actionStatuses}
           saving={saving}
           onStatusChange={onStatusChange}
+          lockedClaim={policy.deliveryMode === "locked"}
         />
       </div>
     </div>
@@ -1469,6 +1573,7 @@ function InventoryFulfillmentDetail({
 }) {
   const [note, setNote] = useState("");
   const [reference, setReference] = useState("");
+  const policy = row ? getLootboxFulfillmentPolicyForRow(toFulfillmentPolicyInput(row)) : null;
 
   useEffect(() => {
     setNote("");
@@ -1538,6 +1643,8 @@ function InventoryFulfillmentDetail({
           </div>
         </div>
       </div>
+
+      {policy ? <FulfillmentPolicyCard policy={policy} /> : null}
 
       <div className="mt-3 rounded-[16px] border border-white/[0.018] bg-black/15 p-3">
         <div className="flex items-center gap-2">
@@ -1676,8 +1783,51 @@ function InventoryFulfillmentDetail({
           statuses={row.actionStatuses}
           saving={saving}
           onStatusChange={onStatusChange}
+          lockedClaim={policy?.deliveryMode === "locked"}
         />
       </div>
+    </div>
+  );
+}
+
+function FulfillmentPolicyCard({ policy }: { policy: LootboxFulfillmentPolicy }) {
+  return (
+    <div className="mt-3 rounded-[16px] border border-white/[0.018] bg-black/15 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2">
+          <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/[0.026] bg-white/[0.018] text-primary">
+            {getFulfillmentLaneIcon(policy.laneId)}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+              Lane policy
+            </p>
+            <h3 className="mt-1.5 break-words text-[12px] font-black text-text [overflow-wrap:anywhere]">
+              {policy.label}
+            </h3>
+          </div>
+        </div>
+        <OpsStatusPill tone={getFulfillmentRiskTone(policy.risk)}>
+          {policy.deliveryMode}
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <MiniRead label="Gate" value={policy.gateLabel} />
+        <MiniRead label="Recommend" value={policy.recommendedStatus.replace(/_/g, " ")} />
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <OpsSnapshotRow label="Next step" value={policy.nextOperatorStep} />
+        <OpsSnapshotRow label="Audit" value={policy.auditRequirement} />
+      </div>
+
+      {policy.deliveryMode === "locked" ? (
+        <div className="mt-3 rounded-[13px] border border-amber-400/18 bg-amber-400/[0.055] px-3 py-2 text-[10px] font-semibold leading-5 text-amber-100">
+          Claimed status is blocked from this console until treasury approval and payout controls
+          are live.
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1737,6 +1887,15 @@ function LootboxInventoryActivityRow({
   saving: boolean;
   onStatusChange: (id: string, status: LootboxInventoryStatus) => void;
 }) {
+  const policy = getLootboxFulfillmentPolicyForRow({
+    id: item.id,
+    itemType: item.itemType,
+    rarity: item.rarity,
+    status: item.status,
+    label: item.label,
+    payloadSummary: item.label,
+  });
+
   return (
     <div className="rounded-[13px] border border-white/[0.016] bg-black/15 px-2.5 py-2">
       <div className="flex items-start justify-between gap-3">
@@ -1745,6 +1904,11 @@ function LootboxInventoryActivityRow({
             <Crown size={13} className="text-primary" />
             <span className="text-[9px] font-black uppercase tracking-[0.14em] text-sub">
               {item.itemType.replace(/_/g, " ")}
+            </span>
+            <span
+              className={`rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] ${getFulfillmentPolicyPillClass(policy)}`}
+            >
+              {policy.shortLabel}
             </span>
           </div>
           <p className="mt-2 truncate text-[11px] font-semibold text-text">{item.label}</p>
@@ -1761,6 +1925,7 @@ function LootboxInventoryActivityRow({
         statuses={inventoryCommandStatuses}
         saving={saving}
         onStatusChange={onStatusChange}
+        lockedClaim={policy.deliveryMode === "locked"}
         compact
       />
     </div>
@@ -1773,6 +1938,7 @@ function InventoryStatusButtons({
   statuses,
   saving,
   onStatusChange,
+  lockedClaim = false,
   compact = false,
 }: {
   id: string;
@@ -1780,25 +1946,30 @@ function InventoryStatusButtons({
   statuses: LootboxInventoryStatus[];
   saving: boolean;
   onStatusChange: (id: string, status: LootboxInventoryStatus) => void;
+  lockedClaim?: boolean;
   compact?: boolean;
 }) {
   return (
     <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-2" : ""}`}>
-      {statuses.map((status) => (
-        <button
-          key={status}
-          type="button"
-          disabled={saving || currentStatus === status}
-          onClick={() => onStatusChange(id, status)}
-          className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] transition ${
-            saving || currentStatus === status
-              ? "cursor-not-allowed border-white/[0.012] bg-white/[0.008] text-sub/40"
-              : "border-primary/16 bg-primary/[0.045] text-primary hover:border-primary/32 hover:bg-primary/[0.08]"
-          }`}
-        >
-          {saving ? "Saving" : getShortInventoryActionLabel(status)}
-        </button>
-      ))}
+      {statuses.map((status) => {
+        const disabled = saving || currentStatus === status || (lockedClaim && status === "claimed");
+
+        return (
+          <button
+            key={status}
+            type="button"
+            disabled={disabled}
+            onClick={() => onStatusChange(id, status)}
+            className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] transition ${
+              disabled
+                ? "cursor-not-allowed border-white/[0.012] bg-white/[0.008] text-sub/40"
+                : "border-primary/16 bg-primary/[0.045] text-primary hover:border-primary/32 hover:bg-primary/[0.08]"
+            }`}
+          >
+            {saving ? "Saving" : getShortInventoryActionLabel(status)}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -1904,6 +2075,57 @@ function formatActivityDate(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function toFulfillmentPolicyInput(
+  row: LootboxInventoryCommandRow
+): LootboxFulfillmentPolicyInput {
+  return {
+    id: row.id,
+    itemType: row.itemType,
+    rarity: row.rarity,
+    status: row.status,
+    label: row.label,
+    payloadSummary: row.payloadSummary,
+  };
+}
+
+function getFulfillmentLaneIcon(id: LootboxFulfillmentLaneId) {
+  switch (id) {
+    case "treasury_reward":
+      return <ShieldCheck size={13} />;
+    case "sponsored_reward":
+      return <Gift size={13} />;
+    case "season_access":
+      return <Crown size={13} />;
+    case "platform_utility":
+    default:
+      return <PackageOpen size={13} />;
+  }
+}
+
+function getFulfillmentRiskTone(risk: LootboxFulfillmentRisk) {
+  switch (risk) {
+    case "low":
+      return "success" as const;
+    case "high":
+      return "danger" as const;
+    case "medium":
+    default:
+      return "warning" as const;
+  }
+}
+
+function getFulfillmentPolicyPillClass(policy: LootboxFulfillmentPolicy) {
+  switch (policy.risk) {
+    case "low":
+      return "border-emerald-300/18 bg-emerald-300/[0.055] text-emerald-100";
+    case "high":
+      return "border-rose-300/18 bg-rose-300/[0.055] text-rose-100";
+    case "medium":
+    default:
+      return "border-amber-300/18 bg-amber-300/[0.055] text-amber-100";
+  }
 }
 
 function getRewardLaneIcon(id: LootboxRewardOpsLane["id"]) {
