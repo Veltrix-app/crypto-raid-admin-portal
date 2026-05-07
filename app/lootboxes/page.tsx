@@ -60,6 +60,13 @@ import {
   getLootboxInventoryStatusActionLabel,
   type LootboxInventoryStatus,
 } from "@/lib/lootboxes/lootbox-inventory-actions";
+import {
+  LOOTBOX_REWARD_OPS_LANES,
+  buildLootboxRewardOpsSummary,
+  getRecommendedLootboxRewardOpsLane,
+  type LootboxRewardOpsLane,
+  type LootboxRewardOpsLaneRisk,
+} from "@/lib/lootboxes/lootbox-reward-ops-catalog";
 import type { LootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
@@ -130,6 +137,15 @@ export default function LootboxesPage() {
       .map((pool) => pool.campaignId)
       .filter((campaignId): campaignId is string => Boolean(campaignId))
   ).size;
+  const rewardOpsSummary = useMemo(() => buildLootboxRewardOpsSummary(), []);
+  const recommendedRewardLane = useMemo(
+    () =>
+      getRecommendedLootboxRewardOpsLane({
+        pendingReviewInventory: lootboxActivity?.summary.pendingReviewInventory ?? 0,
+        activeShardPools: activePools.length,
+      }),
+    [activePools.length, lootboxActivity?.summary.pendingReviewInventory]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -381,7 +397,7 @@ export default function LootboxesPage() {
               tone="accent"
               action={<ShardToken value={remainingShards} label="remaining" />}
             >
-              <div className="grid gap-3 md:grid-cols-4">
+              <div className="grid gap-3 md:grid-cols-5">
                 <OpsMetricCard
                   label="Active boosts"
                   value={activePools.length}
@@ -403,6 +419,12 @@ export default function LootboxesPage() {
                   label="Tier catalog"
                   value={LOOTBOX_STUDIO_TIERS.length}
                   sub="Common through Mythic lanes are mapped."
+                />
+                <OpsMetricCard
+                  label="Reward lanes"
+                  value={`${rewardOpsSummary.live}/${rewardOpsSummary.total}`}
+                  sub={`${rewardOpsSummary.planned} planned surfaces stay gated.`}
+                  emphasis={rewardOpsSummary.highRisk > 0 ? "warning" : "default"}
                 />
               </div>
             </OpsPanel>
@@ -529,6 +551,12 @@ export default function LootboxesPage() {
               onInventoryStatusChange={updateInventoryStatus}
             />
 
+            <RewardOpsLanePanel
+              lanes={LOOTBOX_REWARD_OPS_LANES}
+              summary={rewardOpsSummary}
+              recommendedLane={recommendedRewardLane}
+            />
+
             <OpsPanel
               eyebrow="Next operator read"
               title="What to tune first"
@@ -553,6 +581,112 @@ export default function LootboxesPage() {
         </div>
       </PortalPageFrame>
     </AdminShell>
+  );
+}
+
+function RewardOpsLanePanel({
+  lanes,
+  summary,
+  recommendedLane,
+}: {
+  lanes: LootboxRewardOpsLane[];
+  summary: ReturnType<typeof buildLootboxRewardOpsSummary>;
+  recommendedLane: LootboxRewardOpsLane;
+}) {
+  return (
+    <OpsPanel
+      eyebrow="Reward operations"
+      title="Lootbox reward lanes"
+      description="Keep live rewards, planned paid passes, sponsored lanes and future USDC outcomes visible before any deeper entitlement or payout mutation ships."
+      action={
+        <OpsStatusPill tone={summary.highRisk > 0 ? "warning" : "success"}>
+          {summary.live} live / {summary.planned} planned
+        </OpsStatusPill>
+      }
+    >
+      <div className="grid gap-2.5">
+        <div className="grid grid-cols-3 gap-2">
+          <MiniRead label="Live" value={`${summary.live}`} />
+          <MiniRead label="Planned" value={`${summary.planned}`} />
+          <MiniRead label="High risk" value={`${summary.highRisk}`} />
+        </div>
+
+        <div className="rounded-[16px] border border-primary/14 bg-[linear-gradient(180deg,rgba(186,255,59,0.055),rgba(8,10,15,0.82))] p-3">
+          <div className="flex items-start gap-2.5">
+            <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/18 bg-primary/[0.08] text-primary">
+              <Target size={14} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                Recommended operator focus
+              </p>
+              <h3 className="mt-1.5 break-words text-[13px] font-black text-text [overflow-wrap:anywhere]">
+                {recommendedLane.label}
+              </h3>
+              <p className="mt-2 text-[11px] leading-5 text-sub">
+                {recommendedLane.operatorAction}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          {lanes.map((lane) => (
+            <RewardOpsLaneCard
+              key={lane.id}
+              lane={lane}
+              recommended={lane.id === recommendedLane.id}
+            />
+          ))}
+        </div>
+      </div>
+    </OpsPanel>
+  );
+}
+
+function RewardOpsLaneCard({
+  lane,
+  recommended,
+}: {
+  lane: LootboxRewardOpsLane;
+  recommended: boolean;
+}) {
+  return (
+    <article
+      className={`rounded-[15px] border p-3 ${
+        recommended
+          ? "border-primary/18 bg-primary/[0.045]"
+          : "border-white/[0.018] bg-white/[0.012]"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.026] bg-black/20 text-primary">
+              {getRewardLaneIcon(lane.id)}
+            </span>
+            <OpsStatusPill tone={lane.status === "live" ? "success" : "default"}>
+              {lane.status}
+            </OpsStatusPill>
+            <OpsStatusPill tone={getRewardRiskTone(lane.risk)}>{lane.risk} risk</OpsStatusPill>
+          </div>
+          <h3 className="mt-2 break-words text-[12px] font-black text-text [overflow-wrap:anywhere]">
+            {lane.label}
+          </h3>
+          <p className="mt-1.5 text-[11px] leading-5 text-sub">{lane.memberPromise}</p>
+        </div>
+        {recommended ? (
+          <span className="shrink-0 rounded-full border border-primary/18 bg-primary/[0.08] px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-primary">
+            Focus
+          </span>
+        ) : null}
+      </div>
+
+      <div className="mt-3 grid gap-2">
+        <OpsSnapshotRow label="Control" value={lane.controlSurface} />
+        <OpsSnapshotRow label="Gate" value={lane.deliveryGate} />
+      </div>
+    </article>
   );
 }
 
@@ -1770,6 +1904,32 @@ function formatActivityDate(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function getRewardLaneIcon(id: LootboxRewardOpsLane["id"]) {
+  switch (id) {
+    case "season_access":
+      return <ShieldCheck size={13} />;
+    case "member_pass":
+      return <Crown size={13} />;
+    case "sponsored_reward":
+      return <Gift size={13} />;
+    case "usdc_reward":
+    default:
+      return <BadgeCheck size={13} />;
+  }
+}
+
+function getRewardRiskTone(risk: LootboxRewardOpsLaneRisk) {
+  switch (risk) {
+    case "low":
+      return "success" as const;
+    case "high":
+      return "danger" as const;
+    case "medium":
+    default:
+      return "warning" as const;
+  }
 }
 
 function getShortInventoryActionLabel(status: LootboxInventoryStatus) {
