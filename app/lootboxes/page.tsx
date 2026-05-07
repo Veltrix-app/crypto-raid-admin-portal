@@ -76,6 +76,12 @@ import {
   type LootboxRewardOpsLane,
   type LootboxRewardOpsLaneRisk,
 } from "@/lib/lootboxes/lootbox-reward-ops-catalog";
+import {
+  buildLootboxSponsoredRewardSetupRead,
+  type LootboxSponsoredRewardSetupLane,
+  type LootboxSponsoredRewardSetupReadiness,
+  type LootboxSponsoredRewardSetupRow,
+} from "@/lib/lootboxes/lootbox-sponsored-reward-setup";
 import type { LootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
@@ -147,6 +153,34 @@ export default function LootboxesPage() {
       .filter((campaignId): campaignId is string => Boolean(campaignId))
   ).size;
   const rewardOpsSummary = useMemo(() => buildLootboxRewardOpsSummary(), []);
+  const sponsoredRewardSetup = useMemo(
+    () =>
+      buildLootboxSponsoredRewardSetupRead({
+        campaigns: campaigns.map((campaign) => ({
+          id: campaign.id,
+          projectId: campaign.projectId,
+          projectName:
+            projects.find((project) => project.id === campaign.projectId)?.name ?? "Workspace",
+          title: campaign.title,
+          status: campaign.status,
+          visibility: campaign.visibility,
+          featured: campaign.featured,
+          rewardType: campaign.rewardType,
+          rewardPoolAmount: campaign.rewardPoolAmount,
+          participants: campaign.participants,
+          completionRate: campaign.completionRate,
+          xpBudget: campaign.xpBudget,
+        })),
+        shardPools: featuredShardPools.map((pool) => ({
+          id: pool.id,
+          campaignId: pool.campaignId,
+          status: pool.status,
+          poolSize: pool.poolSize,
+          remainingShards: pool.remainingShards,
+        })),
+      }),
+    [campaigns, featuredShardPools, projects]
+  );
   const recommendedRewardLane = useMemo(
     () =>
       getRecommendedLootboxRewardOpsLane({
@@ -500,6 +534,8 @@ export default function LootboxesPage() {
               />
             </div>
 
+            <SponsoredRewardSetupPanel read={sponsoredRewardSetup} />
+
             <InventoryCommandTable
               activity={lootboxActivity}
               loading={lootboxActivityLoading}
@@ -696,6 +732,210 @@ function RewardOpsLaneCard({
         <OpsSnapshotRow label="Gate" value={lane.deliveryGate} />
       </div>
     </article>
+  );
+}
+
+function SponsoredRewardSetupPanel({
+  read,
+}: {
+  read: ReturnType<typeof buildLootboxSponsoredRewardSetupRead>;
+}) {
+  return (
+    <OpsPanel
+      eyebrow="Phase 2E-H"
+      title="Sponsored reward setup"
+      description="Package project-funded reward pressure before it enters lootboxes: sponsor budget, campaign route, shard boost and fulfillment owner stay visible as separate gates."
+      action={
+        <OpsStatusPill tone={read.summary.setupNeeded > 0 ? "warning" : "success"}>
+          {read.summary.ready} ready / {read.summary.setupNeeded} setup
+        </OpsStatusPill>
+      }
+    >
+      <div className="grid gap-3">
+        <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <MiniRead label="Campaigns" value={`${read.summary.total}`} />
+          <MiniRead label="Ready" value={`${read.summary.ready}`} />
+          <MiniRead label="Setup" value={`${read.summary.setupNeeded}`} />
+          <MiniRead label="Locked" value={`${read.summary.locked}`} />
+          <MiniRead label="Need budget" value={`${read.summary.needsBudget}`} />
+          <MiniRead label="Need pool" value={`${read.summary.needsShardPool}`} />
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-[18px] border border-primary/14 bg-[linear-gradient(180deg,rgba(186,255,59,0.055),rgba(8,10,15,0.86))] p-3">
+            <div className="flex items-start gap-2.5">
+              <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/18 bg-primary/[0.08] text-primary">
+                <Target size={15} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+                  Recommended sponsor setup
+                </p>
+                {read.recommendedSetup ? (
+                  <>
+                    <h3 className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+                      {read.recommendedSetup.title}
+                    </h3>
+                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-sub">
+                      {read.recommendedSetup.projectName}
+                    </p>
+                    <p className="mt-2 text-[11px] leading-5 text-sub">
+                      {read.recommendedSetup.operatorStep}
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-2 text-[11px] leading-5 text-sub">
+                    No campaigns are available yet. Create a public campaign before sponsor
+                    reward setup starts.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-3">
+            <SponsorGuardrailCard
+              icon={<Gift size={14} />}
+              label="Sponsor budget"
+              value={`${read.summary.needsBudget} missing`}
+              detail="No partner promise ships without visible project-funded budget."
+              tone={read.summary.needsBudget > 0 ? "warning" : "success"}
+            />
+            <SponsorGuardrailCard
+              icon={<RadioTower size={14} />}
+              label="Shard boost"
+              value={`${read.summary.needsShardPool} missing`}
+              detail="A finite pool creates the hunt rush projects pay for."
+              tone={read.summary.needsShardPool > 0 ? "warning" : "success"}
+            />
+            <SponsorGuardrailCard
+              icon={<ShieldCheck size={14} />}
+              label="Locked routes"
+              value={`${read.summary.locked} locked`}
+              detail="Private, draft or paused routes stay out of sponsor packaging."
+              tone={read.summary.locked > 0 ? "warning" : "success"}
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-2 xl:grid-cols-3">
+          {read.rows.length ? (
+            read.rows.slice(0, 6).map((row) => (
+              <SponsoredRewardSetupCard key={row.campaignId} row={row} />
+            ))
+          ) : (
+            <div className="rounded-[16px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub xl:col-span-3">
+              Sponsored reward candidates appear here once campaigns exist.
+            </div>
+          )}
+        </div>
+      </div>
+    </OpsPanel>
+  );
+}
+
+function SponsorGuardrailCard({
+  icon,
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  detail: string;
+  tone: "success" | "warning";
+}) {
+  return (
+    <div
+      className={`rounded-[16px] border p-3 ${
+        tone === "success"
+          ? "border-emerald-300/14 bg-emerald-300/[0.035]"
+          : "border-amber-300/14 bg-amber-300/[0.04]"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.026] bg-black/20 text-primary">
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-sub">{label}</p>
+          <p className="mt-1 truncate text-[12px] font-black text-text">{value}</p>
+        </div>
+      </div>
+      <p className="mt-3 text-[10px] leading-4 text-sub">{detail}</p>
+    </div>
+  );
+}
+
+function SponsoredRewardSetupCard({ row }: { row: LootboxSponsoredRewardSetupRow }) {
+  return (
+    <Link
+      href={`/campaigns/${row.campaignId}`}
+      className={`group block rounded-[18px] border p-3 transition hover:border-primary/22 ${
+        row.readiness === "ready"
+          ? "border-emerald-300/14 bg-emerald-300/[0.032]"
+          : row.readiness === "locked"
+            ? "border-white/[0.018] bg-white/[0.012]"
+            : "border-primary/16 bg-primary/[0.04]"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.026] bg-black/20 text-primary">
+              {getSponsoredSetupLaneIcon(row.lane)}
+            </span>
+            <OpsStatusPill tone={getSponsoredSetupTone(row.readiness)}>
+              {row.readiness.replace(/_/g, " ")}
+            </OpsStatusPill>
+            {row.featured ? <OpsStatusPill tone="success">featured</OpsStatusPill> : null}
+          </div>
+          <h3 className="mt-2 line-clamp-2 text-[13px] font-black text-text">{row.title}</h3>
+          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-sub">
+            {row.projectName}
+          </p>
+        </div>
+        <ArrowRight
+          size={15}
+          className="mt-1 shrink-0 text-white/35 transition group-hover:translate-x-0.5 group-hover:text-primary"
+        />
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <MiniRead label="Budget" value={row.rewardBudget.toLocaleString("en-US")} />
+        <MiniRead label="Pool" value={`${row.activePoolCount}/${row.linkedPoolCount}`} />
+        <MiniRead label="Left" value={row.remainingShards.toLocaleString("en-US")} />
+      </div>
+
+      <p className="mt-3 text-[11px] leading-5 text-sub">{row.operatorStep}</p>
+
+      <div className="mt-3 grid gap-1.5">
+        {row.guardrails.map((guardrail) => (
+          <div
+            key={guardrail.label}
+            className="flex items-start gap-2 rounded-[12px] border border-white/[0.014] bg-black/15 px-2.5 py-2"
+          >
+            <span
+              className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${
+                guardrail.status === "ready"
+                  ? "bg-emerald-300"
+                  : guardrail.status === "locked"
+                    ? "bg-white/35"
+                    : "bg-amber-300"
+              }`}
+            />
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.14em] text-text">
+                {guardrail.label}
+              </p>
+              <p className="mt-1 text-[10px] leading-4 text-sub">{guardrail.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Link>
   );
 }
 
@@ -2125,6 +2365,32 @@ function getFulfillmentPolicyPillClass(policy: LootboxFulfillmentPolicy) {
     case "medium":
     default:
       return "border-amber-300/18 bg-amber-300/[0.055] text-amber-100";
+  }
+}
+
+function getSponsoredSetupLaneIcon(lane: LootboxSponsoredRewardSetupLane) {
+  switch (lane) {
+    case "boosted_ready":
+      return <BadgeCheck size={13} />;
+    case "needs_budget":
+      return <Gift size={13} />;
+    case "needs_shard_pool":
+      return <RadioTower size={13} />;
+    case "locked_visibility":
+    default:
+      return <PauseCircle size={13} />;
+  }
+}
+
+function getSponsoredSetupTone(readiness: LootboxSponsoredRewardSetupReadiness) {
+  switch (readiness) {
+    case "ready":
+      return "success" as const;
+    case "locked":
+      return "default" as const;
+    case "setup_needed":
+    default:
+      return "warning" as const;
   }
 }
 
