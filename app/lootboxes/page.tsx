@@ -103,6 +103,10 @@ import {
   type LootboxSponsoredPackageStatusBoardColumnId,
   type LootboxSponsoredPackageStatusBoardItem,
 } from "@/lib/lootboxes/lootbox-sponsored-package-status-board";
+import {
+  buildLootboxSponsoredPackagePersistenceReadiness,
+  type LootboxSponsoredPackagePersistenceTable,
+} from "@/lib/lootboxes/lootbox-sponsored-package-persistence";
 import type { LootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
@@ -215,6 +219,21 @@ export default function LootboxesPage() {
   const sponsoredPackageStatusBoard = useMemo(
     () => buildLootboxSponsoredPackageStatusBoard(sponsoredPackageActionDesk.packs),
     [sponsoredPackageActionDesk.packs]
+  );
+  const sponsoredPackagePersistence = useMemo(
+    () =>
+      buildLootboxSponsoredPackagePersistenceReadiness({
+        totalPackages: sponsoredPackageStatusBoard.summary.total,
+        readyToPitch: sponsoredPackageStatusBoard.summary.readyToPitch,
+        setupQueue: sponsoredPackageStatusBoard.summary.setupQueue,
+        blocked: sponsoredPackageStatusBoard.summary.blocked,
+      }),
+    [
+      sponsoredPackageStatusBoard.summary.blocked,
+      sponsoredPackageStatusBoard.summary.readyToPitch,
+      sponsoredPackageStatusBoard.summary.setupQueue,
+      sponsoredPackageStatusBoard.summary.total,
+    ]
   );
   const recommendedRewardLane = useMemo(
     () =>
@@ -603,6 +622,7 @@ export default function LootboxesPage() {
               onCopy={copyPackageActionText}
             />
             <SponsoredPackageStatusBoardPanel read={sponsoredPackageStatusBoard} />
+            <SponsoredPackagePersistencePanel read={sponsoredPackagePersistence} />
 
             <InventoryCommandTable
               activity={lootboxActivity}
@@ -1588,6 +1608,140 @@ function SponsorStatusBoardItem({ item }: { item: LootboxSponsoredPackageStatusB
         <p className="mt-1 text-[10px] leading-4 text-sub">{item.detail}</p>
       </div>
     </Link>
+  );
+}
+
+function SponsoredPackagePersistencePanel({
+  read,
+}: {
+  read: ReturnType<typeof buildLootboxSponsoredPackagePersistenceReadiness>;
+}) {
+  return (
+    <OpsPanel
+      eyebrow="Phase 2E-L"
+      title="Sponsor persistence runway"
+      description="The database foundation for sponsor package status, owner, notes and follow-up is defined here, while portal writes stay locked until the SQL has been run."
+      action={
+        <OpsStatusPill tone={read.summary.liveWrites ? "success" : "warning"}>
+          writes planned
+        </OpsStatusPill>
+      }
+    >
+      <div className="grid gap-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+          <MiniRead label="Tables" value={`${read.summary.requiredTables}`} />
+          <MiniRead label="Packages" value={`${read.summary.totalPackages}`} />
+          <MiniRead label="Ready" value={`${read.summary.readyToPitch}`} />
+          <MiniRead label="Setup pressure" value={`${read.summary.needsOperatorSetup}`} />
+          <MiniRead label="Live writes" value={read.summary.liveWrites ? "On" : "Off"} />
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-[0.82fr_1.18fr]">
+          <div className="rounded-[18px] border border-primary/14 bg-[linear-gradient(180deg,rgba(186,255,59,0.052),rgba(8,10,15,0.9))] p-3">
+            <div className="flex items-start gap-2.5">
+              <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/18 bg-primary/[0.08] text-primary">
+                <Save size={15} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+                  Next persistence step
+                </p>
+                <h3 className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+                  SQL first, write APIs second
+                </h3>
+                <p className="mt-2 text-[11px] leading-5 text-sub">{read.nextStep}</p>
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-1.5">
+              {read.guardrails.map((guardrail) => (
+                <div
+                  key={guardrail}
+                  className="flex items-start gap-2 rounded-[12px] border border-white/[0.014] bg-black/15 px-2.5 py-2"
+                >
+                  <ShieldCheck size={12} className="mt-0.5 shrink-0 text-primary" />
+                  <p className="text-[10px] leading-4 text-sub">{guardrail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <div className="grid gap-2 lg:grid-cols-2">
+              {read.tables.map((table) => (
+                <SponsorPersistenceTableCard key={table.name} table={table} />
+              ))}
+            </div>
+
+            <div className="grid gap-2 lg:grid-cols-3">
+              {read.writeGates.map((gate) => (
+                <div
+                  key={gate.label}
+                  className="rounded-[16px] border border-white/[0.018] bg-white/[0.012] p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                      {gate.label}
+                    </p>
+                    <OpsStatusPill tone="default">{gate.state}</OpsStatusPill>
+                  </div>
+                  <p className="mt-2 text-[10px] leading-4 text-sub">{gate.detail}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-[16px] border border-white/[0.018] bg-black/15 p-3">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                Persistence fields
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {[...read.fields.status, ...read.fields.noteTypes].map((field) => (
+                  <span
+                    key={field}
+                    className="rounded-full border border-white/[0.018] bg-white/[0.012] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-sub"
+                  >
+                    {field.replace(/_/g, " ")}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </OpsPanel>
+  );
+}
+
+function SponsorPersistenceTableCard({
+  table,
+}: {
+  table: LootboxSponsoredPackagePersistenceTable;
+}) {
+  return (
+    <article className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3">
+      <div className="flex items-start gap-2">
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/[0.026] bg-black/20 text-primary">
+          <FileText size={13} />
+        </span>
+        <div className="min-w-0">
+          <p className="break-words text-[12px] font-black text-text [overflow-wrap:anywhere]">
+            {table.name}
+          </p>
+          <p className="mt-1 text-[10px] leading-4 text-sub">{table.purpose}</p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {table.primaryFields.map((field) => (
+          <span
+            key={field}
+            className="rounded-full border border-primary/12 bg-primary/[0.035] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-primary/90"
+          >
+            {field}
+          </span>
+        ))}
+      </div>
+    </article>
   );
 }
 
