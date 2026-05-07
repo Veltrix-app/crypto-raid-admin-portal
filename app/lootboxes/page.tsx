@@ -227,6 +227,7 @@ export default function LootboxesPage() {
         readyToPitch: sponsoredPackageStatusBoard.summary.readyToPitch,
         setupQueue: sponsoredPackageStatusBoard.summary.setupQueue,
         blocked: sponsoredPackageStatusBoard.summary.blocked,
+        apiState: "live",
       }),
     [
       sponsoredPackageStatusBoard.summary.blocked,
@@ -1620,10 +1621,10 @@ function SponsoredPackagePersistencePanel({
     <OpsPanel
       eyebrow="Phase 2E-L"
       title="Sponsor persistence runway"
-      description="The database foundation for sponsor package status, owner, notes and follow-up is defined here, while portal writes stay locked until the SQL has been run."
+      description="The database foundation and API layer for sponsor package status, owner, notes and follow-up are now live behind super-admin controls."
       action={
         <OpsStatusPill tone={read.summary.liveWrites ? "success" : "warning"}>
-          writes planned
+          {read.summary.liveWrites ? "writes live" : "writes planned"}
         </OpsStatusPill>
       }
     >
@@ -1647,7 +1648,7 @@ function SponsoredPackagePersistencePanel({
                   Next persistence step
                 </p>
                 <h3 className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
-                  SQL first, write APIs second
+                  APIs live, UI controls next
                 </h3>
                 <p className="mt-2 text-[11px] leading-5 text-sub">{read.nextStep}</p>
               </div>
