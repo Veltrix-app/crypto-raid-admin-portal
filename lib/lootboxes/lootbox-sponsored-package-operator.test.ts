@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildLootboxSponsorActivationHandoffRead,
   buildLootboxSponsorPackageCreateRequest,
   buildLootboxSponsorPackageCrmRead,
   buildLootboxSponsorPackageDetailRead,
@@ -385,4 +386,121 @@ test("buildLootboxSponsorPackageCrmRead adds safe next controls for sponsor prog
     reason: "Sponsor package can safely move to pitched.",
     blockingFields: [],
   });
+});
+
+test("buildLootboxSponsorActivationHandoffRead turns won packages into ready activation handoffs", () => {
+  const read = buildLootboxSponsorActivationHandoffRead({
+    packages: [
+      {
+        id: "package-ready",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: basePack.campaignId,
+        package_tier: "premium",
+        status: "won",
+        sponsor_name: "Atlas Labs",
+        sponsor_contact: "atlas@labs.test",
+        sponsor_budget: 2500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-1",
+        follow_up_at: "2026-05-09T12:00:00.000Z",
+        last_contacted_at: "2026-05-07T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Holder Activation Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-setup",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: "33333333-3333-4333-8333-333333333333",
+        package_tier: "standard",
+        status: "won",
+        sponsor_name: "Beta Guild",
+        sponsor_contact: "beta@guild.test",
+        sponsor_budget: 900,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-2",
+        follow_up_at: null,
+        last_contacted_at: null,
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "No Pool Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-2",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+    ],
+    campaigns: [
+      {
+        id: basePack.campaignId,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "Holder Activation Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 500,
+        participants: 128,
+        completionRate: 42,
+      },
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "No Pool Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 300,
+        participants: 25,
+        completionRate: 18,
+      },
+    ],
+    projects: [
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "VYNTRO",
+        slug: "vyntro",
+      },
+    ],
+    shardPools: [
+      {
+        id: "pool-1",
+        campaignId: basePack.campaignId,
+        status: "active",
+        poolSize: 10_000,
+        remainingShards: 6_400,
+      },
+    ],
+  });
+
+  assert.deepEqual(read.summary, {
+    total: 2,
+    ready: 1,
+    setupNeeded: 1,
+    locked: 0,
+    closed: 0,
+    manualOnly: true,
+  });
+  assert.deepEqual(
+    read.handoffs.map((handoff) => `${handoff.packageId}:${handoff.activationState}`),
+    ["package-ready:ready", "package-setup:setup_needed"]
+  );
+  assert.equal(read.focus?.packageId, "package-ready");
+  assert.equal(read.handoffs[0]?.nextAction, "Stage activation brief for manual launch.");
+  assert.equal(read.handoffs[0]?.brief.title, "Atlas Labs x VYNTRO activation handoff");
+  assert.match(read.handoffs[0]?.brief.body ?? "", /10,000 shard pool/);
+  assert.deepEqual(
+    read.handoffs[1]?.checklist.map((item) => `${item.id}:${item.state}`),
+    [
+      "sponsor_win:ready",
+      "campaign_route:ready",
+      "shard_pool:missing",
+      "reward_budget:ready",
+      "owner:ready",
+    ]
+  );
+  assert.equal(read.handoffs[1]?.nextAction, "Attach an active shard pool before activation.");
 });

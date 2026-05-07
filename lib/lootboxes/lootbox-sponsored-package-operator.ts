@@ -93,6 +93,27 @@ export type LootboxSponsorPackageCrmControls = {
   blockingFields: string[];
 };
 
+export type LootboxSponsorActivationShardPool = {
+  id: string;
+  campaignId: string | null;
+  status: string;
+  poolSize: number;
+  remainingShards: number;
+};
+
+export type LootboxSponsorActivationState =
+  | "ready"
+  | "setup_needed"
+  | "locked"
+  | "closed";
+
+export type LootboxSponsorActivationChecklistItem = {
+  id: "sponsor_win" | "campaign_route" | "shard_pool" | "reward_budget" | "owner";
+  label: string;
+  state: "ready" | "missing" | "locked";
+  detail: string;
+};
+
 const sponsorCrmStages = [
   {
     id: "ready_to_pitch",
@@ -211,6 +232,50 @@ export type LootboxSponsorPackageDetailRead = ReturnType<
   typeof buildLootboxSponsorPackageDetailRead
 >;
 
+export function buildLootboxSponsorActivationHandoffRead(params: {
+  packages: LootboxSponsorPackageDetailPackageRow[];
+  campaigns: CampaignContext[];
+  projects: ProjectContext[];
+  shardPools: LootboxSponsorActivationShardPool[];
+}) {
+  const handoffs = params.packages
+    .map((row) =>
+      buildSponsorActivationHandoff({
+        row,
+        campaigns: params.campaigns,
+        projects: params.projects,
+        shardPools: params.shardPools,
+      })
+    )
+    .sort(compareSponsorActivationHandoffs);
+
+  return {
+    summary: {
+      total: handoffs.length,
+      ready: handoffs.filter((handoff) => handoff.activationState === "ready").length,
+      setupNeeded: handoffs.filter((handoff) => handoff.activationState === "setup_needed").length,
+      locked: handoffs.filter((handoff) => handoff.activationState === "locked").length,
+      closed: handoffs.filter((handoff) => handoff.activationState === "closed").length,
+      manualOnly: true as const,
+    },
+    handoffs,
+    focus:
+      handoffs.find((handoff) => handoff.activationState === "ready") ??
+      handoffs.find((handoff) => handoff.activationState === "setup_needed") ??
+      handoffs[0] ??
+      null,
+    guardrails: [
+      "Activation handoff does not create billing, payouts or reward inventory.",
+      "Operators still own sponsor follow-up, pool setup and fulfillment decisions.",
+      "Shard boosts stay finite and campaign-scoped before any public promise is made.",
+    ],
+  };
+}
+
+export type LootboxSponsorActivationHandoffRead = ReturnType<
+  typeof buildLootboxSponsorActivationHandoffRead
+>;
+
 export function buildLootboxSponsorPackageCrmRead(
   row: LootboxSponsorPackageDetailPackageRow
 ) {
@@ -291,6 +356,239 @@ export function buildLootboxSponsorPackageCrmRead(
 export type LootboxSponsorPackageCrmRead = ReturnType<
   typeof buildLootboxSponsorPackageCrmRead
 >;
+
+function buildSponsorActivationHandoff(params: {
+  row: LootboxSponsorPackageDetailPackageRow;
+  campaigns: CampaignContext[];
+  projects: ProjectContext[];
+  shardPools: LootboxSponsorActivationShardPool[];
+}) {
+  const { row } = params;
+  const status = normalizeText(row.status) ?? "draft";
+  const campaign = params.campaigns.find((item) => item.id === row.campaign_id) ?? null;
+  const project =
+    params.projects.find((item) => item.id === row.project_id || item.id === campaign?.projectId) ??
+    null;
+  const linkedPools = params.shardPools.filter((pool) => pool.campaignId === row.campaign_id);
+  const activePools = linkedPools.filter((pool) =>
+    ["active", "scheduled"].includes(pool.status)
+  );
+  const poolSize = linkedPools.reduce((sum, pool) => sum + Math.max(0, Number(pool.poolSize)), 0);
+  const remainingShards = linkedPools.reduce(
+    (sum, pool) => sum + Math.max(0, Number(pool.remainingShards)),
+    0
+  );
+  const rewardBudget = Math.max(0, Number(campaign?.rewardPoolAmount ?? 0));
+  const sponsorWon = status === "won";
+  const closed = status === "lost" || status === "archived";
+  const campaignRouteReady =
+    Boolean(campaign) &&
+    campaign?.visibility === "public" &&
+    ["active", "scheduled"].includes(campaign.status);
+  const shardPoolReady = activePools.length > 0 && poolSize > 0;
+  const rewardBudgetReady = rewardBudget > 0;
+  const ownerReady = Boolean(row.owner_auth_user_id);
+  const checklist: LootboxSponsorActivationChecklistItem[] = [
+    {
+      id: "sponsor_win",
+      label: "Sponsor win",
+      state: sponsorWon ? "ready" : closed ? "locked" : "missing",
+      detail: sponsorWon
+        ? "Sponsor package is marked won and can enter activation planning."
+        : closed
+          ? "Sponsor route is closed."
+          : "Win the sponsor package before activation starts.",
+    },
+    {
+      id: "campaign_route",
+      label: "Campaign route",
+      state: campaignRouteReady ? "ready" : "missing",
+      detail: campaignRouteReady
+        ? "Campaign is public and active or scheduled."
+        : "Move the campaign to public active or scheduled before launch.",
+    },
+    {
+      id: "shard_pool",
+      label: "Shard pool",
+      state: shardPoolReady ? "ready" : "missing",
+      detail: shardPoolReady
+        ? `${activePools.length} active or scheduled pool covers ${poolSize.toLocaleString("en-US")} shards.`
+        : "Attach an active shard pool before activation.",
+    },
+    {
+      id: "reward_budget",
+      label: "Reward budget",
+      state: rewardBudgetReady ? "ready" : "missing",
+      detail: rewardBudgetReady
+        ? `${rewardBudget.toLocaleString("en-US")} reward budget is visible.`
+        : "Add a visible reward budget before sponsor activation.",
+    },
+    {
+      id: "owner",
+      label: "Owner",
+      state: ownerReady ? "ready" : "missing",
+      detail: ownerReady ? "Internal owner is assigned." : "Assign an operator owner.",
+    },
+  ];
+  const activationState = getSponsorActivationState({
+    closed,
+    sponsorWon,
+    campaignRouteReady,
+    shardPoolReady,
+    rewardBudgetReady,
+    ownerReady,
+  });
+  const projectName =
+    project?.name ?? getSnapshotText(row, "projectName", row.project_id ?? "Workspace");
+  const campaignTitle =
+    campaign?.title ?? getSnapshotText(row, "campaignTitle", row.campaign_id ?? "Campaign");
+  const sponsorName = normalizeText(row.sponsor_name) ?? "Unnamed sponsor";
+
+  return {
+    packageId: row.id,
+    campaignId: row.campaign_id,
+    projectId: row.project_id ?? campaign?.projectId ?? null,
+    packageTier: normalizeText(row.package_tier) ?? "starter",
+    status,
+    activationState,
+    tone: getSponsorActivationTone(activationState),
+    projectName,
+    campaignTitle,
+    sponsorName,
+    budgetLabel: formatCrmBudget(row.sponsor_budget, row.currency),
+    nextAction: getSponsorActivationNextAction(activationState, checklist),
+    routeHref: row.campaign_id ? `/campaigns/${row.campaign_id}` : "/campaigns",
+    metrics: {
+      linkedPools: linkedPools.length,
+      activePools: activePools.length,
+      poolSize,
+      remainingShards,
+      rewardBudget,
+      participants: Math.max(0, Number(campaign?.participants ?? 0)),
+      completionRate: Math.max(0, Number(campaign?.completionRate ?? 0)),
+    },
+    checklist,
+    brief: {
+      title: `${sponsorName} x ${projectName} activation handoff`,
+      body: buildSponsorActivationBrief({
+        sponsorName,
+        projectName,
+        campaignTitle,
+        packageTier: normalizeText(row.package_tier) ?? "starter",
+        budgetLabel: formatCrmBudget(row.sponsor_budget, row.currency),
+        poolSize,
+        remainingShards,
+        rewardBudget,
+        nextAction: getSponsorActivationNextAction(activationState, checklist),
+      }),
+    },
+  };
+}
+
+function getSponsorActivationState(params: {
+  closed: boolean;
+  sponsorWon: boolean;
+  campaignRouteReady: boolean;
+  shardPoolReady: boolean;
+  rewardBudgetReady: boolean;
+  ownerReady: boolean;
+}): LootboxSponsorActivationState {
+  if (params.closed) {
+    return "closed";
+  }
+
+  if (!params.sponsorWon || !params.campaignRouteReady) {
+    return "locked";
+  }
+
+  if (!params.shardPoolReady || !params.rewardBudgetReady || !params.ownerReady) {
+    return "setup_needed";
+  }
+
+  return "ready";
+}
+
+function getSponsorActivationTone(state: LootboxSponsorActivationState) {
+  switch (state) {
+    case "ready":
+      return "success" as const;
+    case "setup_needed":
+      return "warning" as const;
+    case "locked":
+      return "danger" as const;
+    case "closed":
+    default:
+      return "default" as const;
+  }
+}
+
+function getSponsorActivationNextAction(
+  state: LootboxSponsorActivationState,
+  checklist: LootboxSponsorActivationChecklistItem[]
+) {
+  if (state === "ready") {
+    return "Stage activation brief for manual launch.";
+  }
+
+  if (state === "closed") {
+    return "Archive learnings and keep the package out of activation.";
+  }
+
+  const firstMissing = checklist.find((item) => item.state !== "ready");
+  switch (firstMissing?.id) {
+    case "sponsor_win":
+      return "Move sponsor deal to won before activation.";
+    case "campaign_route":
+      return "Open a public active campaign route before activation.";
+    case "shard_pool":
+      return "Attach an active shard pool before activation.";
+    case "reward_budget":
+      return "Add visible reward budget before activation.";
+    case "owner":
+      return "Assign an operator owner before activation.";
+    default:
+      return "Review activation setup before launch.";
+  }
+}
+
+function buildSponsorActivationBrief(params: {
+  sponsorName: string;
+  projectName: string;
+  campaignTitle: string;
+  packageTier: string;
+  budgetLabel: string;
+  poolSize: number;
+  remainingShards: number;
+  rewardBudget: number;
+  nextAction: string;
+}) {
+  return [
+    `${params.sponsorName} is ready for a ${params.packageTier} VYNTRO lootbox activation with ${params.projectName}.`,
+    `Campaign: ${params.campaignTitle}.`,
+    `Budget: ${params.budgetLabel}; visible reward budget: ${params.rewardBudget.toLocaleString("en-US")}.`,
+    `Shard boost: ${params.poolSize.toLocaleString("en-US")} shard pool with ${params.remainingShards.toLocaleString("en-US")} remaining.`,
+    `Next operator move: ${params.nextAction}`,
+    "Manual-only guardrail: do not trigger billing, payouts or reward inventory from this handoff.",
+  ].join("\n");
+}
+
+function compareSponsorActivationHandoffs(
+  left: ReturnType<typeof buildSponsorActivationHandoff>,
+  right: ReturnType<typeof buildSponsorActivationHandoff>
+) {
+  const stateRank = {
+    ready: 4,
+    setup_needed: 3,
+    locked: 2,
+    closed: 1,
+  } satisfies Record<LootboxSponsorActivationState, number>;
+  const stateDiff = stateRank[right.activationState] - stateRank[left.activationState];
+  if (stateDiff !== 0) {
+    return stateDiff;
+  }
+
+  return right.metrics.rewardBudget - left.metrics.rewardBudget;
+}
 
 function getCreateStatus(pack: LootboxSponsoredPackageActionPack): LootboxSponsorPackageStatus {
   switch (pack.status) {
@@ -583,6 +881,15 @@ function formatBlockingFields(fields: string[]) {
 function normalizeText(value: string | null) {
   const text = typeof value === "string" ? value.trim() : "";
   return text || null;
+}
+
+function getSnapshotText(
+  row: { package_snapshot: Record<string, unknown> | null },
+  key: string,
+  fallback: string
+) {
+  const value = row.package_snapshot?.[key];
+  return typeof value === "string" && value.trim() ? value : fallback;
 }
 
 function formatCrmBudget(value: number | null, currency: string | null) {

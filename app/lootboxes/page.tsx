@@ -106,6 +106,7 @@ import {
   type LootboxSponsoredPackageStatusBoardItem,
 } from "@/lib/lootboxes/lootbox-sponsored-package-status-board";
 import {
+  buildLootboxSponsorActivationHandoffRead,
   buildLootboxSponsorPackageCreateRequest,
   buildLootboxSponsorPackageCrmRead,
   type LootboxSponsorPackageDetailRead,
@@ -328,6 +329,35 @@ export default function LootboxesPage() {
       sponsoredPackageStatusBoard.summary.setupQueue,
       sponsoredPackageStatusBoard.summary.total,
     ]
+  );
+  const sponsorActivationHandoff = useMemo(
+    () =>
+      buildLootboxSponsorActivationHandoffRead({
+        packages: sponsorPackages,
+        campaigns: campaigns.map((campaign) => ({
+          id: campaign.id,
+          projectId: campaign.projectId,
+          title: campaign.title,
+          status: campaign.status,
+          visibility: campaign.visibility,
+          rewardPoolAmount: campaign.rewardPoolAmount,
+          participants: campaign.participants,
+          completionRate: campaign.completionRate,
+        })),
+        projects: projects.map((project) => ({
+          id: project.id,
+          name: project.name,
+          slug: project.slug,
+        })),
+        shardPools: featuredShardPools.map((pool) => ({
+          id: pool.id,
+          campaignId: pool.campaignId,
+          status: pool.status,
+          poolSize: pool.poolSize,
+          remainingShards: pool.remainingShards,
+        })),
+      }),
+    [campaigns, featuredShardPools, projects, sponsorPackages]
   );
   const recommendedRewardLane = useMemo(
     () =>
@@ -1031,6 +1061,11 @@ export default function LootboxesPage() {
               onDealSave={updateSponsorPackageDeal}
               onDealProgress={progressSponsorPackageDeal}
               onNoteAdd={addSponsorPackageNote}
+            />
+            <SponsorActivationHandoffPanel
+              read={sponsorActivationHandoff}
+              copyingId={packageActionCopyId}
+              onCopy={copyPackageActionText}
             />
             <SponsoredPackageStatusBoardPanel read={sponsoredPackageStatusBoard} />
             <SponsoredPackagePersistencePanel read={sponsoredPackagePersistence} />
@@ -2689,6 +2724,189 @@ function SponsorPackageTimelineItemRow({ item }: { item: LootboxSponsorPackageTi
         </span>
       </div>
     </div>
+  );
+}
+
+type SponsorActivationHandoffRead = ReturnType<typeof buildLootboxSponsorActivationHandoffRead>;
+type SponsorActivationHandoff = SponsorActivationHandoffRead["handoffs"][number];
+
+function SponsorActivationHandoffPanel({
+  read,
+  copyingId,
+  onCopy,
+}: {
+  read: SponsorActivationHandoffRead;
+  copyingId: string | null;
+  onCopy: (id: string, text: string, successText: string) => void;
+}) {
+  return (
+    <OpsPanel
+      eyebrow="Phase 2F-D"
+      title="Sponsor activation handoff"
+      description="Turn a won sponsor package into a clean manual activation plan: campaign route, shard pool, reward budget and owner stay visible before anyone promises public delivery."
+      action={
+        <OpsStatusPill tone={read.summary.ready > 0 ? "success" : "warning"}>
+          {read.summary.ready} ready
+        </OpsStatusPill>
+      }
+    >
+      <div className="grid gap-3">
+        <div className="grid gap-2 sm:grid-cols-5">
+          <MiniRead label="Packages" value={`${read.summary.total}`} />
+          <MiniRead label="Ready" value={`${read.summary.ready}`} />
+          <MiniRead label="Setup needed" value={`${read.summary.setupNeeded}`} />
+          <MiniRead label="Locked" value={`${read.summary.locked}`} />
+          <MiniRead label="Mode" value={read.summary.manualOnly ? "Manual" : "Auto"} />
+        </div>
+
+        {read.focus ? <SponsorActivationFocusCard handoff={read.focus} /> : null}
+
+        {read.handoffs.length ? (
+          <div className="grid gap-3 xl:grid-cols-2">
+            {read.handoffs.slice(0, 4).map((handoff) => (
+              <SponsorActivationHandoffCard
+                key={handoff.packageId}
+                handoff={handoff}
+                copying={copyingId === `activation-${handoff.packageId}`}
+                onCopy={onCopy}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
+            Win or save a sponsor package first. Activation handoffs appear here without creating billing, payouts or inventory.
+          </div>
+        )}
+
+        <div className="grid gap-2 md:grid-cols-3">
+          {read.guardrails.map((guardrail) => (
+            <div
+              key={guardrail}
+              className="rounded-[14px] border border-white/[0.016] bg-black/18 p-3 text-[10px] font-semibold leading-4 text-sub"
+            >
+              {guardrail}
+            </div>
+          ))}
+        </div>
+      </div>
+    </OpsPanel>
+  );
+}
+
+function SponsorActivationFocusCard({ handoff }: { handoff: SponsorActivationHandoff }) {
+  return (
+    <div className="rounded-[18px] border border-primary/18 bg-[radial-gradient(circle_at_92%_8%,rgba(186,255,59,0.14),transparent_28%),linear-gradient(180deg,rgba(186,255,59,0.045),rgba(8,10,15,0.94))] p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Recommended handoff
+          </p>
+          <h3 className="mt-2 break-words text-[15px] font-black text-text [overflow-wrap:anywhere]">
+            {handoff.brief.title}
+          </h3>
+          <p className="mt-1 text-[11px] leading-5 text-sub">{handoff.nextAction}</p>
+        </div>
+        <OpsStatusPill tone={handoff.tone}>{handoff.activationState.replace(/_/g, " ")}</OpsStatusPill>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-4">
+        <MiniRead label="Shard pool" value={handoff.metrics.poolSize.toLocaleString("en-US")} />
+        <MiniRead label="Remaining" value={handoff.metrics.remainingShards.toLocaleString("en-US")} />
+        <MiniRead label="Reward budget" value={handoff.metrics.rewardBudget.toLocaleString("en-US")} />
+        <MiniRead label="Campaign" value={handoff.campaignTitle} />
+      </div>
+    </div>
+  );
+}
+
+function SponsorActivationHandoffCard({
+  handoff,
+  copying,
+  onCopy,
+}: {
+  handoff: SponsorActivationHandoff;
+  copying: boolean;
+  onCopy: (id: string, text: string, successText: string) => void;
+}) {
+  const copyText = `${handoff.brief.title}\n\n${handoff.brief.body}`;
+
+  return (
+    <article className="rounded-[18px] border border-white/[0.018] bg-[linear-gradient(180deg,rgba(12,15,21,0.92),rgba(7,9,14,0.94))] p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <OpsStatusPill tone={handoff.tone}>{handoff.activationState.replace(/_/g, " ")}</OpsStatusPill>
+            <OpsStatusPill tone={getPackageTierTone(handoff.packageTier as LootboxSponsoredPackageTier)}>
+              {handoff.packageTier}
+            </OpsStatusPill>
+          </div>
+          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+            {handoff.projectName}
+          </p>
+          <h3 className="mt-1.5 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+            {handoff.sponsorName}
+          </h3>
+          <p className="mt-1 text-[10px] leading-4 text-sub">{handoff.campaignTitle}</p>
+        </div>
+        <Link
+          href={handoff.routeHref}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.024] bg-white/[0.014] px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-text transition hover:border-primary/28 hover:text-primary"
+        >
+          <ArrowRight size={12} />
+          Campaign
+        </Link>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <MiniRead label="Deal" value={handoff.budgetLabel} />
+        <MiniRead label="Pools" value={`${handoff.metrics.activePools}/${handoff.metrics.linkedPools}`} />
+        <MiniRead label="Remaining" value={handoff.metrics.remainingShards.toLocaleString("en-US")} />
+      </div>
+
+      <div className="mt-3 grid gap-1.5">
+        {handoff.checklist.map((item) => (
+          <div
+            key={item.id}
+            className={`rounded-[13px] border px-2.5 py-2 ${getSponsorActivationChecklistClass(item.state)}`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[8px] font-black uppercase tracking-[0.12em]">
+                {item.label}
+              </span>
+              <span className="text-[8px] font-black uppercase tracking-[0.12em]">
+                {item.state}
+              </span>
+            </div>
+            <p className="mt-1 text-[10px] leading-4">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 rounded-[14px] border border-white/[0.014] bg-black/18 p-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+              Activation brief
+            </p>
+            <p className="mt-1 text-[10px] leading-4 text-sub">{handoff.nextAction}</p>
+          </div>
+          <button
+            type="button"
+            disabled={copying}
+            onClick={() =>
+              onCopy(
+                `activation-${handoff.packageId}`,
+                copyText,
+                "Activation handoff copied."
+              )
+            }
+            className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border border-primary/18 bg-primary/[0.07] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary transition enabled:hover:border-primary/34 enabled:hover:bg-primary/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Copy size={12} />
+            {copying ? "Copying" : "Copy"}
+          </button>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -4579,6 +4797,18 @@ function getSponsorCrmChecklistClass(state: "ready" | "missing") {
   switch (state) {
     case "ready":
       return "border-emerald-300/16 bg-emerald-300/[0.05] text-emerald-100";
+    case "missing":
+    default:
+      return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
+  }
+}
+
+function getSponsorActivationChecklistClass(state: "ready" | "missing" | "locked") {
+  switch (state) {
+    case "ready":
+      return "border-emerald-300/16 bg-emerald-300/[0.05] text-emerald-100";
+    case "locked":
+      return "border-white/[0.018] bg-white/[0.012] text-sub";
     case "missing":
     default:
       return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
