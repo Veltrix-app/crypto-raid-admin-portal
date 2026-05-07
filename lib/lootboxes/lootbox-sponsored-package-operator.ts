@@ -143,6 +143,22 @@ export type LootboxSponsorPerformanceKpi = {
   tone: "success" | "warning" | "default";
 };
 
+export type LootboxSponsorRenewalState = "ready" | "watch" | "not_ready" | "closed";
+
+export type LootboxSponsorRenewalFollowUpUrgency =
+  | "overdue"
+  | "due_soon"
+  | "scheduled"
+  | "unscheduled"
+  | "closed";
+
+export type LootboxSponsorRenewalPlaybookStep = {
+  id: "send_performance_update" | "pitch_next_package" | "schedule_follow_up";
+  label: string;
+  state: "ready" | "action_needed" | "blocked";
+  detail: string;
+};
+
 const sponsorCrmStages = [
   {
     id: "ready_to_pitch",
@@ -266,7 +282,9 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
   campaigns: CampaignContext[];
   projects: ProjectContext[];
   shardPools: LootboxSponsorActivationShardPool[];
+  now?: string | Date;
 }) {
+  const now = toReferenceDate(params.now);
   const handoffs = params.packages
     .map((row) =>
       buildSponsorActivationHandoff({
@@ -274,6 +292,7 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
         campaigns: params.campaigns,
         projects: params.projects,
         shardPools: params.shardPools,
+        now,
       })
     )
     .sort(compareSponsorActivationHandoffs);
@@ -285,6 +304,8 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
       setupNeeded: handoffs.filter((handoff) => handoff.activationState === "setup_needed").length,
       locked: handoffs.filter((handoff) => handoff.activationState === "locked").length,
       closed: handoffs.filter((handoff) => handoff.activationState === "closed").length,
+      renewalReady: handoffs.filter((handoff) => handoff.renewal.state === "ready").length,
+      renewalWatch: handoffs.filter((handoff) => handoff.renewal.state === "watch").length,
       manualOnly: true as const,
     },
     handoffs,
@@ -391,6 +412,7 @@ function buildSponsorActivationHandoff(params: {
   campaigns: CampaignContext[];
   projects: ProjectContext[];
   shardPools: LootboxSponsorActivationShardPool[];
+  now: Date;
 }) {
   const { row } = params;
   const status = normalizeText(row.status) ?? "draft";
@@ -471,27 +493,36 @@ function buildSponsorActivationHandoff(params: {
     activationState,
     checklist,
   });
-  const performance = buildSponsorPerformanceSnapshot({
-    activationState,
-    sponsorName: normalizeText(row.sponsor_name) ?? "Unnamed sponsor",
-    campaignTitle:
-      campaign?.title ?? getSnapshotText(row, "campaignTitle", row.campaign_id ?? "Campaign"),
-    poolSize,
-    remainingShards,
-    participants: Math.max(0, Number(campaign?.participants ?? 0)),
-    completionRate: Math.max(0, Number(campaign?.completionRate ?? 0)),
-  });
   const projectName =
     project?.name ?? getSnapshotText(row, "projectName", row.project_id ?? "Workspace");
   const campaignTitle =
     campaign?.title ?? getSnapshotText(row, "campaignTitle", row.campaign_id ?? "Campaign");
   const sponsorName = normalizeText(row.sponsor_name) ?? "Unnamed sponsor";
+  const packageTier = normalizeText(row.package_tier) ?? "starter";
+  const performance = buildSponsorPerformanceSnapshot({
+    activationState,
+    sponsorName,
+    campaignTitle,
+    poolSize,
+    remainingShards,
+    participants: Math.max(0, Number(campaign?.participants ?? 0)),
+    completionRate: Math.max(0, Number(campaign?.completionRate ?? 0)),
+  });
+  const renewal = buildSponsorRenewalPipeline({
+    activationState,
+    performance,
+    sponsorName,
+    campaignTitle,
+    packageTier,
+    followUpAt: row.follow_up_at,
+    now: params.now,
+  });
 
   return {
     packageId: row.id,
     campaignId: row.campaign_id,
     projectId: row.project_id ?? campaign?.projectId ?? null,
-    packageTier: normalizeText(row.package_tier) ?? "starter",
+    packageTier,
     status,
     activationState,
     tone: getSponsorActivationTone(activationState),
@@ -513,13 +544,14 @@ function buildSponsorActivationHandoff(params: {
     checklist,
     execution,
     performance,
+    renewal,
     brief: {
       title: `${sponsorName} x ${projectName} activation handoff`,
       body: buildSponsorActivationBrief({
         sponsorName,
         projectName,
         campaignTitle,
-        packageTier: normalizeText(row.package_tier) ?? "starter",
+        packageTier,
         budgetLabel: formatCrmBudget(row.sponsor_budget, row.currency),
         poolSize,
         remainingShards,
@@ -692,6 +724,12 @@ function buildSponsorPerformanceSnapshot(params: {
     label: getSponsorPerformanceLabel(state),
     renewalSignal,
     nextAction,
+    metrics: {
+      issuedShards,
+      depletionRate,
+      participants: params.participants,
+      completionRate: params.completionRate,
+    },
     kpis: buildSponsorPerformanceKpis({
       issuedShards,
       depletionRate,
@@ -711,6 +749,296 @@ function buildSponsorPerformanceSnapshot(params: {
       }),
     },
   };
+}
+
+function buildSponsorRenewalPipeline(params: {
+  activationState: LootboxSponsorActivationState;
+  performance: ReturnType<typeof buildSponsorPerformanceSnapshot>;
+  sponsorName: string;
+  campaignTitle: string;
+  packageTier: string;
+  followUpAt: string | null;
+  now: Date;
+}) {
+  const followUpUrgency = getSponsorRenewalFollowUpUrgency({
+    followUpAt: params.followUpAt,
+    now: params.now,
+    closed: params.activationState === "closed" || params.performance.state === "closed",
+  });
+  const state = getSponsorRenewalState({
+    activationState: params.activationState,
+    performanceState: params.performance.state,
+    renewalSignal: params.performance.renewalSignal,
+  });
+  const nextPackageTier = getSponsorRenewalPackageTier({
+    packageTier: params.packageTier,
+    renewalSignal: params.performance.renewalSignal,
+  });
+  const blockedBy = getSponsorRenewalBlockedBy({
+    activationState: params.activationState,
+    performanceState: params.performance.state,
+    renewalSignal: params.performance.renewalSignal,
+  });
+  const nextAction = getSponsorRenewalNextAction({
+    state,
+    blockedBy,
+    followUpUrgency,
+  });
+
+  return {
+    state,
+    label: getSponsorRenewalLabel(state),
+    followUpUrgency,
+    nextPackageTier,
+    nextAction,
+    blockedBy,
+    playbook: buildSponsorRenewalPlaybook({
+      state,
+      nextPackageTier,
+      followUpUrgency,
+      renewalSignal: params.performance.renewalSignal,
+    }),
+    renewalCopy: {
+      title: `${params.sponsorName} renewal follow-up`,
+      body: buildSponsorRenewalCopy({
+        sponsorName: params.sponsorName,
+        campaignTitle: params.campaignTitle,
+        nextPackageTier,
+        renewalSignal: params.performance.renewalSignal,
+        followUpUrgency,
+        nextAction,
+        issuedShards: params.performance.metrics.issuedShards,
+        depletionRate: params.performance.metrics.depletionRate,
+        participants: params.performance.metrics.participants,
+        completionRate: params.performance.metrics.completionRate,
+      }),
+    },
+  };
+}
+
+function getSponsorRenewalState(params: {
+  activationState: LootboxSponsorActivationState;
+  performanceState: LootboxSponsorPerformanceState;
+  renewalSignal: "strong" | "watch" | "none";
+}): LootboxSponsorRenewalState {
+  if (params.activationState === "closed" || params.performanceState === "closed") {
+    return "closed";
+  }
+
+  if (
+    params.activationState !== "ready" ||
+    params.performanceState !== "report_ready" ||
+    params.renewalSignal === "none"
+  ) {
+    return "not_ready";
+  }
+
+  return params.renewalSignal === "strong" ? "ready" : "watch";
+}
+
+function getSponsorRenewalFollowUpUrgency(params: {
+  followUpAt: string | null;
+  now: Date;
+  closed: boolean;
+}): LootboxSponsorRenewalFollowUpUrgency {
+  if (params.closed) {
+    return "closed";
+  }
+
+  if (!params.followUpAt) {
+    return "unscheduled";
+  }
+
+  const followUpDate = new Date(params.followUpAt);
+  if (Number.isNaN(followUpDate.getTime())) {
+    return "unscheduled";
+  }
+
+  const hoursUntilFollowUp = (followUpDate.getTime() - params.now.getTime()) / 3_600_000;
+  if (hoursUntilFollowUp <= 0) {
+    return "overdue";
+  }
+
+  if (hoursUntilFollowUp <= 72) {
+    return "due_soon";
+  }
+
+  return "scheduled";
+}
+
+function getSponsorRenewalPackageTier(params: {
+  packageTier: string;
+  renewalSignal: "strong" | "watch" | "none";
+}) {
+  const tier = normalizeSponsorRenewalPackageTier(params.packageTier);
+  if (params.renewalSignal !== "strong") {
+    return tier;
+  }
+
+  if (tier === "starter") {
+    return "standard" as const;
+  }
+
+  return "premium" as const;
+}
+
+function normalizeSponsorRenewalPackageTier(packageTier: string) {
+  const normalized = packageTier.trim().toLowerCase();
+  if (normalized === "premium" || normalized === "standard" || normalized === "starter") {
+    return normalized;
+  }
+
+  return "starter" as const;
+}
+
+function getSponsorRenewalBlockedBy(params: {
+  activationState: LootboxSponsorActivationState;
+  performanceState: LootboxSponsorPerformanceState;
+  renewalSignal: "strong" | "watch" | "none";
+}) {
+  if (params.activationState === "closed" || params.performanceState === "closed") {
+    return [];
+  }
+
+  const blockedBy: string[] = [];
+  if (params.activationState !== "ready") {
+    blockedBy.push("Activation setup");
+  }
+
+  if (params.performanceState !== "report_ready" || params.renewalSignal === "none") {
+    blockedBy.push("Sponsor performance");
+  }
+
+  return blockedBy;
+}
+
+function getSponsorRenewalNextAction(params: {
+  state: LootboxSponsorRenewalState;
+  blockedBy: string[];
+  followUpUrgency: LootboxSponsorRenewalFollowUpUrgency;
+}) {
+  if (params.state === "closed") {
+    return "Keep the package out of renewal outreach.";
+  }
+
+  if (params.state === "not_ready") {
+    return params.blockedBy.includes("Activation setup")
+      ? "Finish activation setup before renewal outreach."
+      : "Wait for stronger sponsor performance before renewal outreach.";
+  }
+
+  if (params.state === "watch") {
+    return "Keep sponsor warm until the next activity proof improves.";
+  }
+
+  if (params.followUpUrgency === "unscheduled") {
+    return "Schedule renewal follow-up with the performance snapshot.";
+  }
+
+  return "Send renewal follow-up with the performance snapshot.";
+}
+
+function getSponsorRenewalLabel(state: LootboxSponsorRenewalState) {
+  switch (state) {
+    case "ready":
+      return "Renewal ready";
+    case "watch":
+      return "Watchlist";
+    case "closed":
+      return "Closed";
+    case "not_ready":
+    default:
+      return "Not ready";
+  }
+}
+
+function buildSponsorRenewalPlaybook(params: {
+  state: LootboxSponsorRenewalState;
+  nextPackageTier: string;
+  followUpUrgency: LootboxSponsorRenewalFollowUpUrgency;
+  renewalSignal: "strong" | "watch" | "none";
+}): LootboxSponsorRenewalPlaybookStep[] {
+  const canAct = params.state === "ready" || params.state === "watch";
+  return [
+    {
+      id: "send_performance_update",
+      label: "Send proof update",
+      state: canAct ? "ready" : "blocked",
+      detail: "Lead with shard depletion, participants and completion before asking for another package.",
+    },
+    {
+      id: "pitch_next_package",
+      label: `Pitch ${params.nextPackageTier}`,
+      state:
+        params.state === "ready"
+          ? "ready"
+          : params.state === "watch"
+            ? "action_needed"
+            : "blocked",
+      detail:
+        params.renewalSignal === "strong"
+          ? "Performance supports a renewal or expansion conversation."
+          : "Use a softer follow-up until the activity proof is stronger.",
+    },
+    {
+      id: "schedule_follow_up",
+      label: "Lock next follow-up",
+      state:
+        params.state === "closed"
+          ? "blocked"
+          : params.followUpUrgency === "unscheduled"
+            ? "action_needed"
+            : canAct
+              ? "ready"
+              : "blocked",
+      detail: "Keep the next sponsor touch visible so the deal does not go cold.",
+    },
+  ];
+}
+
+function buildSponsorRenewalCopy(params: {
+  sponsorName: string;
+  campaignTitle: string;
+  nextPackageTier: string;
+  renewalSignal: "strong" | "watch" | "none";
+  followUpUrgency: LootboxSponsorRenewalFollowUpUrgency;
+  nextAction: string;
+  issuedShards: number;
+  depletionRate: number;
+  participants: number;
+  completionRate: number;
+}) {
+  const performanceLine = [
+    `${params.issuedShards.toLocaleString("en-US")} shards issued`,
+    `${params.depletionRate}% depleted`,
+    `${params.participants.toLocaleString("en-US")} participants`,
+    `${params.completionRate}% completion`,
+  ].join(", ");
+
+  return [
+    `${params.sponsorName} renewal follow-up for ${params.campaignTitle}:`,
+    `${performanceLine}.`,
+    `Recommended package: ${params.nextPackageTier} renewal based on a ${params.renewalSignal} renewal signal.`,
+    `Follow-up status: ${getSponsorRenewalFollowUpLabel(params.followUpUrgency)}.`,
+    `Next operator move: ${params.nextAction}`,
+    "Manual-only guardrail: this does not create billing, budget, payout or reward inventory.",
+  ].join("\n");
+}
+
+function getSponsorRenewalFollowUpLabel(urgency: LootboxSponsorRenewalFollowUpUrgency) {
+  switch (urgency) {
+    case "overdue":
+      return "overdue";
+    case "due_soon":
+      return "due soon";
+    case "scheduled":
+      return "scheduled";
+    case "closed":
+      return "closed";
+    case "unscheduled":
+    default:
+      return "unscheduled";
+  }
 }
 
 function getSponsorPerformanceState(params: {
@@ -1208,6 +1536,21 @@ function formatBlockingFields(fields: string[]) {
 function normalizeText(value: string | null) {
   const text = typeof value === "string" ? value.trim() : "";
   return text || null;
+}
+
+function toReferenceDate(value: string | Date | undefined) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  return new Date();
 }
 
 function getSnapshotText(

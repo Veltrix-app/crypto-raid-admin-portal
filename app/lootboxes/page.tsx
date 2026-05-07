@@ -2741,9 +2741,9 @@ function SponsorActivationHandoffPanel({
 }) {
   return (
     <OpsPanel
-      eyebrow="Phase 2F-D"
+      eyebrow="Phase 2F-G"
       title="Sponsor activation handoff"
-      description="Turn a won sponsor package into a clean manual activation plan: campaign route, shard pool, reward budget and owner stay visible before anyone promises public delivery."
+      description="Turn a won sponsor package into a clean manual activation and renewal plan: campaign route, shard pool, reward budget, performance proof and next sponsor follow-up stay visible before public delivery."
       action={
         <OpsStatusPill tone={read.summary.ready > 0 ? "success" : "warning"}>
           {read.summary.ready} ready
@@ -2751,11 +2751,12 @@ function SponsorActivationHandoffPanel({
       }
     >
       <div className="grid gap-3">
-        <div className="grid gap-2 sm:grid-cols-5">
+        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <MiniRead label="Packages" value={`${read.summary.total}`} />
           <MiniRead label="Ready" value={`${read.summary.ready}`} />
           <MiniRead label="Setup needed" value={`${read.summary.setupNeeded}`} />
           <MiniRead label="Locked" value={`${read.summary.locked}`} />
+          <MiniRead label="Renewal ready" value={`${read.summary.renewalReady}`} />
           <MiniRead label="Mode" value={read.summary.manualOnly ? "Manual" : "Auto"} />
         </div>
 
@@ -2769,6 +2770,7 @@ function SponsorActivationHandoffPanel({
                 handoff={handoff}
                 activationCopying={copyingId === `activation-${handoff.packageId}`}
                 performanceCopying={copyingId === `performance-${handoff.packageId}`}
+                renewalCopying={copyingId === `renewal-${handoff.packageId}`}
                 onCopy={onCopy}
               />
             ))}
@@ -2813,7 +2815,7 @@ function SponsorActivationFocusCard({ handoff }: { handoff: SponsorActivationHan
         <MiniRead label="Shard pool" value={handoff.metrics.poolSize.toLocaleString("en-US")} />
         <MiniRead label="Remaining" value={handoff.metrics.remainingShards.toLocaleString("en-US")} />
         <MiniRead label="Reward budget" value={handoff.metrics.rewardBudget.toLocaleString("en-US")} />
-        <MiniRead label="Renewal" value={handoff.performance.renewalSignal} />
+        <MiniRead label="Renewal" value={handoff.renewal.label} />
       </div>
       <div className="mt-3 rounded-[14px] border border-white/[0.016] bg-black/18 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2842,15 +2844,18 @@ function SponsorActivationHandoffCard({
   handoff,
   activationCopying,
   performanceCopying,
+  renewalCopying,
   onCopy,
 }: {
   handoff: SponsorActivationHandoff;
   activationCopying: boolean;
   performanceCopying: boolean;
+  renewalCopying: boolean;
   onCopy: (id: string, text: string, successText: string) => void;
 }) {
   const copyText = `${handoff.brief.title}\n\n${handoff.brief.body}`;
   const performanceCopyText = `${handoff.performance.sponsorUpdate.title}\n\n${handoff.performance.sponsorUpdate.body}`;
+  const renewalCopyText = `${handoff.renewal.renewalCopy.title}\n\n${handoff.renewal.renewalCopy.body}`;
 
   return (
     <article className="rounded-[18px] border border-white/[0.018] bg-[linear-gradient(180deg,rgba(12,15,21,0.92),rgba(7,9,14,0.94))] p-3">
@@ -2940,6 +2945,73 @@ function SponsorActivationHandoffCard({
               {item}
             </p>
           ))}
+        </div>
+      </div>
+
+      <div className={`mt-3 rounded-[14px] border p-3 ${getSponsorRenewalShellClass(handoff.renewal.state)}`}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+              Renewal pipeline
+            </p>
+            <p className="mt-1 text-[10px] leading-4 text-sub">
+              {handoff.renewal.nextAction}
+            </p>
+          </div>
+          <OpsStatusPill tone={getSponsorRenewalTone(handoff.renewal.state)}>
+            {handoff.renewal.label}
+          </OpsStatusPill>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <MiniRead label="Proposal" value={`${handoff.renewal.nextPackageTier} renewal`} />
+          <MiniRead label="Follow-up" value={handoff.renewal.followUpUrgency.replace(/_/g, " ")} />
+          <MiniRead
+            label="Blockers"
+            value={handoff.renewal.blockedBy.length ? `${handoff.renewal.blockedBy.length}` : "0"}
+          />
+        </div>
+        {handoff.renewal.blockedBy.length ? (
+          <p className="mt-3 rounded-[12px] border border-amber-300/12 bg-amber-300/[0.035] px-2.5 py-2 text-[10px] leading-4 text-amber-100">
+            Blocking: {handoff.renewal.blockedBy.join(", ")}
+          </p>
+        ) : null}
+        <div className="mt-3 grid gap-1.5">
+          {handoff.renewal.playbook.map((step) => (
+            <div
+              key={step.id}
+              className={`rounded-[12px] border px-2.5 py-2 ${getSponsorRenewalPlaybookClass(step.state)}`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[8px] font-black uppercase tracking-[0.12em]">
+                  {step.label}
+                </span>
+                <span className="text-[8px] font-black uppercase tracking-[0.12em]">
+                  {step.state.replace(/_/g, " ")}
+                </span>
+              </div>
+              <p className="mt-1 text-[10px] leading-4">{step.detail}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-white/[0.012] bg-white/[0.01] px-2.5 py-2">
+          <span className="text-[8px] font-black uppercase tracking-[0.12em] text-sub">
+            Manual renewal, no billing action
+          </span>
+          <button
+            type="button"
+            disabled={renewalCopying}
+            onClick={() =>
+              onCopy(
+                `renewal-${handoff.packageId}`,
+                renewalCopyText,
+                "Renewal follow-up copied."
+              )
+            }
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-primary/18 bg-primary/[0.07] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary transition enabled:hover:border-primary/34 enabled:hover:bg-primary/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Copy size={12} />
+            {renewalCopying ? "Copying" : "Copy renewal"}
+          </button>
         </div>
       </div>
 
@@ -4963,6 +5035,47 @@ function getSponsorPerformanceKpiClass(
     case "warning":
       return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
     case "default":
+    default:
+      return "border-white/[0.018] bg-white/[0.012] text-sub";
+  }
+}
+
+function getSponsorRenewalTone(state: SponsorActivationHandoff["renewal"]["state"]) {
+  switch (state) {
+    case "ready":
+      return "success" as const;
+    case "watch":
+    case "not_ready":
+      return "warning" as const;
+    case "closed":
+    default:
+      return "default" as const;
+  }
+}
+
+function getSponsorRenewalShellClass(state: SponsorActivationHandoff["renewal"]["state"]) {
+  switch (state) {
+    case "ready":
+      return "border-primary/18 bg-[radial-gradient(circle_at_92%_8%,rgba(186,255,59,0.12),transparent_26%),rgba(186,255,59,0.035)]";
+    case "watch":
+      return "border-sky-300/12 bg-sky-300/[0.035]";
+    case "not_ready":
+      return "border-amber-300/12 bg-amber-300/[0.025]";
+    case "closed":
+    default:
+      return "border-white/[0.014] bg-black/18";
+  }
+}
+
+function getSponsorRenewalPlaybookClass(
+  state: SponsorActivationHandoff["renewal"]["playbook"][number]["state"]
+) {
+  switch (state) {
+    case "ready":
+      return "border-emerald-300/16 bg-emerald-300/[0.05] text-emerald-100";
+    case "action_needed":
+      return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
+    case "blocked":
     default:
       return "border-white/[0.018] bg-white/[0.012] text-sub";
   }
