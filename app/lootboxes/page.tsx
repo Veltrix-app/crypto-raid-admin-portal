@@ -82,6 +82,12 @@ import {
   type LootboxSponsoredRewardSetupReadiness,
   type LootboxSponsoredRewardSetupRow,
 } from "@/lib/lootboxes/lootbox-sponsored-reward-setup";
+import {
+  buildLootboxSponsoredPackageBriefs,
+  type LootboxSponsoredPackageBrief,
+  type LootboxSponsoredPackageStatus,
+  type LootboxSponsoredPackageTier,
+} from "@/lib/lootboxes/lootbox-sponsored-package-briefs";
 import type { LootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
@@ -180,6 +186,10 @@ export default function LootboxesPage() {
         })),
       }),
     [campaigns, featuredShardPools, projects]
+  );
+  const sponsoredPackageBriefs = useMemo(
+    () => buildLootboxSponsoredPackageBriefs(sponsoredRewardSetup.rows),
+    [sponsoredRewardSetup.rows]
   );
   const recommendedRewardLane = useMemo(
     () =>
@@ -535,6 +545,7 @@ export default function LootboxesPage() {
             </div>
 
             <SponsoredRewardSetupPanel read={sponsoredRewardSetup} />
+            <SponsoredPackageBriefsPanel read={sponsoredPackageBriefs} />
 
             <InventoryCommandTable
               activity={lootboxActivity}
@@ -934,6 +945,197 @@ function SponsoredRewardSetupCard({ row }: { row: LootboxSponsoredRewardSetupRow
             </div>
           </div>
         ))}
+      </div>
+    </Link>
+  );
+}
+
+function SponsoredPackageBriefsPanel({
+  read,
+}: {
+  read: ReturnType<typeof buildLootboxSponsoredPackageBriefs>;
+}) {
+  return (
+    <OpsPanel
+      eyebrow="Phase 2E-I"
+      title="Sponsor package briefs"
+      description="Turn ready campaign pressure into operator-ready sponsor packages without auto-delivery: tier, pitch, deliverables and the next safe setup step stay visible."
+      action={
+        <OpsStatusPill tone={read.summary.pitchReady > 0 ? "success" : "warning"}>
+          {read.summary.pitchReady} pitch ready
+        </OpsStatusPill>
+      }
+    >
+      <div className="grid gap-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+          <MiniRead label="Briefs" value={`${read.summary.total}`} />
+          <MiniRead label="Pitch ready" value={`${read.summary.pitchReady}`} />
+          <MiniRead label="Prep needed" value={`${read.summary.needsSetup}`} />
+          <MiniRead label="Locked" value={`${read.summary.locked}`} />
+          <MiniRead label="Premium" value={`${read.summary.premium}`} />
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-[0.82fr_1.18fr]">
+          <div className="rounded-[18px] border border-primary/14 bg-[linear-gradient(180deg,rgba(186,255,59,0.052),rgba(8,10,15,0.88))] p-3">
+            <div className="flex items-start gap-2.5">
+              <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/18 bg-primary/[0.08] text-primary">
+                <FileText size={15} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+                  Recommended brief
+                </p>
+                {read.recommendedBrief ? (
+                  <>
+                    <h3 className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+                      {read.recommendedBrief.campaignTitle}
+                    </h3>
+                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-sub">
+                      {read.recommendedBrief.projectName} / {read.recommendedBrief.packageTier}
+                    </p>
+                    <p className="mt-2 text-[11px] leading-5 text-sub">
+                      {read.recommendedBrief.operatorPitch}
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-2 text-[11px] leading-5 text-sub">
+                    No package can be pitched yet. Unlock a campaign route, budget and shard
+                    pressure first.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-2 lg:grid-cols-3">
+            <PackageBriefMetric
+              icon={<Sparkles size={14} />}
+              label="Pitch"
+              value={`${read.summary.pitchReady} ready`}
+              detail="Ready packages can be used in sponsor conversations."
+            />
+            <PackageBriefMetric
+              icon={<SlidersHorizontal size={14} />}
+              label="Prep"
+              value={`${read.summary.needsSetup} open`}
+              detail="Needs budget or shard pressure before a clean pitch."
+            />
+            <PackageBriefMetric
+              icon={<ShieldCheck size={14} />}
+              label="No auto delivery"
+              value="Locked"
+              detail="Briefs do not grant rewards or charge projects."
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-2 xl:grid-cols-3">
+          {read.briefs.length ? (
+            read.briefs.slice(0, 6).map((brief) => (
+              <SponsoredPackageBriefCard key={brief.campaignId} brief={brief} />
+            ))
+          ) : (
+            <div className="rounded-[16px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub xl:col-span-3">
+              Package briefs appear after sponsor reward candidates exist.
+            </div>
+          )}
+        </div>
+      </div>
+    </OpsPanel>
+  );
+}
+
+function PackageBriefMetric({
+  icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-[16px] border border-white/[0.018] bg-white/[0.012] p-3">
+      <div className="flex items-center gap-2">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.026] bg-black/20 text-primary">
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-sub">{label}</p>
+          <p className="mt-1 truncate text-[12px] font-black text-text">{value}</p>
+        </div>
+      </div>
+      <p className="mt-3 text-[10px] leading-4 text-sub">{detail}</p>
+    </div>
+  );
+}
+
+function SponsoredPackageBriefCard({ brief }: { brief: LootboxSponsoredPackageBrief }) {
+  return (
+    <Link
+      href={`/campaigns/${brief.campaignId}`}
+      className={`group block rounded-[18px] border p-3 transition hover:border-primary/22 ${
+        brief.status === "pitch_ready"
+          ? "border-emerald-300/14 bg-emerald-300/[0.032]"
+          : brief.status === "prep_needed"
+            ? "border-primary/16 bg-primary/[0.04]"
+            : "border-white/[0.018] bg-white/[0.012]"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.026] bg-black/20 text-primary">
+              {getPackageBriefIcon(brief.status)}
+            </span>
+            <OpsStatusPill tone={getPackageBriefStatusTone(brief.status)}>
+              {brief.status.replace(/_/g, " ")}
+            </OpsStatusPill>
+            <OpsStatusPill tone={getPackageTierTone(brief.packageTier)}>
+              {brief.packageTier}
+            </OpsStatusPill>
+          </div>
+          <h3 className="mt-2 line-clamp-2 text-[13px] font-black text-text">
+            {brief.campaignTitle}
+          </h3>
+          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-sub">
+            {brief.projectName}
+          </p>
+        </div>
+        <ArrowRight
+          size={15}
+          className="mt-1 shrink-0 text-white/35 transition group-hover:translate-x-0.5 group-hover:text-primary"
+        />
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <MiniRead label="Budget" value={brief.budgetLabel} />
+        <MiniRead label="Pressure" value={brief.pressureLabel} />
+      </div>
+
+      <p className="mt-3 text-[11px] leading-5 text-sub">{brief.operatorPitch}</p>
+
+      <div className="mt-3 grid gap-1.5">
+        {brief.deliverables.map((deliverable) => (
+          <div
+            key={deliverable.label}
+            className="rounded-[12px] border border-white/[0.014] bg-black/15 px-2.5 py-2"
+          >
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-text">
+              {deliverable.label}
+            </p>
+            <p className="mt-1 text-[10px] leading-4 text-sub">{deliverable.detail}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 rounded-[12px] border border-primary/14 bg-primary/[0.04] px-2.5 py-2">
+        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-primary">
+          Next operator step
+        </p>
+        <p className="mt-1 text-[10px] leading-4 text-sub">{brief.nextOperatorStep}</p>
       </div>
     </Link>
   );
@@ -2391,6 +2593,42 @@ function getSponsoredSetupTone(readiness: LootboxSponsoredRewardSetupReadiness) 
     case "setup_needed":
     default:
       return "warning" as const;
+  }
+}
+
+function getPackageBriefIcon(status: LootboxSponsoredPackageStatus) {
+  switch (status) {
+    case "pitch_ready":
+      return <Sparkles size={13} />;
+    case "prep_needed":
+      return <SlidersHorizontal size={13} />;
+    case "locked":
+    default:
+      return <ShieldCheck size={13} />;
+  }
+}
+
+function getPackageBriefStatusTone(status: LootboxSponsoredPackageStatus) {
+  switch (status) {
+    case "pitch_ready":
+      return "success" as const;
+    case "locked":
+      return "default" as const;
+    case "prep_needed":
+    default:
+      return "warning" as const;
+  }
+}
+
+function getPackageTierTone(tier: LootboxSponsoredPackageTier) {
+  switch (tier) {
+    case "premium":
+      return "success" as const;
+    case "standard":
+      return "warning" as const;
+    case "starter":
+    default:
+      return "default" as const;
   }
 }
 
