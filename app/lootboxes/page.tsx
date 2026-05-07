@@ -7,10 +7,12 @@ import {
   ArrowRight,
   BadgeCheck,
   ClipboardCheck,
+  Copy,
   Crown,
   FileText,
   Gift,
   History,
+  Lock,
   PackageOpen,
   PauseCircle,
   RadioTower,
@@ -20,6 +22,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  Send,
   Target,
   ToggleLeft,
   ToggleRight,
@@ -88,6 +91,12 @@ import {
   type LootboxSponsoredPackageStatus,
   type LootboxSponsoredPackageTier,
 } from "@/lib/lootboxes/lootbox-sponsored-package-briefs";
+import {
+  buildLootboxSponsoredPackageActionDesk,
+  type LootboxSponsoredPackageActionPack,
+  type LootboxSponsoredPackageActionState,
+  type LootboxSponsoredPackageOperatorAction,
+} from "@/lib/lootboxes/lootbox-sponsored-package-actions";
 import type { LootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
@@ -129,6 +138,8 @@ export default function LootboxesPage() {
   const [inventoryNoteMessage, setInventoryNoteMessage] = useState<PoolSaveMessage>(null);
   const [inventoryFilter, setInventoryFilter] = useState<LootboxInventoryCommandFilter>("all");
   const [inventorySearch, setInventorySearch] = useState("");
+  const [packageActionCopyId, setPackageActionCopyId] = useState<string | null>(null);
+  const [packageActionMessage, setPackageActionMessage] = useState<PoolSaveMessage>(null);
 
   const readiness = useMemo(() => buildLootboxStudioReadiness(), []);
   const selectedReadiness =
@@ -190,6 +201,10 @@ export default function LootboxesPage() {
   const sponsoredPackageBriefs = useMemo(
     () => buildLootboxSponsoredPackageBriefs(sponsoredRewardSetup.rows),
     [sponsoredRewardSetup.rows]
+  );
+  const sponsoredPackageActionDesk = useMemo(
+    () => buildLootboxSponsoredPackageActionDesk(sponsoredPackageBriefs.briefs),
+    [sponsoredPackageBriefs.briefs]
   );
   const recommendedRewardLane = useMemo(
     () =>
@@ -383,6 +398,31 @@ export default function LootboxesPage() {
     }
   }
 
+  async function copyPackageActionText(id: string, text: string, successText: string) {
+    if (packageActionCopyId) {
+      return;
+    }
+
+    setPackageActionCopyId(id);
+    setPackageActionMessage({ tone: "default", text: "Copying sponsor package text..." });
+
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard is not available in this browser.");
+      }
+
+      await navigator.clipboard.writeText(text);
+      setPackageActionMessage({ tone: "success", text: successText });
+    } catch (error) {
+      setPackageActionMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Copy action failed.",
+      });
+    } finally {
+      setPackageActionCopyId(null);
+    }
+  }
+
   async function saveSelectedPoolDraft() {
     if (selectedDraft.summary.readiness !== "ready" || poolSaving) {
       return;
@@ -546,6 +586,12 @@ export default function LootboxesPage() {
 
             <SponsoredRewardSetupPanel read={sponsoredRewardSetup} />
             <SponsoredPackageBriefsPanel read={sponsoredPackageBriefs} />
+            <SponsoredPackageActionDeskPanel
+              read={sponsoredPackageActionDesk}
+              copyingId={packageActionCopyId}
+              message={packageActionMessage}
+              onCopy={copyPackageActionText}
+            />
 
             <InventoryCommandTable
               activity={lootboxActivity}
@@ -1138,6 +1184,249 @@ function SponsoredPackageBriefCard({ brief }: { brief: LootboxSponsoredPackageBr
         <p className="mt-1 text-[10px] leading-4 text-sub">{brief.nextOperatorStep}</p>
       </div>
     </Link>
+  );
+}
+
+function SponsoredPackageActionDeskPanel({
+  read,
+  copyingId,
+  message,
+  onCopy,
+}: {
+  read: ReturnType<typeof buildLootboxSponsoredPackageActionDesk>;
+  copyingId: string | null;
+  message: PoolSaveMessage;
+  onCopy: (id: string, text: string, successText: string) => void;
+}) {
+  const recommendedPack = read.recommendedPack;
+
+  return (
+    <OpsPanel
+      eyebrow="Phase 2E-J"
+      title="Sponsor action desk"
+      description="Move package briefs into a real operator workflow: copy sponsor copy, stage an internal note and route into the campaign without reward, payment or fulfillment automation."
+      action={
+        <OpsStatusPill tone={read.summary.readyToShare > 0 ? "success" : "warning"}>
+          {read.summary.readyToShare} share ready
+        </OpsStatusPill>
+      }
+    >
+      <div className="grid gap-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+          <MiniRead label="Packages" value={`${read.summary.total}`} />
+          <MiniRead label="Share ready" value={`${read.summary.readyToShare}`} />
+          <MiniRead label="Needs setup" value={`${read.summary.needsSetup}`} />
+          <MiniRead label="Copy actions" value={`${read.summary.copyReady}`} />
+          <MiniRead label="Locked" value={`${read.summary.locked}`} />
+        </div>
+
+        {message ? (
+          <div
+            className={`rounded-[14px] border px-3 py-2 text-[11px] font-semibold ${
+              message.tone === "success"
+                ? "border-emerald-300/16 bg-emerald-300/[0.045] text-emerald-100"
+                : message.tone === "error"
+                  ? "border-rose-300/16 bg-rose-300/[0.055] text-rose-100"
+                  : "border-white/[0.018] bg-white/[0.012] text-sub"
+            }`}
+          >
+            {message.text}
+          </div>
+        ) : null}
+
+        <div className="grid gap-3 xl:grid-cols-[0.9fr_1.1fr]">
+          {recommendedPack ? (
+            <SponsorPackageCommandCard
+              pack={recommendedPack}
+              copyingId={copyingId}
+              onCopy={onCopy}
+            />
+          ) : (
+            <div className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
+              No sponsor package action is ready yet. Unlock campaign visibility, budget and shard
+              pressure before an operator can package it.
+            </div>
+          )}
+
+          <div className="grid gap-2">
+            {read.packs.length ? (
+              read.packs.slice(0, 5).map((pack) => (
+                <SponsorPackageActionRow key={pack.campaignId} pack={pack} />
+              ))
+            ) : (
+              <div className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
+                Action packets appear after sponsor package briefs exist.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </OpsPanel>
+  );
+}
+
+function SponsorPackageCommandCard({
+  pack,
+  copyingId,
+  onCopy,
+}: {
+  pack: LootboxSponsoredPackageActionPack;
+  copyingId: string | null;
+  onCopy: (id: string, text: string, successText: string) => void;
+}) {
+  const sponsorCopyAction = pack.actions.find((action) => action.id === "copy_sponsor_brief");
+  const auditNoteAction = pack.actions.find((action) => action.id === "copy_audit_note");
+  const sponsorCopyId = `${pack.campaignId}:sponsor-copy`;
+  const auditCopyId = `${pack.campaignId}:audit-note`;
+
+  return (
+    <article className="rounded-[18px] border border-primary/14 bg-[linear-gradient(180deg,rgba(186,255,59,0.048),rgba(8,10,15,0.9))] p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-primary/18 bg-primary/[0.08] text-primary">
+              <Send size={15} />
+            </span>
+            <OpsStatusPill tone={getPackageActionStateTone(pack.actionState)}>
+              {pack.actionState}
+            </OpsStatusPill>
+            <OpsStatusPill tone={getPackageTierTone(pack.packageTier)}>
+              {pack.packageTier}
+            </OpsStatusPill>
+          </div>
+          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Recommended action pack
+          </p>
+          <h3 className="mt-2 break-words text-[15px] font-black text-text [overflow-wrap:anywhere]">
+            {pack.exportTitle}
+          </h3>
+          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-sub">
+            {pack.campaignTitle}
+          </p>
+        </div>
+        <Link
+          href={`/campaigns/${pack.campaignId}`}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.026] bg-white/[0.014] px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-text transition hover:border-primary/24 hover:text-primary"
+        >
+          Open
+          <ArrowRight size={12} />
+        </Link>
+      </div>
+
+      <div className="mt-3 rounded-[14px] border border-white/[0.018] bg-black/18 p-3">
+        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sub">
+          Sponsor brief preview
+        </p>
+        <p className="mt-2 line-clamp-4 text-[11px] leading-5 text-sub">
+          {pack.sponsorBriefText}
+        </p>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <SponsorPackageCopyButton
+          icon={<Copy size={13} />}
+          label="Copy brief"
+          disabled={sponsorCopyAction?.state !== "ready"}
+          loading={copyingId === sponsorCopyId}
+          detail={sponsorCopyAction?.detail ?? "Sponsor brief unavailable."}
+          onClick={() =>
+            onCopy(sponsorCopyId, pack.sponsorBriefText, "Sponsor brief copied.")
+          }
+        />
+        <SponsorPackageCopyButton
+          icon={<ClipboardCheck size={13} />}
+          label="Copy note"
+          disabled={auditNoteAction?.state !== "ready"}
+          loading={copyingId === auditCopyId}
+          detail={auditNoteAction?.detail ?? "Operator note unavailable."}
+          onClick={() =>
+            onCopy(auditCopyId, pack.auditNoteTemplate, "Operator note copied.")
+          }
+        />
+      </div>
+    </article>
+  );
+}
+
+function SponsorPackageCopyButton({
+  icon,
+  label,
+  detail,
+  disabled,
+  loading,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  detail: string;
+  disabled: boolean;
+  loading: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled || loading}
+      onClick={onClick}
+      className="group rounded-[14px] border border-white/[0.018] bg-white/[0.012] p-3 text-left transition enabled:hover:border-primary/24 enabled:hover:bg-primary/[0.035] disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-text">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.026] bg-black/20 text-primary">
+          {icon}
+        </span>
+        {loading ? "Copying" : label}
+      </span>
+      <span className="mt-2 block text-[10px] leading-4 text-sub">{detail}</span>
+    </button>
+  );
+}
+
+function SponsorPackageActionRow({ pack }: { pack: LootboxSponsoredPackageActionPack }) {
+  return (
+    <article
+      className={`rounded-[18px] border p-3 ${getPackageActionBorderClass(pack.actionState)}`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            {pack.projectName}
+          </p>
+          <h3 className="mt-1.5 line-clamp-2 text-[13px] font-black text-text">
+            {pack.campaignTitle}
+          </h3>
+        </div>
+        <OpsStatusPill tone={getPackageActionStateTone(pack.actionState)}>
+          {pack.actionState}
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
+        {pack.actions.map((action) => (
+          <div
+            key={action.id}
+            className="flex items-start gap-2 rounded-[12px] border border-white/[0.014] bg-black/15 px-2.5 py-2"
+          >
+            <span
+              className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
+                action.state === "ready"
+                  ? "border-emerald-300/16 bg-emerald-300/[0.055] text-emerald-200"
+                  : action.state === "prep"
+                    ? "border-amber-300/16 bg-amber-300/[0.055] text-amber-200"
+                    : "border-white/[0.022] bg-white/[0.012] text-white/45"
+              }`}
+            >
+              {getPackageActionIcon(action)}
+            </span>
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-text">
+                {action.label}
+              </p>
+              <p className="mt-1 text-[10px] leading-4 text-sub">{action.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </article>
   );
 }
 
@@ -2629,6 +2918,45 @@ function getPackageTierTone(tier: LootboxSponsoredPackageTier) {
     case "starter":
     default:
       return "default" as const;
+  }
+}
+
+function getPackageActionStateTone(state: LootboxSponsoredPackageActionState) {
+  switch (state) {
+    case "ready":
+      return "success" as const;
+    case "prep":
+      return "warning" as const;
+    case "locked":
+    default:
+      return "default" as const;
+  }
+}
+
+function getPackageActionIcon(action: LootboxSponsoredPackageOperatorAction) {
+  switch (action.id) {
+    case "copy_sponsor_brief":
+      return <Copy size={12} />;
+    case "copy_audit_note":
+      return <ClipboardCheck size={12} />;
+    case "share_packet":
+      return <Send size={12} />;
+    case "open_campaign":
+      return action.state === "locked" ? <Lock size={12} /> : <ArrowRight size={12} />;
+    default:
+      return <FileText size={12} />;
+  }
+}
+
+function getPackageActionBorderClass(state: LootboxSponsoredPackageActionState) {
+  switch (state) {
+    case "ready":
+      return "border-emerald-300/14 bg-emerald-300/[0.032]";
+    case "prep":
+      return "border-primary/16 bg-primary/[0.04]";
+    case "locked":
+    default:
+      return "border-white/[0.018] bg-white/[0.012]";
   }
 }
 
