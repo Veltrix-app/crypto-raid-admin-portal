@@ -97,6 +97,12 @@ import {
   type LootboxSponsoredPackageActionState,
   type LootboxSponsoredPackageOperatorAction,
 } from "@/lib/lootboxes/lootbox-sponsored-package-actions";
+import {
+  buildLootboxSponsoredPackageStatusBoard,
+  type LootboxSponsoredPackageStatusBoardColumn,
+  type LootboxSponsoredPackageStatusBoardColumnId,
+  type LootboxSponsoredPackageStatusBoardItem,
+} from "@/lib/lootboxes/lootbox-sponsored-package-status-board";
 import type { LootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
@@ -205,6 +211,10 @@ export default function LootboxesPage() {
   const sponsoredPackageActionDesk = useMemo(
     () => buildLootboxSponsoredPackageActionDesk(sponsoredPackageBriefs.briefs),
     [sponsoredPackageBriefs.briefs]
+  );
+  const sponsoredPackageStatusBoard = useMemo(
+    () => buildLootboxSponsoredPackageStatusBoard(sponsoredPackageActionDesk.packs),
+    [sponsoredPackageActionDesk.packs]
   );
   const recommendedRewardLane = useMemo(
     () =>
@@ -592,6 +602,7 @@ export default function LootboxesPage() {
               message={packageActionMessage}
               onCopy={copyPackageActionText}
             />
+            <SponsoredPackageStatusBoardPanel read={sponsoredPackageStatusBoard} />
 
             <InventoryCommandTable
               activity={lootboxActivity}
@@ -1427,6 +1438,156 @@ function SponsorPackageActionRow({ pack }: { pack: LootboxSponsoredPackageAction
         ))}
       </div>
     </article>
+  );
+}
+
+function SponsoredPackageStatusBoardPanel({
+  read,
+}: {
+  read: ReturnType<typeof buildLootboxSponsoredPackageStatusBoard>;
+}) {
+  return (
+    <OpsPanel
+      eyebrow="Phase 2E-K"
+      title="Sponsor intake board"
+      description="A compact operator board for sponsor package status: ready packages, setup queue and blocked routes stay visible before any status write, billing or reward delivery exists."
+      action={
+        <OpsStatusPill tone={read.summary.readyToPitch > 0 ? "success" : "warning"}>
+          {read.summary.readyToPitch} ready
+        </OpsStatusPill>
+      }
+    >
+      <div className="grid gap-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+          <MiniRead label="Intake" value={`${read.summary.total}`} />
+          <MiniRead label="Ready" value={`${read.summary.readyToPitch}`} />
+          <MiniRead label="Setup" value={`${read.summary.setupQueue}`} />
+          <MiniRead label="Blocked" value={`${read.summary.blocked}`} />
+          <MiniRead label="Writes" value={read.summary.manualOnly ? "Manual only" : "Live"} />
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-[0.78fr_1.22fr]">
+          <div className="rounded-[18px] border border-primary/14 bg-[linear-gradient(180deg,rgba(186,255,59,0.052),rgba(8,10,15,0.9))] p-3">
+            <div className="flex items-start gap-2.5">
+              <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/18 bg-primary/[0.08] text-primary">
+                <Target size={15} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+                  Next board focus
+                </p>
+                {read.focus ? (
+                  <>
+                    <h3 className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+                      {read.focus.title}
+                    </h3>
+                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-sub">
+                      {read.focus.columnId.replace(/_/g, " ")}
+                    </p>
+                    <p className="mt-2 text-[11px] leading-5 text-sub">{read.focus.detail}</p>
+                  </>
+                ) : (
+                  <p className="mt-2 text-[11px] leading-5 text-sub">
+                    No sponsor package intake exists yet. Create a package brief first.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-1.5">
+              {read.guardrails.map((guardrail) => (
+                <div
+                  key={guardrail}
+                  className="flex items-start gap-2 rounded-[12px] border border-white/[0.014] bg-black/15 px-2.5 py-2"
+                >
+                  <ShieldCheck size={12} className="mt-0.5 shrink-0 text-primary" />
+                  <p className="text-[10px] leading-4 text-sub">{guardrail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2 xl:grid-cols-3">
+            {read.columns.map((column) => (
+              <SponsorStatusBoardColumn key={column.id} column={column} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </OpsPanel>
+  );
+}
+
+function SponsorStatusBoardColumn({
+  column,
+}: {
+  column: LootboxSponsoredPackageStatusBoardColumn;
+}) {
+  return (
+    <section className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2">
+          <span
+            className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${getStatusBoardColumnIconClass(
+              column.id
+            )}`}
+          >
+            {getStatusBoardColumnIcon(column.id)}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+              {column.label}
+            </p>
+            <p className="mt-1 text-[10px] leading-4 text-sub">{column.detail}</p>
+          </div>
+        </div>
+        <OpsStatusPill tone={getStatusBoardColumnTone(column.id)}>
+          {column.items.length}
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid gap-2">
+        {column.items.length ? (
+          column.items.slice(0, 4).map((item) => (
+            <SponsorStatusBoardItem key={item.campaignId} item={item} />
+          ))
+        ) : (
+          <div className="rounded-[14px] border border-white/[0.014] bg-black/15 px-2.5 py-3 text-[10px] leading-4 text-sub">
+            No packages in this lane.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SponsorStatusBoardItem({ item }: { item: LootboxSponsoredPackageStatusBoardItem }) {
+  return (
+    <Link
+      href={item.routeHref}
+      className="group block rounded-[14px] border border-white/[0.014] bg-black/15 px-2.5 py-2.5 transition hover:border-primary/22 hover:bg-primary/[0.025]"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-sub">
+            {item.projectName} / {item.packageTier}
+          </p>
+          <h3 className="mt-1 line-clamp-2 text-[12px] font-black text-text">
+            {item.campaignTitle}
+          </h3>
+        </div>
+        <ArrowRight
+          size={13}
+          className="mt-0.5 shrink-0 text-white/35 transition group-hover:translate-x-0.5 group-hover:text-primary"
+        />
+      </div>
+      <div className="mt-2 rounded-[10px] border border-white/[0.012] bg-white/[0.01] px-2 py-1.5">
+        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-primary">
+          {item.primaryAction}
+        </p>
+        <p className="mt-1 text-[10px] leading-4 text-sub">{item.detail}</p>
+      </div>
+    </Link>
   );
 }
 
@@ -2957,6 +3118,42 @@ function getPackageActionBorderClass(state: LootboxSponsoredPackageActionState) 
     case "locked":
     default:
       return "border-white/[0.018] bg-white/[0.012]";
+  }
+}
+
+function getStatusBoardColumnTone(id: LootboxSponsoredPackageStatusBoardColumnId) {
+  switch (id) {
+    case "ready_to_pitch":
+      return "success" as const;
+    case "setup_queue":
+      return "warning" as const;
+    case "blocked":
+    default:
+      return "default" as const;
+  }
+}
+
+function getStatusBoardColumnIcon(id: LootboxSponsoredPackageStatusBoardColumnId) {
+  switch (id) {
+    case "ready_to_pitch":
+      return <Send size={13} />;
+    case "setup_queue":
+      return <SlidersHorizontal size={13} />;
+    case "blocked":
+    default:
+      return <Lock size={13} />;
+  }
+}
+
+function getStatusBoardColumnIconClass(id: LootboxSponsoredPackageStatusBoardColumnId) {
+  switch (id) {
+    case "ready_to_pitch":
+      return "border-emerald-300/16 bg-emerald-300/[0.055] text-emerald-200";
+    case "setup_queue":
+      return "border-amber-300/16 bg-amber-300/[0.055] text-amber-200";
+    case "blocked":
+    default:
+      return "border-white/[0.022] bg-white/[0.012] text-white/45";
   }
 }
 
