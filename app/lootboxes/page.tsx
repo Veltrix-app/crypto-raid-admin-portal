@@ -6,6 +6,7 @@ import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "re
 import {
   ArrowRight,
   BadgeCheck,
+  CalendarClock,
   ClipboardCheck,
   Copy,
   Crown,
@@ -26,6 +27,7 @@ import {
   Target,
   ToggleLeft,
   ToggleRight,
+  UserCheck,
   X,
 } from "lucide-react";
 import {
@@ -103,11 +105,16 @@ import {
   type LootboxSponsoredPackageStatusBoardColumnId,
   type LootboxSponsoredPackageStatusBoardItem,
 } from "@/lib/lootboxes/lootbox-sponsored-package-status-board";
+import { buildLootboxSponsorPackageCreateRequest } from "@/lib/lootboxes/lootbox-sponsored-package-operator";
 import {
   buildLootboxSponsoredPackagePersistenceReadiness,
+  lootboxSponsorPackageNoteTypes,
   type LootboxSponsoredPackagePersistenceTable,
+  type LootboxSponsorPackageNoteType,
+  type LootboxSponsorPackageStatus,
 } from "@/lib/lootboxes/lootbox-sponsored-package-persistence";
 import type { LootboxStockSafetyRead } from "@/lib/lootboxes/lootbox-stock-safety";
+import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminFeaturedShardPool } from "@/types/entities/featured-shard-pool";
 
@@ -126,8 +133,52 @@ const inventoryFilterOptions: Array<{ id: LootboxInventoryCommandFilter; label: 
   { id: "high_rarity", label: "High rarity" },
 ];
 type PoolSaveMessage = { tone: "success" | "error" | "default"; text: string } | null;
+type SponsorPackageApiRow = {
+  id: string;
+  project_id: string | null;
+  campaign_id: string | null;
+  package_tier: LootboxSponsoredPackageTier | string | null;
+  status: LootboxSponsorPackageStatus | string | null;
+  sponsor_name: string | null;
+  sponsor_contact: string | null;
+  sponsor_budget: number | null;
+  currency: string | null;
+  owner_auth_user_id: string | null;
+  follow_up_at: string | null;
+  last_contacted_at: string | null;
+  package_snapshot: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  created_by_auth_user_id: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
+const sponsorPackageStatusControls: LootboxSponsorPackageStatus[] = [
+  "ready_to_pitch",
+  "pitched",
+  "negotiating",
+  "won",
+  "lost",
+  "blocked",
+];
+
+async function fetchSponsorPackagesRead() {
+  const response = await fetch("/api/lootboxes/sponsor-packages", {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | { ok?: boolean; error?: string; sponsorPackages?: SponsorPackageApiRow[] }
+    | null;
+
+  if (!response.ok || !payload?.ok || !Array.isArray(payload.sponsorPackages)) {
+    throw new Error(payload?.error ?? "Sponsor package read failed.");
+  }
+
+  return payload.sponsorPackages;
+}
 
 export default function LootboxesPage() {
+  const authUserId = useAdminAuthStore((s) => s.authUserId);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
   const projects = useAdminPortalStore((s) => s.projects);
   const featuredShardPools = useAdminPortalStore((s) => s.featuredShardPools);
@@ -150,6 +201,13 @@ export default function LootboxesPage() {
   const [inventorySearch, setInventorySearch] = useState("");
   const [packageActionCopyId, setPackageActionCopyId] = useState<string | null>(null);
   const [packageActionMessage, setPackageActionMessage] = useState<PoolSaveMessage>(null);
+  const [sponsorPackages, setSponsorPackages] = useState<SponsorPackageApiRow[]>([]);
+  const [sponsorPackageLoading, setSponsorPackageLoading] = useState(true);
+  const [sponsorPackageSavingId, setSponsorPackageSavingId] = useState<string | null>(null);
+  const [sponsorPackageMutatingId, setSponsorPackageMutatingId] = useState<string | null>(null);
+  const [sponsorPackageNoteSavingId, setSponsorPackageNoteSavingId] = useState<string | null>(null);
+  const [sponsorPackageOpsMessage, setSponsorPackageOpsMessage] =
+    useState<PoolSaveMessage>(null);
 
   const readiness = useMemo(() => buildLootboxStudioReadiness(), []);
   const selectedReadiness =
@@ -296,6 +354,38 @@ export default function LootboxesPage() {
     }
 
     loadLootboxActivity();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSponsorPackages() {
+      setSponsorPackageLoading(true);
+
+      try {
+        const rows = await fetchSponsorPackagesRead();
+        if (!cancelled) {
+          setSponsorPackages(rows);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSponsorPackageOpsMessage({
+            tone: "error",
+            text: error instanceof Error ? error.message : "Sponsor package read failed.",
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setSponsorPackageLoading(false);
+        }
+      }
+    }
+
+    loadSponsorPackages();
 
     return () => {
       cancelled = true;
@@ -450,6 +540,213 @@ export default function LootboxesPage() {
       });
     } finally {
       setPackageActionCopyId(null);
+    }
+  }
+
+  async function refreshSponsorPackages() {
+    const rows = await fetchSponsorPackagesRead();
+    setSponsorPackages(rows);
+    return rows;
+  }
+
+  async function saveSponsorPackage(pack: LootboxSponsoredPackageActionPack) {
+    if (sponsorPackageSavingId) {
+      return;
+    }
+
+    const campaign = campaigns.find((item) => item.id === pack.campaignId);
+    const project = campaign ? projects.find((item) => item.id === campaign.projectId) : null;
+    const request = buildLootboxSponsorPackageCreateRequest({
+      pack,
+      campaign: campaign
+        ? {
+            id: campaign.id,
+            projectId: campaign.projectId,
+            title: campaign.title,
+            status: campaign.status,
+            visibility: campaign.visibility,
+            rewardPoolAmount: campaign.rewardPoolAmount,
+            participants: campaign.participants,
+            completionRate: campaign.completionRate,
+          }
+        : null,
+      project: project
+        ? {
+            id: project.id,
+            name: project.name,
+            slug: project.slug,
+          }
+        : null,
+    });
+
+    if (!request.ok) {
+      setSponsorPackageOpsMessage({ tone: "error", text: request.error });
+      return;
+    }
+
+    setSponsorPackageSavingId(pack.campaignId);
+    setSponsorPackageOpsMessage({ tone: "default", text: "Saving sponsor package..." });
+
+    try {
+      const response = await fetch("/api/lootboxes/sponsor-packages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(request.payload),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? "Sponsor package save failed.");
+      }
+
+      await refreshSponsorPackages();
+      setSponsorPackageOpsMessage({
+        tone: "success",
+        text: "Sponsor package saved to the operator board.",
+      });
+    } catch (error) {
+      setSponsorPackageOpsMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Sponsor package save failed.",
+      });
+    } finally {
+      setSponsorPackageSavingId(null);
+    }
+  }
+
+  async function patchSponsorPackage(
+    id: string,
+    patch: Partial<{
+      status: LootboxSponsorPackageStatus;
+      ownerAuthUserId: string | null;
+      followUpAt: string | null;
+    }>,
+    successText: string
+  ) {
+    if (sponsorPackageMutatingId) {
+      return;
+    }
+
+    setSponsorPackageMutatingId(id);
+    setSponsorPackageOpsMessage({ tone: "default", text: "Updating sponsor package..." });
+
+    try {
+      const response = await fetch(`/api/lootboxes/sponsor-packages/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(patch),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? "Sponsor package update failed.");
+      }
+
+      await refreshSponsorPackages();
+      setSponsorPackageOpsMessage({ tone: "success", text: successText });
+    } catch (error) {
+      setSponsorPackageOpsMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Sponsor package update failed.",
+      });
+    } finally {
+      setSponsorPackageMutatingId(null);
+    }
+  }
+
+  async function claimSponsorPackageOwner(id: string) {
+    if (!authUserId) {
+      setSponsorPackageOpsMessage({
+        tone: "error",
+        text: "Current admin session is missing an auth user id.",
+      });
+      return;
+    }
+
+    await patchSponsorPackage(
+      id,
+      { ownerAuthUserId: authUserId },
+      "Sponsor package owner claimed."
+    );
+  }
+
+  async function updateSponsorPackageFollowUp(id: string, value: string | null) {
+    const date = value ? new Date(value) : null;
+    if (date && Number.isNaN(date.getTime())) {
+      setSponsorPackageOpsMessage({
+        tone: "error",
+        text: "Follow-up date is invalid.",
+      });
+      return;
+    }
+
+    const followUpAt = date ? date.toISOString() : null;
+    await patchSponsorPackage(
+      id,
+      { followUpAt },
+      followUpAt ? "Sponsor package follow-up saved." : "Sponsor package follow-up cleared."
+    );
+  }
+
+  async function addSponsorPackageNote(
+    id: string,
+    note: string,
+    noteType: LootboxSponsorPackageNoteType,
+    followUpAt: string | null
+  ) {
+    if (sponsorPackageNoteSavingId) {
+      return false;
+    }
+
+    setSponsorPackageNoteSavingId(id);
+    setSponsorPackageOpsMessage({ tone: "default", text: "Saving sponsor package note..." });
+
+    try {
+      const date = followUpAt ? new Date(followUpAt) : null;
+      if (date && Number.isNaN(date.getTime())) {
+        throw new Error("Follow-up date is invalid.");
+      }
+
+      const response = await fetch(`/api/lootboxes/sponsor-packages/${id}/notes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          note,
+          noteType,
+          followUpAt: date ? date.toISOString() : null,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? "Sponsor package note failed.");
+      }
+
+      setSponsorPackageOpsMessage({
+        tone: "success",
+        text: "Sponsor package note saved.",
+      });
+      return true;
+    } catch (error) {
+      setSponsorPackageOpsMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Sponsor package note failed.",
+      });
+      return false;
+    } finally {
+      setSponsorPackageNoteSavingId(null);
     }
   }
 
@@ -620,7 +917,24 @@ export default function LootboxesPage() {
               read={sponsoredPackageActionDesk}
               copyingId={packageActionCopyId}
               message={packageActionMessage}
+              sponsorPackages={sponsorPackages}
+              savingId={sponsorPackageSavingId}
               onCopy={copyPackageActionText}
+              onSavePackage={saveSponsorPackage}
+            />
+            <SponsoredPackageOpsPanel
+              packages={sponsorPackages}
+              loading={sponsorPackageLoading}
+              message={sponsorPackageOpsMessage}
+              currentAuthUserId={authUserId}
+              mutatingId={sponsorPackageMutatingId}
+              noteSavingId={sponsorPackageNoteSavingId}
+              onStatusChange={(id, status) =>
+                patchSponsorPackage(id, { status }, "Sponsor package status updated.")
+              }
+              onOwnerClaim={claimSponsorPackageOwner}
+              onFollowUpChange={updateSponsorPackageFollowUp}
+              onNoteAdd={addSponsorPackageNote}
             />
             <SponsoredPackageStatusBoardPanel read={sponsoredPackageStatusBoard} />
             <SponsoredPackagePersistencePanel read={sponsoredPackagePersistence} />
@@ -1223,12 +1537,18 @@ function SponsoredPackageActionDeskPanel({
   read,
   copyingId,
   message,
+  sponsorPackages,
+  savingId,
   onCopy,
+  onSavePackage,
 }: {
   read: ReturnType<typeof buildLootboxSponsoredPackageActionDesk>;
   copyingId: string | null;
   message: PoolSaveMessage;
+  sponsorPackages: SponsorPackageApiRow[];
+  savingId: string | null;
   onCopy: (id: string, text: string, successText: string) => void;
+  onSavePackage: (pack: LootboxSponsoredPackageActionPack) => void;
 }) {
   const recommendedPack = read.recommendedPack;
 
@@ -1270,8 +1590,11 @@ function SponsoredPackageActionDeskPanel({
           {recommendedPack ? (
             <SponsorPackageCommandCard
               pack={recommendedPack}
+              savedPackage={getSponsorPackageForPack(sponsorPackages, recommendedPack)}
+              saving={savingId === recommendedPack.campaignId}
               copyingId={copyingId}
               onCopy={onCopy}
+              onSavePackage={onSavePackage}
             />
           ) : (
             <div className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
@@ -1283,7 +1606,13 @@ function SponsoredPackageActionDeskPanel({
           <div className="grid gap-2">
             {read.packs.length ? (
               read.packs.slice(0, 5).map((pack) => (
-                <SponsorPackageActionRow key={pack.campaignId} pack={pack} />
+                <SponsorPackageActionRow
+                  key={pack.campaignId}
+                  pack={pack}
+                  savedPackage={getSponsorPackageForPack(sponsorPackages, pack)}
+                  saving={savingId === pack.campaignId}
+                  onSavePackage={onSavePackage}
+                />
               ))
             ) : (
               <div className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
@@ -1299,12 +1628,18 @@ function SponsoredPackageActionDeskPanel({
 
 function SponsorPackageCommandCard({
   pack,
+  savedPackage,
+  saving,
   copyingId,
   onCopy,
+  onSavePackage,
 }: {
   pack: LootboxSponsoredPackageActionPack;
+  savedPackage: SponsorPackageApiRow | null;
+  saving: boolean;
   copyingId: string | null;
   onCopy: (id: string, text: string, successText: string) => void;
+  onSavePackage: (pack: LootboxSponsoredPackageActionPack) => void;
 }) {
   const sponsorCopyAction = pack.actions.find((action) => action.id === "copy_sponsor_brief");
   const auditNoteAction = pack.actions.find((action) => action.id === "copy_audit_note");
@@ -1376,6 +1711,22 @@ function SponsorPackageCommandCard({
           }
         />
       </div>
+
+      <button
+        type="button"
+        disabled={Boolean(savedPackage) || saving}
+        onClick={() => onSavePackage(pack)}
+        className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[14px] border px-3 py-2.5 text-[10px] font-black uppercase tracking-[0.12em] transition ${
+          savedPackage
+            ? "cursor-default border-emerald-300/16 bg-emerald-300/[0.055] text-emerald-100"
+            : saving
+              ? "cursor-wait border-white/[0.018] bg-white/[0.012] text-sub"
+              : "border-primary/22 bg-primary text-black shadow-[0_18px_42px_rgba(186,255,59,0.14)] hover:brightness-110"
+        }`}
+      >
+        <Save size={14} />
+        {savedPackage ? `Saved as ${savedPackage.status?.replace(/_/g, " ") ?? "package"}` : saving ? "Saving package" : "Save package"}
+      </button>
     </article>
   );
 }
@@ -1413,7 +1764,17 @@ function SponsorPackageCopyButton({
   );
 }
 
-function SponsorPackageActionRow({ pack }: { pack: LootboxSponsoredPackageActionPack }) {
+function SponsorPackageActionRow({
+  pack,
+  savedPackage,
+  saving,
+  onSavePackage,
+}: {
+  pack: LootboxSponsoredPackageActionPack;
+  savedPackage: SponsorPackageApiRow | null;
+  saving: boolean;
+  onSavePackage: (pack: LootboxSponsoredPackageActionPack) => void;
+}) {
   return (
     <article
       className={`rounded-[18px] border p-3 ${getPackageActionBorderClass(pack.actionState)}`}
@@ -1430,6 +1791,34 @@ function SponsorPackageActionRow({ pack }: { pack: LootboxSponsoredPackageAction
         <OpsStatusPill tone={getPackageActionStateTone(pack.actionState)}>
           {pack.actionState}
         </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[13px] border border-white/[0.014] bg-black/15 px-2.5 py-2">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.14em] text-sub">
+            Persistence
+          </p>
+          <p className="mt-1 text-[10px] leading-4 text-sub">
+            {savedPackage
+              ? `Saved as ${savedPackage.status?.replace(/_/g, " ") ?? "package"}`
+              : "Ready to persist into sponsor ops."}
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={Boolean(savedPackage) || saving}
+          onClick={() => onSavePackage(pack)}
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] transition ${
+            savedPackage
+              ? "cursor-default border-emerald-300/16 bg-emerald-300/[0.055] text-emerald-100"
+              : saving
+                ? "cursor-wait border-white/[0.018] bg-white/[0.012] text-sub"
+                : "border-primary/20 bg-primary/[0.08] text-primary hover:border-primary/34 hover:bg-primary/[0.13]"
+          }`}
+        >
+          <Save size={12} />
+          {savedPackage ? "Saved" : saving ? "Saving" : "Save"}
+        </button>
       </div>
 
       <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
@@ -1458,6 +1847,279 @@ function SponsorPackageActionRow({ pack }: { pack: LootboxSponsoredPackageAction
           </div>
         ))}
       </div>
+    </article>
+  );
+}
+
+function SponsoredPackageOpsPanel({
+  packages,
+  loading,
+  message,
+  currentAuthUserId,
+  mutatingId,
+  noteSavingId,
+  onStatusChange,
+  onOwnerClaim,
+  onFollowUpChange,
+  onNoteAdd,
+}: {
+  packages: SponsorPackageApiRow[];
+  loading: boolean;
+  message: PoolSaveMessage;
+  currentAuthUserId: string | null;
+  mutatingId: string | null;
+  noteSavingId: string | null;
+  onStatusChange: (id: string, status: LootboxSponsorPackageStatus) => void;
+  onOwnerClaim: (id: string) => void;
+  onFollowUpChange: (id: string, followUpAt: string | null) => void;
+  onNoteAdd: (
+    id: string,
+    note: string,
+    noteType: LootboxSponsorPackageNoteType,
+    followUpAt: string | null
+  ) => Promise<boolean>;
+}) {
+  const activePackages = packages.filter(
+    (row) => row.status !== "won" && row.status !== "lost" && row.status !== "archived"
+  );
+  const ownedByYou = packages.filter((row) => row.owner_auth_user_id === currentAuthUserId).length;
+  const followUps = activePackages.filter((row) => Boolean(row.follow_up_at)).length;
+
+  return (
+    <OpsPanel
+      eyebrow="Phase 2E-N"
+      title="Sponsor package ops"
+      description="Persisted sponsor packages can now be owned, followed up, moved through sponsor status and annotated from the lootbox control room."
+      action={
+        <OpsStatusPill tone={packages.length > 0 ? "success" : "warning"}>
+          {packages.length} saved
+        </OpsStatusPill>
+      }
+    >
+      <div className="grid gap-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+          <MiniRead label="Saved" value={`${packages.length}`} />
+          <MiniRead label="Active" value={`${activePackages.length}`} />
+          <MiniRead label="Owned by you" value={`${ownedByYou}`} />
+          <MiniRead label="Follow-ups" value={`${followUps}`} />
+          <MiniRead label="Scope" value="Sponsor only" />
+        </div>
+
+        {message ? <PoolSaveNotice message={message} /> : null}
+
+        {loading ? (
+          <div className="grid gap-2 lg:grid-cols-2">
+            <ActivitySkeleton />
+            <ActivitySkeleton />
+          </div>
+        ) : packages.length ? (
+          <div className="grid gap-3 xl:grid-cols-2">
+            {packages.slice(0, 6).map((row) => (
+              <SponsorPackageOpsRow
+                key={row.id}
+                row={row}
+                currentAuthUserId={currentAuthUserId}
+                mutating={mutatingId === row.id}
+                noteSaving={noteSavingId === row.id}
+                onStatusChange={onStatusChange}
+                onOwnerClaim={onOwnerClaim}
+                onFollowUpChange={onFollowUpChange}
+                onNoteAdd={onNoteAdd}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
+            Save a sponsor package from the action desk to start the operator lane.
+          </div>
+        )}
+      </div>
+    </OpsPanel>
+  );
+}
+
+function SponsorPackageOpsRow({
+  row,
+  currentAuthUserId,
+  mutating,
+  noteSaving,
+  onStatusChange,
+  onOwnerClaim,
+  onFollowUpChange,
+  onNoteAdd,
+}: {
+  row: SponsorPackageApiRow;
+  currentAuthUserId: string | null;
+  mutating: boolean;
+  noteSaving: boolean;
+  onStatusChange: (id: string, status: LootboxSponsorPackageStatus) => void;
+  onOwnerClaim: (id: string) => void;
+  onFollowUpChange: (id: string, followUpAt: string | null) => void;
+  onNoteAdd: (
+    id: string,
+    note: string,
+    noteType: LootboxSponsorPackageNoteType,
+    followUpAt: string | null
+  ) => Promise<boolean>;
+}) {
+  const [followUpInput, setFollowUpInput] = useState(toDateTimeLocalValue(row.follow_up_at));
+  const [note, setNote] = useState("");
+  const [noteType, setNoteType] = useState<LootboxSponsorPackageNoteType>("operator_note");
+  const campaignTitle = getSponsorPackageSnapshotText(row, "campaignTitle", row.campaign_id ?? "Campaign");
+  const projectName = getSponsorPackageSnapshotText(row, "projectName", "Workspace");
+  const ownerIsCurrentAdmin =
+    Boolean(currentAuthUserId) && row.owner_auth_user_id === currentAuthUserId;
+
+  useEffect(() => {
+    setFollowUpInput(toDateTimeLocalValue(row.follow_up_at));
+  }, [row.follow_up_at]);
+
+  async function submitNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const saved = await onNoteAdd(row.id, note, noteType, followUpInput || null);
+
+    if (saved) {
+      setNote("");
+    }
+  }
+
+  return (
+    <article className="rounded-[18px] border border-white/[0.018] bg-[linear-gradient(180deg,rgba(12,15,21,0.92),rgba(7,9,14,0.94))] p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <OpsStatusPill tone={getSponsorPackageStatusTone(row.status)}>
+              {(row.status ?? "draft").replace(/_/g, " ")}
+            </OpsStatusPill>
+            <OpsStatusPill tone={getPackageTierTone((row.package_tier ?? "starter") as LootboxSponsoredPackageTier)}>
+              {row.package_tier ?? "package"}
+            </OpsStatusPill>
+          </div>
+          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+            {projectName}
+          </p>
+          <h3 className="mt-1.5 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+            {campaignTitle}
+          </h3>
+          <p className="mt-1 text-[10px] leading-4 text-sub">
+            Updated {formatSponsorPackageDate(row.updated_at)}
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={!currentAuthUserId || ownerIsCurrentAdmin || mutating}
+          onClick={() => onOwnerClaim(row.id)}
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] transition ${
+            ownerIsCurrentAdmin
+              ? "cursor-default border-emerald-300/16 bg-emerald-300/[0.055] text-emerald-100"
+              : "border-primary/18 bg-primary/[0.055] text-primary enabled:hover:border-primary/32 enabled:hover:bg-primary/[0.1] disabled:cursor-not-allowed disabled:opacity-50"
+          }`}
+        >
+          <UserCheck size={12} />
+          {ownerIsCurrentAdmin ? "Owned" : "Claim"}
+        </button>
+      </div>
+
+      <div className="mt-3 grid gap-1.5 sm:grid-cols-3">
+        {sponsorPackageStatusControls.map((status) => {
+          const disabled = mutating || row.status === status;
+
+          return (
+            <button
+              key={status}
+              type="button"
+              disabled={disabled}
+              onClick={() => onStatusChange(row.id, status)}
+              className={`rounded-full border px-2 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] transition ${
+                disabled
+                  ? "cursor-not-allowed border-white/[0.014] bg-white/[0.01] text-sub/45"
+                  : "border-white/[0.024] bg-white/[0.014] text-text hover:border-primary/28 hover:text-primary"
+              }`}
+            >
+              {status.replace(/_/g, " ")}
+            </button>
+          );
+        })}
+      </div>
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          onFollowUpChange(row.id, followUpInput || null);
+        }}
+        className="mt-3 rounded-[14px] border border-white/[0.014] bg-black/15 p-3"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.14em] text-primary">
+            <CalendarClock size={12} />
+            Follow-up
+          </span>
+          <span className="text-[9px] text-sub">
+            {row.follow_up_at ? formatSponsorPackageDate(row.follow_up_at) : "No date"}
+          </span>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <input
+            type="datetime-local"
+            value={followUpInput}
+            onChange={(event) => setFollowUpInput(event.target.value)}
+            className="min-w-[210px] flex-1 rounded-full border border-white/[0.018] bg-white/[0.012] px-3 py-2 text-[11px] font-semibold text-text outline-none focus:border-primary/22"
+            aria-label="Sponsor package follow-up date"
+          />
+          <button
+            type="submit"
+            disabled={mutating}
+            className="inline-flex items-center gap-1.5 rounded-full border border-primary/18 bg-primary/[0.07] px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-primary transition enabled:hover:border-primary/34 enabled:hover:bg-primary/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Save size={12} />
+            {mutating ? "Saving" : "Set"}
+          </button>
+        </div>
+      </form>
+
+      <form
+        onSubmit={submitNote}
+        className="mt-3 rounded-[14px] border border-white/[0.014] bg-black/15 p-3"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.14em] text-primary">
+            <ClipboardCheck size={12} />
+            Note
+          </span>
+          <select
+            value={noteType}
+            onChange={(event) => setNoteType(event.target.value as LootboxSponsorPackageNoteType)}
+            className="rounded-full border border-white/[0.018] bg-white/[0.012] px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.1em] text-text outline-none focus:border-primary/22"
+            aria-label="Sponsor package note type"
+          >
+            {lootboxSponsorPackageNoteTypes.map((type) => (
+              <option key={type} value={type}>
+                {type.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+        </div>
+        <textarea
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          maxLength={2000}
+          rows={3}
+          placeholder="Add sponsor follow-up context"
+          className="mt-2 min-h-[78px] w-full resize-none rounded-[13px] border border-white/[0.018] bg-white/[0.012] px-3 py-2 text-[11px] leading-5 text-text outline-none placeholder:text-sub/55 focus:border-primary/22"
+          aria-label="Sponsor package note"
+        />
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[9px] text-sub">{note.length}/2000</span>
+          <button
+            type="submit"
+            disabled={noteSaving || !note.trim()}
+            className="inline-flex items-center gap-1.5 rounded-full border border-primary/18 bg-primary text-black px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:border-white/[0.014] disabled:bg-white/[0.012] disabled:text-sub/45"
+          >
+            <Save size={12} />
+            {noteSaving ? "Saving" : "Save note"}
+          </button>
+        </div>
+      </form>
     </article>
   );
 }
@@ -3124,6 +3786,58 @@ function formatActivityDate(value: string) {
   });
 }
 
+function getSponsorPackageForPack(
+  packages: SponsorPackageApiRow[],
+  pack: LootboxSponsoredPackageActionPack
+) {
+  return (
+    packages.find(
+      (row) => row.campaign_id === pack.campaignId && row.package_tier === pack.packageTier
+    ) ?? null
+  );
+}
+
+function getSponsorPackageSnapshotText(
+  row: SponsorPackageApiRow,
+  key: string,
+  fallback: string
+) {
+  const value = row.package_snapshot?.[key];
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+function toDateTimeLocalValue(value: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function formatSponsorPackageDate(value: string | null) {
+  if (!value) {
+    return "not set";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "unknown";
+  }
+
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function toFulfillmentPolicyInput(
   row: LootboxInventoryCommandRow
 ): LootboxFulfillmentPolicyInput {
@@ -3244,6 +3958,24 @@ function getPackageActionStateTone(state: LootboxSponsoredPackageActionState) {
     case "prep":
       return "warning" as const;
     case "locked":
+    default:
+      return "default" as const;
+  }
+}
+
+function getSponsorPackageStatusTone(status: string | null) {
+  switch (status) {
+    case "ready_to_pitch":
+    case "won":
+      return "success" as const;
+    case "pitched":
+    case "negotiating":
+      return "warning" as const;
+    case "lost":
+    case "blocked":
+      return "danger" as const;
+    case "archived":
+    case "draft":
     default:
       return "default" as const;
   }
