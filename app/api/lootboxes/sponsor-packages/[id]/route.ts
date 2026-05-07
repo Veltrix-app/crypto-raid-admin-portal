@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabaseClient } from "@/lib/community/project-community-ops";
 import {
+  buildLootboxSponsorPackageDetailRead,
+  type LootboxSponsorPackageDetailAuditRow,
+  type LootboxSponsorPackageDetailNoteRow,
+  type LootboxSponsorPackageDetailPackageRow,
+} from "@/lib/lootboxes/lootbox-sponsored-package-operator";
+import {
   buildLootboxSponsorPackageAuditPayload,
   buildLootboxSponsorPackagePatchRow,
   isMissingLootboxSponsorPackageSchema,
@@ -68,6 +74,103 @@ async function getSponsorPackageAdmin(): Promise<SponsorPackageAdminResult> {
   }
 
   return { ok: true, authUserId: user.id, serviceSupabase };
+}
+
+export async function GET(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+
+    if (!id) {
+      return NextResponse.json({ ok: false, error: "Missing sponsor package id." }, { status: 400 });
+    }
+
+    const admin = await getSponsorPackageAdmin();
+    if (!admin.ok) {
+      return admin.response;
+    }
+
+    const packageResponse = await admin.serviceSupabase
+      .from("lootbox_sponsor_packages")
+      .select(
+        [
+          "id",
+          "project_id",
+          "campaign_id",
+          "package_tier",
+          "status",
+          "sponsor_name",
+          "sponsor_contact",
+          "sponsor_budget",
+          "currency",
+          "owner_auth_user_id",
+          "follow_up_at",
+          "last_contacted_at",
+          "package_snapshot",
+          "metadata",
+          "created_by_auth_user_id",
+          "created_at",
+          "updated_at",
+        ].join(", ")
+      )
+      .eq("id", id)
+      .maybeSingle();
+
+    if (packageResponse.error) {
+      const status = isMissingLootboxSponsorPackageSchema(packageResponse.error) ? 409 : 500;
+      return NextResponse.json({ ok: false, error: packageResponse.error.message }, { status });
+    }
+
+    if (!packageResponse.data) {
+      return NextResponse.json({ ok: false, error: "Sponsor package not found." }, { status: 404 });
+    }
+
+    const [notesResponse, auditResponse] = await Promise.all([
+      admin.serviceSupabase
+        .from("lootbox_sponsor_package_notes")
+        .select("id, sponsor_package_id, note_type, note, metadata, follow_up_at, created_by_auth_user_id, created_at")
+        .eq("sponsor_package_id", id)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      admin.serviceSupabase
+        .from("admin_audit_logs")
+        .select("id, auth_user_id, source_table, source_id, action, summary, metadata, created_at")
+        .eq("source_table", "lootbox_sponsor_packages")
+        .eq("source_id", id)
+        .order("created_at", { ascending: false })
+        .limit(50),
+    ]);
+
+    if (notesResponse.error || auditResponse.error) {
+      const error = notesResponse.error ?? auditResponse.error;
+      const status = isMissingLootboxSponsorPackageSchema(error) ? 409 : 500;
+      return NextResponse.json(
+        { ok: false, error: error?.message ?? "Sponsor package detail read failed." },
+        { status }
+      );
+    }
+
+    const detail = buildLootboxSponsorPackageDetailRead({
+      packageRow: packageResponse.data as unknown as LootboxSponsorPackageDetailPackageRow,
+      notes: (notesResponse.data ?? []) as unknown as LootboxSponsorPackageDetailNoteRow[],
+      auditEvents: (auditResponse.data ?? []) as unknown as LootboxSponsorPackageDetailAuditRow[],
+    });
+
+    return NextResponse.json({
+      ok: true,
+      detail,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Sponsor package detail read failed.",
+      },
+      { status: 500 }
+    );
+  }
 }
 
 export async function PATCH(

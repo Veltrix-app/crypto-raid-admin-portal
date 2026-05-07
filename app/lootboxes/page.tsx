@@ -105,7 +105,11 @@ import {
   type LootboxSponsoredPackageStatusBoardColumnId,
   type LootboxSponsoredPackageStatusBoardItem,
 } from "@/lib/lootboxes/lootbox-sponsored-package-status-board";
-import { buildLootboxSponsorPackageCreateRequest } from "@/lib/lootboxes/lootbox-sponsored-package-operator";
+import {
+  buildLootboxSponsorPackageCreateRequest,
+  type LootboxSponsorPackageDetailRead,
+  type LootboxSponsorPackageTimelineItem,
+} from "@/lib/lootboxes/lootbox-sponsored-package-operator";
 import {
   buildLootboxSponsoredPackagePersistenceReadiness,
   lootboxSponsorPackageNoteTypes,
@@ -177,6 +181,22 @@ async function fetchSponsorPackagesRead() {
   return payload.sponsorPackages;
 }
 
+async function fetchSponsorPackageDetailRead(id: string) {
+  const response = await fetch(`/api/lootboxes/sponsor-packages/${id}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | { ok?: boolean; error?: string; detail?: LootboxSponsorPackageDetailRead }
+    | null;
+
+  if (!response.ok || !payload?.ok || !payload.detail) {
+    throw new Error(payload?.error ?? "Sponsor package detail read failed.");
+  }
+
+  return payload.detail;
+}
+
 export default function LootboxesPage() {
   const authUserId = useAdminAuthStore((s) => s.authUserId);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
@@ -206,6 +226,10 @@ export default function LootboxesPage() {
   const [sponsorPackageSavingId, setSponsorPackageSavingId] = useState<string | null>(null);
   const [sponsorPackageMutatingId, setSponsorPackageMutatingId] = useState<string | null>(null);
   const [sponsorPackageNoteSavingId, setSponsorPackageNoteSavingId] = useState<string | null>(null);
+  const [selectedSponsorPackageId, setSelectedSponsorPackageId] = useState<string | null>(null);
+  const [sponsorPackageDetail, setSponsorPackageDetail] =
+    useState<LootboxSponsorPackageDetailRead | null>(null);
+  const [sponsorPackageDetailLoading, setSponsorPackageDetailLoading] = useState(false);
   const [sponsorPackageOpsMessage, setSponsorPackageOpsMessage] =
     useState<PoolSaveMessage>(null);
 
@@ -370,6 +394,24 @@ export default function LootboxesPage() {
         const rows = await fetchSponsorPackagesRead();
         if (!cancelled) {
           setSponsorPackages(rows);
+          const firstPackage = rows[0];
+          setSelectedSponsorPackageId(firstPackage?.id ?? null);
+
+          if (firstPackage) {
+            setSponsorPackageDetailLoading(true);
+            try {
+              const detail = await fetchSponsorPackageDetailRead(firstPackage.id);
+              if (!cancelled) {
+                setSponsorPackageDetail(detail);
+              }
+            } finally {
+              if (!cancelled) {
+                setSponsorPackageDetailLoading(false);
+              }
+            }
+          } else {
+            setSponsorPackageDetail(null);
+          }
         }
       } catch (error) {
         if (!cancelled) {
@@ -549,6 +591,23 @@ export default function LootboxesPage() {
     return rows;
   }
 
+  async function loadSponsorPackageDetail(id: string) {
+    setSelectedSponsorPackageId(id);
+    setSponsorPackageDetailLoading(true);
+
+    try {
+      const detail = await fetchSponsorPackageDetailRead(id);
+      setSponsorPackageDetail(detail);
+    } catch (error) {
+      setSponsorPackageOpsMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Sponsor package detail read failed.",
+      });
+    } finally {
+      setSponsorPackageDetailLoading(false);
+    }
+  }
+
   async function saveSponsorPackage(pack: LootboxSponsoredPackageActionPack) {
     if (sponsorPackageSavingId) {
       return;
@@ -603,7 +662,13 @@ export default function LootboxesPage() {
         throw new Error(payload?.error ?? "Sponsor package save failed.");
       }
 
-      await refreshSponsorPackages();
+      const rows = await refreshSponsorPackages();
+      const savedPackage = rows.find(
+        (row) => row.campaign_id === pack.campaignId && row.package_tier === pack.packageTier
+      );
+      if (savedPackage) {
+        await loadSponsorPackageDetail(savedPackage.id);
+      }
       setSponsorPackageOpsMessage({
         tone: "success",
         text: "Sponsor package saved to the operator board.",
@@ -651,6 +716,7 @@ export default function LootboxesPage() {
       }
 
       await refreshSponsorPackages();
+      await loadSponsorPackageDetail(id);
       setSponsorPackageOpsMessage({ tone: "success", text: successText });
     } catch (error) {
       setSponsorPackageOpsMessage({
@@ -738,6 +804,7 @@ export default function LootboxesPage() {
         tone: "success",
         text: "Sponsor package note saved.",
       });
+      await loadSponsorPackageDetail(id);
       return true;
     } catch (error) {
       setSponsorPackageOpsMessage({
@@ -926,9 +993,13 @@ export default function LootboxesPage() {
               packages={sponsorPackages}
               loading={sponsorPackageLoading}
               message={sponsorPackageOpsMessage}
+              selectedPackageId={selectedSponsorPackageId}
+              detail={sponsorPackageDetail}
+              detailLoading={sponsorPackageDetailLoading}
               currentAuthUserId={authUserId}
               mutatingId={sponsorPackageMutatingId}
               noteSavingId={sponsorPackageNoteSavingId}
+              onSelectPackage={loadSponsorPackageDetail}
               onStatusChange={(id, status) =>
                 patchSponsorPackage(id, { status }, "Sponsor package status updated.")
               }
@@ -1855,9 +1926,13 @@ function SponsoredPackageOpsPanel({
   packages,
   loading,
   message,
+  selectedPackageId,
+  detail,
+  detailLoading,
   currentAuthUserId,
   mutatingId,
   noteSavingId,
+  onSelectPackage,
   onStatusChange,
   onOwnerClaim,
   onFollowUpChange,
@@ -1866,9 +1941,13 @@ function SponsoredPackageOpsPanel({
   packages: SponsorPackageApiRow[];
   loading: boolean;
   message: PoolSaveMessage;
+  selectedPackageId: string | null;
+  detail: LootboxSponsorPackageDetailRead | null;
+  detailLoading: boolean;
   currentAuthUserId: string | null;
   mutatingId: string | null;
   noteSavingId: string | null;
+  onSelectPackage: (id: string) => void;
   onStatusChange: (id: string, status: LootboxSponsorPackageStatus) => void;
   onOwnerClaim: (id: string) => void;
   onFollowUpChange: (id: string, followUpAt: string | null) => void;
@@ -1908,25 +1987,30 @@ function SponsoredPackageOpsPanel({
         {message ? <PoolSaveNotice message={message} /> : null}
 
         {loading ? (
-          <div className="grid gap-2 lg:grid-cols-2">
+          <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr]">
             <ActivitySkeleton />
             <ActivitySkeleton />
           </div>
         ) : packages.length ? (
-          <div className="grid gap-3 xl:grid-cols-2">
-            {packages.slice(0, 6).map((row) => (
-              <SponsorPackageOpsRow
-                key={row.id}
-                row={row}
-                currentAuthUserId={currentAuthUserId}
-                mutating={mutatingId === row.id}
-                noteSaving={noteSavingId === row.id}
-                onStatusChange={onStatusChange}
-                onOwnerClaim={onOwnerClaim}
-                onFollowUpChange={onFollowUpChange}
-                onNoteAdd={onNoteAdd}
-              />
-            ))}
+          <div className="grid gap-3 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
+            <div className="grid gap-3">
+              {packages.slice(0, 6).map((row) => (
+                <SponsorPackageOpsRow
+                  key={row.id}
+                  row={row}
+                  selected={row.id === selectedPackageId}
+                  currentAuthUserId={currentAuthUserId}
+                  mutating={mutatingId === row.id}
+                  noteSaving={noteSavingId === row.id}
+                  onSelect={onSelectPackage}
+                  onStatusChange={onStatusChange}
+                  onOwnerClaim={onOwnerClaim}
+                  onFollowUpChange={onFollowUpChange}
+                  onNoteAdd={onNoteAdd}
+                />
+              ))}
+            </div>
+            <SponsorPackageDetailPanel detail={detail} loading={detailLoading} />
           </div>
         ) : (
           <div className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
@@ -1940,18 +2024,22 @@ function SponsoredPackageOpsPanel({
 
 function SponsorPackageOpsRow({
   row,
+  selected,
   currentAuthUserId,
   mutating,
   noteSaving,
+  onSelect,
   onStatusChange,
   onOwnerClaim,
   onFollowUpChange,
   onNoteAdd,
 }: {
   row: SponsorPackageApiRow;
+  selected: boolean;
   currentAuthUserId: string | null;
   mutating: boolean;
   noteSaving: boolean;
+  onSelect: (id: string) => void;
   onStatusChange: (id: string, status: LootboxSponsorPackageStatus) => void;
   onOwnerClaim: (id: string) => void;
   onFollowUpChange: (id: string, followUpAt: string | null) => void;
@@ -1984,7 +2072,11 @@ function SponsorPackageOpsRow({
   }
 
   return (
-    <article className="rounded-[18px] border border-white/[0.018] bg-[linear-gradient(180deg,rgba(12,15,21,0.92),rgba(7,9,14,0.94))] p-3">
+    <article
+      className={`rounded-[18px] border bg-[linear-gradient(180deg,rgba(12,15,21,0.92),rgba(7,9,14,0.94))] p-3 ${
+        selected ? "border-primary/24 shadow-[0_18px_48px_rgba(186,255,59,0.065)]" : "border-white/[0.018]"
+      }`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -2005,19 +2097,33 @@ function SponsorPackageOpsRow({
             Updated {formatSponsorPackageDate(row.updated_at)}
           </p>
         </div>
-        <button
-          type="button"
-          disabled={!currentAuthUserId || ownerIsCurrentAdmin || mutating}
-          onClick={() => onOwnerClaim(row.id)}
-          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] transition ${
-            ownerIsCurrentAdmin
-              ? "cursor-default border-emerald-300/16 bg-emerald-300/[0.055] text-emerald-100"
-              : "border-primary/18 bg-primary/[0.055] text-primary enabled:hover:border-primary/32 enabled:hover:bg-primary/[0.1] disabled:cursor-not-allowed disabled:opacity-50"
-          }`}
-        >
-          <UserCheck size={12} />
-          {ownerIsCurrentAdmin ? "Owned" : "Claim"}
-        </button>
+        <div className="flex shrink-0 flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => onSelect(row.id)}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] transition ${
+              selected
+                ? "border-primary/24 bg-primary/[0.08] text-primary"
+                : "border-white/[0.024] bg-white/[0.014] text-text hover:border-primary/24 hover:text-primary"
+            }`}
+          >
+            <History size={12} />
+            Timeline
+          </button>
+          <button
+            type="button"
+            disabled={!currentAuthUserId || ownerIsCurrentAdmin || mutating}
+            onClick={() => onOwnerClaim(row.id)}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] transition ${
+              ownerIsCurrentAdmin
+                ? "cursor-default border-emerald-300/16 bg-emerald-300/[0.055] text-emerald-100"
+                : "border-primary/18 bg-primary/[0.055] text-primary enabled:hover:border-primary/32 enabled:hover:bg-primary/[0.1] disabled:cursor-not-allowed disabled:opacity-50"
+            }`}
+          >
+            <UserCheck size={12} />
+            {ownerIsCurrentAdmin ? "Owned" : "Claim"}
+          </button>
+        </div>
       </div>
 
       <div className="mt-3 grid gap-1.5 sm:grid-cols-3">
@@ -2121,6 +2227,111 @@ function SponsorPackageOpsRow({
         </div>
       </form>
     </article>
+  );
+}
+
+function SponsorPackageDetailPanel({
+  detail,
+  loading,
+}: {
+  detail: LootboxSponsorPackageDetailRead | null;
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <section className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3">
+        <ActivitySkeleton />
+      </section>
+    );
+  }
+
+  if (!detail) {
+    return (
+      <section className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
+        Select a sponsor package to inspect notes, audit events and the next operator move.
+      </section>
+    );
+  }
+
+  const row = detail.package;
+  const projectName = getSponsorPackageSnapshotText(row, "projectName", "Workspace");
+  const campaignTitle = getSponsorPackageSnapshotText(row, "campaignTitle", row.campaign_id ?? "Campaign");
+
+  return (
+    <section className="rounded-[18px] border border-primary/16 bg-[linear-gradient(180deg,rgba(186,255,59,0.045),rgba(8,10,15,0.94))] p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Package detail
+          </p>
+          <h3 className="mt-2 break-words text-[15px] font-black text-text [overflow-wrap:anywhere]">
+            {campaignTitle}
+          </h3>
+          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-sub">
+            {projectName}
+          </p>
+        </div>
+        <OpsStatusPill tone={getSponsorPackageStatusTone(row.status)}>
+          {(row.status ?? "draft").replace(/_/g, " ")}
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <MiniRead label="Next action" value={detail.summary.nextAction} />
+        <MiniRead label="Notes" value={`${detail.summary.notes}`} />
+        <MiniRead label="Audit events" value={`${detail.summary.auditEvents}`} />
+      </div>
+
+      <div className="mt-3 rounded-[14px] border border-white/[0.016] bg-black/18 p-3">
+        <div className="flex items-center gap-2">
+          <History size={13} className="text-primary" />
+          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+            Timeline
+          </p>
+        </div>
+        <div className="mt-3 grid gap-2">
+          {detail.timeline.length ? (
+            detail.timeline.slice(0, 8).map((item) => (
+              <SponsorPackageTimelineItemRow key={`${item.kind}:${item.id}`} item={item} />
+            ))
+          ) : (
+            <p className="rounded-[12px] border border-white/[0.014] bg-white/[0.012] px-2.5 py-3 text-[10px] leading-4 text-sub">
+              No notes or audit events recorded yet.
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SponsorPackageTimelineItemRow({ item }: { item: LootboxSponsorPackageTimelineItem }) {
+  return (
+    <div className="rounded-[13px] border border-white/[0.014] bg-white/[0.012] px-2.5 py-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span
+              className={`rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] ${getTimelineToneClass(item.tone)}`}
+            >
+              {item.kind}
+            </span>
+            <span className="text-[9px] font-black uppercase tracking-[0.12em] text-sub">
+              {item.title}
+            </span>
+          </div>
+          <p className="mt-2 text-[10px] leading-4 text-sub">{item.detail}</p>
+          {item.followUpAt ? (
+            <p className="mt-1 text-[9px] font-semibold text-primary">
+              Follow-up {formatSponsorPackageDate(item.followUpAt)}
+            </p>
+          ) : null}
+        </div>
+        <span className="shrink-0 text-[9px] text-sub">
+          {formatSponsorPackageDate(item.createdAt)}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -3798,7 +4009,7 @@ function getSponsorPackageForPack(
 }
 
 function getSponsorPackageSnapshotText(
-  row: SponsorPackageApiRow,
+  row: { package_snapshot: Record<string, unknown> | null },
   key: string,
   fallback: string
 ) {
@@ -3978,6 +4189,20 @@ function getSponsorPackageStatusTone(status: string | null) {
     case "draft":
     default:
       return "default" as const;
+  }
+}
+
+function getTimelineToneClass(tone: LootboxSponsorPackageTimelineItem["tone"]) {
+  switch (tone) {
+    case "success":
+      return "border-emerald-300/16 bg-emerald-300/[0.055] text-emerald-100";
+    case "warning":
+      return "border-amber-300/16 bg-amber-300/[0.055] text-amber-100";
+    case "danger":
+      return "border-rose-300/16 bg-rose-300/[0.055] text-rose-100";
+    case "default":
+    default:
+      return "border-white/[0.018] bg-white/[0.012] text-sub";
   }
 }
 
