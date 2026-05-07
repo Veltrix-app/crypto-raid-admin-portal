@@ -168,6 +168,15 @@ type SponsorPackagePatchInput = Partial<{
   followUpAt: string | null;
   lastContactedAt: string | null;
 }>;
+type SponsorActivationRunApiPayload = {
+  ok?: boolean;
+  error?: string;
+  blockedBy?: string[];
+  activationRun?: {
+    runId: string;
+    title: string;
+  };
+};
 const sponsorPackageStatusControls: LootboxSponsorPackageStatus[] = [
   "ready_to_pitch",
   "pitched",
@@ -238,6 +247,7 @@ export default function LootboxesPage() {
   const [sponsorPackageSavingId, setSponsorPackageSavingId] = useState<string | null>(null);
   const [sponsorPackageMutatingId, setSponsorPackageMutatingId] = useState<string | null>(null);
   const [sponsorPackageNoteSavingId, setSponsorPackageNoteSavingId] = useState<string | null>(null);
+  const [sponsorActivationRunSavingId, setSponsorActivationRunSavingId] = useState<string | null>(null);
   const [selectedSponsorPackageId, setSelectedSponsorPackageId] = useState<string | null>(null);
   const [sponsorPackageDetail, setSponsorPackageDetail] =
     useState<LootboxSponsorPackageDetailRead | null>(null);
@@ -870,6 +880,46 @@ export default function LootboxesPage() {
     }
   }
 
+  async function stageSponsorActivationRun(id: string) {
+    if (sponsorActivationRunSavingId) {
+      return;
+    }
+
+    setSponsorActivationRunSavingId(id);
+    setSponsorPackageOpsMessage({ tone: "default", text: "Staging sponsor activation run..." });
+
+    try {
+      const response = await fetch(`/api/lootboxes/sponsor-packages/${id}/activation-run`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | SponsorActivationRunApiPayload
+        | null;
+
+      if (!response.ok || !payload?.ok || !payload.activationRun) {
+        const blockerText = payload?.blockedBy?.length
+          ? ` Blocking: ${payload.blockedBy.join(", ")}.`
+          : "";
+        throw new Error(`${payload?.error ?? "Sponsor activation run failed."}${blockerText}`);
+      }
+
+      await refreshSponsorPackages();
+      await loadSponsorPackageDetail(id);
+      setSponsorPackageOpsMessage({
+        tone: "success",
+        text: `${payload.activationRun.title} staged as an auditable manual run.`,
+      });
+    } catch (error) {
+      setSponsorPackageOpsMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Sponsor activation run failed.",
+      });
+    } finally {
+      setSponsorActivationRunSavingId(null);
+    }
+  }
+
   async function saveSelectedPoolDraft() {
     if (selectedDraft.summary.readiness !== "ready" || poolSaving) {
       return;
@@ -1065,7 +1115,9 @@ export default function LootboxesPage() {
             <SponsorActivationHandoffPanel
               read={sponsorActivationHandoff}
               copyingId={packageActionCopyId}
+              activationRunSavingId={sponsorActivationRunSavingId}
               onCopy={copyPackageActionText}
+              onStageRun={stageSponsorActivationRun}
             />
             <SponsoredPackageStatusBoardPanel read={sponsoredPackageStatusBoard} />
             <SponsoredPackagePersistencePanel read={sponsoredPackagePersistence} />
@@ -2733,17 +2785,21 @@ type SponsorActivationHandoff = SponsorActivationHandoffRead["handoffs"][number]
 function SponsorActivationHandoffPanel({
   read,
   copyingId,
+  activationRunSavingId,
   onCopy,
+  onStageRun,
 }: {
   read: SponsorActivationHandoffRead;
   copyingId: string | null;
+  activationRunSavingId: string | null;
   onCopy: (id: string, text: string, successText: string) => void;
+  onStageRun: (id: string) => void;
 }) {
   return (
     <OpsPanel
-      eyebrow="Phase 2F-G"
+      eyebrow="Phase 2F-I-A"
       title="Sponsor activation handoff"
-      description="Turn a won sponsor package into a clean manual activation and renewal plan: campaign route, shard pool, reward budget, performance proof and next sponsor follow-up stay visible before public delivery."
+      description="Turn a won sponsor package into a clean staged activation run: campaign route, shard pool, reward budget, performance proof and next sponsor follow-up stay visible before public delivery."
       action={
         <OpsStatusPill tone={read.summary.ready > 0 ? "success" : "warning"}>
           {read.summary.ready} ready
@@ -2771,7 +2827,9 @@ function SponsorActivationHandoffPanel({
                 activationCopying={copyingId === `activation-${handoff.packageId}`}
                 performanceCopying={copyingId === `performance-${handoff.packageId}`}
                 renewalCopying={copyingId === `renewal-${handoff.packageId}`}
+                activationRunSaving={activationRunSavingId === handoff.packageId}
                 onCopy={onCopy}
+                onStageRun={onStageRun}
               />
             ))}
           </div>
@@ -2845,13 +2903,17 @@ function SponsorActivationHandoffCard({
   activationCopying,
   performanceCopying,
   renewalCopying,
+  activationRunSaving,
   onCopy,
+  onStageRun,
 }: {
   handoff: SponsorActivationHandoff;
   activationCopying: boolean;
   performanceCopying: boolean;
   renewalCopying: boolean;
+  activationRunSaving: boolean;
   onCopy: (id: string, text: string, successText: string) => void;
+  onStageRun: (id: string) => void;
 }) {
   const copyText = `${handoff.brief.title}\n\n${handoff.brief.body}`;
   const performanceCopyText = `${handoff.performance.sponsorUpdate.title}\n\n${handoff.performance.sponsorUpdate.body}`;
@@ -3073,22 +3135,36 @@ function SponsorActivationHandoffCard({
             </p>
             <p className="mt-1 text-[10px] leading-4 text-sub">{handoff.nextAction}</p>
           </div>
-          <button
-            type="button"
-            disabled={activationCopying}
-            onClick={() =>
-              onCopy(
-                `activation-${handoff.packageId}`,
-                copyText,
-                "Activation handoff copied."
-              )
-            }
-            className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border border-primary/18 bg-primary/[0.07] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary transition enabled:hover:border-primary/34 enabled:hover:bg-primary/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Copy size={12} />
-            {activationCopying ? "Copying" : "Copy"}
-          </button>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={!handoff.execution.canLaunch || activationRunSaving}
+              onClick={() => onStageRun(handoff.packageId)}
+              className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-primary/24 bg-primary px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_28px_rgba(186,255,59,0.16)] transition enabled:hover:shadow-[0_18px_36px_rgba(186,255,59,0.22)] disabled:cursor-not-allowed disabled:border-white/[0.018] disabled:bg-white/[0.04] disabled:text-sub disabled:shadow-none"
+            >
+              <Send size={12} />
+              {activationRunSaving ? "Staging" : "Stage run"}
+            </button>
+            <button
+              type="button"
+              disabled={activationCopying}
+              onClick={() =>
+                onCopy(
+                  `activation-${handoff.packageId}`,
+                  copyText,
+                  "Activation handoff copied."
+                )
+              }
+              className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-primary/18 bg-primary/[0.07] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary transition enabled:hover:border-primary/34 enabled:hover:bg-primary/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Copy size={12} />
+              {activationCopying ? "Copying" : "Copy"}
+            </button>
+          </div>
         </div>
+        <p className="mt-2 rounded-[11px] border border-white/[0.012] bg-white/[0.01] px-2.5 py-2 text-[10px] leading-4 text-sub">
+          Stage run writes a decision note and audit event only. It does not trigger billing, payouts, reward inventory or public launch.
+        </p>
       </div>
     </article>
   );

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildLootboxSponsorActivationHandoffRead,
+  buildLootboxSponsorActivationRunRequest,
   buildLootboxSponsorPackageCreateRequest,
   buildLootboxSponsorPackageCrmRead,
   buildLootboxSponsorPackageDetailRead,
@@ -853,4 +854,140 @@ test("buildLootboxSponsorActivationHandoffRead adds sponsor renewal pipeline", (
   assert.equal(setup?.renewal.state, "not_ready");
   assert.equal(setup?.renewal.nextAction, "Finish activation setup before renewal outreach.");
   assert.deepEqual(setup?.renewal.blockedBy, ["Activation setup", "Sponsor performance"]);
+});
+
+test("buildLootboxSponsorActivationRunRequest stages only ready manual activation runs", () => {
+  const read = buildLootboxSponsorActivationHandoffRead({
+    now: "2026-05-10T10:00:00.000Z",
+    packages: [
+      {
+        id: "package-ready",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: basePack.campaignId,
+        package_tier: "premium",
+        status: "won",
+        sponsor_name: "Atlas Labs",
+        sponsor_contact: "atlas@labs.test",
+        sponsor_budget: 2500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-1",
+        follow_up_at: "2026-05-09T12:00:00.000Z",
+        last_contacted_at: "2026-05-07T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Holder Activation Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-setup",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: "33333333-3333-4333-8333-333333333333",
+        package_tier: "standard",
+        status: "won",
+        sponsor_name: "Beta Guild",
+        sponsor_contact: "beta@guild.test",
+        sponsor_budget: 900,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-2",
+        follow_up_at: null,
+        last_contacted_at: null,
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "No Pool Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-2",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+    ],
+    campaigns: [
+      {
+        id: basePack.campaignId,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "Holder Activation Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 500,
+        participants: 128,
+        completionRate: 42,
+      },
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "No Pool Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 300,
+        participants: 25,
+        completionRate: 18,
+      },
+    ],
+    projects: [
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "VYNTRO",
+        slug: "vyntro",
+      },
+    ],
+    shardPools: [
+      {
+        id: "pool-1",
+        campaignId: basePack.campaignId,
+        status: "active",
+        poolSize: 10_000,
+        remainingShards: 6_400,
+      },
+    ],
+  });
+
+  const ready = read.handoffs.find((handoff) => handoff.packageId === "package-ready");
+  const setup = read.handoffs.find((handoff) => handoff.packageId === "package-setup");
+  assert.ok(ready);
+  assert.ok(setup);
+
+  const run = buildLootboxSponsorActivationRunRequest({
+    handoff: ready,
+    now: "2026-05-10T12:00:00.000Z",
+  });
+  const blocked = buildLootboxSponsorActivationRunRequest({
+    handoff: setup,
+    now: "2026-05-10T12:00:00.000Z",
+  });
+
+  assert.equal(run.ok, true);
+  if (run.ok) {
+    assert.equal(run.activationRun.runId, "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z");
+    assert.equal(run.notePayload.noteType, "decision");
+    assert.match(run.notePayload.note, /Activation run staged for Atlas Labs/);
+    assert.match(run.notePayload.note, /no billing, payout, reward inventory or public launch was triggered/i);
+    assert.deepEqual(run.notePayload.metadata.guardrails, [
+      "Manual-only activation run.",
+      "No billing action was triggered.",
+      "No payout action was triggered.",
+      "No reward inventory was created or mutated.",
+      "No public campaign launch was triggered.",
+    ]);
+    assert.equal(run.audit.summary, "Staged manual activation run for Atlas Labs.");
+    assert.equal(run.audit.metadata.activationState, "ready");
+    assert.deepEqual(run.audit.metadata.metrics, {
+      activePools: 1,
+      linkedPools: 1,
+      poolSize: 10000,
+      remainingShards: 6400,
+      rewardBudget: 500,
+      participants: 128,
+      completionRate: 42,
+    });
+  }
+
+  assert.deepEqual(blocked, {
+    ok: false,
+    error: "Activation run can only be staged when the sponsor handoff is ready.",
+    blockedBy: ["Shard pool"],
+  });
 });

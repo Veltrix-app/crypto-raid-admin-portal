@@ -1,6 +1,7 @@
 import type { LootboxSponsoredPackageActionPack } from "./lootbox-sponsored-package-actions";
 import type {
   LootboxSponsorPackageCreatePayload,
+  LootboxSponsorPackageNotePayload,
   LootboxSponsorPackageStatus,
 } from "./lootbox-sponsored-package-persistence";
 
@@ -325,6 +326,116 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
 export type LootboxSponsorActivationHandoffRead = ReturnType<
   typeof buildLootboxSponsorActivationHandoffRead
 >;
+export type LootboxSponsorActivationHandoff =
+  LootboxSponsorActivationHandoffRead["handoffs"][number];
+
+export type LootboxSponsorActivationRunRequestResult =
+  | {
+      ok: true;
+      activationRun: {
+        runId: string;
+        sponsorPackageId: string;
+        campaignId: string | null;
+        projectId: string | null;
+        routeHref: string;
+        title: string;
+        stagedAt: string;
+        nextOperatorMoves: string[];
+        guardrails: string[];
+      };
+      notePayload: LootboxSponsorPackageNotePayload;
+      audit: {
+        action: "lootbox_sponsor_activation_run_staged";
+        summary: string;
+        metadata: Record<string, unknown>;
+      };
+    }
+  | { ok: false; error: string; blockedBy: string[] };
+
+export function buildLootboxSponsorActivationRunRequest(params: {
+  handoff: LootboxSponsorActivationHandoff;
+  now?: string | Date;
+}): LootboxSponsorActivationRunRequestResult {
+  if (!params.handoff.execution.canLaunch || params.handoff.activationState !== "ready") {
+    return {
+      ok: false,
+      error: "Activation run can only be staged when the sponsor handoff is ready.",
+      blockedBy: params.handoff.execution.blockedBy.length
+        ? params.handoff.execution.blockedBy
+        : ["Activation state"],
+    };
+  }
+
+  const stagedAt = toReferenceDate(params.now).toISOString();
+  const runId = `sponsor-activation:${params.handoff.packageId}:${stagedAt}`;
+  const guardrails = [
+    "Manual-only activation run.",
+    "No billing action was triggered.",
+    "No payout action was triggered.",
+    "No reward inventory was created or mutated.",
+    "No public campaign launch was triggered.",
+  ];
+  const nextOperatorMoves = [...params.handoff.execution.runbook];
+  const metrics = {
+    activePools: params.handoff.metrics.activePools,
+    linkedPools: params.handoff.metrics.linkedPools,
+    poolSize: params.handoff.metrics.poolSize,
+    remainingShards: params.handoff.metrics.remainingShards,
+    rewardBudget: params.handoff.metrics.rewardBudget,
+    participants: params.handoff.metrics.participants,
+    completionRate: params.handoff.metrics.completionRate,
+  };
+  const metadata = {
+    source: "lootbox_sponsor_activation_run",
+    runId,
+    stagedAt,
+    sponsorPackageId: params.handoff.packageId,
+    campaignId: params.handoff.campaignId,
+    projectId: params.handoff.projectId,
+    routeHref: params.handoff.routeHref,
+    activationState: params.handoff.activationState,
+    packageTier: params.handoff.packageTier,
+    sponsorName: params.handoff.sponsorName,
+    campaignTitle: params.handoff.campaignTitle,
+    executionPrimaryStepId: params.handoff.execution.primaryStepId,
+    executionStepIds: params.handoff.execution.steps.map((step) => step.id),
+    metrics,
+    guardrails,
+    noBillingAction: true,
+    noPayoutAction: true,
+    noRewardInventoryAction: true,
+    noPublicLaunchAction: true,
+  };
+
+  return {
+    ok: true,
+    activationRun: {
+      runId,
+      sponsorPackageId: params.handoff.packageId,
+      campaignId: params.handoff.campaignId,
+      projectId: params.handoff.projectId,
+      routeHref: params.handoff.routeHref,
+      title: `${params.handoff.sponsorName} activation run`,
+      stagedAt,
+      nextOperatorMoves,
+      guardrails,
+    },
+    notePayload: {
+      noteType: "decision",
+      note: buildSponsorActivationRunNote({
+        handoff: params.handoff,
+        nextOperatorMoves,
+      }),
+      followUpAt: null,
+      metadata,
+    },
+    audit: {
+      action: "lootbox_sponsor_activation_run_staged",
+      summary: `Staged manual activation run for ${params.handoff.sponsorName}.`,
+      metadata,
+    },
+  };
+}
 
 export function buildLootboxSponsorPackageCrmRead(
   row: LootboxSponsorPackageDetailPackageRow
@@ -1224,6 +1335,21 @@ function buildSponsorActivationBrief(params: {
     `Shard boost: ${params.poolSize.toLocaleString("en-US")} shard pool with ${params.remainingShards.toLocaleString("en-US")} remaining.`,
     `Next operator move: ${params.nextAction}`,
     "Manual-only guardrail: do not trigger billing, payouts or reward inventory from this handoff.",
+  ].join("\n");
+}
+
+function buildSponsorActivationRunNote(params: {
+  handoff: LootboxSponsorActivationHandoff;
+  nextOperatorMoves: string[];
+}) {
+  return [
+    `Activation run staged for ${params.handoff.sponsorName} / ${params.handoff.campaignTitle}.`,
+    `Route: ${params.handoff.routeHref}.`,
+    `Shard pool: ${params.handoff.metrics.poolSize.toLocaleString("en-US")} total, ${params.handoff.metrics.remainingShards.toLocaleString("en-US")} remaining.`,
+    `Reward budget: ${params.handoff.metrics.rewardBudget.toLocaleString("en-US")}.`,
+    "Next operator moves:",
+    ...params.nextOperatorMoves.map((move, index) => `${index + 1}. ${move}`),
+    "Guardrail: this stages an operator run only; no billing, payout, reward inventory or public launch was triggered.",
   ].join("\n");
 }
 
