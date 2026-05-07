@@ -504,3 +504,130 @@ test("buildLootboxSponsorActivationHandoffRead turns won packages into ready act
   );
   assert.equal(read.handoffs[1]?.nextAction, "Attach an active shard pool before activation.");
 });
+
+test("buildLootboxSponsorActivationHandoffRead adds the manual execution checklist", () => {
+  const read = buildLootboxSponsorActivationHandoffRead({
+    packages: [
+      {
+        id: "package-ready",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: basePack.campaignId,
+        package_tier: "premium",
+        status: "won",
+        sponsor_name: "Atlas Labs",
+        sponsor_contact: "atlas@labs.test",
+        sponsor_budget: 2500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-1",
+        follow_up_at: "2026-05-09T12:00:00.000Z",
+        last_contacted_at: "2026-05-07T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Holder Activation Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-setup",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: "33333333-3333-4333-8333-333333333333",
+        package_tier: "standard",
+        status: "won",
+        sponsor_name: "Beta Guild",
+        sponsor_contact: "beta@guild.test",
+        sponsor_budget: 900,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-2",
+        follow_up_at: null,
+        last_contacted_at: null,
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "No Pool Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-2",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+    ],
+    campaigns: [
+      {
+        id: basePack.campaignId,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "Holder Activation Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 500,
+        participants: 128,
+        completionRate: 42,
+      },
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "No Pool Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 300,
+        participants: 25,
+        completionRate: 18,
+      },
+    ],
+    projects: [
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "VYNTRO",
+        slug: "vyntro",
+      },
+    ],
+    shardPools: [
+      {
+        id: "pool-1",
+        campaignId: basePack.campaignId,
+        status: "active",
+        poolSize: 10_000,
+        remainingShards: 6_400,
+      },
+    ],
+  });
+
+  const ready = read.handoffs[0];
+  const setup = read.handoffs[1];
+
+  assert.equal(ready?.execution.canLaunch, true);
+  assert.equal(ready?.execution.primaryStepId, "stage_activation_brief");
+  assert.deepEqual(ready?.execution.blockedBy, []);
+  assert.deepEqual(
+    ready?.execution.steps.map((step) => `${step.id}:${step.state}`),
+    [
+      "stage_activation_brief:ready",
+      "confirm_campaign_route:ready",
+      "verify_shard_pool:ready",
+      "lock_reward_budget:ready",
+      "assign_owner:ready",
+      "monitor_launch:ready",
+    ]
+  );
+  assert.deepEqual(ready?.execution.runbook, [
+    "Copy the activation brief into the internal launch thread.",
+    "Confirm campaign route, shard pool, reward budget and owner one final time.",
+    "Start the sponsored activation manually and monitor first-hour shard depletion.",
+  ]);
+
+  assert.equal(setup?.execution.canLaunch, false);
+  assert.equal(setup?.execution.primaryStepId, "verify_shard_pool");
+  assert.deepEqual(setup?.execution.blockedBy, ["Shard pool"]);
+  assert.deepEqual(
+    setup?.execution.steps.map((step) => `${step.id}:${step.state}`),
+    [
+      "stage_activation_brief:ready",
+      "confirm_campaign_route:ready",
+      "verify_shard_pool:action_needed",
+      "lock_reward_budget:ready",
+      "assign_owner:ready",
+      "monitor_launch:blocked",
+    ]
+  );
+});

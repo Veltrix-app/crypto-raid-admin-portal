@@ -2814,6 +2814,25 @@ function SponsorActivationFocusCard({ handoff }: { handoff: SponsorActivationHan
         <MiniRead label="Reward budget" value={handoff.metrics.rewardBudget.toLocaleString("en-US")} />
         <MiniRead label="Campaign" value={handoff.campaignTitle} />
       </div>
+      <div className="mt-3 rounded-[14px] border border-white/[0.016] bg-black/18 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+            Execution
+          </p>
+          <OpsStatusPill tone={handoff.execution.canLaunch ? "success" : "warning"}>
+            {handoff.execution.label}
+          </OpsStatusPill>
+        </div>
+        {handoff.execution.blockedBy.length ? (
+          <p className="mt-2 text-[10px] leading-4 text-sub">
+            Blocking: {handoff.execution.blockedBy.join(", ")}
+          </p>
+        ) : (
+          <p className="mt-2 text-[10px] leading-4 text-sub">
+            Manual launch can start once the activation brief is staged.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -2879,6 +2898,45 @@ function SponsorActivationHandoffCard({
             <p className="mt-1 text-[10px] leading-4">{item.detail}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mt-3 rounded-[14px] border border-white/[0.014] bg-black/18 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+            Execution checklist
+          </p>
+          <span className="text-[8px] font-black uppercase tracking-[0.12em] text-sub">
+            {handoff.execution.primaryStepId.replace(/_/g, " ")}
+          </span>
+        </div>
+        <div className="mt-3 grid gap-1.5">
+          {handoff.execution.steps.map((step) => (
+            <div
+              key={step.id}
+              className={`rounded-[12px] border px-2.5 py-2 ${getSponsorActivationExecutionStepClass(step.state)}`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[8px] font-black uppercase tracking-[0.12em]">
+                  {step.label}
+                </span>
+                <span className="text-[8px] font-black uppercase tracking-[0.12em]">
+                  {step.state.replace(/_/g, " ")}
+                </span>
+              </div>
+              <p className="mt-1 text-[10px] leading-4">{step.detail}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 grid gap-1.5">
+          {handoff.execution.runbook.map((item) => (
+            <p
+              key={item}
+              className="rounded-[11px] border border-white/[0.012] bg-white/[0.01] px-2.5 py-2 text-[10px] leading-4 text-sub"
+            >
+              {item}
+            </p>
+          ))}
+        </div>
       </div>
 
       <div className="mt-3 rounded-[14px] border border-white/[0.014] bg-black/18 p-3">
@@ -4810,6 +4868,20 @@ function getSponsorActivationChecklistClass(state: "ready" | "missing" | "locked
     case "locked":
       return "border-white/[0.018] bg-white/[0.012] text-sub";
     case "missing":
+    default:
+      return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
+  }
+}
+
+function getSponsorActivationExecutionStepClass(
+  state: SponsorActivationHandoff["execution"]["steps"][number]["state"]
+) {
+  switch (state) {
+    case "ready":
+      return "border-emerald-300/16 bg-emerald-300/[0.05] text-emerald-100";
+    case "blocked":
+      return "border-white/[0.018] bg-white/[0.012] text-sub";
+    case "action_needed":
     default:
       return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
   }

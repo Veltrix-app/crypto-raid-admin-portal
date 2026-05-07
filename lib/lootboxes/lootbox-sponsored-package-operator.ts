@@ -114,6 +114,21 @@ export type LootboxSponsorActivationChecklistItem = {
   detail: string;
 };
 
+export type LootboxSponsorActivationExecutionStepId =
+  | "stage_activation_brief"
+  | "confirm_campaign_route"
+  | "verify_shard_pool"
+  | "lock_reward_budget"
+  | "assign_owner"
+  | "monitor_launch";
+
+export type LootboxSponsorActivationExecutionStep = {
+  id: LootboxSponsorActivationExecutionStepId;
+  label: string;
+  state: "ready" | "action_needed" | "blocked";
+  detail: string;
+};
+
 const sponsorCrmStages = [
   {
     id: "ready_to_pitch",
@@ -438,6 +453,10 @@ function buildSponsorActivationHandoff(params: {
     rewardBudgetReady,
     ownerReady,
   });
+  const execution = buildSponsorActivationExecution({
+    activationState,
+    checklist,
+  });
   const projectName =
     project?.name ?? getSnapshotText(row, "projectName", row.project_id ?? "Workspace");
   const campaignTitle =
@@ -468,6 +487,7 @@ function buildSponsorActivationHandoff(params: {
       completionRate: Math.max(0, Number(campaign?.completionRate ?? 0)),
     },
     checklist,
+    execution,
     brief: {
       title: `${sponsorName} x ${projectName} activation handoff`,
       body: buildSponsorActivationBrief({
@@ -549,6 +569,104 @@ function getSponsorActivationNextAction(
     default:
       return "Review activation setup before launch.";
   }
+}
+
+function buildSponsorActivationExecution(params: {
+  activationState: LootboxSponsorActivationState;
+  checklist: LootboxSponsorActivationChecklistItem[];
+}) {
+  const checklistById = new Map(params.checklist.map((item) => [item.id, item]));
+  const canLaunch = params.activationState === "ready";
+  const blockedBy = params.checklist
+    .filter((item) => item.state !== "ready")
+    .map((item) => item.label);
+  const primaryStepId = canLaunch
+    ? "stage_activation_brief"
+    : getPrimaryActivationExecutionStep(params.checklist);
+  const steps: LootboxSponsorActivationExecutionStep[] = [
+    {
+      id: "stage_activation_brief",
+      label: "Stage activation brief",
+      state: toExecutionStepState(checklistById.get("sponsor_win")),
+      detail: "Copy the sponsor activation brief into the internal launch thread.",
+    },
+    {
+      id: "confirm_campaign_route",
+      label: "Confirm campaign route",
+      state: toExecutionStepState(checklistById.get("campaign_route")),
+      detail: "Verify the campaign is public and active or scheduled before launch.",
+    },
+    {
+      id: "verify_shard_pool",
+      label: "Verify shard pool",
+      state: toExecutionStepState(checklistById.get("shard_pool")),
+      detail: "Confirm the sponsored shard pool is active, finite and has remaining shards.",
+    },
+    {
+      id: "lock_reward_budget",
+      label: "Lock reward budget",
+      state: toExecutionStepState(checklistById.get("reward_budget")),
+      detail: "Confirm visible reward budget and fulfillment posture before public pressure.",
+    },
+    {
+      id: "assign_owner",
+      label: "Assign operator owner",
+      state: toExecutionStepState(checklistById.get("owner")),
+      detail: "Keep one internal owner accountable for sponsor launch and follow-up.",
+    },
+    {
+      id: "monitor_launch",
+      label: "Monitor launch window",
+      state: canLaunch ? "ready" : "blocked",
+      detail: "Watch first-hour shard depletion, member activity and support pressure.",
+    },
+  ];
+
+  return {
+    canLaunch,
+    label: canLaunch ? "Ready for manual launch" : "Finish activation setup",
+    primaryStepId,
+    blockedBy,
+    steps,
+    runbook: [
+      "Copy the activation brief into the internal launch thread.",
+      "Confirm campaign route, shard pool, reward budget and owner one final time.",
+      "Start the sponsored activation manually and monitor first-hour shard depletion.",
+    ],
+  };
+}
+
+function getPrimaryActivationExecutionStep(
+  checklist: LootboxSponsorActivationChecklistItem[]
+): LootboxSponsorActivationExecutionStepId {
+  const firstMissing = checklist.find((item) => item.state !== "ready");
+  switch (firstMissing?.id) {
+    case "campaign_route":
+      return "confirm_campaign_route";
+    case "shard_pool":
+      return "verify_shard_pool";
+    case "reward_budget":
+      return "lock_reward_budget";
+    case "owner":
+      return "assign_owner";
+    case "sponsor_win":
+    default:
+      return "stage_activation_brief";
+  }
+}
+
+function toExecutionStepState(
+  item: LootboxSponsorActivationChecklistItem | undefined
+): LootboxSponsorActivationExecutionStep["state"] {
+  if (!item || item.state === "missing") {
+    return "action_needed";
+  }
+
+  if (item.state === "locked") {
+    return "blocked";
+  }
+
+  return "ready";
 }
 
 function buildSponsorActivationBrief(params: {
