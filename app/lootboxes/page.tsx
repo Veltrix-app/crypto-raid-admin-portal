@@ -107,6 +107,7 @@ import {
 } from "@/lib/lootboxes/lootbox-sponsored-package-status-board";
 import {
   buildLootboxSponsorPackageCreateRequest,
+  buildLootboxSponsorPackageCrmRead,
   type LootboxSponsorPackageDetailRead,
   type LootboxSponsorPackageTimelineItem,
 } from "@/lib/lootboxes/lootbox-sponsored-package-operator";
@@ -156,6 +157,16 @@ type SponsorPackageApiRow = {
   created_at: string | null;
   updated_at: string | null;
 };
+type SponsorPackagePatchInput = Partial<{
+  status: LootboxSponsorPackageStatus;
+  sponsorName: string | null;
+  sponsorContact: string | null;
+  sponsorBudget: number;
+  currency: string;
+  ownerAuthUserId: string | null;
+  followUpAt: string | null;
+  lastContactedAt: string | null;
+}>;
 const sponsorPackageStatusControls: LootboxSponsorPackageStatus[] = [
   "ready_to_pitch",
   "pitched",
@@ -685,11 +696,7 @@ export default function LootboxesPage() {
 
   async function patchSponsorPackage(
     id: string,
-    patch: Partial<{
-      status: LootboxSponsorPackageStatus;
-      ownerAuthUserId: string | null;
-      followUpAt: string | null;
-    }>,
+    patch: SponsorPackagePatchInput,
     successText: string
   ) {
     if (sponsorPackageMutatingId) {
@@ -759,6 +766,22 @@ export default function LootboxesPage() {
       id,
       { followUpAt },
       followUpAt ? "Sponsor package follow-up saved." : "Sponsor package follow-up cleared."
+    );
+  }
+
+  async function updateSponsorPackageDeal(id: string, patch: SponsorPackagePatchInput) {
+    await patchSponsorPackage(id, patch, "Sponsor package CRM fields saved.");
+  }
+
+  async function progressSponsorPackageDeal(id: string, status: LootboxSponsorPackageStatus) {
+    const contactStatuses = new Set<LootboxSponsorPackageStatus>(["pitched", "negotiating"]);
+    await patchSponsorPackage(
+      id,
+      {
+        status,
+        ...(contactStatuses.has(status) ? { lastContactedAt: new Date().toISOString() } : {}),
+      },
+      `Sponsor package moved to ${status.replace(/_/g, " ")}.`
     );
   }
 
@@ -1005,6 +1028,8 @@ export default function LootboxesPage() {
               }
               onOwnerClaim={claimSponsorPackageOwner}
               onFollowUpChange={updateSponsorPackageFollowUp}
+              onDealSave={updateSponsorPackageDeal}
+              onDealProgress={progressSponsorPackageDeal}
               onNoteAdd={addSponsorPackageNote}
             />
             <SponsoredPackageStatusBoardPanel read={sponsoredPackageStatusBoard} />
@@ -1936,6 +1961,8 @@ function SponsoredPackageOpsPanel({
   onStatusChange,
   onOwnerClaim,
   onFollowUpChange,
+  onDealSave,
+  onDealProgress,
   onNoteAdd,
 }: {
   packages: SponsorPackageApiRow[];
@@ -1951,6 +1978,8 @@ function SponsoredPackageOpsPanel({
   onStatusChange: (id: string, status: LootboxSponsorPackageStatus) => void;
   onOwnerClaim: (id: string) => void;
   onFollowUpChange: (id: string, followUpAt: string | null) => void;
+  onDealSave: (id: string, patch: SponsorPackagePatchInput) => void;
+  onDealProgress: (id: string, status: LootboxSponsorPackageStatus) => void;
   onNoteAdd: (
     id: string,
     note: string,
@@ -2010,7 +2039,15 @@ function SponsoredPackageOpsPanel({
                 />
               ))}
             </div>
-            <SponsorPackageDetailPanel detail={detail} loading={detailLoading} />
+            <SponsorPackageDetailPanel
+              detail={detail}
+              loading={detailLoading}
+              currentAuthUserId={currentAuthUserId}
+              mutating={Boolean(detail?.package.id && mutatingId === detail.package.id)}
+              onOwnerClaim={onOwnerClaim}
+              onDealSave={onDealSave}
+              onDealProgress={onDealProgress}
+            />
           </div>
         ) : (
           <div className="rounded-[18px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
@@ -2233,9 +2270,19 @@ function SponsorPackageOpsRow({
 function SponsorPackageDetailPanel({
   detail,
   loading,
+  currentAuthUserId,
+  mutating,
+  onOwnerClaim,
+  onDealSave,
+  onDealProgress,
 }: {
   detail: LootboxSponsorPackageDetailRead | null;
   loading: boolean;
+  currentAuthUserId: string | null;
+  mutating: boolean;
+  onOwnerClaim: (id: string) => void;
+  onDealSave: (id: string, patch: SponsorPackagePatchInput) => void;
+  onDealProgress: (id: string, status: LootboxSponsorPackageStatus) => void;
 }) {
   if (loading) {
     return (
@@ -2256,6 +2303,7 @@ function SponsorPackageDetailPanel({
   const row = detail.package;
   const projectName = getSponsorPackageSnapshotText(row, "projectName", "Workspace");
   const campaignTitle = getSponsorPackageSnapshotText(row, "campaignTitle", row.campaign_id ?? "Campaign");
+  const crm = buildLootboxSponsorPackageCrmRead(row);
 
   return (
     <section className="rounded-[18px] border border-primary/16 bg-[linear-gradient(180deg,rgba(186,255,59,0.045),rgba(8,10,15,0.94))] p-3">
@@ -2282,6 +2330,16 @@ function SponsorPackageDetailPanel({
         <MiniRead label="Audit events" value={`${detail.summary.auditEvents}`} />
       </div>
 
+      <SponsorPackageDealCockpit
+        row={row}
+        crm={crm}
+        currentAuthUserId={currentAuthUserId}
+        mutating={mutating}
+        onOwnerClaim={onOwnerClaim}
+        onDealSave={onDealSave}
+        onDealProgress={onDealProgress}
+      />
+
       <div className="mt-3 rounded-[14px] border border-white/[0.016] bg-black/18 p-3">
         <div className="flex items-center gap-2">
           <History size={13} className="text-primary" />
@@ -2302,6 +2360,227 @@ function SponsorPackageDetailPanel({
         </div>
       </div>
     </section>
+  );
+}
+
+function SponsorPackageDealCockpit({
+  row,
+  crm,
+  currentAuthUserId,
+  mutating,
+  onOwnerClaim,
+  onDealSave,
+  onDealProgress,
+}: {
+  row: LootboxSponsorPackageDetailRead["package"];
+  crm: ReturnType<typeof buildLootboxSponsorPackageCrmRead>;
+  currentAuthUserId: string | null;
+  mutating: boolean;
+  onOwnerClaim: (id: string) => void;
+  onDealSave: (id: string, patch: SponsorPackagePatchInput) => void;
+  onDealProgress: (id: string, status: LootboxSponsorPackageStatus) => void;
+}) {
+  const [sponsorName, setSponsorName] = useState(row.sponsor_name ?? "");
+  const [sponsorContact, setSponsorContact] = useState(row.sponsor_contact ?? "");
+  const [sponsorBudget, setSponsorBudget] = useState(
+    row.sponsor_budget ? String(row.sponsor_budget) : ""
+  );
+  const [currency, setCurrency] = useState(row.currency ?? "USD");
+  const [followUpInput, setFollowUpInput] = useState(toDateTimeLocalValue(row.follow_up_at));
+  const ownerIsCurrentAdmin =
+    Boolean(currentAuthUserId) && row.owner_auth_user_id === currentAuthUserId;
+
+  useEffect(() => {
+    setSponsorName(row.sponsor_name ?? "");
+    setSponsorContact(row.sponsor_contact ?? "");
+    setSponsorBudget(row.sponsor_budget ? String(row.sponsor_budget) : "");
+    setCurrency(row.currency ?? "USD");
+    setFollowUpInput(toDateTimeLocalValue(row.follow_up_at));
+  }, [
+    row.currency,
+    row.follow_up_at,
+    row.id,
+    row.sponsor_budget,
+    row.sponsor_contact,
+    row.sponsor_name,
+  ]);
+
+  function submitDeal(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const budget = sponsorBudget.trim() ? Number(sponsorBudget) : 0;
+    const followUpDate = followUpInput ? new Date(followUpInput) : null;
+
+    onDealSave(row.id, {
+      sponsorName: sponsorName.trim() || null,
+      sponsorContact: sponsorContact.trim() || null,
+      sponsorBudget: Number.isFinite(budget) && budget > 0 ? budget : 0,
+      currency: currency.trim() || "USD",
+      followUpAt:
+        followUpDate && !Number.isNaN(followUpDate.getTime())
+          ? followUpDate.toISOString()
+          : null,
+    });
+  }
+
+  return (
+    <div className="mt-3 rounded-[16px] border border-white/[0.018] bg-black/18 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Deal cockpit
+          </p>
+          <h4 className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+            {crm.identity.sponsorName}
+          </h4>
+          <p className="mt-1 text-[10px] leading-4 text-sub">{crm.primaryAction}</p>
+        </div>
+        <OpsStatusPill tone={crm.stage.tone}>{crm.stage.label}</OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid grid-cols-4 gap-1.5">
+        {crm.stage.stages.map((stage) => (
+          <button
+            key={stage.id}
+            type="button"
+            disabled={mutating || row.status === stage.id}
+            onClick={() => onDealProgress(row.id, stage.id as LootboxSponsorPackageStatus)}
+            className={`min-h-16 rounded-[13px] border px-2 py-2 text-left transition ${
+              getSponsorCrmStageClass(stage.state)
+            } disabled:cursor-not-allowed disabled:opacity-70`}
+          >
+            <span className="block text-[8px] font-black uppercase tracking-[0.12em]">
+              {stage.state}
+            </span>
+            <span className="mt-1 block text-[10px] font-black text-text">{stage.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <form onSubmit={submitDeal} className="mt-3 grid gap-2">
+        <div className="grid gap-2 md:grid-cols-2">
+          <label className="rounded-[13px] border border-white/[0.018] bg-white/[0.012] px-3 py-2">
+            <span className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">
+              Sponsor
+            </span>
+            <input
+              value={sponsorName}
+              onChange={(event) => setSponsorName(event.target.value)}
+              placeholder="Sponsor name"
+              maxLength={160}
+              className="mt-1 w-full bg-transparent text-[12px] font-semibold text-text outline-none placeholder:text-sub/45"
+              aria-label="Sponsor name"
+            />
+          </label>
+          <label className="rounded-[13px] border border-white/[0.018] bg-white/[0.012] px-3 py-2">
+            <span className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">
+              Contact
+            </span>
+            <input
+              value={sponsorContact}
+              onChange={(event) => setSponsorContact(event.target.value)}
+              placeholder="Email, Telegram or CRM route"
+              maxLength={220}
+              className="mt-1 w-full bg-transparent text-[12px] font-semibold text-text outline-none placeholder:text-sub/45"
+              aria-label="Sponsor contact"
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_82px]">
+          <label className="rounded-[13px] border border-white/[0.018] bg-white/[0.012] px-3 py-2">
+            <span className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">
+              Deal value
+            </span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={sponsorBudget}
+              onChange={(event) => setSponsorBudget(event.target.value)}
+              placeholder="0"
+              className="mt-1 w-full bg-transparent text-[12px] font-semibold text-text outline-none placeholder:text-sub/45"
+              aria-label="Sponsor package budget"
+            />
+          </label>
+          <label className="rounded-[13px] border border-white/[0.018] bg-white/[0.012] px-3 py-2">
+            <span className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">
+              Currency
+            </span>
+            <input
+              value={currency}
+              onChange={(event) => setCurrency(event.target.value.toUpperCase())}
+              maxLength={12}
+              className="mt-1 w-full bg-transparent text-[12px] font-semibold text-text outline-none"
+              aria-label="Sponsor package currency"
+            />
+          </label>
+        </div>
+
+        <label className="rounded-[13px] border border-white/[0.018] bg-white/[0.012] px-3 py-2">
+          <span className="text-[8px] font-black uppercase tracking-[0.14em] text-sub">
+            Next follow-up
+          </span>
+          <input
+            type="datetime-local"
+            value={followUpInput}
+            onChange={(event) => setFollowUpInput(event.target.value)}
+            className="mt-1 w-full bg-transparent text-[12px] font-semibold text-text outline-none"
+            aria-label="Sponsor package next follow-up"
+          />
+        </label>
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          {crm.checklist.map((item) => (
+            <div
+              key={item.id}
+              className={`rounded-[12px] border px-2.5 py-2 ${getSponsorCrmChecklistClass(
+                item.state
+              )}`}
+            >
+              <p className="text-[8px] font-black uppercase tracking-[0.12em]">{item.label}</p>
+              <p className="mt-1 line-clamp-2 text-[10px] leading-4">{item.detail}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          <button
+            type="button"
+            disabled={!currentAuthUserId || ownerIsCurrentAdmin || mutating}
+            onClick={() => onOwnerClaim(row.id)}
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/[0.024] bg-white/[0.014] px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-text transition enabled:hover:border-primary/28 enabled:hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <UserCheck size={12} />
+            {ownerIsCurrentAdmin ? "Owned" : "Claim"}
+          </button>
+          <button
+            type="button"
+            disabled={mutating}
+            onClick={() => onDealProgress(row.id, "lost")}
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-rose-300/16 bg-rose-300/[0.045] px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-rose-100 transition enabled:hover:border-rose-300/28 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <X size={12} />
+            Lost
+          </button>
+          <button
+            type="submit"
+            disabled={mutating}
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-primary/20 bg-primary px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-black transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Save size={12} />
+            {mutating ? "Saving" : "Save CRM"}
+          </button>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          <MiniRead label="Deal value" value={crm.identity.budgetLabel} />
+          <MiniRead
+            label="Last contacted"
+            value={formatSponsorPackageDate(crm.identity.lastContactedAt)}
+          />
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -4203,6 +4482,28 @@ function getTimelineToneClass(tone: LootboxSponsorPackageTimelineItem["tone"]) {
     case "default":
     default:
       return "border-white/[0.018] bg-white/[0.012] text-sub";
+  }
+}
+
+function getSponsorCrmStageClass(state: "complete" | "current" | "upcoming") {
+  switch (state) {
+    case "complete":
+      return "border-emerald-300/18 bg-emerald-300/[0.055] text-emerald-100";
+    case "current":
+      return "border-primary/24 bg-primary/[0.08] text-primary shadow-[0_14px_34px_rgba(186,255,59,0.08)]";
+    case "upcoming":
+    default:
+      return "border-white/[0.018] bg-white/[0.012] text-sub";
+  }
+}
+
+function getSponsorCrmChecklistClass(state: "ready" | "missing") {
+  switch (state) {
+    case "ready":
+      return "border-emerald-300/16 bg-emerald-300/[0.05] text-emerald-100";
+    case "missing":
+    default:
+      return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
   }
 }
 

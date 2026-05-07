@@ -68,6 +68,7 @@ export type LootboxSponsorPackagePatchPayload = {
   currency?: string;
   ownerAuthUserId?: string | null;
   followUpAt?: string | null;
+  lastContactedAt?: string | null;
   packageSnapshot?: JsonObject;
   metadata?: JsonObject;
 };
@@ -273,6 +274,14 @@ export function parseLootboxSponsorPackagePatchBody(
     payload.followUpAt = followUpAt.value;
   }
 
+  if (hasOwn(body, "lastContactedAt")) {
+    const lastContactedAt = parseOptionalIsoDate(body?.lastContactedAt, "Last contacted date");
+    if (!lastContactedAt.ok) {
+      return lastContactedAt;
+    }
+    payload.lastContactedAt = lastContactedAt.value;
+  }
+
   if (hasOwn(body, "packageSnapshot")) {
     const packageSnapshot = parseOptionalObject(body?.packageSnapshot, "Package snapshot");
     if (!packageSnapshot.ok) {
@@ -376,6 +385,9 @@ export function buildLootboxSponsorPackagePatchRow(
       ? { owner_auth_user_id: payload.ownerAuthUserId }
       : {}),
     ...(payload.followUpAt !== undefined ? { follow_up_at: payload.followUpAt } : {}),
+    ...(payload.lastContactedAt !== undefined
+      ? { last_contacted_at: payload.lastContactedAt }
+      : {}),
     ...(payload.packageSnapshot !== undefined
       ? { package_snapshot: payload.packageSnapshot }
       : {}),

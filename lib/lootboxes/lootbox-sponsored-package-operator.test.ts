@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildLootboxSponsorPackageCreateRequest,
+  buildLootboxSponsorPackageCrmRead,
   buildLootboxSponsorPackageDetailRead,
 } from "./lootbox-sponsored-package-operator";
 import type { LootboxSponsoredPackageActionPack } from "./lootbox-sponsored-package-actions";
@@ -294,4 +295,49 @@ test("buildLootboxSponsorPackageDetailRead chooses next action from package stat
 
   assert.equal(blocked.summary.nextAction, "Unblock package context");
   assert.equal(won.summary.nextAction, "Record fulfillment plan");
+});
+
+test("buildLootboxSponsorPackageCrmRead turns package fields into an operator deal cockpit", () => {
+  const read = buildLootboxSponsorPackageCrmRead({
+    id: "package-1",
+    project_id: "11111111-1111-4111-8111-111111111111",
+    campaign_id: basePack.campaignId,
+    package_tier: "premium",
+    status: "negotiating",
+    sponsor_name: "Atlas Labs",
+    sponsor_contact: "",
+    sponsor_budget: 2500,
+    currency: "eur",
+    owner_auth_user_id: "admin-auth-1",
+    follow_up_at: null,
+    last_contacted_at: "2026-05-07T12:00:00.000Z",
+    package_snapshot: {
+      projectName: "VYNTRO",
+      campaignTitle: "Holder Activation Sprint",
+    },
+    metadata: {},
+    created_by_auth_user_id: "admin-auth-1",
+    created_at: "2026-05-07T10:00:00.000Z",
+    updated_at: "2026-05-07T11:00:00.000Z",
+  });
+
+  assert.equal(read.stage.label, "Negotiating");
+  assert.equal(read.stage.index, 2);
+  assert.equal(read.stage.count, 4);
+  assert.equal(read.stage.tone, "warning");
+  assert.equal(read.identity.sponsorName, "Atlas Labs");
+  assert.equal(read.identity.sponsorContact, "No contact saved");
+  assert.equal(read.identity.budgetLabel, "EUR 2,500");
+  assert.deepEqual(read.missingFields, ["Sponsor contact", "Follow-up date"]);
+  assert.deepEqual(
+    read.checklist.map((item) => `${item.id}:${item.state}`),
+    [
+      "sponsor_name:ready",
+      "sponsor_contact:missing",
+      "deal_budget:ready",
+      "owner:ready",
+      "follow_up:missing",
+    ]
+  );
+  assert.equal(read.primaryAction, "Add sponsor contact before next follow-up");
 });
