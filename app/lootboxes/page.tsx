@@ -2767,7 +2767,8 @@ function SponsorActivationHandoffPanel({
               <SponsorActivationHandoffCard
                 key={handoff.packageId}
                 handoff={handoff}
-                copying={copyingId === `activation-${handoff.packageId}`}
+                activationCopying={copyingId === `activation-${handoff.packageId}`}
+                performanceCopying={copyingId === `performance-${handoff.packageId}`}
                 onCopy={onCopy}
               />
             ))}
@@ -2812,7 +2813,7 @@ function SponsorActivationFocusCard({ handoff }: { handoff: SponsorActivationHan
         <MiniRead label="Shard pool" value={handoff.metrics.poolSize.toLocaleString("en-US")} />
         <MiniRead label="Remaining" value={handoff.metrics.remainingShards.toLocaleString("en-US")} />
         <MiniRead label="Reward budget" value={handoff.metrics.rewardBudget.toLocaleString("en-US")} />
-        <MiniRead label="Campaign" value={handoff.campaignTitle} />
+        <MiniRead label="Renewal" value={handoff.performance.renewalSignal} />
       </div>
       <div className="mt-3 rounded-[14px] border border-white/[0.016] bg-black/18 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2839,14 +2840,17 @@ function SponsorActivationFocusCard({ handoff }: { handoff: SponsorActivationHan
 
 function SponsorActivationHandoffCard({
   handoff,
-  copying,
+  activationCopying,
+  performanceCopying,
   onCopy,
 }: {
   handoff: SponsorActivationHandoff;
-  copying: boolean;
+  activationCopying: boolean;
+  performanceCopying: boolean;
   onCopy: (id: string, text: string, successText: string) => void;
 }) {
   const copyText = `${handoff.brief.title}\n\n${handoff.brief.body}`;
+  const performanceCopyText = `${handoff.performance.sponsorUpdate.title}\n\n${handoff.performance.sponsorUpdate.body}`;
 
   return (
     <article className="rounded-[18px] border border-white/[0.018] bg-[linear-gradient(180deg,rgba(12,15,21,0.92),rgba(7,9,14,0.94))] p-3">
@@ -2943,13 +2947,63 @@ function SponsorActivationHandoffCard({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+              Performance snapshot
+            </p>
+            <p className="mt-1 text-[10px] leading-4 text-sub">
+              {handoff.performance.nextAction}
+            </p>
+          </div>
+          <OpsStatusPill tone={getSponsorPerformanceTone(handoff.performance.state)}>
+            {handoff.performance.label}
+          </OpsStatusPill>
+        </div>
+        <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
+          {handoff.performance.kpis.map((kpi) => (
+            <div
+              key={kpi.id}
+              className={`rounded-[12px] border px-2.5 py-2 ${getSponsorPerformanceKpiClass(kpi.tone)}`}
+            >
+              <p className="text-[8px] font-black uppercase tracking-[0.12em]">
+                {kpi.label}
+              </p>
+              <p className="mt-1 text-[13px] font-black">{kpi.value}</p>
+              <p className="mt-1 text-[10px] leading-4">{kpi.detail}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-white/[0.012] bg-white/[0.01] px-2.5 py-2">
+          <span className="text-[8px] font-black uppercase tracking-[0.12em] text-sub">
+            Renewal signal: {handoff.performance.renewalSignal}
+          </span>
+          <button
+            type="button"
+            disabled={performanceCopying}
+            onClick={() =>
+              onCopy(
+                `performance-${handoff.packageId}`,
+                performanceCopyText,
+                "Sponsor performance update copied."
+              )
+            }
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-primary/18 bg-primary/[0.07] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary transition enabled:hover:border-primary/34 enabled:hover:bg-primary/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Copy size={12} />
+            {performanceCopying ? "Copying" : "Copy update"}
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-[14px] border border-white/[0.014] bg-black/18 p-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
               Activation brief
             </p>
             <p className="mt-1 text-[10px] leading-4 text-sub">{handoff.nextAction}</p>
           </div>
           <button
             type="button"
-            disabled={copying}
+            disabled={activationCopying}
             onClick={() =>
               onCopy(
                 `activation-${handoff.packageId}`,
@@ -2960,7 +3014,7 @@ function SponsorActivationHandoffCard({
             className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border border-primary/18 bg-primary/[0.07] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary transition enabled:hover:border-primary/34 enabled:hover:bg-primary/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Copy size={12} />
-            {copying ? "Copying" : "Copy"}
+            {activationCopying ? "Copying" : "Copy"}
           </button>
         </div>
       </div>
@@ -4884,6 +4938,33 @@ function getSponsorActivationExecutionStepClass(
     case "action_needed":
     default:
       return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
+  }
+}
+
+function getSponsorPerformanceTone(state: SponsorActivationHandoff["performance"]["state"]) {
+  switch (state) {
+    case "report_ready":
+      return "success" as const;
+    case "warming_up":
+    case "setup_needed":
+      return "warning" as const;
+    case "closed":
+    default:
+      return "default" as const;
+  }
+}
+
+function getSponsorPerformanceKpiClass(
+  tone: SponsorActivationHandoff["performance"]["kpis"][number]["tone"]
+) {
+  switch (tone) {
+    case "success":
+      return "border-emerald-300/16 bg-emerald-300/[0.05] text-emerald-100";
+    case "warning":
+      return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
+    case "default":
+    default:
+      return "border-white/[0.018] bg-white/[0.012] text-sub";
   }
 }
 

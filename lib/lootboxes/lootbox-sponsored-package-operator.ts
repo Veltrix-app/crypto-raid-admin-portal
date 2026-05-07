@@ -129,6 +129,20 @@ export type LootboxSponsorActivationExecutionStep = {
   detail: string;
 };
 
+export type LootboxSponsorPerformanceState =
+  | "report_ready"
+  | "warming_up"
+  | "setup_needed"
+  | "closed";
+
+export type LootboxSponsorPerformanceKpi = {
+  id: "shards_issued" | "depletion" | "participants" | "completion";
+  label: string;
+  value: string;
+  detail: string;
+  tone: "success" | "warning" | "default";
+};
+
 const sponsorCrmStages = [
   {
     id: "ready_to_pitch",
@@ -457,6 +471,16 @@ function buildSponsorActivationHandoff(params: {
     activationState,
     checklist,
   });
+  const performance = buildSponsorPerformanceSnapshot({
+    activationState,
+    sponsorName: normalizeText(row.sponsor_name) ?? "Unnamed sponsor",
+    campaignTitle:
+      campaign?.title ?? getSnapshotText(row, "campaignTitle", row.campaign_id ?? "Campaign"),
+    poolSize,
+    remainingShards,
+    participants: Math.max(0, Number(campaign?.participants ?? 0)),
+    completionRate: Math.max(0, Number(campaign?.completionRate ?? 0)),
+  });
   const projectName =
     project?.name ?? getSnapshotText(row, "projectName", row.project_id ?? "Workspace");
   const campaignTitle =
@@ -488,6 +512,7 @@ function buildSponsorActivationHandoff(params: {
     },
     checklist,
     execution,
+    performance,
     brief: {
       title: `${sponsorName} x ${projectName} activation handoff`,
       body: buildSponsorActivationBrief({
@@ -634,6 +659,190 @@ function buildSponsorActivationExecution(params: {
       "Start the sponsored activation manually and monitor first-hour shard depletion.",
     ],
   };
+}
+
+function buildSponsorPerformanceSnapshot(params: {
+  activationState: LootboxSponsorActivationState;
+  sponsorName: string;
+  campaignTitle: string;
+  poolSize: number;
+  remainingShards: number;
+  participants: number;
+  completionRate: number;
+}) {
+  const issuedShards = Math.max(0, params.poolSize - params.remainingShards);
+  const depletionRate =
+    params.poolSize > 0 ? Math.round((issuedShards / params.poolSize) * 100) : 0;
+  const state = getSponsorPerformanceState({
+    activationState: params.activationState,
+    issuedShards,
+    participants: params.participants,
+    completionRate: params.completionRate,
+  });
+  const renewalSignal = getSponsorPerformanceRenewalSignal({
+    state,
+    depletionRate,
+    participants: params.participants,
+    completionRate: params.completionRate,
+  });
+  const nextAction = getSponsorPerformanceNextAction(state, renewalSignal);
+
+  return {
+    state,
+    label: getSponsorPerformanceLabel(state),
+    renewalSignal,
+    nextAction,
+    kpis: buildSponsorPerformanceKpis({
+      issuedShards,
+      depletionRate,
+      participants: params.participants,
+      completionRate: params.completionRate,
+    }),
+    sponsorUpdate: {
+      title: `${params.sponsorName} activation performance update`,
+      body: buildSponsorPerformanceUpdate({
+        sponsorName: params.sponsorName,
+        campaignTitle: params.campaignTitle,
+        issuedShards,
+        depletionRate,
+        participants: params.participants,
+        completionRate: params.completionRate,
+        nextAction,
+      }),
+    },
+  };
+}
+
+function getSponsorPerformanceState(params: {
+  activationState: LootboxSponsorActivationState;
+  issuedShards: number;
+  participants: number;
+  completionRate: number;
+}): LootboxSponsorPerformanceState {
+  if (params.activationState === "closed") {
+    return "closed";
+  }
+
+  if (params.activationState !== "ready") {
+    return "setup_needed";
+  }
+
+  if (params.issuedShards > 0 || params.participants > 0 || params.completionRate > 0) {
+    return "report_ready";
+  }
+
+  return "warming_up";
+}
+
+function getSponsorPerformanceRenewalSignal(params: {
+  state: LootboxSponsorPerformanceState;
+  depletionRate: number;
+  participants: number;
+  completionRate: number;
+}) {
+  if (params.state !== "report_ready") {
+    return "none" as const;
+  }
+
+  if (params.depletionRate >= 30 || params.participants >= 100 || params.completionRate >= 35) {
+    return "strong" as const;
+  }
+
+  return "watch" as const;
+}
+
+function getSponsorPerformanceNextAction(
+  state: LootboxSponsorPerformanceState,
+  renewalSignal: "strong" | "watch" | "none"
+) {
+  if (state === "setup_needed") {
+    return "Finish activation setup before sending performance updates.";
+  }
+
+  if (state === "closed") {
+    return "Keep this sponsor package out of performance reporting.";
+  }
+
+  if (state === "warming_up") {
+    return "Monitor launch before reporting results.";
+  }
+
+  if (renewalSignal === "strong") {
+    return "Send sponsor performance update and tee up renewal.";
+  }
+
+  return "Send early sponsor update after more activity.";
+}
+
+function getSponsorPerformanceLabel(state: LootboxSponsorPerformanceState) {
+  switch (state) {
+    case "report_ready":
+      return "Sponsor update ready";
+    case "warming_up":
+      return "Warming up";
+    case "closed":
+      return "Closed";
+    case "setup_needed":
+    default:
+      return "Setup needed";
+  }
+}
+
+function buildSponsorPerformanceKpis(params: {
+  issuedShards: number;
+  depletionRate: number;
+  participants: number;
+  completionRate: number;
+}): LootboxSponsorPerformanceKpi[] {
+  return [
+    {
+      id: "shards_issued",
+      label: "Shards issued",
+      value: params.issuedShards.toLocaleString("en-US"),
+      detail: "Bonus shards earned from linked sponsored pools.",
+      tone: params.issuedShards > 0 ? "success" : "default",
+    },
+    {
+      id: "depletion",
+      label: "Pool depletion",
+      value: `${params.depletionRate}%`,
+      detail: "How much of the sponsored shard pool has been consumed.",
+      tone: params.depletionRate >= 30 ? "success" : params.depletionRate > 0 ? "warning" : "default",
+    },
+    {
+      id: "participants",
+      label: "Participants",
+      value: params.participants.toLocaleString("en-US"),
+      detail: "Campaign participation visible on the campaign snapshot.",
+      tone: params.participants >= 100 ? "success" : params.participants > 0 ? "warning" : "default",
+    },
+    {
+      id: "completion",
+      label: "Completion",
+      value: `${params.completionRate}%`,
+      detail: "Campaign completion rate visible to the operator.",
+      tone: params.completionRate >= 35 ? "success" : params.completionRate > 0 ? "warning" : "default",
+    },
+  ];
+}
+
+function buildSponsorPerformanceUpdate(params: {
+  sponsorName: string;
+  campaignTitle: string;
+  issuedShards: number;
+  depletionRate: number;
+  participants: number;
+  completionRate: number;
+  nextAction: string;
+}) {
+  return [
+    `${params.sponsorName} performance snapshot for ${params.campaignTitle}:`,
+    `${params.issuedShards.toLocaleString("en-US")} shards issued from the sponsored boost.`,
+    `${params.depletionRate}% depleted across the linked shard pool.`,
+    `${params.participants.toLocaleString("en-US")} participants with ${params.completionRate}% completion.`,
+    `Recommended next move: ${params.nextAction}`,
+    "Manual-only note: this is an operator report, not an automated payout, billing or fulfillment action.",
+  ].join("\n");
 }
 
 function getPrimaryActivationExecutionStep(
