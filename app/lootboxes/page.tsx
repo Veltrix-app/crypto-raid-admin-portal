@@ -3357,13 +3357,14 @@ function SponsorActivationHandoffPanel({
       }
     >
       <div className="grid gap-3">
-        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-7">
+        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-8">
           <MiniRead label="Packages" value={`${read.summary.total}`} />
           <MiniRead label="Ready" value={`${read.summary.ready}`} />
           <MiniRead label="Setup needed" value={`${read.summary.setupNeeded}`} />
           <MiniRead label="Locked" value={`${read.summary.locked}`} />
           <MiniRead label="Renewal ready" value={`${read.summary.renewalReady}`} />
           <MiniRead label="Staged runs" value={`${read.summary.stagedRuns}`} />
+          <MiniRead label="Signed off" value={`${read.summary.signedOffRuns}`} />
           <MiniRead label="Mode" value={read.summary.manualOnly ? "Manual" : "Auto"} />
         </div>
 
@@ -3420,11 +3421,12 @@ function SponsorActivationFocusCard({ handoff }: { handoff: SponsorActivationHan
         </div>
         <OpsStatusPill tone={handoff.tone}>{handoff.activationState.replace(/_/g, " ")}</OpsStatusPill>
       </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-4">
+      <div className="mt-3 grid gap-2 sm:grid-cols-5">
         <MiniRead label="Shard pool" value={handoff.metrics.poolSize.toLocaleString("en-US")} />
         <MiniRead label="Remaining" value={handoff.metrics.remainingShards.toLocaleString("en-US")} />
         <MiniRead label="Reward budget" value={handoff.metrics.rewardBudget.toLocaleString("en-US")} />
         <MiniRead label="Run" value={handoff.activationRun.label} />
+        <MiniRead label="Outcome" value={handoff.activationRun.signoff?.label ?? "Open"} />
       </div>
       <div className="mt-3 rounded-[14px] border border-white/[0.016] bg-black/18 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -3479,6 +3481,11 @@ function SponsorActivationHandoffCard({
           <div className="flex flex-wrap items-center gap-1.5">
             <OpsStatusPill tone={handoff.tone}>{handoff.activationState.replace(/_/g, " ")}</OpsStatusPill>
             <OpsStatusPill tone={handoff.activationRun.tone}>{handoff.activationRun.label}</OpsStatusPill>
+            {handoff.activationRun.signoff ? (
+              <OpsStatusPill tone={getActivationRunSignoffTone(handoff.activationRun.signoff.outcome)}>
+                {handoff.activationRun.signoff.label}
+              </OpsStatusPill>
+            ) : null}
             <OpsStatusPill tone={getPackageTierTone(handoff.packageTier as LootboxSponsoredPackageTier)}>
               {handoff.packageTier}
             </OpsStatusPill>
@@ -3518,7 +3525,7 @@ function SponsorActivationHandoffCard({
             {handoff.activationRun.label}
           </OpsStatusPill>
         </div>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <MiniRead
             label="Last staged"
             value={
@@ -3527,6 +3534,7 @@ function SponsorActivationHandoffCard({
                 : "Not yet"
             }
           />
+          <MiniRead label="Signoff" value={handoff.activationRun.signoff?.label ?? "Open"} />
           <MiniRead
             label="Run note"
             value={handoff.activationRun.noteId ? "Decision saved" : "No note"}
@@ -3606,14 +3614,20 @@ function SponsorActivationHandoffCard({
             {handoff.renewal.label}
           </OpsStatusPill>
         </div>
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <div className="mt-3 grid gap-2 sm:grid-cols-4">
           <MiniRead label="Proposal" value={`${handoff.renewal.nextPackageTier} renewal`} />
           <MiniRead label="Follow-up" value={handoff.renewal.followUpUrgency.replace(/_/g, " ")} />
+          <MiniRead label="Outcome" value={handoff.renewal.signoff.label} />
           <MiniRead
             label="Blockers"
             value={handoff.renewal.blockedBy.length ? `${handoff.renewal.blockedBy.length}` : "0"}
           />
         </div>
+        {handoff.renewal.signoff.state === "signed_off" ? (
+          <p className="mt-3 rounded-[12px] border border-primary/12 bg-primary/[0.035] px-2.5 py-2 text-[10px] leading-4 text-primary">
+            Signed-off move: {handoff.renewal.signoff.nextSponsorMove}
+          </p>
+        ) : null}
         {handoff.renewal.blockedBy.length ? (
           <p className="mt-3 rounded-[12px] border border-amber-300/12 bg-amber-300/[0.035] px-2.5 py-2 text-[10px] leading-4 text-amber-100">
             Blocking: {handoff.renewal.blockedBy.join(", ")}
@@ -3687,9 +3701,24 @@ function SponsorActivationHandoffCard({
             </div>
           ))}
         </div>
+        {handoff.performance.signoff.state === "signed_off" ? (
+          <div className="mt-3 rounded-[12px] border border-primary/12 bg-primary/[0.035] px-2.5 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[8px] font-black uppercase tracking-[0.12em] text-primary">
+                {handoff.performance.signoff.label} signoff
+              </span>
+              <span className="text-[8px] font-black uppercase tracking-[0.12em] text-sub">
+                {formatSponsorPackageDate(handoff.performance.signoff.signedOffAt)}
+              </span>
+            </div>
+            <p className="mt-1 break-words text-[10px] leading-4 text-primary [overflow-wrap:anywhere]">
+              {handoff.performance.signoff.note}
+            </p>
+          </div>
+        ) : null}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-white/[0.012] bg-white/[0.01] px-2.5 py-2">
           <span className="text-[8px] font-black uppercase tracking-[0.12em] text-sub">
-            Renewal signal: {handoff.performance.renewalSignal}
+            Renewal signal: {handoff.performance.renewalSignal} / {handoff.performance.signoff.label}
           </span>
           <button
             type="button"

@@ -431,6 +431,7 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
       renewalReady: handoffs.filter((handoff) => handoff.renewal.state === "ready").length,
       renewalWatch: handoffs.filter((handoff) => handoff.renewal.state === "watch").length,
       stagedRuns: handoffs.filter((handoff) => handoff.activationRun.state === "staged").length,
+      signedOffRuns: handoffs.filter((handoff) => Boolean(handoff.activationRun.signoff)).length,
       manualOnly: true as const,
     },
     handoffs,
@@ -1003,6 +1004,9 @@ function buildSponsorActivationHandoff(params: {
     metadata: row.metadata,
     canStage: execution.canLaunch,
   });
+  const activationRunSignoff = activationRun.runId
+    ? buildSponsorActivationRunSignoff(row.metadata, activationRun.runId)
+    : null;
   const projectName =
     project?.name ?? getSnapshotText(row, "projectName", row.project_id ?? "Workspace");
   const campaignTitle =
@@ -1011,6 +1015,7 @@ function buildSponsorActivationHandoff(params: {
   const packageTier = normalizeText(row.package_tier) ?? "starter";
   const performance = buildSponsorPerformanceSnapshot({
     activationState,
+    signoff: activationRunSignoff,
     sponsorName,
     campaignTitle,
     poolSize,
@@ -1021,6 +1026,7 @@ function buildSponsorActivationHandoff(params: {
   const renewal = buildSponsorRenewalPipeline({
     activationState,
     performance,
+    signoff: activationRunSignoff,
     sponsorName,
     campaignTitle,
     packageTier,
@@ -1206,6 +1212,7 @@ function buildSponsorActivationExecution(params: {
 
 function buildSponsorPerformanceSnapshot(params: {
   activationState: LootboxSponsorActivationState;
+  signoff: LootboxSponsorActivationRunSignoff | null;
   sponsorName: string;
   campaignTitle: string;
   poolSize: number;
@@ -1228,13 +1235,14 @@ function buildSponsorPerformanceSnapshot(params: {
     participants: params.participants,
     completionRate: params.completionRate,
   });
-  const nextAction = getSponsorPerformanceNextAction(state, renewalSignal);
+  const nextAction = getSponsorPerformanceNextAction(state, renewalSignal, params.signoff);
 
   return {
     state,
     label: getSponsorPerformanceLabel(state),
     renewalSignal,
     nextAction,
+    signoff: buildSponsorPerformanceSignoff(params.signoff),
     metrics: {
       issuedShards,
       depletionRate,
@@ -1257,6 +1265,7 @@ function buildSponsorPerformanceSnapshot(params: {
         participants: params.participants,
         completionRate: params.completionRate,
         nextAction,
+        signoff: params.signoff,
       }),
     },
   };
@@ -1265,6 +1274,7 @@ function buildSponsorPerformanceSnapshot(params: {
 function buildSponsorRenewalPipeline(params: {
   activationState: LootboxSponsorActivationState;
   performance: ReturnType<typeof buildSponsorPerformanceSnapshot>;
+  signoff: LootboxSponsorActivationRunSignoff | null;
   sponsorName: string;
   campaignTitle: string;
   packageTier: string;
@@ -1280,6 +1290,7 @@ function buildSponsorRenewalPipeline(params: {
     activationState: params.activationState,
     performanceState: params.performance.state,
     renewalSignal: params.performance.renewalSignal,
+    signoff: params.signoff,
   });
   const nextPackageTier = getSponsorRenewalPackageTier({
     packageTier: params.packageTier,
@@ -1289,16 +1300,19 @@ function buildSponsorRenewalPipeline(params: {
     activationState: params.activationState,
     performanceState: params.performance.state,
     renewalSignal: params.performance.renewalSignal,
+    signoff: params.signoff,
   });
   const nextAction = getSponsorRenewalNextAction({
     state,
     blockedBy,
     followUpUrgency,
+    signoff: params.signoff,
   });
 
   return {
     state,
     label: getSponsorRenewalLabel(state),
+    signoff: buildSponsorPerformanceSignoff(params.signoff),
     followUpUrgency,
     nextPackageTier,
     nextAction,
@@ -1308,6 +1322,7 @@ function buildSponsorRenewalPipeline(params: {
       nextPackageTier,
       followUpUrgency,
       renewalSignal: params.performance.renewalSignal,
+      signoff: params.signoff,
     }),
     renewalCopy: {
       title: `${params.sponsorName} renewal follow-up`,
@@ -1318,6 +1333,7 @@ function buildSponsorRenewalPipeline(params: {
         renewalSignal: params.performance.renewalSignal,
         followUpUrgency,
         nextAction,
+        signoff: params.signoff,
         issuedShards: params.performance.metrics.issuedShards,
         depletionRate: params.performance.metrics.depletionRate,
         participants: params.performance.metrics.participants,
@@ -1331,9 +1347,18 @@ function getSponsorRenewalState(params: {
   activationState: LootboxSponsorActivationState;
   performanceState: LootboxSponsorPerformanceState;
   renewalSignal: "strong" | "watch" | "none";
+  signoff: LootboxSponsorActivationRunSignoff | null;
 }): LootboxSponsorRenewalState {
   if (params.activationState === "closed" || params.performanceState === "closed") {
     return "closed";
+  }
+
+  if (params.signoff?.outcome === "paused") {
+    return "not_ready";
+  }
+
+  if (params.signoff?.outcome === "needs_follow_up") {
+    return "watch";
   }
 
   if (
@@ -1406,12 +1431,17 @@ function getSponsorRenewalBlockedBy(params: {
   activationState: LootboxSponsorActivationState;
   performanceState: LootboxSponsorPerformanceState;
   renewalSignal: "strong" | "watch" | "none";
+  signoff: LootboxSponsorActivationRunSignoff | null;
 }) {
   if (params.activationState === "closed" || params.performanceState === "closed") {
     return [];
   }
 
   const blockedBy: string[] = [];
+  if (params.signoff?.outcome === "paused") {
+    blockedBy.push("Paused activation run");
+  }
+
   if (params.activationState !== "ready") {
     blockedBy.push("Activation setup");
   }
@@ -1427,9 +1457,14 @@ function getSponsorRenewalNextAction(params: {
   state: LootboxSponsorRenewalState;
   blockedBy: string[];
   followUpUrgency: LootboxSponsorRenewalFollowUpUrgency;
+  signoff: LootboxSponsorActivationRunSignoff | null;
 }) {
   if (params.state === "closed") {
     return "Keep the package out of renewal outreach.";
+  }
+
+  if (params.signoff?.outcome === "paused") {
+    return "Resolve paused activation run before renewal outreach.";
   }
 
   if (params.state === "not_ready") {
@@ -1439,11 +1474,19 @@ function getSponsorRenewalNextAction(params: {
   }
 
   if (params.state === "watch") {
+    if (params.signoff?.outcome === "needs_follow_up") {
+      return "Close the signoff follow-up before pitching renewal.";
+    }
+
     return "Keep sponsor warm until the next activity proof improves.";
   }
 
   if (params.followUpUrgency === "unscheduled") {
     return "Schedule renewal follow-up with the performance snapshot.";
+  }
+
+  if (params.signoff?.outcome === "completed") {
+    return "Send signed-off renewal follow-up with the performance snapshot.";
   }
 
   return "Send renewal follow-up with the performance snapshot.";
@@ -1468,20 +1511,26 @@ function buildSponsorRenewalPlaybook(params: {
   nextPackageTier: string;
   followUpUrgency: LootboxSponsorRenewalFollowUpUrgency;
   renewalSignal: "strong" | "watch" | "none";
+  signoff: LootboxSponsorActivationRunSignoff | null;
 }): LootboxSponsorRenewalPlaybookStep[] {
   const canAct = params.state === "ready" || params.state === "watch";
+  const signoffPaused = params.signoff?.outcome === "paused";
   return [
     {
       id: "send_performance_update",
       label: "Send proof update",
-      state: canAct ? "ready" : "blocked",
-      detail: "Lead with shard depletion, participants and completion before asking for another package.",
+      state: canAct && !signoffPaused ? "ready" : "blocked",
+      detail: params.signoff
+        ? `Lead with the ${params.signoff.label.toLowerCase()} signoff, shard depletion, participants and completion.`
+        : "Lead with shard depletion, participants and completion before asking for another package.",
     },
     {
       id: "pitch_next_package",
       label: `Pitch ${params.nextPackageTier}`,
       state:
-        params.state === "ready"
+        signoffPaused
+          ? "blocked"
+          : params.state === "ready"
           ? "ready"
           : params.state === "watch"
             ? "action_needed"
@@ -1514,6 +1563,7 @@ function buildSponsorRenewalCopy(params: {
   renewalSignal: "strong" | "watch" | "none";
   followUpUrgency: LootboxSponsorRenewalFollowUpUrgency;
   nextAction: string;
+  signoff: LootboxSponsorActivationRunSignoff | null;
   issuedShards: number;
   depletionRate: number;
   participants: number;
@@ -1528,6 +1578,12 @@ function buildSponsorRenewalCopy(params: {
 
   return [
     `${params.sponsorName} renewal follow-up for ${params.campaignTitle}:`,
+    ...(params.signoff
+      ? [
+          `Signed-off outcome: ${params.signoff.label}.`,
+          `Operator note: ${params.signoff.note}`,
+        ]
+      : []),
     `${performanceLine}.`,
     `Recommended package: ${params.nextPackageTier} renewal based on a ${params.renewalSignal} renewal signal.`,
     `Follow-up status: ${getSponsorRenewalFollowUpLabel(params.followUpUrgency)}.`,
@@ -1549,6 +1605,45 @@ function getSponsorRenewalFollowUpLabel(urgency: LootboxSponsorRenewalFollowUpUr
     case "unscheduled":
     default:
       return "unscheduled";
+  }
+}
+
+function buildSponsorPerformanceSignoff(signoff: LootboxSponsorActivationRunSignoff | null) {
+  if (!signoff) {
+    return {
+      state: "open" as const,
+      outcome: null,
+      label: "Not signed off",
+      note: null,
+      signedOffAt: null,
+      followUpAt: null,
+      nextSponsorMove: "Sign off the activation run before renewal outreach.",
+    };
+  }
+
+  return {
+    state: "signed_off" as const,
+    outcome: signoff.outcome,
+    label: signoff.label,
+    note: signoff.note,
+    signedOffAt: signoff.signedOffAt,
+    followUpAt: signoff.followUpAt,
+    nextSponsorMove: getSponsorSignoffNextSponsorMove(signoff.outcome),
+  };
+}
+
+function getSponsorSignoffNextSponsorMove(
+  outcome: LootboxSponsorActivationRunSignoffOutcome
+) {
+  switch (outcome) {
+    case "completed":
+      return "Send signed-off performance update and renewal follow-up.";
+    case "needs_follow_up":
+      return "Close the operator follow-up before pitching renewal.";
+    case "paused":
+      return "Resolve the paused run before sponsor reporting.";
+    default:
+      return "Review the signed-off run before sponsor outreach.";
   }
 }
 
@@ -1592,7 +1687,8 @@ function getSponsorPerformanceRenewalSignal(params: {
 
 function getSponsorPerformanceNextAction(
   state: LootboxSponsorPerformanceState,
-  renewalSignal: "strong" | "watch" | "none"
+  renewalSignal: "strong" | "watch" | "none",
+  signoff: LootboxSponsorActivationRunSignoff | null
 ) {
   if (state === "setup_needed") {
     return "Finish activation setup before sending performance updates.";
@@ -1604,6 +1700,18 @@ function getSponsorPerformanceNextAction(
 
   if (state === "warming_up") {
     return "Monitor launch before reporting results.";
+  }
+
+  if (signoff?.outcome === "paused") {
+    return "Resolve paused activation run before sponsor reporting.";
+  }
+
+  if (signoff?.outcome === "needs_follow_up") {
+    return "Send sponsor performance update and close the signoff follow-up.";
+  }
+
+  if (signoff?.outcome === "completed" && renewalSignal === "strong") {
+    return "Send signed-off sponsor performance update and tee up renewal.";
   }
 
   if (renewalSignal === "strong") {
@@ -1673,9 +1781,13 @@ function buildSponsorPerformanceUpdate(params: {
   participants: number;
   completionRate: number;
   nextAction: string;
+  signoff: LootboxSponsorActivationRunSignoff | null;
 }) {
   return [
     `${params.sponsorName} performance snapshot for ${params.campaignTitle}:`,
+    ...(params.signoff
+      ? [`Signoff: ${params.signoff.label}.`, `Operator note: ${params.signoff.note}`]
+      : []),
     `${params.issuedShards.toLocaleString("en-US")} shards issued from the sponsored boost.`,
     `${params.depletionRate}% depleted across the linked shard pool.`,
     `${params.participants.toLocaleString("en-US")} participants with ${params.completionRate}% completion.`,
@@ -1759,9 +1871,10 @@ function buildSponsorActivationRunSummary(params: {
 }) {
   const staged = readLastSponsorActivationRun(params.metadata);
   if (staged) {
+    const signoff = buildSponsorActivationRunSignoff(params.metadata, staged.runId);
     return {
       state: "staged" as const,
-      label: "Run staged",
+      label: signoff ? "Run signed off" : "Run staged",
       tone: "success" as const,
       canStage: false,
       runId: staged.runId,
@@ -1769,7 +1882,10 @@ function buildSponsorActivationRunSummary(params: {
       stagedAt: staged.stagedAt,
       noteId: staged.noteId,
       stagedByAuthUserId: staged.stagedByAuthUserId,
-      detail: "Decision note and audit are saved; continue the manual runbook and monitor the launch window.",
+      signoff,
+      detail: signoff
+        ? `${signoff.label} signoff saved; send the sponsor update and move into renewal follow-up.`
+        : "Decision note and audit are saved; continue the manual runbook and monitor the launch window.",
     };
   }
 
@@ -1783,6 +1899,7 @@ function buildSponsorActivationRunSummary(params: {
     stagedAt: null,
     noteId: null,
     stagedByAuthUserId: null,
+    signoff: null,
     detail: params.canStage
       ? "Stage a decision note and audit event before the manual launch starts."
       : "Finish activation setup before staging the manual run.",

@@ -617,6 +617,7 @@ test("buildLootboxSponsorActivationHandoffRead turns won packages into ready act
     renewalReady: 1,
     renewalWatch: 0,
     stagedRuns: 0,
+    signedOffRuns: 0,
     manualOnly: true,
   });
   assert.deepEqual(
@@ -1195,6 +1196,108 @@ test("buildLootboxSponsorActivationHandoffRead surfaces staged activation run st
   assert.equal(read.handoffs[0]?.activationRun.stagedAt, "2026-05-10T12:00:00.000Z");
   assert.equal(read.handoffs[0]?.activationRun.noteId, "note-1");
   assert.match(read.handoffs[0]?.activationRun.detail ?? "", /manual runbook/);
+});
+
+test("buildLootboxSponsorActivationHandoffRead routes completed signoff into performance and renewal follow-up", () => {
+  const read = buildLootboxSponsorActivationHandoffRead({
+    now: "2026-05-10T14:00:00.000Z",
+    packages: [
+      {
+        id: "package-ready",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: basePack.campaignId,
+        package_tier: "premium",
+        status: "won",
+        sponsor_name: "Atlas Labs",
+        sponsor_contact: "atlas@labs.test",
+        sponsor_budget: 2500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-1",
+        follow_up_at: "2026-05-11T12:00:00.000Z",
+        last_contacted_at: "2026-05-07T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Holder Activation Sprint",
+        },
+        metadata: {
+          lastActivationRun: {
+            runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+            title: "Atlas Labs activation run",
+            stagedAt: "2026-05-10T12:00:00.000Z",
+            sponsorPackageId: "package-ready",
+            campaignId: basePack.campaignId,
+            projectId: "11111111-1111-4111-8111-111111111111",
+            routeHref: `/campaigns/${basePack.campaignId}`,
+            noteId: "note-1",
+            stagedByAuthUserId: "admin-auth-1",
+            guardrailCount: 5,
+          },
+          lastActivationRunSignoff: {
+            runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+            outcome: "completed",
+            label: "Completed",
+            signedOffAt: "2026-05-10T13:00:00.000Z",
+            signedOffByAuthUserId: "admin-auth-1",
+            noteId: "note-signoff",
+            note: "Launch completed and shard pressure stayed healthy.",
+            followUpAt: "2026-05-11T12:00:00.000Z",
+          },
+        },
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+    ],
+    campaigns: [
+      {
+        id: basePack.campaignId,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "Holder Activation Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 500,
+        participants: 128,
+        completionRate: 42,
+      },
+    ],
+    projects: [
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "VYNTRO",
+        slug: "vyntro",
+      },
+    ],
+    shardPools: [
+      {
+        id: "pool-1",
+        campaignId: basePack.campaignId,
+        status: "active",
+        poolSize: 10_000,
+        remainingShards: 6_400,
+      },
+    ],
+  });
+
+  const handoff = read.handoffs[0];
+
+  assert.equal(read.summary.signedOffRuns, 1);
+  assert.equal(handoff?.activationRun.signoff?.outcome, "completed");
+  assert.equal(handoff?.performance.signoff.outcome, "completed");
+  assert.equal(
+    handoff?.performance.nextAction,
+    "Send signed-off sponsor performance update and tee up renewal."
+  );
+  assert.match(handoff?.performance.sponsorUpdate.body ?? "", /Signoff: Completed/);
+  assert.match(
+    handoff?.performance.sponsorUpdate.body ?? "",
+    /Launch completed and shard pressure stayed healthy/
+  );
+  assert.equal(handoff?.renewal.signoff.outcome, "completed");
+  assert.equal(
+    handoff?.renewal.nextAction,
+    "Send signed-off renewal follow-up with the performance snapshot."
+  );
+  assert.match(handoff?.renewal.renewalCopy.body ?? "", /Signed-off outcome: Completed/);
 });
 
 test("buildLootboxSponsorActivationRunMetadataPatch preserves metadata and stores run visibility", () => {
