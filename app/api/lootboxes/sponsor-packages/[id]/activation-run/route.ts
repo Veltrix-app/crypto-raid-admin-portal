@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceSupabaseClient } from "@/lib/community/project-community-ops";
 import {
   buildLootboxSponsorActivationHandoffRead,
+  buildLootboxSponsorActivationRunMetadataPatch,
   buildLootboxSponsorActivationRunRequest,
   type LootboxSponsorPackageDetailPackageRow,
 } from "@/lib/lootboxes/lootbox-sponsored-package-operator";
@@ -191,6 +192,19 @@ export async function POST(
       return NextResponse.json({ ok: false, error: noteResponse.error.message }, { status });
     }
 
+    const metadataUpdate = await admin.serviceSupabase
+      .from("lootbox_sponsor_packages")
+      .update({
+        metadata: buildLootboxSponsorActivationRunMetadataPatch({
+          existingMetadata: packageRow.metadata,
+          activationRun: runRequest.activationRun,
+          noteId: noteResponse.data.id,
+          stagedByAuthUserId: admin.authUserId,
+        }),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", packageRow.id);
+
     const auditResult = await admin.serviceSupabase
       .from("admin_audit_logs")
       .insert(
@@ -215,6 +229,10 @@ export async function POST(
       ok: true,
       activationRun: runRequest.activationRun,
       note: noteResponse.data,
+      metadataUpdated: !metadataUpdate.error,
+      warning: metadataUpdate.error
+        ? `Activation run staged, but package metadata refresh failed: ${metadataUpdate.error.message}`
+        : null,
     });
   } catch (error) {
     return NextResponse.json(

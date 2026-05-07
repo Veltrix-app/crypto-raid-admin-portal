@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildLootboxSponsorActivationHandoffRead,
+  buildLootboxSponsorActivationRunMetadataPatch,
   buildLootboxSponsorActivationRunRequest,
   buildLootboxSponsorPackageCreateRequest,
   buildLootboxSponsorPackageCrmRead,
@@ -485,6 +486,7 @@ test("buildLootboxSponsorActivationHandoffRead turns won packages into ready act
     closed: 0,
     renewalReady: 1,
     renewalWatch: 0,
+    stagedRuns: 0,
     manualOnly: true,
   });
   assert.deepEqual(
@@ -990,4 +992,157 @@ test("buildLootboxSponsorActivationRunRequest stages only ready manual activatio
     error: "Activation run can only be staged when the sponsor handoff is ready.",
     blockedBy: ["Shard pool"],
   });
+});
+
+test("buildLootboxSponsorActivationHandoffRead surfaces staged activation run state", () => {
+  const read = buildLootboxSponsorActivationHandoffRead({
+    packages: [
+      {
+        id: "package-ready",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: basePack.campaignId,
+        package_tier: "premium",
+        status: "won",
+        sponsor_name: "Atlas Labs",
+        sponsor_contact: "atlas@labs.test",
+        sponsor_budget: 2500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-1",
+        follow_up_at: "2026-05-09T12:00:00.000Z",
+        last_contacted_at: "2026-05-07T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Holder Activation Sprint",
+        },
+        metadata: {
+          lastActivationRun: {
+            runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+            title: "Atlas Labs activation run",
+            stagedAt: "2026-05-10T12:00:00.000Z",
+            noteId: "note-1",
+            stagedByAuthUserId: "admin-auth-1",
+          },
+        },
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+    ],
+    campaigns: [
+      {
+        id: basePack.campaignId,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "Holder Activation Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 500,
+        participants: 128,
+        completionRate: 42,
+      },
+    ],
+    projects: [
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "VYNTRO",
+        slug: "vyntro",
+      },
+    ],
+    shardPools: [
+      {
+        id: "pool-1",
+        campaignId: basePack.campaignId,
+        status: "active",
+        poolSize: 10_000,
+        remainingShards: 6_400,
+      },
+    ],
+  });
+
+  assert.equal(read.summary.stagedRuns, 1);
+  assert.equal(read.handoffs[0]?.activationRun.state, "staged");
+  assert.equal(read.handoffs[0]?.activationRun.label, "Run staged");
+  assert.equal(read.handoffs[0]?.activationRun.canStage, false);
+  assert.equal(read.handoffs[0]?.activationRun.stagedAt, "2026-05-10T12:00:00.000Z");
+  assert.equal(read.handoffs[0]?.activationRun.noteId, "note-1");
+  assert.match(read.handoffs[0]?.activationRun.detail ?? "", /manual runbook/);
+});
+
+test("buildLootboxSponsorActivationRunMetadataPatch preserves metadata and stores run visibility", () => {
+  const read = buildLootboxSponsorActivationHandoffRead({
+    packages: [
+      {
+        id: "package-ready",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        campaign_id: basePack.campaignId,
+        package_tier: "premium",
+        status: "won",
+        sponsor_name: "Atlas Labs",
+        sponsor_contact: "atlas@labs.test",
+        sponsor_budget: 2500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-1",
+        follow_up_at: "2026-05-09T12:00:00.000Z",
+        last_contacted_at: "2026-05-07T12:00:00.000Z",
+        package_snapshot: {},
+        metadata: { source: "existing", untouched: true },
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+    ],
+    campaigns: [
+      {
+        id: basePack.campaignId,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        title: "Holder Activation Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 500,
+        participants: 128,
+        completionRate: 42,
+      },
+    ],
+    projects: [{ id: "11111111-1111-4111-8111-111111111111", name: "VYNTRO", slug: "vyntro" }],
+    shardPools: [
+      {
+        id: "pool-1",
+        campaignId: basePack.campaignId,
+        status: "active",
+        poolSize: 10_000,
+        remainingShards: 6_400,
+      },
+    ],
+  });
+  const run = buildLootboxSponsorActivationRunRequest({
+    handoff: read.handoffs[0]!,
+    now: "2026-05-10T12:00:00.000Z",
+  });
+  assert.equal(run.ok, true);
+
+  if (run.ok) {
+    const metadata = buildLootboxSponsorActivationRunMetadataPatch({
+      existingMetadata: { source: "existing", untouched: true },
+      activationRun: run.activationRun,
+      noteId: "note-1",
+      stagedByAuthUserId: "admin-auth-1",
+    });
+
+    assert.deepEqual(metadata, {
+      source: "existing",
+      untouched: true,
+      activationRunState: "staged",
+      lastActivationRun: {
+        runId: "sponsor-activation:package-ready:2026-05-10T12:00:00.000Z",
+        title: "Atlas Labs activation run",
+        stagedAt: "2026-05-10T12:00:00.000Z",
+        sponsorPackageId: "package-ready",
+        campaignId: basePack.campaignId,
+        projectId: "11111111-1111-4111-8111-111111111111",
+        routeHref: `/campaigns/${basePack.campaignId}`,
+        noteId: "note-1",
+        stagedByAuthUserId: "admin-auth-1",
+        guardrailCount: 5,
+      },
+    });
+  }
 });

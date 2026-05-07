@@ -307,6 +307,7 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
       closed: handoffs.filter((handoff) => handoff.activationState === "closed").length,
       renewalReady: handoffs.filter((handoff) => handoff.renewal.state === "ready").length,
       renewalWatch: handoffs.filter((handoff) => handoff.renewal.state === "watch").length,
+      stagedRuns: handoffs.filter((handoff) => handoff.activationRun.state === "staged").length,
       manualOnly: true as const,
     },
     handoffs,
@@ -329,20 +330,22 @@ export type LootboxSponsorActivationHandoffRead = ReturnType<
 export type LootboxSponsorActivationHandoff =
   LootboxSponsorActivationHandoffRead["handoffs"][number];
 
+export type LootboxSponsorActivationRun = {
+  runId: string;
+  sponsorPackageId: string;
+  campaignId: string | null;
+  projectId: string | null;
+  routeHref: string;
+  title: string;
+  stagedAt: string;
+  nextOperatorMoves: string[];
+  guardrails: string[];
+};
+
 export type LootboxSponsorActivationRunRequestResult =
   | {
       ok: true;
-      activationRun: {
-        runId: string;
-        sponsorPackageId: string;
-        campaignId: string | null;
-        projectId: string | null;
-        routeHref: string;
-        title: string;
-        stagedAt: string;
-        nextOperatorMoves: string[];
-        guardrails: string[];
-      };
+      activationRun: LootboxSponsorActivationRun;
       notePayload: LootboxSponsorPackageNotePayload;
       audit: {
         action: "lootbox_sponsor_activation_run_staged";
@@ -433,6 +436,35 @@ export function buildLootboxSponsorActivationRunRequest(params: {
       action: "lootbox_sponsor_activation_run_staged",
       summary: `Staged manual activation run for ${params.handoff.sponsorName}.`,
       metadata,
+    },
+  };
+}
+
+export function buildLootboxSponsorActivationRunMetadataPatch(params: {
+  existingMetadata: Record<string, unknown> | null;
+  activationRun: LootboxSponsorActivationRun;
+  noteId: string;
+  stagedByAuthUserId: string;
+}) {
+  const existing =
+    params.existingMetadata && typeof params.existingMetadata === "object"
+      ? params.existingMetadata
+      : {};
+
+  return {
+    ...existing,
+    activationRunState: "staged",
+    lastActivationRun: {
+      runId: params.activationRun.runId,
+      title: params.activationRun.title,
+      stagedAt: params.activationRun.stagedAt,
+      sponsorPackageId: params.activationRun.sponsorPackageId,
+      campaignId: params.activationRun.campaignId,
+      projectId: params.activationRun.projectId,
+      routeHref: params.activationRun.routeHref,
+      noteId: params.noteId,
+      stagedByAuthUserId: params.stagedByAuthUserId,
+      guardrailCount: params.activationRun.guardrails.length,
     },
   };
 }
@@ -604,6 +636,10 @@ function buildSponsorActivationHandoff(params: {
     activationState,
     checklist,
   });
+  const activationRun = buildSponsorActivationRunSummary({
+    metadata: row.metadata,
+    canStage: execution.canLaunch,
+  });
   const projectName =
     project?.name ?? getSnapshotText(row, "projectName", row.project_id ?? "Workspace");
   const campaignTitle =
@@ -654,6 +690,7 @@ function buildSponsorActivationHandoff(params: {
     },
     checklist,
     execution,
+    activationRun,
     performance,
     renewal,
     brief: {
@@ -1353,6 +1390,60 @@ function buildSponsorActivationRunNote(params: {
   ].join("\n");
 }
 
+function buildSponsorActivationRunSummary(params: {
+  metadata: Record<string, unknown> | null;
+  canStage: boolean;
+}) {
+  const staged = readLastSponsorActivationRun(params.metadata);
+  if (staged) {
+    return {
+      state: "staged" as const,
+      label: "Run staged",
+      tone: "success" as const,
+      canStage: false,
+      runId: staged.runId,
+      title: staged.title,
+      stagedAt: staged.stagedAt,
+      noteId: staged.noteId,
+      stagedByAuthUserId: staged.stagedByAuthUserId,
+      detail: "Decision note and audit are saved; continue the manual runbook and monitor the launch window.",
+    };
+  }
+
+  return {
+    state: "not_staged" as const,
+    label: "Not staged",
+    tone: params.canStage ? ("warning" as const) : ("default" as const),
+    canStage: params.canStage,
+    runId: null,
+    title: null,
+    stagedAt: null,
+    noteId: null,
+    stagedByAuthUserId: null,
+    detail: params.canStage
+      ? "Stage a decision note and audit event before the manual launch starts."
+      : "Finish activation setup before staging the manual run.",
+  };
+}
+
+function readLastSponsorActivationRun(metadata: Record<string, unknown> | null) {
+  const run = readObject(metadata?.lastActivationRun);
+  const runId = readNonEmptyString(run?.runId);
+  const stagedAt = readNonEmptyString(run?.stagedAt);
+
+  if (!runId || !stagedAt) {
+    return null;
+  }
+
+  return {
+    runId,
+    stagedAt,
+    title: readNonEmptyString(run?.title),
+    noteId: readNonEmptyString(run?.noteId),
+    stagedByAuthUserId: readNonEmptyString(run?.stagedByAuthUserId),
+  };
+}
+
 function compareSponsorActivationHandoffs(
   left: ReturnType<typeof buildSponsorActivationHandoff>,
   right: ReturnType<typeof buildSponsorActivationHandoff>
@@ -1662,6 +1753,16 @@ function formatBlockingFields(fields: string[]) {
 function normalizeText(value: string | null) {
   const text = typeof value === "string" ? value.trim() : "";
   return text || null;
+}
+
+function readObject(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function readNonEmptyString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function toReferenceDate(value: string | Date | undefined) {

@@ -176,6 +176,8 @@ type SponsorActivationRunApiPayload = {
     runId: string;
     title: string;
   };
+  metadataUpdated?: boolean;
+  warning?: string | null;
 };
 const sponsorPackageStatusControls: LootboxSponsorPackageStatus[] = [
   "ready_to_pitch",
@@ -907,8 +909,10 @@ export default function LootboxesPage() {
       await refreshSponsorPackages();
       await loadSponsorPackageDetail(id);
       setSponsorPackageOpsMessage({
-        tone: "success",
-        text: `${payload.activationRun.title} staged as an auditable manual run.`,
+        tone: payload.metadataUpdated === false ? "default" : "success",
+        text:
+          payload.warning ??
+          `${payload.activationRun.title} staged as an auditable manual run.`,
       });
     } catch (error) {
       setSponsorPackageOpsMessage({
@@ -2807,12 +2811,13 @@ function SponsorActivationHandoffPanel({
       }
     >
       <div className="grid gap-3">
-        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-7">
           <MiniRead label="Packages" value={`${read.summary.total}`} />
           <MiniRead label="Ready" value={`${read.summary.ready}`} />
           <MiniRead label="Setup needed" value={`${read.summary.setupNeeded}`} />
           <MiniRead label="Locked" value={`${read.summary.locked}`} />
           <MiniRead label="Renewal ready" value={`${read.summary.renewalReady}`} />
+          <MiniRead label="Staged runs" value={`${read.summary.stagedRuns}`} />
           <MiniRead label="Mode" value={read.summary.manualOnly ? "Manual" : "Auto"} />
         </div>
 
@@ -2873,7 +2878,7 @@ function SponsorActivationFocusCard({ handoff }: { handoff: SponsorActivationHan
         <MiniRead label="Shard pool" value={handoff.metrics.poolSize.toLocaleString("en-US")} />
         <MiniRead label="Remaining" value={handoff.metrics.remainingShards.toLocaleString("en-US")} />
         <MiniRead label="Reward budget" value={handoff.metrics.rewardBudget.toLocaleString("en-US")} />
-        <MiniRead label="Renewal" value={handoff.renewal.label} />
+        <MiniRead label="Run" value={handoff.activationRun.label} />
       </div>
       <div className="mt-3 rounded-[14px] border border-white/[0.016] bg-black/18 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2890,7 +2895,9 @@ function SponsorActivationFocusCard({ handoff }: { handoff: SponsorActivationHan
           </p>
         ) : (
           <p className="mt-2 text-[10px] leading-4 text-sub">
-            Manual launch can start once the activation brief is staged.
+            {handoff.activationRun.state === "staged"
+              ? handoff.activationRun.detail
+              : "Manual launch can start once the activation brief is staged."}
           </p>
         )}
       </div>
@@ -2925,6 +2932,7 @@ function SponsorActivationHandoffCard({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <OpsStatusPill tone={handoff.tone}>{handoff.activationState.replace(/_/g, " ")}</OpsStatusPill>
+            <OpsStatusPill tone={handoff.activationRun.tone}>{handoff.activationRun.label}</OpsStatusPill>
             <OpsStatusPill tone={getPackageTierTone(handoff.packageTier as LootboxSponsoredPackageTier)}>
               {handoff.packageTier}
             </OpsStatusPill>
@@ -2950,6 +2958,34 @@ function SponsorActivationHandoffCard({
         <MiniRead label="Deal" value={handoff.budgetLabel} />
         <MiniRead label="Pools" value={`${handoff.metrics.activePools}/${handoff.metrics.linkedPools}`} />
         <MiniRead label="Remaining" value={handoff.metrics.remainingShards.toLocaleString("en-US")} />
+      </div>
+
+      <div className="mt-3 rounded-[14px] border border-primary/12 bg-[linear-gradient(180deg,rgba(186,255,59,0.04),rgba(255,255,255,0.01))] p-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+              Activation run state
+            </p>
+            <p className="mt-1 text-[10px] leading-4 text-sub">{handoff.activationRun.detail}</p>
+          </div>
+          <OpsStatusPill tone={handoff.activationRun.tone}>
+            {handoff.activationRun.label}
+          </OpsStatusPill>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <MiniRead
+            label="Last staged"
+            value={
+              handoff.activationRun.stagedAt
+                ? formatSponsorPackageDate(handoff.activationRun.stagedAt)
+                : "Not yet"
+            }
+          />
+          <MiniRead
+            label="Run note"
+            value={handoff.activationRun.noteId ? "Decision saved" : "No note"}
+          />
+        </div>
       </div>
 
       <div className="mt-3 grid gap-1.5">
@@ -3138,12 +3174,16 @@ function SponsorActivationHandoffCard({
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <button
               type="button"
-              disabled={!handoff.execution.canLaunch || activationRunSaving}
+              disabled={!handoff.activationRun.canStage || activationRunSaving}
               onClick={() => onStageRun(handoff.packageId)}
               className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-primary/24 bg-primary px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_28px_rgba(186,255,59,0.16)] transition enabled:hover:shadow-[0_18px_36px_rgba(186,255,59,0.22)] disabled:cursor-not-allowed disabled:border-white/[0.018] disabled:bg-white/[0.04] disabled:text-sub disabled:shadow-none"
             >
               <Send size={12} />
-              {activationRunSaving ? "Staging" : "Stage run"}
+              {activationRunSaving
+                ? "Staging"
+                : handoff.activationRun.state === "staged"
+                  ? "Run staged"
+                  : "Stage run"}
             </button>
             <button
               type="button"
@@ -3163,7 +3203,9 @@ function SponsorActivationHandoffCard({
           </div>
         </div>
         <p className="mt-2 rounded-[11px] border border-white/[0.012] bg-white/[0.01] px-2.5 py-2 text-[10px] leading-4 text-sub">
-          Stage run writes a decision note and audit event only. It does not trigger billing, payouts, reward inventory or public launch.
+          {handoff.activationRun.state === "staged"
+            ? "Run state is saved on this sponsor package. Continue manually from the decision note and audit trail."
+            : "Stage run writes a decision note and audit event only. It does not trigger billing, payouts, reward inventory or public launch."}
         </p>
       </div>
     </article>
