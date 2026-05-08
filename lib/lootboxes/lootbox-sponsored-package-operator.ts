@@ -442,6 +442,7 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
       null,
     businessCockpit: buildSponsorBusinessCockpit(handoffs),
     billingReadiness: buildSponsorBillingReadiness(handoffs),
+    dealClosePack: buildSponsorDealClosePack(handoffs),
     guardrails: [
       "Activation handoff does not create billing, payouts or reward inventory.",
       "Operators still own sponsor follow-up, pool setup and fulfillment decisions.",
@@ -1081,6 +1082,209 @@ function buildSponsorActivationHandoff(params: {
       }),
     },
   };
+}
+
+function buildSponsorDealClosePack(
+  handoffs: ReturnType<typeof buildSponsorActivationHandoff>[]
+) {
+  const packs = handoffs.map(toSponsorDealClosePack).sort(compareDealClosePacks);
+  const readyPacks = packs.filter((pack) => pack.state === "ready");
+  const setupPacks = packs.filter((pack) => pack.state === "needs_setup");
+  const watchPacks = packs.filter((pack) => pack.state === "watch");
+  const focus = readyPacks[0] ?? setupPacks[0] ?? watchPacks[0] ?? packs[0] ?? null;
+
+  return {
+    summary: {
+      total: packs.length,
+      ready: readyPacks.length,
+      needsSetup: setupPacks.length,
+      watch: watchPacks.length,
+      copyBlocks: readyPacks.reduce(
+        (sum, pack) => sum + pack.blocks.filter((block) => block.enabled).length,
+        0
+      ),
+      manualOnly: true as const,
+      topNextAction:
+        focus?.nextAction ?? "Save sponsor packages before creating a close pack.",
+    },
+    focus,
+    packs,
+    guardrails: [
+      "Close packs are copy-only and do not create invoices, payment links or payouts.",
+      "Finance prep stays disabled until sponsor contact, deal value and delivery signoff are ready.",
+      "Internal proof is a human handoff for ops and finance, not an automated fulfillment event.",
+    ],
+  };
+}
+
+function toSponsorDealClosePack(
+  handoff: ReturnType<typeof buildSponsorActivationHandoff>
+) {
+  const closed = ["lost", "blocked", "archived"].includes(handoff.status);
+  const won = handoff.status === "won";
+  const deliverySignedOff = handoff.activationRun.signoff?.outcome === "completed";
+  const blockers = closed
+    ? []
+    : won
+      ? [
+          handoff.sponsorContact ? null : "Sponsor contact",
+          handoff.dealValue > 0 ? null : "Deal value",
+          deliverySignedOff ? null : "Delivery signoff",
+        ].filter((item): item is string => Boolean(item))
+      : ["Sponsor win"];
+  const state = closed
+    ? ("closed" as const)
+    : !won
+      ? ("watch" as const)
+      : blockers.length === 0
+        ? ("ready" as const)
+        : ("needs_setup" as const);
+  const enabled = state === "ready";
+  const blocks = [
+    {
+      id: "sponsor_recap" as const,
+      label: "Sponsor recap",
+      title: `${handoff.sponsorName} sponsor close recap`,
+      body: buildSponsorCloseRecapCopy(handoff),
+      enabled,
+      blockers,
+    },
+    {
+      id: "finance_prep" as const,
+      label: "Finance prep",
+      title: `${handoff.sponsorName} finance invoice prep`,
+      body: buildSponsorCloseFinanceCopy(handoff),
+      enabled,
+      blockers,
+    },
+    {
+      id: "internal_proof" as const,
+      label: "Internal proof",
+      title: `${handoff.sponsorName} internal delivery proof`,
+      body: buildSponsorCloseInternalProofCopy(handoff),
+      enabled,
+      blockers,
+    },
+  ];
+
+  return {
+    packageId: handoff.packageId,
+    sponsorName: handoff.sponsorName,
+    campaignTitle: handoff.campaignTitle,
+    projectName: handoff.projectName,
+    packageTier: handoff.packageTier,
+    routeHref: handoff.routeHref,
+    state,
+    blockers,
+    valueLabel: handoff.budgetLabel,
+    dealValue: handoff.dealValue,
+    signoffLabel: handoff.activationRun.signoff?.label ?? "No delivery signoff",
+    score:
+      Math.round(handoff.dealValue / 100) +
+      (state === "ready" ? 120 : 0) +
+      (state === "needs_setup" ? 40 : 0) +
+      (state === "watch" ? 10 : 0),
+    nextAction: getSponsorDealCloseNextAction({
+      state,
+      sponsorName: handoff.sponsorName,
+      blockers,
+    }),
+    blocks,
+  };
+}
+
+function getSponsorDealCloseNextAction({
+  state,
+  sponsorName,
+  blockers,
+}: {
+  state: "ready" | "needs_setup" | "watch" | "closed";
+  sponsorName: string;
+  blockers: string[];
+}) {
+  if (state === "ready") {
+    return `Copy close pack for ${sponsorName}: sponsor recap, finance prep and internal proof.`;
+  }
+
+  if (state === "needs_setup") {
+    return `Resolve close blockers: ${blockers.join(", ")}.`;
+  }
+
+  if (state === "closed") {
+    return "Keep closed sponsor package out of deal close.";
+  }
+
+  return "Move sponsor package to won before preparing close copy.";
+}
+
+function buildSponsorCloseRecapCopy(
+  handoff: ReturnType<typeof buildSponsorActivationHandoff>
+) {
+  return [
+    `${handoff.sponsorName} close recap for ${handoff.campaignTitle}:`,
+    `Project: ${handoff.projectName}.`,
+    `Package: ${handoff.packageTier}.`,
+    `Deal value: ${handoff.budgetLabel}.`,
+    `Sponsor contact: ${handoff.sponsorContact ?? "Missing"}.`,
+    `Delivery signoff: ${handoff.activationRun.signoff?.label ?? "Not signed off"}.`,
+    `Performance: ${handoff.performance.metrics.issuedShards.toLocaleString("en-US")} shards issued, ${handoff.performance.metrics.depletionRate}% depleted, ${handoff.metrics.participants.toLocaleString("en-US")} participants, ${handoff.metrics.completionRate}% completion.`,
+    `Next sponsor move: ${handoff.renewal.nextAction}`,
+    "Manual-only guardrail: this does not create invoices, payment links, payouts or reward inventory.",
+  ].join("\n");
+}
+
+function buildSponsorCloseFinanceCopy(
+  handoff: ReturnType<typeof buildSponsorActivationHandoff>
+) {
+  return [
+    `${handoff.sponsorName} finance invoice prep:`,
+    `Campaign: ${handoff.campaignTitle}.`,
+    `Package: ${handoff.packageTier}.`,
+    `Deal value: ${handoff.budgetLabel}.`,
+    `Finance contact: ${handoff.sponsorContact ?? "Missing"}.`,
+    `Delivery proof: ${handoff.activationRun.signoff?.label ?? "Not signed off"}.`,
+    "Finance approval required before sending.",
+    "Manual-only guardrail: this does not create invoices, payment links, payouts or reward inventory.",
+  ].join("\n");
+}
+
+function buildSponsorCloseInternalProofCopy(
+  handoff: ReturnType<typeof buildSponsorActivationHandoff>
+) {
+  return [
+    `${handoff.sponsorName} internal delivery proof:`,
+    `Run: ${handoff.activationRun.runId ?? "No staged run"}.`,
+    `Campaign: ${handoff.campaignTitle}.`,
+    `Shard pool: ${handoff.metrics.poolSize.toLocaleString("en-US")} total / ${handoff.metrics.remainingShards.toLocaleString("en-US")} remaining.`,
+    `Reward budget: ${handoff.metrics.rewardBudget.toLocaleString("en-US")}.`,
+    `Participants: ${handoff.metrics.participants.toLocaleString("en-US")}.`,
+    `Completion: ${handoff.metrics.completionRate}%.`,
+    `Signoff: ${handoff.activationRun.signoff?.label ?? "Not signed off"}.`,
+    `Operator note: ${handoff.activationRun.signoff?.note ?? "No signoff note yet."}`,
+    "Manual-only guardrail: this does not create invoices, payment links, payouts or reward inventory.",
+  ].join("\n");
+}
+
+function compareDealClosePacks(
+  left: ReturnType<typeof toSponsorDealClosePack>,
+  right: ReturnType<typeof toSponsorDealClosePack>
+) {
+  const stateRank = {
+    ready: 4,
+    needs_setup: 3,
+    watch: 2,
+    closed: 1,
+  };
+  const rankDelta = stateRank[right.state] - stateRank[left.state];
+  if (rankDelta !== 0) {
+    return rankDelta;
+  }
+
+  if (right.score !== left.score) {
+    return right.score - left.score;
+  }
+
+  return right.dealValue - left.dealValue;
 }
 
 function buildSponsorBillingReadiness(

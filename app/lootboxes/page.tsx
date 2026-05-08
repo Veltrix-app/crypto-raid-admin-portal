@@ -3335,6 +3335,9 @@ type SponsorBusinessCockpit = SponsorActivationHandoffRead["businessCockpit"];
 type SponsorBusinessCockpitItem = SponsorBusinessCockpit["lanes"][number]["items"][number];
 type SponsorBillingReadiness = SponsorActivationHandoffRead["billingReadiness"];
 type SponsorBillingReadinessItem = SponsorBillingReadiness["lanes"][number]["items"][number];
+type SponsorDealClosePack = SponsorActivationHandoffRead["dealClosePack"];
+type SponsorDealClosePackItem = SponsorDealClosePack["packs"][number];
+type SponsorDealCloseBlock = SponsorDealClosePackItem["blocks"][number];
 
 function SponsorActivationHandoffPanel({
   read,
@@ -3376,6 +3379,12 @@ function SponsorActivationHandoffPanel({
 
         <SponsorBillingReadinessPanel readiness={read.billingReadiness} />
 
+        <SponsorDealClosePackPanel
+          closePack={read.dealClosePack}
+          copyingId={copyingId}
+          onCopy={onCopy}
+        />
+
         {read.focus ? <SponsorActivationFocusCard handoff={read.focus} /> : null}
 
         {read.handoffs.length ? (
@@ -3411,6 +3420,182 @@ function SponsorActivationHandoffPanel({
         </div>
       </div>
     </OpsPanel>
+  );
+}
+
+function SponsorDealClosePackPanel({
+  closePack,
+  copyingId,
+  onCopy,
+}: {
+  closePack: SponsorDealClosePack;
+  copyingId: string | null;
+  onCopy: (id: string, text: string, successText: string) => void;
+}) {
+  const focus = closePack.focus;
+
+  return (
+    <div className="relative overflow-hidden rounded-[18px] border border-primary/12 bg-[radial-gradient(circle_at_8%_0%,rgba(186,255,59,0.1),transparent_26%),radial-gradient(circle_at_90%_12%,rgba(255,255,255,0.045),transparent_24%),linear-gradient(180deg,rgba(15,17,22,0.95),rgba(7,9,14,0.94))] p-3.5">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/24 to-transparent" />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 max-w-3xl">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Deal close pack
+          </p>
+          <h3 className="mt-2 break-words text-[16px] font-black text-text [overflow-wrap:anywhere]">
+            Sponsor closing copy
+          </h3>
+          <p className="mt-1.5 break-words text-[11px] leading-5 text-sub [overflow-wrap:anywhere]">
+            {closePack.summary.topNextAction}
+          </p>
+        </div>
+        <OpsStatusPill tone={closePack.summary.ready > 0 ? "success" : "warning"}>
+          {closePack.summary.copyBlocks} copy blocks
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-5">
+        <MiniRead label="Packages" value={`${closePack.summary.total}`} />
+        <MiniRead label="Ready" value={`${closePack.summary.ready}`} />
+        <MiniRead label="Setup" value={`${closePack.summary.needsSetup}`} />
+        <MiniRead label="Watch" value={`${closePack.summary.watch}`} />
+        <MiniRead label="Mode" value={closePack.summary.manualOnly ? "Manual" : "Live"} />
+      </div>
+
+      {focus ? (
+        <div className={`mt-3 rounded-[16px] border p-3 ${getSponsorDealCloseStateClass(focus.state)}`}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <OpsStatusPill tone={getSponsorDealCloseStateTone(focus.state)}>
+                  {focus.state.replace(/_/g, " ")}
+                </OpsStatusPill>
+                <OpsStatusPill tone={getPackageTierTone(focus.packageTier as LootboxSponsoredPackageTier)}>
+                  {focus.packageTier}
+                </OpsStatusPill>
+              </div>
+              <p className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+                {focus.sponsorName}
+              </p>
+              <p className="mt-1 break-words text-[10px] leading-4 text-sub [overflow-wrap:anywhere]">
+                {focus.nextAction}
+              </p>
+            </div>
+            <Link
+              href={focus.routeHref}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.024] bg-black/24 px-2.5 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary transition hover:border-primary/28 hover:bg-primary/[0.07]"
+            >
+              <ClipboardCheck size={12} />
+              Open
+            </Link>
+          </div>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-4">
+            <MiniRead label="Value" value={focus.valueLabel} />
+            <MiniRead label="Signoff" value={focus.signoffLabel} />
+            <MiniRead label="Blocks" value={`${focus.blocks.filter((block) => block.enabled).length}/3`} />
+            <MiniRead label="Blockers" value={focus.blockers.length ? `${focus.blockers.length}` : "0"} />
+          </div>
+
+          <div className="mt-3 grid gap-2 lg:grid-cols-3">
+            {focus.blocks.map((block) => (
+              <SponsorDealCloseCopyBlock
+                key={block.id}
+                packageId={focus.packageId}
+                block={block}
+                copying={copyingId === `close-${focus.packageId}-${block.id}`}
+                onCopy={onCopy}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-3 grid gap-2 lg:grid-cols-3">
+        {closePack.packs.slice(0, 3).map((pack) => (
+          <Link
+            key={pack.packageId}
+            href={pack.routeHref}
+            className={`group block rounded-[14px] border px-3 py-2.5 transition hover:border-primary/24 ${getSponsorDealCloseStateClass(pack.state)}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-[12px] font-black text-text">{pack.sponsorName}</p>
+                <p className="mt-1 line-clamp-1 text-[9px] text-sub">{pack.campaignTitle}</p>
+              </div>
+              <OpsStatusPill tone={getSponsorDealCloseStateTone(pack.state)}>
+                {pack.state.replace(/_/g, " ")}
+              </OpsStatusPill>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[8px] font-black uppercase tracking-[0.12em]">
+              <span className="text-primary">{pack.valueLabel}</span>
+              <span className="text-sub">{pack.signoffLabel}</span>
+            </div>
+            {pack.blockers.length ? (
+              <p className="mt-2 line-clamp-1 text-[9px] leading-4 text-sub">
+                Blocking: {pack.blockers.join(", ")}
+              </p>
+            ) : null}
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
+        {closePack.guardrails.map((guardrail) => (
+          <div
+            key={guardrail}
+            className="rounded-[13px] border border-white/[0.016] bg-white/[0.012] px-2.5 py-2 text-[10px] font-semibold leading-4 text-sub"
+          >
+            {guardrail}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SponsorDealCloseCopyBlock({
+  packageId,
+  block,
+  copying,
+  onCopy,
+}: {
+  packageId: string;
+  block: SponsorDealCloseBlock;
+  copying: boolean;
+  onCopy: (id: string, text: string, successText: string) => void;
+}) {
+  return (
+    <div className="rounded-[14px] border border-white/[0.018] bg-black/22 p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+            {block.label}
+          </p>
+          <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-sub">
+            {block.enabled ? block.title : `Blocked: ${block.blockers.join(", ")}`}
+          </p>
+        </div>
+        <OpsStatusPill tone={block.enabled ? "success" : "warning"}>
+          {block.enabled ? "ready" : "locked"}
+        </OpsStatusPill>
+      </div>
+      <button
+        type="button"
+        disabled={!block.enabled || copying}
+        onClick={() =>
+          onCopy(
+            `close-${packageId}-${block.id}`,
+            `${block.title}\n\n${block.body}`,
+            `${block.label} copied.`
+          )
+        }
+        className="mt-3 inline-flex min-h-8 w-full items-center justify-center gap-1.5 rounded-full border border-primary/18 bg-primary/[0.07] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary transition enabled:hover:border-primary/34 enabled:hover:bg-primary/[0.12] disabled:cursor-not-allowed disabled:border-white/[0.018] disabled:bg-white/[0.012] disabled:text-sub"
+      >
+        <Copy size={12} />
+        {copying ? "Copying" : "Copy"}
+      </button>
+    </div>
   );
 }
 
@@ -6103,6 +6288,33 @@ function getSponsorBillingReadinessClass(readiness: SponsorBillingReadinessItem[
     case "closed":
       return "border-white/[0.014] bg-white/[0.008] text-sub";
     case "payment_watch":
+    default:
+      return "border-sky-300/12 bg-sky-300/[0.035] text-sky-100";
+  }
+}
+
+function getSponsorDealCloseStateTone(state: SponsorDealClosePackItem["state"]) {
+  switch (state) {
+    case "ready":
+      return "success" as const;
+    case "needs_setup":
+      return "warning" as const;
+    case "closed":
+    case "watch":
+    default:
+      return "default" as const;
+  }
+}
+
+function getSponsorDealCloseStateClass(state: SponsorDealClosePackItem["state"]) {
+  switch (state) {
+    case "ready":
+      return "border-primary/18 bg-primary/[0.055] text-primary";
+    case "needs_setup":
+      return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
+    case "closed":
+      return "border-white/[0.014] bg-white/[0.008] text-sub";
+    case "watch":
     default:
       return "border-sky-300/12 bg-sky-300/[0.035] text-sky-100";
   }

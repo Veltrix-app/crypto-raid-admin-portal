@@ -1681,6 +1681,145 @@ test("buildLootboxSponsorActivationHandoffRead builds sponsor billing readiness"
   );
 });
 
+test("buildLootboxSponsorActivationHandoffRead builds a sponsor deal close pack", () => {
+  const projectId = "11111111-1111-4111-8111-111111111111";
+  const readyRunId = "sponsor-activation:package-close:2026-05-10T12:00:00.000Z";
+  const read = buildLootboxSponsorActivationHandoffRead({
+    now: "2026-05-10T14:00:00.000Z",
+    packages: [
+      {
+        id: "package-close",
+        project_id: projectId,
+        campaign_id: basePack.campaignId,
+        package_tier: "premium",
+        status: "won",
+        sponsor_name: "Atlas Labs",
+        sponsor_contact: "finance@atlas.test",
+        sponsor_budget: 2500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-1",
+        follow_up_at: "2026-05-11T10:00:00.000Z",
+        last_contacted_at: "2026-05-09T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Holder Activation Sprint",
+        },
+        metadata: {
+          lastActivationRun: {
+            runId: readyRunId,
+            title: "Atlas Labs activation run",
+            stagedAt: "2026-05-10T12:00:00.000Z",
+            sponsorPackageId: "package-close",
+            campaignId: basePack.campaignId,
+            projectId,
+            routeHref: `/campaigns/${basePack.campaignId}`,
+            noteId: "note-1",
+            stagedByAuthUserId: "admin-auth-1",
+            guardrailCount: 5,
+          },
+          lastActivationRunSignoff: {
+            runId: readyRunId,
+            outcome: "completed",
+            label: "Completed",
+            signedOffAt: "2026-05-10T13:00:00.000Z",
+            signedOffByAuthUserId: "admin-auth-1",
+            noteId: "note-signoff",
+            note: "Launch completed and sponsor proof is ready.",
+            followUpAt: "2026-05-11T12:00:00.000Z",
+          },
+        },
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-setup",
+        project_id: projectId,
+        campaign_id: "44444444-4444-4444-8444-444444444444",
+        package_tier: "standard",
+        status: "won",
+        sponsor_name: "Gamma Crew",
+        sponsor_contact: "gamma@test.local",
+        sponsor_budget: 1500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-3",
+        follow_up_at: null,
+        last_contacted_at: null,
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Gamma Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-3",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+    ],
+    campaigns: [
+      {
+        id: basePack.campaignId,
+        projectId,
+        title: "Holder Activation Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 500,
+        participants: 128,
+        completionRate: 42,
+      },
+      {
+        id: "44444444-4444-4444-8444-444444444444",
+        projectId,
+        title: "Gamma Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 200,
+        participants: 12,
+        completionRate: 12,
+      },
+    ],
+    projects: [{ id: projectId, name: "VYNTRO", slug: "vyntro" }],
+    shardPools: [
+      {
+        id: "pool-1",
+        campaignId: basePack.campaignId,
+        status: "active",
+        poolSize: 10_000,
+        remainingShards: 6_400,
+      },
+    ],
+  });
+
+  assert.deepEqual(read.dealClosePack.summary, {
+    total: 2,
+    ready: 1,
+    needsSetup: 1,
+    watch: 0,
+    copyBlocks: 3,
+    manualOnly: true,
+    topNextAction: "Copy close pack for Atlas Labs: sponsor recap, finance prep and internal proof.",
+  });
+  assert.equal(read.dealClosePack.focus?.packageId, "package-close");
+
+  const readyPack = read.dealClosePack.packs.find((pack) => pack.packageId === "package-close");
+  assert.deepEqual(
+    readyPack?.blocks.map((block) => `${block.id}:${block.enabled}`),
+    ["sponsor_recap:true", "finance_prep:true", "internal_proof:true"]
+  );
+  assert.match(readyPack?.blocks[0]?.body ?? "", /Atlas Labs close recap for Holder Activation Sprint/);
+  assert.match(readyPack?.blocks[1]?.body ?? "", /Finance contact: finance@atlas.test/);
+  assert.match(readyPack?.blocks[1]?.body ?? "", /Finance approval required before sending/);
+  assert.match(readyPack?.blocks[2]?.body ?? "", /Launch completed and sponsor proof is ready/);
+  assert.match(
+    readyPack?.blocks[2]?.body ?? "",
+    /Manual-only guardrail: this does not create invoices, payment links, payouts or reward inventory/
+  );
+
+  const setupPack = read.dealClosePack.packs.find((pack) => pack.packageId === "package-setup");
+  assert.equal(setupPack?.state, "needs_setup");
+  assert.deepEqual(setupPack?.blockers, ["Delivery signoff"]);
+  assert.equal(setupPack?.blocks.every((block) => !block.enabled), true);
+});
+
 test("buildLootboxSponsorActivationRunMetadataPatch preserves metadata and stores run visibility", () => {
   const read = buildLootboxSponsorActivationHandoffRead({
     packages: [
