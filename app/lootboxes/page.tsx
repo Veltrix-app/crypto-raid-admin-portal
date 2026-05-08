@@ -213,6 +213,7 @@ const sponsorPackageStatusControls: LootboxSponsorPackageStatus[] = [
   "lost",
   "blocked",
 ];
+type LootboxDeskId = "overview" | "economy" | "sponsors" | "fulfillment";
 
 async function fetchSponsorPackagesRead() {
   const response = await fetch("/api/lootboxes/sponsor-packages", {
@@ -252,6 +253,7 @@ export default function LootboxesPage() {
   const projects = useAdminPortalStore((s) => s.projects);
   const featuredShardPools = useAdminPortalStore((s) => s.featuredShardPools);
   const [selectedTierId, setSelectedTierId] = useState<LootboxStudioTierId>("common");
+  const [activeDesk, setActiveDesk] = useState<LootboxDeskId>("overview");
   const [poolDraftOverrides, setPoolDraftOverrides] = useState<
     Partial<Record<LootboxStudioTierId, LootboxPoolDraftOverride[]>>
   >({});
@@ -1108,12 +1110,128 @@ export default function LootboxesPage() {
     }
   }
 
+  const pendingReviewInventory = lootboxActivity?.summary.pendingReviewInventory ?? 0;
+  const sponsorNowCount = sponsorActivationHandoff.followUpTimeline.summary.now;
+  const readySponsorCount = sponsorActivationHandoff.summary.ready;
+  const deskItems = [
+    {
+      id: "overview" as const,
+      label: "Overview",
+      kicker: "Command",
+      title: "Launch posture",
+      detail: "One read for economy, sponsor and fulfillment pressure.",
+      metric: `${activePools.length} boosts`,
+      tone: "primary" as const,
+    },
+    {
+      id: "economy" as const,
+      label: "Economy",
+      kicker: "Tune",
+      title: "Tiers and pools",
+      detail: "Prices, odds, stock safety and sponsored shard pools.",
+      metric: `${LOOTBOX_STUDIO_TIERS.length} tiers`,
+      tone: "default" as const,
+    },
+    {
+      id: "sponsors" as const,
+      label: "Sponsors",
+      kicker: "Revenue",
+      title: "Sponsor packages",
+      detail: "Briefs, CRM, activation handoff and follow-up timeline.",
+      metric: `${readySponsorCount}/${sponsorNowCount} now`,
+      tone: sponsorNowCount > 0 ? ("warning" as const) : ("default" as const),
+    },
+    {
+      id: "fulfillment" as const,
+      label: "Fulfillment",
+      kicker: "Ops",
+      title: "Inventory queue",
+      detail: "Claims, review states, notes and reward delivery lanes.",
+      metric: `${pendingReviewInventory} review`,
+      tone: pendingReviewInventory > 0 ? ("warning" as const) : ("default" as const),
+    },
+  ];
+
+  const featuredPoolsPanel = (
+    <OpsPanel
+      eyebrow="Live pressure"
+      title="Featured shard pools"
+      description="Active and paused boosts determine where members have a reason to hunt."
+      action={
+        <OpsStatusPill tone={activePools.length > 0 ? "success" : "default"}>
+          {activePools.length} active
+        </OpsStatusPill>
+      }
+    >
+      <div className="space-y-2.5">
+        {featuredShardPools.length > 0 ? (
+          featuredShardPools.slice(0, 6).map((pool) => (
+            <PoolPressureCard
+              key={pool.id}
+              pool={pool}
+              campaignTitle={
+                campaigns.find((campaign) => campaign.id === pool.campaignId)?.title ??
+                "Campaign boost"
+              }
+              projectName={
+                projects.find((project) => project.id === pool.projectId)?.name ?? "Workspace"
+              }
+            />
+          ))
+        ) : (
+          <div className="rounded-[16px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
+            No shard boost pools are attached yet. Create a campaign with a boost preset
+            to start the hunt layer.
+          </div>
+        )}
+      </div>
+    </OpsPanel>
+  );
+  const activityPanel = (
+    <LootboxActivityPanel
+      activity={lootboxActivity}
+      loading={lootboxActivityLoading}
+      actionSavingId={inventoryActionId}
+      message={inventoryActionMessage}
+      onInventoryStatusChange={updateInventoryStatus}
+    />
+  );
+  const rewardOpsPanel = (
+    <RewardOpsLanePanel
+      lanes={LOOTBOX_REWARD_OPS_LANES}
+      summary={rewardOpsSummary}
+      recommendedLane={recommendedRewardLane}
+    />
+  );
+  const nextOperatorPanel = (
+    <OpsPanel
+      eyebrow="Next operator read"
+      title="What to tune first"
+      description="Keep the economy readable before opening deeper mutation controls."
+    >
+      <div className="grid gap-2.5">
+        <OpsSnapshotRow
+          label="Budget"
+          value={`${remainingShards.toLocaleString("en-US")} shards remain across ${featuredShardPools.length} pool${featuredShardPools.length === 1 ? "" : "s"}.`}
+        />
+        <OpsSnapshotRow
+          label="Paused pressure"
+          value={`${pausedPools.length} pool${pausedPools.length === 1 ? "" : "s"} can be resumed from campaign detail.`}
+        />
+        <OpsSnapshotRow
+          label="High-price tier"
+          value="Mythic stays season-gated until the reward pool can support the risk."
+        />
+      </div>
+    </OpsPanel>
+  );
+
   return (
     <AdminShell>
       <PortalPageFrame
         eyebrow="Shard economy"
         title="Lootbox Control Room"
-        description="Tune the hunt layer from one command view: tier economics, outcome posture and live shard boosts stay visible before campaign demand moves."
+        description="Operate the hunt layer from one clean command view: economy, sponsor pressure and reward fulfillment stay visible without turning the page into one long checklist."
         actions={
           <Link
             href="/campaigns/new"
@@ -1128,7 +1246,7 @@ export default function LootboxesPage() {
             <OpsPanel
               eyebrow="Economy posture"
               title="Shard demand is now tied to featured campaign pressure"
-              description="Phase 2B starts with a safe control-room layer: no new schema, no mutation risk, but operators can see what boxes cost and where sponsored shard pools are creating urgency."
+              description="Launch cutover view: shard supply, live boosts, sponsor pressure and fulfillment risk stay visible before operators open deeper workbenches."
               tone="accent"
               action={<ShardToken value={remainingShards} label="remaining" />}
             >
@@ -1190,7 +1308,74 @@ export default function LootboxesPage() {
           </div>
         }
       >
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+        <div className="space-y-3">
+          <LootboxDeskSwitch
+            items={deskItems}
+            activeDesk={activeDesk}
+            onChange={setActiveDesk}
+          />
+
+          {activeDesk === "overview" ? (
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+              <div className="space-y-3">
+                <OpsPanel
+                  eyebrow="Command overview"
+                  title="Launch-ready operating map"
+                  description="Start with the lane that matters right now. Each workbench keeps a focused job on screen instead of hiding important actions below a long scroll."
+                >
+                  <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
+                    <LootboxOverviewActionCard
+                      eyebrow="Economy"
+                      title="Tune tier pricing"
+                      detail="Inspect costs, odds, stock safety and the sponsored pool builder."
+                      metric={`${LOOTBOX_STUDIO_TIERS.length} mapped tiers`}
+                      icon={<PackageOpen size={17} />}
+                      onClick={() => setActiveDesk("economy")}
+                    />
+                    <LootboxOverviewActionCard
+                      eyebrow="Sponsor revenue"
+                      title="Move paid packages"
+                      detail="Brief the offer, manage CRM follow-ups and stage activation runs."
+                      metric={`${readySponsorCount} ready packages`}
+                      icon={<RadioTower size={17} />}
+                      tone={sponsorNowCount > 0 ? "warning" : "default"}
+                      onClick={() => setActiveDesk("sponsors")}
+                    />
+                    <LootboxOverviewActionCard
+                      eyebrow="Fulfillment"
+                      title="Clear reward queue"
+                      detail="Review lootbox claims, route notes and keep delivery lanes clean."
+                      metric={`${pendingReviewInventory} pending review`}
+                      icon={<ClipboardCheck size={17} />}
+                      tone={pendingReviewInventory > 0 ? "warning" : "default"}
+                      onClick={() => setActiveDesk("fulfillment")}
+                    />
+                    <LootboxOverviewActionCard
+                      eyebrow="Growth"
+                      title="Create boost campaign"
+                      detail="Open the campaign studio with shard demand already in mind."
+                      metric={`${activePools.length} live boosts`}
+                      icon={<Sparkles size={17} />}
+                      href="/campaigns/new"
+                    />
+                  </div>
+                </OpsPanel>
+
+                <div className="grid gap-3 2xl:grid-cols-2">
+                  {activityPanel}
+                  {rewardOpsPanel}
+                </div>
+              </div>
+
+              <aside className="space-y-3">
+                {featuredPoolsPanel}
+                {nextOperatorPanel}
+              </aside>
+            </div>
+          ) : null}
+
+          {activeDesk === "economy" ? (
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
           <div className="space-y-3">
             <OpsPanel
               eyebrow="Tier architecture"
@@ -1227,141 +1412,254 @@ export default function LootboxesPage() {
             </div>
 
             <SponsoredRewardSetupPanel read={sponsoredRewardSetup} />
-            <SponsoredPackageBriefsPanel read={sponsoredPackageBriefs} />
-            <SponsoredPackageActionDeskPanel
-              read={sponsoredPackageActionDesk}
-              copyingId={packageActionCopyId}
-              message={packageActionMessage}
-              sponsorPackages={sponsorPackages}
-              savingId={sponsorPackageSavingId}
-              onCopy={copyPackageActionText}
-              onSavePackage={saveSponsorPackage}
-            />
-            <SponsoredPackageOpsPanel
-              packages={sponsorPackages}
-              loading={sponsorPackageLoading}
-              message={sponsorPackageOpsMessage}
-              selectedPackageId={selectedSponsorPackageId}
-              detail={sponsorPackageDetail}
-              detailLoading={sponsorPackageDetailLoading}
-              currentAuthUserId={authUserId}
-              mutatingId={sponsorPackageMutatingId}
-              noteSavingId={sponsorPackageNoteSavingId}
-              activationRunStepSavingKey={sponsorActivationRunStepSavingKey}
-              activationRunSignoffSavingKey={sponsorActivationRunSignoffSavingKey}
-              onSelectPackage={loadSponsorPackageDetail}
-              onStatusChange={(id, status) =>
-                patchSponsorPackage(id, { status }, "Sponsor package status updated.")
-              }
-              onOwnerClaim={claimSponsorPackageOwner}
-              onFollowUpChange={updateSponsorPackageFollowUp}
-              onDealSave={updateSponsorPackageDeal}
-              onDealProgress={progressSponsorPackageDeal}
-              onNoteAdd={addSponsorPackageNote}
-              onActivationRunStepUpdate={updateSponsorActivationRunStep}
-              onActivationRunSignoff={signOffSponsorActivationRun}
-            />
-            <SponsorActivationHandoffPanel
-              read={sponsorActivationHandoff}
-              copyingId={packageActionCopyId}
-              activationRunSavingId={sponsorActivationRunSavingId}
-              onCopy={copyPackageActionText}
-              onStageRun={stageSponsorActivationRun}
-            />
-            <SponsoredPackageStatusBoardPanel read={sponsoredPackageStatusBoard} />
-            <SponsoredPackagePersistencePanel read={sponsoredPackagePersistence} />
-
-            <InventoryCommandTable
-              activity={lootboxActivity}
-              loading={lootboxActivityLoading}
-              actionSavingId={inventoryActionId}
-              message={inventoryActionMessage}
-              noteSavingId={inventoryNoteSavingId}
-              noteMessage={inventoryNoteMessage}
-              filter={inventoryFilter}
-              search={inventorySearch}
-              onFilterChange={setInventoryFilter}
-              onSearchChange={setInventorySearch}
-              onInventoryStatusChange={updateInventoryStatus}
-              onInventoryNoteAdd={addInventoryNote}
-            />
           </div>
 
           <aside className="space-y-3">
-            <OpsPanel
-              eyebrow="Live pressure"
-              title="Featured shard pools"
-              description="Active and paused boosts determine where members have a reason to hunt."
-              action={
-                <OpsStatusPill tone={activePools.length > 0 ? "success" : "default"}>
-                  {activePools.length} active
-                </OpsStatusPill>
-              }
-            >
-              <div className="space-y-2.5">
-                {featuredShardPools.length > 0 ? (
-                  featuredShardPools.slice(0, 6).map((pool) => (
-                    <PoolPressureCard
-                      key={pool.id}
-                      pool={pool}
-                      campaignTitle={
-                        campaigns.find((campaign) => campaign.id === pool.campaignId)?.title ??
-                        "Campaign boost"
-                      }
-                      projectName={
-                        projects.find((project) => project.id === pool.projectId)?.name ??
-                        "Workspace"
-                      }
-                    />
-                  ))
-                ) : (
-                  <div className="rounded-[16px] border border-white/[0.018] bg-white/[0.012] p-3 text-[12px] leading-5 text-sub">
-                    No shard boost pools are attached yet. Create a campaign with a boost preset
-                    to start the hunt layer.
-                  </div>
-                )}
-              </div>
-            </OpsPanel>
-
-            <LootboxActivityPanel
-              activity={lootboxActivity}
-              loading={lootboxActivityLoading}
-              actionSavingId={inventoryActionId}
-              message={inventoryActionMessage}
-              onInventoryStatusChange={updateInventoryStatus}
-            />
-
-            <RewardOpsLanePanel
-              lanes={LOOTBOX_REWARD_OPS_LANES}
-              summary={rewardOpsSummary}
-              recommendedLane={recommendedRewardLane}
-            />
-
-            <OpsPanel
-              eyebrow="Next operator read"
-              title="What to tune first"
-              description="Keep the economy readable before opening deeper mutation controls."
-            >
-              <div className="grid gap-2.5">
-                <OpsSnapshotRow
-                  label="Budget"
-                  value={`${remainingShards.toLocaleString("en-US")} shards remain across ${featuredShardPools.length} pool${featuredShardPools.length === 1 ? "" : "s"}.`}
-                />
-                <OpsSnapshotRow
-                  label="Paused pressure"
-                  value={`${pausedPools.length} pool${pausedPools.length === 1 ? "" : "s"} can be resumed from campaign detail.`}
-                />
-                <OpsSnapshotRow
-                  label="High-price tier"
-                  value="Mythic stays season-gated until the reward pool can support the risk."
-                />
-              </div>
-            </OpsPanel>
+            {featuredPoolsPanel}
+            {rewardOpsPanel}
+            {nextOperatorPanel}
           </aside>
+        </div>
+          ) : null}
+
+          {activeDesk === "sponsors" ? (
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+              <div className="space-y-3">
+                <SponsoredPackageBriefsPanel read={sponsoredPackageBriefs} />
+                <SponsoredPackageActionDeskPanel
+                  read={sponsoredPackageActionDesk}
+                  copyingId={packageActionCopyId}
+                  message={packageActionMessage}
+                  sponsorPackages={sponsorPackages}
+                  savingId={sponsorPackageSavingId}
+                  onCopy={copyPackageActionText}
+                  onSavePackage={saveSponsorPackage}
+                />
+                <SponsoredPackageOpsPanel
+                  packages={sponsorPackages}
+                  loading={sponsorPackageLoading}
+                  message={sponsorPackageOpsMessage}
+                  selectedPackageId={selectedSponsorPackageId}
+                  detail={sponsorPackageDetail}
+                  detailLoading={sponsorPackageDetailLoading}
+                  currentAuthUserId={authUserId}
+                  mutatingId={sponsorPackageMutatingId}
+                  noteSavingId={sponsorPackageNoteSavingId}
+                  activationRunStepSavingKey={sponsorActivationRunStepSavingKey}
+                  activationRunSignoffSavingKey={sponsorActivationRunSignoffSavingKey}
+                  onSelectPackage={loadSponsorPackageDetail}
+                  onStatusChange={(id, status) =>
+                    patchSponsorPackage(id, { status }, "Sponsor package status updated.")
+                  }
+                  onOwnerClaim={claimSponsorPackageOwner}
+                  onFollowUpChange={updateSponsorPackageFollowUp}
+                  onDealSave={updateSponsorPackageDeal}
+                  onDealProgress={progressSponsorPackageDeal}
+                  onNoteAdd={addSponsorPackageNote}
+                  onActivationRunStepUpdate={updateSponsorActivationRunStep}
+                  onActivationRunSignoff={signOffSponsorActivationRun}
+                />
+                <SponsorActivationHandoffPanel
+                  read={sponsorActivationHandoff}
+                  copyingId={packageActionCopyId}
+                  activationRunSavingId={sponsorActivationRunSavingId}
+                  onCopy={copyPackageActionText}
+                  onStageRun={stageSponsorActivationRun}
+                />
+              </div>
+
+              <aside className="space-y-3">
+                <SponsoredPackageStatusBoardPanel read={sponsoredPackageStatusBoard} />
+                <SponsoredPackagePersistencePanel read={sponsoredPackagePersistence} />
+                {featuredPoolsPanel}
+              </aside>
+            </div>
+          ) : null}
+
+          {activeDesk === "fulfillment" ? (
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+              <div className="space-y-3">
+                <InventoryCommandTable
+                  activity={lootboxActivity}
+                  loading={lootboxActivityLoading}
+                  actionSavingId={inventoryActionId}
+                  message={inventoryActionMessage}
+                  noteSavingId={inventoryNoteSavingId}
+                  noteMessage={inventoryNoteMessage}
+                  filter={inventoryFilter}
+                  search={inventorySearch}
+                  onFilterChange={setInventoryFilter}
+                  onSearchChange={setInventorySearch}
+                  onInventoryStatusChange={updateInventoryStatus}
+                  onInventoryNoteAdd={addInventoryNote}
+                />
+              </div>
+
+              <aside className="space-y-3">
+                {activityPanel}
+                {rewardOpsPanel}
+                {nextOperatorPanel}
+              </aside>
+            </div>
+          ) : null}
         </div>
       </PortalPageFrame>
     </AdminShell>
   );
+}
+
+type LootboxDeskItem = {
+  id: LootboxDeskId;
+  label: string;
+  kicker: string;
+  title: string;
+  detail: string;
+  metric: string;
+  tone: "primary" | "warning" | "default";
+};
+
+function LootboxDeskSwitch({
+  items,
+  activeDesk,
+  onChange,
+}: {
+  items: LootboxDeskItem[];
+  activeDesk: LootboxDeskId;
+  onChange: (desk: LootboxDeskId) => void;
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/[0.026] bg-[linear-gradient(180deg,rgba(14,17,24,0.96),rgba(6,8,12,0.98))] p-2 shadow-[0_22px_70px_rgba(0,0,0,0.28)]">
+      <div className="grid gap-2 md:grid-cols-2 2xl:grid-cols-4">
+        {items.map((item) => {
+          const active = item.id === activeDesk;
+          const pillTone =
+            item.tone === "primary" ? "success" : item.tone === "warning" ? "warning" : "default";
+
+          return (
+            <button
+              key={item.id}
+              type="button"
+              aria-label={item.label}
+              aria-pressed={active}
+              onClick={() => onChange(item.id)}
+              className={`group min-h-[154px] rounded-[18px] border p-4 text-left transition duration-200 ${
+                active
+                  ? "border-primary/32 bg-[radial-gradient(circle_at_20%_0%,rgba(186,255,59,0.18),rgba(18,23,18,0.9)_48%,rgba(6,8,12,0.96))] shadow-[0_18px_48px_rgba(186,255,59,0.08)]"
+                  : "border-white/[0.026] bg-white/[0.018] hover:border-primary/20 hover:bg-white/[0.028]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span
+                  className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${
+                    active
+                      ? "border-primary/30 bg-primary/[0.12] text-primary"
+                      : "border-white/[0.035] bg-black/20 text-sub group-hover:text-primary"
+                  }`}
+                >
+                  {getLootboxDeskIcon(item.id)}
+                </span>
+                <OpsStatusPill tone={pillTone}>{item.metric}</OpsStatusPill>
+              </div>
+
+              <p
+                className={`mt-4 text-[9px] font-black uppercase tracking-[0.18em] ${
+                  active ? "text-primary" : "text-muted"
+                }`}
+              >
+                {item.kicker}
+              </p>
+              <h2 className="mt-1.5 break-words text-[15px] font-black text-text [overflow-wrap:anywhere]">
+                {item.title}
+              </h2>
+              <p className="mt-2 text-[12px] leading-5 text-sub">{item.detail}</p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LootboxOverviewActionCard({
+  eyebrow,
+  title,
+  detail,
+  metric,
+  icon,
+  tone = "default",
+  href,
+  onClick,
+}: {
+  eyebrow: string;
+  title: string;
+  detail: string;
+  metric: string;
+  icon: ReactNode;
+  tone?: "warning" | "default";
+  href?: string;
+  onClick?: () => void;
+}) {
+  const className =
+    "group flex min-h-[168px] flex-col justify-between rounded-[20px] border border-white/[0.03] bg-[linear-gradient(180deg,rgba(255,255,255,0.026),rgba(255,255,255,0.012))] p-4 text-left transition duration-200 hover:border-primary/24 hover:bg-white/[0.032]";
+  const body = (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <span
+          className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${
+            tone === "warning"
+              ? "border-amber-300/22 bg-amber-300/[0.08] text-amber-200"
+              : "border-primary/18 bg-primary/[0.07] text-primary"
+          }`}
+        >
+          {icon}
+        </span>
+        <ArrowRight
+          size={15}
+          className="mt-1 text-muted transition group-hover:translate-x-0.5 group-hover:text-primary"
+        />
+      </div>
+
+      <div>
+        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+          {eyebrow}
+        </p>
+        <h3 className="mt-1.5 break-words text-[15px] font-black text-text [overflow-wrap:anywhere]">
+          {title}
+        </h3>
+        <p className="mt-2 text-[12px] leading-5 text-sub">{detail}</p>
+      </div>
+
+      <OpsStatusPill tone={tone === "warning" ? "warning" : "default"}>{metric}</OpsStatusPill>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {body}
+      </Link>
+    );
+  }
+
+  return (
+    <button type="button" onClick={onClick} className={className}>
+      {body}
+    </button>
+  );
+}
+
+function getLootboxDeskIcon(id: LootboxDeskId) {
+  switch (id) {
+    case "economy":
+      return <PackageOpen size={17} />;
+    case "sponsors":
+      return <RadioTower size={17} />;
+    case "fulfillment":
+      return <ClipboardCheck size={17} />;
+    case "overview":
+    default:
+      return <Target size={17} />;
+  }
 }
 
 function RewardOpsLanePanel({
