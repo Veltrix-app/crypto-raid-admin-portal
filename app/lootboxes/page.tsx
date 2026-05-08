@@ -3338,6 +3338,8 @@ type SponsorBillingReadinessItem = SponsorBillingReadiness["lanes"][number]["ite
 type SponsorDealClosePack = SponsorActivationHandoffRead["dealClosePack"];
 type SponsorDealClosePackItem = SponsorDealClosePack["packs"][number];
 type SponsorDealCloseBlock = SponsorDealClosePackItem["blocks"][number];
+type SponsorRevenueCommand = SponsorActivationHandoffRead["revenueCommand"];
+type SponsorRevenueCommandLane = SponsorRevenueCommand["lanes"][number];
 
 function SponsorActivationHandoffPanel({
   read,
@@ -3375,15 +3377,30 @@ function SponsorActivationHandoffPanel({
           <MiniRead label="Mode" value={read.summary.manualOnly ? "Manual" : "Auto"} />
         </div>
 
-        <SponsorBusinessCockpitPanel cockpit={read.businessCockpit} />
-
-        <SponsorBillingReadinessPanel readiness={read.billingReadiness} />
-
-        <SponsorDealClosePackPanel
+        <SponsorRevenueCommandCenterPanel
+          revenueCommand={read.revenueCommand}
           closePack={read.dealClosePack}
           copyingId={copyingId}
           onCopy={onCopy}
         />
+
+        <details className="group rounded-[18px] border border-white/[0.018] bg-white/[0.01] p-3">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[9px] font-black uppercase tracking-[0.16em] text-sub transition hover:text-primary">
+            Advanced sponsor views
+            <span className="rounded-full border border-white/[0.02] bg-black/24 px-2 py-1 text-[8px] text-primary">
+              expand
+            </span>
+          </summary>
+          <div className="mt-3 grid gap-3">
+            <SponsorBusinessCockpitPanel cockpit={read.businessCockpit} />
+            <SponsorBillingReadinessPanel readiness={read.billingReadiness} />
+            <SponsorDealClosePackPanel
+              closePack={read.dealClosePack}
+              copyingId={copyingId}
+              onCopy={onCopy}
+            />
+          </div>
+        </details>
 
         {read.focus ? <SponsorActivationFocusCard handoff={read.focus} /> : null}
 
@@ -3420,6 +3437,129 @@ function SponsorActivationHandoffPanel({
         </div>
       </div>
     </OpsPanel>
+  );
+}
+
+function SponsorRevenueCommandCenterPanel({
+  revenueCommand,
+  closePack,
+  copyingId,
+  onCopy,
+}: {
+  revenueCommand: SponsorRevenueCommand;
+  closePack: SponsorDealClosePack;
+  copyingId: string | null;
+  onCopy: (id: string, text: string, successText: string) => void;
+}) {
+  const focusPack = revenueCommand.focus
+    ? closePack.packs.find((pack) => pack.packageId === revenueCommand.focus?.packageId)
+    : closePack.focus;
+
+  return (
+    <div className="relative overflow-hidden rounded-[18px] border border-primary/14 bg-[radial-gradient(circle_at_10%_0%,rgba(186,255,59,0.12),transparent_28%),radial-gradient(circle_at_92%_10%,rgba(74,217,255,0.085),transparent_25%),linear-gradient(180deg,rgba(14,18,22,0.96),rgba(7,9,14,0.94))] p-3.5">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/32 to-transparent" />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 max-w-3xl">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Sponsor revenue command
+          </p>
+          <h3 className="mt-2 break-words text-[17px] font-black text-text [overflow-wrap:anywhere]">
+            One screen for money, readiness and close copy
+          </h3>
+          <p className="mt-1.5 break-words text-[11px] leading-5 text-sub [overflow-wrap:anywhere]">
+            {revenueCommand.summary.topNextAction}
+          </p>
+        </div>
+        <OpsStatusPill tone={revenueCommand.summary.closeReady > 0 ? "success" : "warning"}>
+          {revenueCommand.summary.manualOnly ? "manual only" : "live"}
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-6">
+        <MiniRead label="Pipeline" value={formatSponsorBusinessValue(revenueCommand.summary.pipelineValue)} />
+        <MiniRead label="Invoice ready" value={formatSponsorBusinessValue(revenueCommand.summary.invoiceReadyValue)} />
+        <MiniRead label="Priority" value={`${revenueCommand.summary.highPriority}`} />
+        <MiniRead label="Invoices" value={`${revenueCommand.summary.invoiceReady}`} />
+        <MiniRead label="Close ready" value={`${revenueCommand.summary.closeReady}`} />
+        <MiniRead label="Copy blocks" value={`${revenueCommand.summary.copyBlocks}`} />
+      </div>
+
+      <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <div className="rounded-[16px] border border-primary/16 bg-[linear-gradient(180deg,rgba(186,255,59,0.06),rgba(255,255,255,0.012))] p-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+                Focus
+              </p>
+              <p className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+                {revenueCommand.focus?.sponsorName ?? "No sponsor package yet"}
+              </p>
+              <p className="mt-1 break-words text-[10px] leading-4 text-sub [overflow-wrap:anywhere]">
+                {revenueCommand.focus?.nextAction ?? "Save a sponsor package to open the revenue command center."}
+              </p>
+            </div>
+            {revenueCommand.focus ? (
+              <Link
+                href={revenueCommand.focus.routeHref}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.024] bg-black/24 px-2.5 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary transition hover:border-primary/28 hover:bg-primary/[0.07]"
+              >
+                <ArrowRight size={12} />
+                Open
+              </Link>
+            ) : null}
+          </div>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            {focusPack?.blocks.map((block) => (
+              <SponsorDealCloseCopyBlock
+                key={block.id}
+                packageId={focusPack.packageId}
+                block={block}
+                copying={copyingId === `close-${focusPack.packageId}-${block.id}`}
+                onCopy={onCopy}
+              />
+            )) ?? (
+              <p className="rounded-[13px] border border-white/[0.014] bg-white/[0.01] px-2.5 py-2 text-[10px] leading-4 text-sub">
+                Close copy appears after a package has a sponsor win, contact, value and delivery signoff.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          {revenueCommand.lanes.map((lane) => (
+            <SponsorRevenueCommandLaneCard key={lane.id} lane={lane} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SponsorRevenueCommandLaneCard({ lane }: { lane: SponsorRevenueCommandLane }) {
+  return (
+    <Link
+      href={lane.routeHref}
+      className="group block rounded-[16px] border border-white/[0.018] bg-black/22 p-3 transition hover:border-primary/24 hover:bg-primary/[0.035]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+            {lane.label}
+          </p>
+          <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-sub">
+            {lane.detail}
+          </p>
+        </div>
+        <OpsStatusPill tone={lane.tone}>{lane.count}</OpsStatusPill>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <span className="truncate text-[13px] font-black text-text">
+          {formatSponsorRevenueLaneValue(lane)}
+        </span>
+        <ArrowRight size={14} className="shrink-0 text-primary transition group-hover:translate-x-0.5" />
+      </div>
+    </Link>
   );
 }
 
@@ -6252,6 +6392,14 @@ function getSponsorBusinessPriorityClass(priority: SponsorBusinessCockpitItem["p
 
 function formatSponsorBusinessValue(value: number) {
   return `USD ${Math.max(0, value).toLocaleString("en-US")}`;
+}
+
+function formatSponsorRevenueLaneValue(lane: SponsorRevenueCommandLane) {
+  if (lane.id === "close_pack") {
+    return `${lane.value.toLocaleString("en-US")} blocks`;
+  }
+
+  return formatSponsorBusinessValue(lane.value);
 }
 
 function getSponsorBillingReadinessTone(readiness: SponsorBillingReadinessItem["readiness"]) {

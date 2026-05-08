@@ -1681,7 +1681,7 @@ test("buildLootboxSponsorActivationHandoffRead builds sponsor billing readiness"
   );
 });
 
-test("buildLootboxSponsorActivationHandoffRead builds a sponsor deal close pack", () => {
+test("buildLootboxSponsorActivationHandoffRead builds a sponsor deal close pack and revenue command", () => {
   const projectId = "11111111-1111-4111-8111-111111111111";
   const readyRunId = "sponsor-activation:package-close:2026-05-10T12:00:00.000Z";
   const read = buildLootboxSponsorActivationHandoffRead({
@@ -1818,6 +1818,23 @@ test("buildLootboxSponsorActivationHandoffRead builds a sponsor deal close pack"
   assert.equal(setupPack?.state, "needs_setup");
   assert.deepEqual(setupPack?.blockers, ["Delivery signoff"]);
   assert.equal(setupPack?.blocks.every((block) => !block.enabled), true);
+
+  assert.deepEqual(read.revenueCommand.summary, {
+    pipelineValue: 4000,
+    invoiceReadyValue: 2500,
+    highPriority: 1,
+    invoiceReady: 1,
+    closeReady: 1,
+    copyBlocks: 3,
+    setupPressure: 1,
+    manualOnly: true,
+    topNextAction: "Copy close pack for Atlas Labs: sponsor recap, finance prep and internal proof.",
+  });
+  assert.equal(read.revenueCommand.focus?.packageId, "package-close");
+  assert.deepEqual(
+    read.revenueCommand.lanes.map((lane) => `${lane.id}:${lane.count}:${lane.value}`),
+    ["business:1:4000", "finance:1:2500", "close_pack:1:3"]
+  );
 });
 
 test("buildLootboxSponsorActivationRunMetadataPatch preserves metadata and stores run visibility", () => {

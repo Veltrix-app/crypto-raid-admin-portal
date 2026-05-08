@@ -420,6 +420,9 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
       })
     )
     .sort(compareSponsorActivationHandoffs);
+  const businessCockpit = buildSponsorBusinessCockpit(handoffs);
+  const billingReadiness = buildSponsorBillingReadiness(handoffs);
+  const dealClosePack = buildSponsorDealClosePack(handoffs);
 
   return {
     summary: {
@@ -440,9 +443,14 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
       handoffs.find((handoff) => handoff.activationState === "setup_needed") ??
       handoffs[0] ??
       null,
-    businessCockpit: buildSponsorBusinessCockpit(handoffs),
-    billingReadiness: buildSponsorBillingReadiness(handoffs),
-    dealClosePack: buildSponsorDealClosePack(handoffs),
+    businessCockpit,
+    billingReadiness,
+    dealClosePack,
+    revenueCommand: buildSponsorRevenueCommand({
+      businessCockpit,
+      billingReadiness,
+      dealClosePack,
+    }),
     guardrails: [
       "Activation handoff does not create billing, payouts or reward inventory.",
       "Operators still own sponsor follow-up, pool setup and fulfillment decisions.",
@@ -1081,6 +1089,74 @@ function buildSponsorActivationHandoff(params: {
         nextAction: getSponsorActivationNextAction(activationState, checklist),
       }),
     },
+  };
+}
+
+function buildSponsorRevenueCommand({
+  businessCockpit,
+  billingReadiness,
+  dealClosePack,
+}: {
+  businessCockpit: ReturnType<typeof buildSponsorBusinessCockpit>;
+  billingReadiness: ReturnType<typeof buildSponsorBillingReadiness>;
+  dealClosePack: ReturnType<typeof buildSponsorDealClosePack>;
+}) {
+  const focus =
+    dealClosePack.focus?.state === "ready"
+      ? dealClosePack.focus
+      : billingReadiness.focus?.readiness === "invoice_ready"
+        ? billingReadiness.focus
+        : businessCockpit.focus ?? dealClosePack.focus ?? billingReadiness.focus ?? null;
+
+  return {
+    summary: {
+      pipelineValue: businessCockpit.summary.totalValue,
+      invoiceReadyValue: billingReadiness.summary.invoiceReadyValue,
+      highPriority: businessCockpit.summary.highPriority,
+      invoiceReady: billingReadiness.summary.invoiceReady,
+      closeReady: dealClosePack.summary.ready,
+      copyBlocks: dealClosePack.summary.copyBlocks,
+      setupPressure: Math.max(
+        billingReadiness.summary.needsFinanceSetup,
+        dealClosePack.summary.needsSetup
+      ),
+      manualOnly: true as const,
+      topNextAction:
+        dealClosePack.focus?.state === "ready"
+          ? dealClosePack.focus.nextAction
+          : billingReadiness.focus?.nextAction ??
+            businessCockpit.summary.topNextAction,
+    },
+    focus,
+    lanes: [
+      {
+        id: "business" as const,
+        label: "Business priority",
+        detail: businessCockpit.summary.topNextAction,
+        count: businessCockpit.summary.highPriority,
+        value: businessCockpit.summary.totalValue,
+        tone: businessCockpit.summary.highPriority > 0 ? ("warning" as const) : ("success" as const),
+        routeHref: businessCockpit.focus?.routeHref ?? "/lootboxes",
+      },
+      {
+        id: "finance" as const,
+        label: "Finance readiness",
+        detail: billingReadiness.summary.topNextAction,
+        count: billingReadiness.summary.invoiceReady,
+        value: billingReadiness.summary.invoiceReadyValue,
+        tone: billingReadiness.summary.invoiceReady > 0 ? ("success" as const) : ("warning" as const),
+        routeHref: billingReadiness.focus?.routeHref ?? "/lootboxes",
+      },
+      {
+        id: "close_pack" as const,
+        label: "Close pack",
+        detail: dealClosePack.summary.topNextAction,
+        count: dealClosePack.summary.ready,
+        value: dealClosePack.summary.copyBlocks,
+        tone: dealClosePack.summary.ready > 0 ? ("success" as const) : ("warning" as const),
+        routeHref: dealClosePack.focus?.routeHref ?? "/lootboxes",
+      },
+    ],
   };
 }
 
