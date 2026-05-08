@@ -215,6 +215,39 @@ export type LootboxSponsorRenewalPlaybookStep = {
   detail: string;
 };
 
+type SponsorFollowUpTimelineLaneId = "now" | "next" | "proof";
+type SponsorFollowUpTimelineKind =
+  | "close_pack"
+  | "finance_prep"
+  | "sponsor_follow_up"
+  | "setup_needed"
+  | "delivery_signoff"
+  | "last_contact";
+type SponsorFollowUpTimelineState =
+  | "ready"
+  | "overdue"
+  | "due_soon"
+  | "scheduled"
+  | "setup_needed"
+  | "proof";
+type SponsorFollowUpTimelineItem = {
+  id: string;
+  packageId: string;
+  sponsorName: string;
+  campaignTitle: string;
+  routeHref: string;
+  kind: SponsorFollowUpTimelineKind;
+  lane: SponsorFollowUpTimelineLaneId;
+  state: SponsorFollowUpTimelineState;
+  tone: "success" | "warning" | "danger" | "default";
+  label: string;
+  detail: string;
+  nextAction: string;
+  eventAt: string | null;
+  valueLabel: string;
+  priority: number;
+};
+
 const sponsorCrmStages = [
   {
     id: "ready_to_pitch",
@@ -423,6 +456,11 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
   const businessCockpit = buildSponsorBusinessCockpit(handoffs);
   const billingReadiness = buildSponsorBillingReadiness(handoffs);
   const dealClosePack = buildSponsorDealClosePack(handoffs);
+  const revenueCommand = buildSponsorRevenueCommand({
+    businessCockpit,
+    billingReadiness,
+    dealClosePack,
+  });
 
   return {
     summary: {
@@ -446,10 +484,13 @@ export function buildLootboxSponsorActivationHandoffRead(params: {
     businessCockpit,
     billingReadiness,
     dealClosePack,
-    revenueCommand: buildSponsorRevenueCommand({
-      businessCockpit,
+    revenueCommand,
+    followUpTimeline: buildSponsorFollowUpTimeline({
+      handoffs,
       billingReadiness,
       dealClosePack,
+      revenueCommand,
+      now,
     }),
     guardrails: [
       "Activation handoff does not create billing, payouts or reward inventory.",
@@ -1059,6 +1100,10 @@ function buildSponsorActivationHandoff(params: {
     sponsorContact: normalizeText(row.sponsor_contact) ?? null,
     budgetLabel: formatCrmBudget(row.sponsor_budget, row.currency),
     dealValue: Math.max(0, Number(row.sponsor_budget ?? 0)),
+    followUpAt: row.follow_up_at,
+    lastContactedAt: row.last_contacted_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
     nextAction: getSponsorActivationNextAction(activationState, checklist),
     routeHref: row.campaign_id ? `/campaigns/${row.campaign_id}` : "/campaigns",
     metrics: {
@@ -1158,6 +1203,286 @@ function buildSponsorRevenueCommand({
       },
     ],
   };
+}
+
+function buildSponsorFollowUpTimeline({
+  handoffs,
+  billingReadiness,
+  dealClosePack,
+  revenueCommand,
+  now,
+}: {
+  handoffs: ReturnType<typeof buildSponsorActivationHandoff>[];
+  billingReadiness: ReturnType<typeof buildSponsorBillingReadiness>;
+  dealClosePack: ReturnType<typeof buildSponsorDealClosePack>;
+  revenueCommand: ReturnType<typeof buildSponsorRevenueCommand>;
+  now: Date;
+}) {
+  const billingByPackage = new Map(
+    billingReadiness.lanes.flatMap((lane) => lane.items).map((item) => [item.packageId, item])
+  );
+  const closePackByPackage = new Map(
+    dealClosePack.packs.map((pack) => [pack.packageId, pack])
+  );
+  const items = handoffs.flatMap((handoff) =>
+    buildSponsorFollowUpTimelineItems({
+      handoff,
+      billing: billingByPackage.get(handoff.packageId) ?? null,
+      closePack: closePackByPackage.get(handoff.packageId) ?? null,
+      now,
+    })
+  );
+  const nowItems = items
+    .filter((item) => item.lane === "now")
+    .sort(compareSponsorFollowUpTimelineItems);
+  const nextItems = items
+    .filter((item) => item.lane === "next")
+    .sort(compareSponsorFollowUpTimelineItems);
+  const proofItems = items
+    .filter((item) => item.lane === "proof")
+    .sort(compareSponsorFollowUpTimelineItems);
+  const focus = nowItems[0] ?? nextItems[0] ?? proofItems[0] ?? null;
+
+  return {
+    summary: {
+      total: items.length,
+      now: nowItems.length,
+      next: nextItems.length,
+      proof: proofItems.length,
+      overdue: items.filter((item) => item.state === "overdue").length,
+      manualOnly: true as const,
+      topNextAction: revenueCommand.summary.topNextAction,
+    },
+    focus,
+    lanes: [
+      {
+        id: "now" as const,
+        label: "Now",
+        detail: "Close copy, finance prep, overdue touches and setup blockers.",
+        count: nowItems.length,
+        items: nowItems.slice(0, 5),
+      },
+      {
+        id: "next" as const,
+        label: "Next",
+        detail: "Scheduled sponsor touches before the deal cools down.",
+        count: nextItems.length,
+        items: nextItems.slice(0, 5),
+      },
+      {
+        id: "proof" as const,
+        label: "Proof trail",
+        detail: "Last contacts and signed-off delivery moments for sponsor context.",
+        count: proofItems.length,
+        items: proofItems.slice(0, 5),
+      },
+    ],
+    guardrails: [
+      "Follow-up timeline is read-only and does not send messages, invoices or payouts.",
+      "Operators still decide what to send and when to move sponsor status.",
+      "Proof moments come from existing signoff and contact fields only.",
+    ],
+  };
+}
+
+function buildSponsorFollowUpTimelineItems({
+  handoff,
+  billing,
+  closePack,
+  now,
+}: {
+  handoff: ReturnType<typeof buildSponsorActivationHandoff>;
+  billing: ReturnType<typeof toSponsorBillingReadinessItem> | null;
+  closePack: ReturnType<typeof toSponsorDealClosePack> | null;
+  now: Date;
+}) {
+  const items: SponsorFollowUpTimelineItem[] = [];
+  const dealPriority = Math.round(handoff.dealValue / 100);
+  const signoff = handoff.activationRun.signoff;
+
+  if (closePack?.state === "ready") {
+    items.push({
+      id: `${handoff.packageId}:close_pack`,
+      packageId: handoff.packageId,
+      sponsorName: handoff.sponsorName,
+      campaignTitle: handoff.campaignTitle,
+      routeHref: handoff.routeHref,
+      kind: "close_pack",
+      lane: "now",
+      state: "ready",
+      tone: "success",
+      label: "Close pack ready",
+      detail: closePack.nextAction,
+      nextAction: closePack.nextAction,
+      eventAt: signoff?.signedOffAt ?? handoff.updatedAt,
+      valueLabel: handoff.budgetLabel,
+      priority: 1000 + dealPriority,
+    });
+  }
+
+  if (billing?.readiness === "invoice_ready") {
+    items.push({
+      id: `${handoff.packageId}:finance_prep`,
+      packageId: handoff.packageId,
+      sponsorName: handoff.sponsorName,
+      campaignTitle: handoff.campaignTitle,
+      routeHref: handoff.routeHref,
+      kind: "finance_prep",
+      lane: "now",
+      state: "ready",
+      tone: "success",
+      label: "Finance prep ready",
+      detail: billing.nextAction,
+      nextAction: billing.nextAction,
+      eventAt: signoff?.signedOffAt ?? handoff.updatedAt,
+      valueLabel: handoff.budgetLabel,
+      priority: 900 + dealPriority,
+    });
+  }
+
+  const followUpState = getSponsorTimelineFollowUpState(handoff.followUpAt, now);
+  if (followUpState) {
+    const overdue = followUpState === "overdue";
+    items.push({
+      id: `${handoff.packageId}:sponsor_follow_up`,
+      packageId: handoff.packageId,
+      sponsorName: handoff.sponsorName,
+      campaignTitle: handoff.campaignTitle,
+      routeHref: handoff.routeHref,
+      kind: "sponsor_follow_up",
+      lane: overdue ? "now" : "next",
+      state: followUpState,
+      tone: overdue ? "danger" : followUpState === "due_soon" ? "warning" : "default",
+      label:
+        followUpState === "overdue"
+          ? "Sponsor follow-up overdue"
+          : followUpState === "due_soon"
+            ? "Sponsor follow-up due soon"
+            : "Sponsor follow-up scheduled",
+      detail: handoff.renewal.nextAction,
+      nextAction: handoff.renewal.nextAction,
+      eventAt: handoff.followUpAt,
+      valueLabel: handoff.budgetLabel,
+      priority: (overdue ? 800 : 500) + dealPriority,
+    });
+  }
+
+  if (!handoff.followUpAt && closePack?.state === "needs_setup") {
+    items.push({
+      id: `${handoff.packageId}:setup_needed`,
+      packageId: handoff.packageId,
+      sponsorName: handoff.sponsorName,
+      campaignTitle: handoff.campaignTitle,
+      routeHref: handoff.routeHref,
+      kind: "setup_needed",
+      lane: "now",
+      state: "setup_needed",
+      tone: "warning",
+      label: "Resolve setup blockers",
+      detail: closePack.blockers.length
+        ? `Blocking: ${closePack.blockers.join(", ")}.`
+        : handoff.nextAction,
+      nextAction: closePack.nextAction,
+      eventAt: handoff.updatedAt,
+      valueLabel: handoff.budgetLabel,
+      priority: 600 + dealPriority,
+    });
+  }
+
+  if (signoff) {
+    items.push({
+      id: `${handoff.packageId}:delivery_signoff`,
+      packageId: handoff.packageId,
+      sponsorName: handoff.sponsorName,
+      campaignTitle: handoff.campaignTitle,
+      routeHref: handoff.routeHref,
+      kind: "delivery_signoff",
+      lane: "proof",
+      state: "proof",
+      tone: "success",
+      label: "Delivery signoff saved",
+      detail: signoff.note,
+      nextAction: handoff.performance.signoff.nextSponsorMove,
+      eventAt: signoff.signedOffAt,
+      valueLabel: handoff.budgetLabel,
+      priority: 300 + dealPriority,
+    });
+  }
+
+  if (handoff.lastContactedAt) {
+    items.push({
+      id: `${handoff.packageId}:last_contact`,
+      packageId: handoff.packageId,
+      sponsorName: handoff.sponsorName,
+      campaignTitle: handoff.campaignTitle,
+      routeHref: handoff.routeHref,
+      kind: "last_contact",
+      lane: "proof",
+      state: "proof",
+      tone: "default",
+      label: "Last sponsor contact",
+      detail: "Keep sponsor context warm before the next commercial move.",
+      nextAction: handoff.renewal.nextAction,
+      eventAt: handoff.lastContactedAt,
+      valueLabel: handoff.budgetLabel,
+      priority: 200 + dealPriority,
+    });
+  }
+
+  return items;
+}
+
+function getSponsorTimelineFollowUpState(
+  followUpAt: string | null,
+  now: Date
+): Extract<SponsorFollowUpTimelineState, "overdue" | "due_soon" | "scheduled"> | null {
+  if (!followUpAt) {
+    return null;
+  }
+
+  const followUpDate = new Date(followUpAt);
+  if (Number.isNaN(followUpDate.getTime())) {
+    return null;
+  }
+
+  const hoursUntilFollowUp = (followUpDate.getTime() - now.getTime()) / 3_600_000;
+  if (hoursUntilFollowUp <= 0) {
+    return "overdue";
+  }
+
+  if (hoursUntilFollowUp <= 72) {
+    return "due_soon";
+  }
+
+  return "scheduled";
+}
+
+function compareSponsorFollowUpTimelineItems(
+  left: SponsorFollowUpTimelineItem,
+  right: SponsorFollowUpTimelineItem
+) {
+  if (left.lane === "proof" && right.lane === "proof") {
+    return getSponsorTimelineTime(right.eventAt) - getSponsorTimelineTime(left.eventAt);
+  }
+
+  if (left.lane === "next" && right.lane === "next") {
+    return getSponsorTimelineTime(left.eventAt) - getSponsorTimelineTime(right.eventAt);
+  }
+
+  if (right.priority !== left.priority) {
+    return right.priority - left.priority;
+  }
+
+  return getSponsorTimelineTime(left.eventAt) - getSponsorTimelineTime(right.eventAt);
+}
+
+function getSponsorTimelineTime(value: string | null) {
+  if (!value) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? Number.MAX_SAFE_INTEGER : date.getTime();
 }
 
 function buildSponsorDealClosePack(

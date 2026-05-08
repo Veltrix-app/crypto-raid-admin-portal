@@ -3340,6 +3340,8 @@ type SponsorDealClosePackItem = SponsorDealClosePack["packs"][number];
 type SponsorDealCloseBlock = SponsorDealClosePackItem["blocks"][number];
 type SponsorRevenueCommand = SponsorActivationHandoffRead["revenueCommand"];
 type SponsorRevenueCommandLane = SponsorRevenueCommand["lanes"][number];
+type SponsorFollowUpTimeline = SponsorActivationHandoffRead["followUpTimeline"];
+type SponsorFollowUpTimelineItem = SponsorFollowUpTimeline["lanes"][number]["items"][number];
 
 function SponsorActivationHandoffPanel({
   read,
@@ -3383,6 +3385,8 @@ function SponsorActivationHandoffPanel({
           copyingId={copyingId}
           onCopy={onCopy}
         />
+
+        <SponsorFollowUpTimelinePanel timeline={read.followUpTimeline} />
 
         <details className="group rounded-[18px] border border-white/[0.018] bg-white/[0.01] p-3">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[9px] font-black uppercase tracking-[0.16em] text-sub transition hover:text-primary">
@@ -3559,6 +3563,150 @@ function SponsorRevenueCommandLaneCard({ lane }: { lane: SponsorRevenueCommandLa
         </span>
         <ArrowRight size={14} className="shrink-0 text-primary transition group-hover:translate-x-0.5" />
       </div>
+    </Link>
+  );
+}
+
+function SponsorFollowUpTimelinePanel({ timeline }: { timeline: SponsorFollowUpTimeline }) {
+  const focus = timeline.focus;
+
+  return (
+    <div className="relative overflow-hidden rounded-[18px] border border-sky-300/12 bg-[radial-gradient(circle_at_8%_0%,rgba(74,217,255,0.1),transparent_28%),radial-gradient(circle_at_88%_10%,rgba(186,255,59,0.08),transparent_24%),linear-gradient(180deg,rgba(12,16,22,0.96),rgba(7,9,14,0.94))] p-3.5">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-200/24 to-transparent" />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 max-w-3xl">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+            Sponsor follow-up timeline
+          </p>
+          <h3 className="mt-2 break-words text-[16px] font-black text-text [overflow-wrap:anywhere]">
+            Next sponsor touches without hidden work
+          </h3>
+          <p className="mt-1.5 break-words text-[11px] leading-5 text-sub [overflow-wrap:anywhere]">
+            {timeline.summary.topNextAction}
+          </p>
+        </div>
+        <OpsStatusPill tone={timeline.summary.overdue > 0 ? "danger" : "success"}>
+          {timeline.summary.manualOnly ? "manual only" : "live"}
+        </OpsStatusPill>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-5">
+        <MiniRead label="Touches" value={`${timeline.summary.total}`} />
+        <MiniRead label="Now" value={`${timeline.summary.now}`} />
+        <MiniRead label="Next" value={`${timeline.summary.next}`} />
+        <MiniRead label="Proof" value={`${timeline.summary.proof}`} />
+        <MiniRead label="Overdue" value={`${timeline.summary.overdue}`} />
+      </div>
+
+      {focus ? (
+        <Link
+          href={focus.routeHref}
+          className={`group mt-3 block rounded-[16px] border p-3 transition hover:border-primary/30 ${getSponsorFollowUpTimelineClass(focus.state)}`}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <OpsStatusPill tone={getSponsorFollowUpTimelineTone(focus.state)}>
+                  {focus.state.replace(/_/g, " ")}
+                </OpsStatusPill>
+                <OpsStatusPill tone="default">{focus.valueLabel}</OpsStatusPill>
+              </div>
+              <p className="mt-2 break-words text-[14px] font-black text-text [overflow-wrap:anywhere]">
+                {focus.label}
+              </p>
+              <p className="mt-1 break-words text-[10px] leading-4 text-sub [overflow-wrap:anywhere]">
+                {focus.sponsorName} - {focus.campaignTitle}
+              </p>
+              <p className="mt-2 line-clamp-2 text-[10px] leading-4 text-sub">
+                {focus.nextAction}
+              </p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.024] bg-black/24 px-2.5 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-primary">
+              Open
+              <ArrowRight size={12} className="transition group-hover:translate-x-0.5" />
+            </span>
+          </div>
+        </Link>
+      ) : (
+        <p className="mt-3 rounded-[14px] border border-white/[0.014] bg-white/[0.01] px-3 py-2 text-[10px] leading-4 text-sub">
+          Save sponsor packages first. Follow-up timing appears here without sending anything automatically.
+        </p>
+      )}
+
+      <div className="mt-3 grid gap-2 lg:grid-cols-3">
+        {timeline.lanes.map((lane) => (
+          <div
+            key={lane.id}
+            className="rounded-[16px] border border-white/[0.018] bg-black/22 p-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
+                  {lane.label}
+                </p>
+                <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-sub">
+                  {lane.detail}
+                </p>
+              </div>
+              <span className="rounded-full border border-white/[0.02] bg-white/[0.012] px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-text">
+                {lane.count}
+              </span>
+            </div>
+
+            <div className="mt-3 grid gap-1.5">
+              {lane.items.slice(0, 3).map((item) => (
+                <SponsorFollowUpTimelineItemLink key={item.id} item={item} />
+              ))}
+              {lane.items.length === 0 ? (
+                <p className="rounded-[13px] border border-white/[0.014] bg-white/[0.01] px-2.5 py-2 text-[10px] leading-4 text-sub">
+                  No sponsor touches in this lane.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
+        {timeline.guardrails.map((guardrail) => (
+          <p
+            key={guardrail}
+            className="rounded-[13px] border border-white/[0.014] bg-white/[0.01] px-2.5 py-2 text-[10px] font-semibold leading-4 text-sub"
+          >
+            {guardrail}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SponsorFollowUpTimelineItemLink({ item }: { item: SponsorFollowUpTimelineItem }) {
+  return (
+    <Link
+      href={item.routeHref}
+      className={`group block rounded-[13px] border px-2.5 py-2 transition hover:border-primary/28 ${getSponsorFollowUpTimelineClass(item.state)}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-[11px] font-black text-text">{item.label}</p>
+          <p className="mt-0.5 line-clamp-1 text-[9px] text-sub">
+            {item.sponsorName}
+          </p>
+        </div>
+        <OpsStatusPill tone={getSponsorFollowUpTimelineTone(item.state)}>
+          {item.state.replace(/_/g, " ")}
+        </OpsStatusPill>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[8px] font-black uppercase tracking-[0.12em]">
+        <span className="text-primary">{formatSponsorPackageDate(item.eventAt)}</span>
+        <span className="text-sub">{item.valueLabel}</span>
+      </div>
+      <p className="mt-1 line-clamp-2 text-[9px] leading-4 text-sub">{item.detail}</p>
+      <span className="mt-2 inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-[0.12em] text-primary">
+        Open
+        <ArrowRight size={11} className="transition group-hover:translate-x-0.5" />
+      </span>
     </Link>
   );
 }
@@ -6463,6 +6611,39 @@ function getSponsorDealCloseStateClass(state: SponsorDealClosePackItem["state"])
     case "closed":
       return "border-white/[0.014] bg-white/[0.008] text-sub";
     case "watch":
+    default:
+      return "border-sky-300/12 bg-sky-300/[0.035] text-sky-100";
+  }
+}
+
+function getSponsorFollowUpTimelineTone(state: SponsorFollowUpTimelineItem["state"]) {
+  switch (state) {
+    case "ready":
+    case "proof":
+      return "success" as const;
+    case "overdue":
+      return "danger" as const;
+    case "due_soon":
+    case "setup_needed":
+      return "warning" as const;
+    case "scheduled":
+    default:
+      return "default" as const;
+  }
+}
+
+function getSponsorFollowUpTimelineClass(state: SponsorFollowUpTimelineItem["state"]) {
+  switch (state) {
+    case "ready":
+      return "border-primary/18 bg-primary/[0.055] text-primary";
+    case "proof":
+      return "border-emerald-300/16 bg-emerald-300/[0.045] text-emerald-100";
+    case "overdue":
+      return "border-rose-300/16 bg-rose-300/[0.045] text-rose-100";
+    case "due_soon":
+    case "setup_needed":
+      return "border-amber-300/16 bg-amber-300/[0.045] text-amber-100";
+    case "scheduled":
     default:
       return "border-sky-300/12 bg-sky-300/[0.035] text-sky-100";
   }

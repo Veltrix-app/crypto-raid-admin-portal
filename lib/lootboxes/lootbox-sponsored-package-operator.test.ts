@@ -1837,6 +1837,188 @@ test("buildLootboxSponsorActivationHandoffRead builds a sponsor deal close pack 
   );
 });
 
+test("buildLootboxSponsorActivationHandoffRead builds a sponsor follow-up timeline", () => {
+  const projectId = "11111111-1111-4111-8111-111111111111";
+  const readyRunId = "sponsor-activation:package-close:2026-05-10T12:00:00.000Z";
+  const read = buildLootboxSponsorActivationHandoffRead({
+    now: "2026-05-10T14:00:00.000Z",
+    packages: [
+      {
+        id: "package-close",
+        project_id: projectId,
+        campaign_id: basePack.campaignId,
+        package_tier: "premium",
+        status: "won",
+        sponsor_name: "Atlas Labs",
+        sponsor_contact: "finance@atlas.test",
+        sponsor_budget: 2500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-1",
+        follow_up_at: "2026-05-10T10:00:00.000Z",
+        last_contacted_at: "2026-05-09T12:00:00.000Z",
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Holder Activation Sprint",
+        },
+        metadata: {
+          lastActivationRun: {
+            runId: readyRunId,
+            title: "Atlas Labs activation run",
+            stagedAt: "2026-05-10T12:00:00.000Z",
+            sponsorPackageId: "package-close",
+            campaignId: basePack.campaignId,
+            projectId,
+            routeHref: `/campaigns/${basePack.campaignId}`,
+            noteId: "note-1",
+            stagedByAuthUserId: "admin-auth-1",
+            guardrailCount: 5,
+          },
+          lastActivationRunSignoff: {
+            runId: readyRunId,
+            outcome: "completed",
+            label: "Completed",
+            signedOffAt: "2026-05-10T13:00:00.000Z",
+            signedOffByAuthUserId: "admin-auth-1",
+            noteId: "note-signoff",
+            note: "Launch completed and sponsor proof is ready.",
+            followUpAt: "2026-05-11T12:00:00.000Z",
+          },
+        },
+        created_by_auth_user_id: "admin-auth-1",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-setup",
+        project_id: projectId,
+        campaign_id: "44444444-4444-4444-8444-444444444444",
+        package_tier: "standard",
+        status: "won",
+        sponsor_name: "Gamma Crew",
+        sponsor_contact: "gamma@test.local",
+        sponsor_budget: 1500,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-3",
+        follow_up_at: null,
+        last_contacted_at: null,
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Gamma Sprint",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-3",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+      {
+        id: "package-watch",
+        project_id: projectId,
+        campaign_id: "55555555-5555-4555-8555-555555555555",
+        package_tier: "starter",
+        status: "negotiating",
+        sponsor_name: "Beta Guild",
+        sponsor_contact: "beta@test.local",
+        sponsor_budget: 1000,
+        currency: "USD",
+        owner_auth_user_id: "admin-auth-4",
+        follow_up_at: "2026-05-12T10:00:00.000Z",
+        last_contacted_at: null,
+        package_snapshot: {
+          projectName: "VYNTRO",
+          campaignTitle: "Beta Warmup",
+        },
+        metadata: {},
+        created_by_auth_user_id: "admin-auth-4",
+        created_at: "2026-05-07T10:00:00.000Z",
+        updated_at: "2026-05-07T11:00:00.000Z",
+      },
+    ],
+    campaigns: [
+      {
+        id: basePack.campaignId,
+        projectId,
+        title: "Holder Activation Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 500,
+        participants: 128,
+        completionRate: 42,
+      },
+      {
+        id: "44444444-4444-4444-8444-444444444444",
+        projectId,
+        title: "Gamma Sprint",
+        status: "active",
+        visibility: "public",
+        rewardPoolAmount: 200,
+        participants: 12,
+        completionRate: 12,
+      },
+      {
+        id: "55555555-5555-4555-8555-555555555555",
+        projectId,
+        title: "Beta Warmup",
+        status: "scheduled",
+        visibility: "public",
+        rewardPoolAmount: 150,
+        participants: 0,
+        completionRate: 0,
+      },
+    ],
+    projects: [{ id: projectId, name: "VYNTRO", slug: "vyntro" }],
+    shardPools: [
+      {
+        id: "pool-1",
+        campaignId: basePack.campaignId,
+        status: "active",
+        poolSize: 10_000,
+        remainingShards: 6_400,
+      },
+    ],
+  });
+
+  assert.deepEqual(read.followUpTimeline.summary, {
+    total: 7,
+    now: 4,
+    next: 1,
+    proof: 2,
+    overdue: 1,
+    manualOnly: true,
+    topNextAction: "Copy close pack for Atlas Labs: sponsor recap, finance prep and internal proof.",
+  });
+  assert.equal(read.followUpTimeline.focus?.packageId, "package-close");
+  assert.deepEqual(
+    read.followUpTimeline.lanes.map((lane) => `${lane.id}:${lane.count}`),
+    ["now:4", "next:1", "proof:2"]
+  );
+  assert.deepEqual(
+    read.followUpTimeline.lanes[0]?.items.map(
+      (item) => `${item.kind}:${item.packageId}:${item.state}`
+    ),
+    [
+      "close_pack:package-close:ready",
+      "finance_prep:package-close:ready",
+      "sponsor_follow_up:package-close:overdue",
+      "setup_needed:package-setup:setup_needed",
+    ]
+  );
+  assert.deepEqual(
+    read.followUpTimeline.lanes[1]?.items.map(
+      (item) => `${item.kind}:${item.packageId}:${item.state}`
+    ),
+    ["sponsor_follow_up:package-watch:due_soon"]
+  );
+  assert.deepEqual(
+    read.followUpTimeline.lanes[2]?.items.map(
+      (item) => `${item.kind}:${item.packageId}:${item.state}`
+    ),
+    [
+      "delivery_signoff:package-close:proof",
+      "last_contact:package-close:proof",
+    ]
+  );
+});
+
 test("buildLootboxSponsorActivationRunMetadataPatch preserves metadata and stores run visibility", () => {
   const read = buildLootboxSponsorActivationHandoffRead({
     packages: [
