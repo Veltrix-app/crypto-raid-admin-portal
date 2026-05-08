@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { ArrowRight, BadgeCheck, Crown, Sparkles } from "lucide-react";
 import SegmentToggle from "@/components/layout/ops/SegmentToggle";
 import {
   OpsFilterBar,
@@ -20,6 +22,100 @@ import {
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
 import type { AdminReward } from "@/types/entities/reward";
 
+type RewardsView = "catalog" | "claims" | "passes";
+
+type MemberPassTier = {
+  id: "spark" | "surge" | "mythic";
+  name: string;
+  utility: string;
+  price: string;
+  image: string;
+  description: string;
+  shardLift: string;
+  recommended?: boolean;
+  tone: "teal" | "violet" | "gold";
+  perks: Array<{ label: string; detail: string }>;
+};
+
+const MEMBER_PASS_TIERS: MemberPassTier[] = [
+  {
+    id: "spark",
+    name: "Spark Pass",
+    utility: "Entry utility",
+    price: "$5",
+    image: "/assets/member-passes/spark-pass.webp",
+    description:
+      "A focused pass for everyday players who want the first layer of utility without turning the economy into a paywall.",
+    shardLift: "Small featured shard lift",
+    tone: "teal",
+    perks: [
+      {
+        label: "Featured shard lift",
+        detail: "A light bonus for featured quests and raids once passes go live.",
+      },
+      {
+        label: "Profile pass mark",
+        detail: "A public member pass signal for profile and leaderboard identity.",
+      },
+      {
+        label: "Common lane priority",
+        detail: "A clearer route into common and rare lootbox chase loops.",
+      },
+    ],
+  },
+  {
+    id: "surge",
+    name: "Surge Pass",
+    utility: "Hunter utility",
+    price: "$10",
+    image: "/assets/member-passes/surge-pass.webp",
+    description:
+      "The main hunter pass for members who keep returning to featured activity and need stronger progression pressure.",
+    shardLift: "Medium featured shard lift",
+    recommended: true,
+    tone: "violet",
+    perks: [
+      {
+        label: "Stronger shard lift",
+        detail: "A bigger featured activity boost for users who hunt consistently.",
+      },
+      {
+        label: "Epic access pressure",
+        detail: "A pass layer designed around faster epic-tier readiness.",
+      },
+      {
+        label: "Cosmetic lane",
+        detail: "A stronger chance to make cosmetic rewards feel visible and collectible.",
+      },
+    ],
+  },
+  {
+    id: "mythic",
+    name: "Mythic Pass",
+    utility: "Premium utility",
+    price: "$15",
+    image: "/assets/member-passes/mythic-pass.webp",
+    description:
+      "The premium pass for the highest-intent members, kept planned until reward funding and entitlement gates are mature.",
+    shardLift: "Highest featured shard lift",
+    tone: "gold",
+    perks: [
+      {
+        label: "Mythic window support",
+        detail: "A premium layer for users chasing the highest rarity box windows.",
+      },
+      {
+        label: "Season identity",
+        detail: "A stronger public signal for pass holders during active seasons.",
+      },
+      {
+        label: "Reward readiness",
+        detail: "A clearer path for future USDC, sponsored and premium reward lanes.",
+      },
+    ],
+  },
+];
+
 export default function RewardsPage() {
   const rewards = useAdminPortalStore((s) => s.rewards);
   const campaigns = useAdminPortalStore((s) => s.campaigns);
@@ -28,7 +124,14 @@ export default function RewardsPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [rewardType, setRewardType] = useState("all");
-  const [rewardsView, setRewardsView] = useState<"catalog" | "claims">("catalog");
+  const [rewardsView, setRewardsView] = useState<RewardsView>("catalog");
+
+  useEffect(() => {
+    const view = new URLSearchParams(window.location.search).get("view");
+    if (view === "passes") {
+      setRewardsView("passes");
+    }
+  }, []);
 
   const filteredRewards = useMemo(() => {
     return rewards.filter((reward) => {
@@ -59,6 +162,35 @@ export default function RewardsPage() {
   const manualFulfillmentCount = rewards.filter(
     (reward) => reward.claimMethod === "manual_fulfillment"
   ).length;
+  const viewPosture = {
+    catalog: {
+      title: "Read the reward inventory",
+      description:
+        "Use catalog mode when the goal is to understand the inventory itself: type mix, visibility, scarcity and campaign context.",
+      nextRead: "Start with title, campaign and rarity, then judge cost and scarcity.",
+      helper: "Catalog mode keeps the reward layer feeling curated instead of like a fulfillment spreadsheet.",
+    },
+    claims: {
+      title: "Read claim and fulfillment pressure",
+      description:
+        "Use claims mode when the team needs to reason about which rewards can create manual work, claim load or stock stress.",
+      nextRead:
+        "Prioritize claimable and manual-fulfillment rewards before browsing the long tail.",
+      helper:
+        "Claims mode reduces the system to the incentives that can actually create operator demand, stock pressure or manual delivery.",
+    },
+    passes: {
+      title: "Shape monthly member utility",
+      description:
+        "Use pass mode for the planned paid member layer: pricing, public identity, shard boost promises and future entitlement gates.",
+      nextRead: "Keep pass perks here on Rewards; Lootboxes should only reference this layer as a shard sink.",
+      helper:
+        "Member passes are a rewards economy product, not a lootbox control. This view keeps the utility ladder visible without cluttering box operations.",
+    },
+  } satisfies Record<
+    RewardsView,
+    { title: string; description: string; nextRead: string; helper: string }
+  >;
   const rewardFundingPostures = rewards.map((reward) => getFundingPosture(reward));
   const fundingReadyCount = rewardFundingPostures.filter(
     (posture) => !posture.requiresFunding || posture.ready
@@ -102,16 +234,8 @@ export default function RewardsPage() {
             <div className="grid gap-4 xl:items-start xl:grid-cols-[1.12fr_0.88fr]">
               <OpsPanel
                 eyebrow="View posture"
-                title={
-                  rewardsView === "catalog"
-                    ? "Read the reward inventory"
-                    : "Read claim and fulfillment pressure"
-                }
-                description={
-                  rewardsView === "catalog"
-                    ? "Use catalog mode when the goal is to understand the inventory itself: type mix, visibility, scarcity and campaign context."
-                    : "Use claims mode when the team needs to reason about which rewards can create manual work, claim load or stock stress."
-                }
+                title={viewPosture[rewardsView].title}
+                description={viewPosture[rewardsView].description}
                 tone="accent"
                 action={
                   <SegmentToggle
@@ -120,6 +244,7 @@ export default function RewardsPage() {
                     options={[
                       { value: "catalog", label: "Catalog" },
                       { value: "claims", label: "Claims" },
+                      { value: "passes", label: "Passes" },
                     ]}
                   />
                 }
@@ -135,11 +260,7 @@ export default function RewardsPage() {
                   />
                   <OpsSnapshotRow
                     label="Next read"
-                    value={
-                      rewardsView === "catalog"
-                        ? "Start with title, campaign and rarity, then judge cost and scarcity."
-                        : "Prioritize claimable and manual-fulfillment rewards before browsing the long tail."
-                    }
+                    value={viewPosture[rewardsView].nextRead}
                   />
                 </div>
               </OpsPanel>
@@ -157,6 +278,7 @@ export default function RewardsPage() {
                 />
                 <RewardSignal label="Funding ready" value={`${fundingReadyCount}`} />
                 <RewardSignal label="Avg cost" value={`${avgCost}`} />
+                <RewardSignal label="Pass tiers" value={`${MEMBER_PASS_TIERS.length}`} />
                 <RewardSignal
                   label="Needs funding"
                   value={`${needsFundingCount}`}
@@ -165,57 +287,76 @@ export default function RewardsPage() {
               </div>
             </div>
 
-            <OpsFilterBar>
-              <OpsSearchInput
-                value={search}
-                onChange={setSearch}
-                placeholder="Search rewards..."
-                ariaLabel="Search rewards"
-                name="reward-search"
-              />
-              <OpsSelect
-                value={status}
-                onChange={setStatus}
-                ariaLabel="Filter rewards by status"
-                name="reward-status"
-              >
-                <option value="all">all statuses</option>
-                <option value="draft">draft</option>
-                <option value="active">active</option>
-                <option value="paused">paused</option>
-                <option value="archived">archived</option>
-              </OpsSelect>
-              <OpsSelect
-                value={rewardType}
-                onChange={setRewardType}
-                ariaLabel="Filter rewards by type"
-                name="reward-type"
-              >
-                <option value="all">all reward types</option>
-                <option value="token">token</option>
-                <option value="nft">nft</option>
-                <option value="role">role</option>
-                <option value="allowlist">allowlist</option>
-                <option value="access">access</option>
-                <option value="badge">badge</option>
-                <option value="physical">physical</option>
-                <option value="custom">custom</option>
-              </OpsSelect>
-            </OpsFilterBar>
+            {rewardsView === "passes" ? (
+              <div className="grid gap-3 md:grid-cols-3">
+                <OpsSnapshotRow
+                  label="Pass posture"
+                  value="Spark, Surge and Mythic stay planned until entitlement and checkout controls are ready."
+                />
+                <OpsSnapshotRow
+                  label="Shard sink"
+                  value="Passes create a second reason to hunt shards without making XP spendable."
+                />
+                <OpsSnapshotRow
+                  label="Placement"
+                  value="Rewards owns the pass ladder; Lootboxes keeps a compact reference only."
+                />
+              </div>
+            ) : (
+              <OpsFilterBar>
+                <OpsSearchInput
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search rewards..."
+                  ariaLabel="Search rewards"
+                  name="reward-search"
+                />
+                <OpsSelect
+                  value={status}
+                  onChange={setStatus}
+                  ariaLabel="Filter rewards by status"
+                  name="reward-status"
+                >
+                  <option value="all">all statuses</option>
+                  <option value="draft">draft</option>
+                  <option value="active">active</option>
+                  <option value="paused">paused</option>
+                  <option value="archived">archived</option>
+                </OpsSelect>
+                <OpsSelect
+                  value={rewardType}
+                  onChange={setRewardType}
+                  ariaLabel="Filter rewards by type"
+                  name="reward-type"
+                >
+                  <option value="all">all reward types</option>
+                  <option value="token">token</option>
+                  <option value="nft">nft</option>
+                  <option value="role">role</option>
+                  <option value="allowlist">allowlist</option>
+                  <option value="access">access</option>
+                  <option value="badge">badge</option>
+                  <option value="physical">physical</option>
+                  <option value="custom">custom</option>
+                </OpsSelect>
+              </OpsFilterBar>
+            )}
 
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_260px]">
               <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 text-[12px] leading-5 text-sub">
-                {rewardsView === "catalog"
-                  ? "Catalog mode keeps the reward layer feeling curated instead of like a fulfillment spreadsheet."
-                  : "Claims mode reduces the system to the incentives that can actually create operator demand, stock pressure or manual delivery."}
+                {viewPosture[rewardsView].helper}
               </div>
               <div className="rounded-[14px] border border-white/[0.026] bg-white/[0.014] px-3 py-2.5 text-[12px] leading-5 text-sub">
-                {manualFulfillmentCount} manual reward flows still depend on explicit operator follow-through
+                {rewardsView === "passes"
+                  ? `${MEMBER_PASS_TIERS.length} planned pass tiers stay gated behind billing, entitlement and perk controls.`
+                  : `${manualFulfillmentCount} manual reward flows still depend on explicit operator follow-through`}
               </div>
             </div>
           </div>
         }
       >
+        {rewardsView === "passes" ? <MemberPassBlueprint tiers={MEMBER_PASS_TIERS} /> : null}
+
         {rewardsView === "catalog" ? (
           <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr] xl:items-start">
             <OpsPanel
@@ -410,6 +551,213 @@ function RewardSignal({
       <p className="mt-1.5 text-[13px] font-semibold text-text">{value}</p>
     </div>
   );
+}
+
+function MemberPassBlueprint({ tiers }: { tiers: MemberPassTier[] }) {
+  return (
+    <div id="member-passes" className="space-y-4">
+      <OpsPanel
+        eyebrow="Member pass blueprint"
+        title="Monthly utility ladder"
+        description="Passes live with Rewards because they shape paid member utility, public identity and a second shard sink beyond lootboxes."
+        tone="accent"
+        action={<OpsStatusPill tone="warning">Planned layer</OpsStatusPill>}
+      >
+        <div className="grid gap-4 2xl:grid-cols-3">
+          {tiers.map((tier) => (
+            <MemberPassTierCard key={tier.id} tier={tier} />
+          ))}
+        </div>
+      </OpsPanel>
+
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <OpsPanel
+          eyebrow="Entitlement map"
+          title="What Rewards should own"
+          description="These controls stay away from the lootbox studio until billing and pass entitlements are real."
+        >
+          <div className="grid gap-3">
+            <PassBlueprintRow
+              icon={<Crown size={14} />}
+              label="Pass identity"
+              value="Profile marks, leaderboard signals and public member status belong to the rewards identity layer."
+            />
+            <PassBlueprintRow
+              icon={<Sparkles size={14} />}
+              label="Shard boost rules"
+              value="The pass can boost featured activity earnings, but the actual quest and raid proof still controls shard issuance."
+            />
+            <PassBlueprintRow
+              icon={<BadgeCheck size={14} />}
+              label="Future billing gate"
+              value="Checkout, renewal state and entitlement checks can be added later without touching lootbox reward pools."
+            />
+          </div>
+        </OpsPanel>
+
+        <OpsPanel
+          eyebrow="Lootbox connection"
+          title="How this should reference boxes"
+          description="Lootboxes should treat member passes as a planned demand driver, not as a place to configure subscription perks."
+          action={
+            <Link
+              href="/lootboxes"
+              className="inline-flex items-center gap-2 rounded-full border border-white/[0.04] bg-white/[0.018] px-3 py-2 text-[12px] font-black text-text transition hover:border-primary/24 hover:text-primary"
+            >
+              Open lootboxes
+              <ArrowRight size={13} />
+            </Link>
+          }
+        >
+          <div className="grid gap-3 md:grid-cols-3">
+            <OpsSnapshotRow
+              label="Economy role"
+              value="Passes make users more motivated to hunt shards."
+            />
+            <OpsSnapshotRow
+              label="Lootbox role"
+              value="Boxes remain the shard spend surface and reward-pool control room."
+            />
+            <OpsSnapshotRow
+              label="Operator rule"
+              value="Configure perks here; only reference the pass layer from lootbox ops."
+            />
+          </div>
+        </OpsPanel>
+      </div>
+    </div>
+  );
+}
+
+function MemberPassTierCard({ tier }: { tier: MemberPassTier }) {
+  return (
+    <article className={`overflow-hidden rounded-[24px] border shadow-[0_22px_60px_rgba(0,0,0,0.22)] ${getPassShellClass(tier.tone)}`}>
+      <div className="relative aspect-[3/2] overflow-hidden bg-black">
+        <Image
+          src={tier.image}
+          alt={`${tier.name} visual`}
+          fill
+          sizes="(min-width: 1536px) 32vw, (min-width: 768px) 50vw, 100vw"
+          className="object-cover"
+          priority={tier.recommended}
+        />
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.72))] p-4">
+          <div>
+            <OpsStatusPill tone={tier.recommended ? "success" : "default"}>
+              {tier.recommended ? "recommended" : "planned"}
+            </OpsStatusPill>
+          </div>
+          <div className="rounded-[18px] border border-white/10 bg-black/58 px-4 py-3 text-right backdrop-blur-md">
+            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-sub">Monthly</p>
+            <p className="mt-1 text-[20px] font-black text-white">{tier.price}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4 p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sub">
+              {tier.utility}
+            </p>
+            <h2 className="mt-1.5 break-words text-[20px] font-black tracking-[-0.02em] text-text [overflow-wrap:anywhere]">
+              {tier.name}
+            </h2>
+          </div>
+          <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${getPassIconClass(tier.tone)}`}>
+            <Crown size={17} />
+          </span>
+        </div>
+
+        <p className="text-[13px] leading-6 text-sub">{tier.description}</p>
+
+        <div className={`rounded-full border px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] ${getPassLiftClass(tier.tone)}`}>
+          {tier.shardLift}
+        </div>
+
+        <div className="grid gap-2.5">
+          {tier.perks.map((perk) => (
+            <div
+              key={`${tier.id}-${perk.label}`}
+              className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3"
+            >
+              <div className="flex items-start gap-2.5">
+                <span className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${getPassIconClass(tier.tone)}`}>
+                  <BadgeCheck size={12} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-black uppercase tracking-[0.13em] text-text">
+                    {perk.label}
+                  </p>
+                  <p className="mt-1 text-[12px] leading-5 text-sub">{perk.detail}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PassBlueprintRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-[16px] border border-white/[0.026] bg-white/[0.014] p-3">
+      <div className="flex items-start gap-2.5">
+        <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/18 bg-primary/[0.07] text-primary">
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <p className="text-[11px] font-black uppercase tracking-[0.14em] text-text">{label}</p>
+          <p className="mt-1.5 text-[12px] leading-5 text-sub">{value}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getPassShellClass(tone: MemberPassTier["tone"]) {
+  switch (tone) {
+    case "teal":
+      return "border-cyan-300/18 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_34%),linear-gradient(180deg,rgba(14,23,28,0.98),rgba(8,12,16,0.96))]";
+    case "violet":
+      return "border-violet-300/18 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.17),transparent_34%),linear-gradient(180deg,rgba(19,16,32,0.98),rgba(9,8,16,0.96))]";
+    case "gold":
+    default:
+      return "border-amber-300/18 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.14),transparent_34%),linear-gradient(180deg,rgba(31,22,12,0.98),rgba(12,9,7,0.96))]";
+  }
+}
+
+function getPassIconClass(tone: MemberPassTier["tone"]) {
+  switch (tone) {
+    case "teal":
+      return "border-cyan-300/22 bg-cyan-300/[0.08] text-cyan-100";
+    case "violet":
+      return "border-violet-300/24 bg-violet-300/[0.08] text-violet-100";
+    case "gold":
+    default:
+      return "border-amber-300/24 bg-amber-300/[0.08] text-amber-100";
+  }
+}
+
+function getPassLiftClass(tone: MemberPassTier["tone"]) {
+  switch (tone) {
+    case "teal":
+      return "border-cyan-300/18 bg-cyan-300/[0.065] text-cyan-100";
+    case "violet":
+      return "border-violet-300/20 bg-violet-300/[0.07] text-violet-100";
+    case "gold":
+    default:
+      return "border-amber-300/20 bg-amber-300/[0.075] text-amber-100";
+  }
 }
 
 function RewardSurfaceCard({

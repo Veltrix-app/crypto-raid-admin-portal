@@ -1675,7 +1675,7 @@ function RewardOpsLanePanel({
     <OpsPanel
       eyebrow="Reward operations"
       title="Lootbox reward lanes"
-      description="Keep live rewards, planned paid passes, sponsored lanes and future USDC outcomes visible before any deeper entitlement or payout mutation ships."
+      description="Keep live box rewards, sponsored lanes and future payout outcomes visible while planned pass utility stays owned by Rewards."
       action={
         <OpsStatusPill tone={summary.highRisk > 0 ? "warning" : "success"}>
           {summary.live} live / {summary.planned} planned
@@ -1764,6 +1764,16 @@ function RewardOpsLaneCard({
         <OpsSnapshotRow label="Control" value={lane.controlSurface} />
         <OpsSnapshotRow label="Gate" value={lane.deliveryGate} />
       </div>
+
+      {lane.id === "member_pass" ? (
+        <Link
+          href="/rewards?view=passes"
+          className="mt-3 inline-flex w-full items-center justify-between gap-3 rounded-[14px] border border-primary/14 bg-primary/[0.045] px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-primary transition hover:border-primary/28 hover:bg-primary/[0.07]"
+        >
+          Open pass blueprint
+          <ArrowRight size={13} />
+        </Link>
+      ) : null}
     </article>
   );
 }
