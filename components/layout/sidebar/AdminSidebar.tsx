@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, ChevronRight, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAccountEntryGuard } from "@/components/accounts/AccountEntryGuard";
 import { cn } from "@/lib/utils/cn";
@@ -51,11 +52,19 @@ export default function AdminSidebar() {
       <div className={cn("gap-2", expanded ? "flex items-center" : "flex flex-col items-center")}>
         <Link
           href="/overview"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-primary/18 bg-[linear-gradient(180deg,rgba(186,255,59,0.13),rgba(255,255,255,0.018))] text-primary shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
+          className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-violet-300/20 bg-black shadow-[0_12px_30px_rgba(111,76,255,0.22)]"
           title="VYNTRO portal"
           aria-label="VYNTRO portal"
         >
-          <Shield size={16} />
+          <Image
+            src="/brand/logo/vyntro-logo.webp"
+            alt=""
+            fill
+            priority
+            unoptimized
+            sizes="40px"
+            className="object-cover"
+          />
         </Link>
 
         {expanded ? (
