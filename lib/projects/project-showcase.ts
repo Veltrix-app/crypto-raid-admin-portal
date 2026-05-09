@@ -746,7 +746,7 @@ export function buildAdminProjectShowcase(input: {
         value: project.bannerUrl,
         group: "profile",
         placeholder: "https://cdn.example.com/banner.png",
-        helper: "Powers the first visual read on the public project page.",
+        helper: "Powers the first visual read on the public project page. Recommended PNG: 2400 x 1080px, minimum 1600 x 720px.",
       }),
       buildControl({
         key: "website",

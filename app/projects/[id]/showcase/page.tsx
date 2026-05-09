@@ -6,6 +6,7 @@ import {
   ArrowRight,
   BadgeCheck,
   FileText,
+  ImageUp,
   Rocket,
   ShieldCheck,
   Sparkles,
@@ -32,6 +33,7 @@ import {
   type AdminShowcaseScanSeverity,
   type AdminShowcaseStatus,
 } from "@/lib/projects/project-showcase";
+import { createClient } from "@/lib/supabase/client";
 import { buildProjectWorkspaceHealthPills } from "@/lib/projects/workspace-selectors";
 import { useAdminAuthStore } from "@/store/auth/useAdminAuthStore";
 import { useAdminPortalStore } from "@/store/ui/useAdminPortalStore";
@@ -462,6 +464,70 @@ export default function ProjectShowcasePage() {
     }
   }
 
+  async function handleBannerUpload(file: File) {
+    if (!project) return;
+
+    const projectInput = Object.fromEntries(
+      Object.entries(project).filter(([key]) => key !== "id")
+    ) as Omit<typeof project, "id">;
+
+    setSavingKey("bannerUpload");
+    setSavedKey(null);
+    setSaveError(null);
+
+    try {
+      if (file.type !== "image/png" && !file.name.toLowerCase().endsWith(".png")) {
+        throw new Error("Upload a PNG banner file.");
+      }
+
+      if (file.size > 6 * 1024 * 1024) {
+        throw new Error("Banner PNG must be 6MB or smaller.");
+      }
+
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Sign in again before uploading a showcase banner.");
+      }
+
+      const uploadData = new FormData();
+      uploadData.set("file", file);
+
+      const response = await fetch(`/api/projects/${project.id}/showcase/banner-upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: uploadData,
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            url?: string;
+            error?: string;
+          }
+        | null;
+
+      if (!response.ok || !payload?.ok || !payload.url) {
+        throw new Error(payload?.error ?? "Could not upload showcase banner.");
+      }
+
+      await updateProject(project.id, {
+        ...projectInput,
+        bannerUrl: payload.url,
+      });
+      setSavedKey("bannerUpload");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Could not upload showcase banner.");
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
   async function handleRegistrySubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!project) return;
@@ -706,6 +772,7 @@ export default function ProjectShowcasePage() {
                   controls={profileControls}
                   group="profile"
                   onSubmit={handleControlSubmit}
+                  onBannerUpload={handleBannerUpload}
                   savedKey={savedKey}
                   savingKey={savingKey}
                 />
@@ -1050,12 +1117,14 @@ function ShowcaseControlGroup({
   controls,
   group,
   onSubmit,
+  onBannerUpload,
   savedKey,
   savingKey,
 }: {
   controls: AdminShowcaseControl[];
   group: AdminShowcaseControlGroup;
   onSubmit: (control: AdminShowcaseControl, event: FormEvent<HTMLFormElement>) => void;
+  onBannerUpload?: (file: File) => void;
   savedKey: string | null;
   savingKey: string | null;
 }) {
@@ -1093,6 +1162,45 @@ function ShowcaseControlGroup({
                 className="mt-2 w-full rounded-[14px] border border-white/[0.026] bg-black/20 px-3 py-2.5 text-[12px] text-text outline-none transition placeholder:text-sub/55 focus:border-primary/24"
               />
             )}
+            {control.key === "bannerUrl" && onBannerUpload ? (
+              <div className="mt-2 rounded-[15px] border border-primary/[0.12] bg-primary/[0.035] p-3">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-primary">
+                      <ImageUp size={13} />
+                      PNG upload
+                    </div>
+                    <p className="mt-1.5 text-[11px] font-semibold leading-5 text-text">
+                      Recommended: 2400 x 1080px PNG. Minimum: 1600 x 720px. Max 6MB.
+                    </p>
+                    <p className="mt-1 text-[10px] leading-4 text-sub">
+                      The uploaded file replaces this banner URL and keeps Project Settings as the source of truth.
+                    </p>
+                  </div>
+                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-primary/18 bg-black/25 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-primary transition hover:bg-primary/[0.08]">
+                    <ImageUp size={13} />
+                    {savingKey === "bannerUpload"
+                      ? "Uploading"
+                      : savedKey === "bannerUpload"
+                        ? "Uploaded"
+                        : "Upload PNG"}
+                    <input
+                      type="file"
+                      accept="image/png,.png"
+                      className="sr-only"
+                      disabled={savingKey === "bannerUpload"}
+                      onChange={(event) => {
+                        const file = event.currentTarget.files?.[0];
+                        if (file) {
+                          onBannerUpload(file);
+                        }
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : null}
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
               <p className="max-w-[28rem] text-[11px] leading-5 text-sub">{control.helper}</p>
               <button
